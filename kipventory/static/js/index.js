@@ -21539,9 +21539,9 @@
 	        { history: _reactRouter.browserHistory },
 	        _react2.default.createElement(
 	          _reactRouter.Route,
-	          { path: '/app', component: Container },
+	          { path: '/app/', component: Container },
 	          _react2.default.createElement(_reactRouter.IndexRoute, { component: Home }),
-	          _react2.default.createElement(_reactRouter.Route, { path: 'address', component: Address }),
+	          _react2.default.createElement(_reactRouter.Route, { path: 'address/', component: Address }),
 	          _react2.default.createElement(_reactRouter.Route, { path: '*', component: NotFound })
 	        )
 	      );
@@ -21557,13 +21557,13 @@
 	    null,
 	    _react2.default.createElement(
 	      _reactRouter.Link,
-	      { to: '/' },
+	      { to: '/app' },
 	      'Home'
 	    ),
 	    '\xA0',
 	    _react2.default.createElement(
 	      _reactRouter.Link,
-	      { to: '/address' },
+	      { to: '/app/address/' },
 	      'Address'
 	    )
 	  );
@@ -21581,10 +21581,11 @@
 	var Home = function Home() {
 	  return _react2.default.createElement(
 	    'h1',
-	    { id: 'main-title' },
+	    null,
 	    'Hello from Home!'
 	  );
 	};
+
 	var Address = function Address() {
 	  return _react2.default.createElement(
 	    'h1',
