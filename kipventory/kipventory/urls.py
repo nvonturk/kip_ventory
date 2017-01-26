@@ -21,5 +21,6 @@ from . import views
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('api.urls')),
-    url(r'^app/', views.index),
+    # catch-all to let Reach handle routing on the client side
+    url(r'', views.index),
 ]
