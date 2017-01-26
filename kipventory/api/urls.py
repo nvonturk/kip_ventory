@@ -20,7 +20,6 @@ from . import views
 
 urlpatterns = [
     url(r'^items/$', views.ItemListView.as_view()),
-    url(r'^items/(?P<category>.+)/$', views.ItemListView.as_view())
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

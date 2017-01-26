@@ -9,11 +9,21 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+class Tag(models.Model):
+    name = models.CharField(max_length=100)
+    class Meta:
+        ordering=('name',)
+
+    def __str__(self):
+        return self.name
 
 class Item(models.Model):
-    part_no = models.CharField(max_length=100, unique=True)
+    part_no = models.CharField(max_length=100, unique=None)
     name = models.CharField(max_length=100)
-    category = models.ForeignKey('Category', on_delete=models.CASCADE)
+    location = models.CharField(max_length=100)
+    quantity = models.IntegerField(default=0)
+    description = models.TextField(max_length=500)
+
     class Meta:
         ordering = ('part_no',)
 
