@@ -70,6 +70,18 @@
 
 	var _profile2 = _interopRequireDefault(_profile);
 
+	var _loginform = __webpack_require__(490);
+
+	var _loginform2 = _interopRequireDefault(_loginform);
+
+	var _logincontainer = __webpack_require__(491);
+
+	var _logincontainer2 = _interopRequireDefault(_logincontainer);
+
+	var _applicationcontainer = __webpack_require__(492);
+
+	var _applicationcontainer2 = _interopRequireDefault(_applicationcontainer);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	(0, _reactDom.render)(_react2.default.createElement(
@@ -77,10 +89,19 @@
 	  { history: _reactRouter.browserHistory },
 	  _react2.default.createElement(
 	    _reactRouter.Route,
-	    { path: 'app', component: _kipnav2.default },
-	    _react2.default.createElement(_reactRouter.IndexRoute, { component: _home2.default }),
-	    _react2.default.createElement(_reactRouter.Route, { path: 'requests', component: _requests2.default }),
-	    _react2.default.createElement(_reactRouter.Route, { path: 'profile', component: _profile2.default })
+	    { path: '/', component: _applicationcontainer2.default },
+	    _react2.default.createElement(
+	      _reactRouter.Route,
+	      { path: 'login', component: _logincontainer2.default },
+	      _react2.default.createElement(_reactRouter.IndexRoute, { component: _loginform2.default })
+	    ),
+	    _react2.default.createElement(
+	      _reactRouter.Route,
+	      { path: 'app', component: _kipnav2.default },
+	      _react2.default.createElement(_reactRouter.IndexRoute, { component: _home2.default }),
+	      _react2.default.createElement(_reactRouter.Route, { path: 'requests', component: _requests2.default }),
+	      _react2.default.createElement(_reactRouter.Route, { path: 'profile', component: _profile2.default })
+	    )
 	  )
 	), document.getElementById('root'));
 
@@ -45618,6 +45639,142 @@
 	      'div',
 	      null,
 	      'Profile'
+	    );
+	  }
+	});
+
+/***/ },
+/* 490 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _react = __webpack_require__(1);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _reactBootstrap = __webpack_require__(234);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = _react2.default.createClass({
+	  displayName: 'loginform',
+	  render: function render() {
+	    return _react2.default.createElement(
+	      _reactBootstrap.Form,
+	      { horizontal: true },
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
+	        { controlId: 'formHorizontalEmail' },
+	        _react2.default.createElement(
+	          _reactBootstrap.Col,
+	          { componentClass: _reactBootstrap.ControlLabel, sm: 2 },
+	          'Email'
+	        ),
+	        _react2.default.createElement(
+	          _reactBootstrap.Col,
+	          { sm: 10 },
+	          _react2.default.createElement(_reactBootstrap.FormControl, { type: 'email', placeholder: 'Email' })
+	        )
+	      ),
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
+	        { controlId: 'formHorizontalPassword' },
+	        _react2.default.createElement(
+	          _reactBootstrap.Col,
+	          { componentClass: _reactBootstrap.ControlLabel, sm: 2 },
+	          'Password'
+	        ),
+	        _react2.default.createElement(
+	          _reactBootstrap.Col,
+	          { sm: 10 },
+	          _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', placeholder: 'Password' })
+	        )
+	      ),
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
+	        null,
+	        _react2.default.createElement(
+	          _reactBootstrap.Col,
+	          { smOffset: 2, sm: 10 },
+	          _react2.default.createElement(
+	            _reactBootstrap.Checkbox,
+	            null,
+	            'Remember me'
+	          )
+	        )
+	      ),
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
+	        null,
+	        _react2.default.createElement(
+	          _reactBootstrap.Col,
+	          { smOffset: 2, sm: 10 },
+	          _react2.default.createElement(
+	            _reactBootstrap.Button,
+	            { type: 'submit' },
+	            'Sign in'
+	          )
+	        )
+	      )
+	    );
+	  }
+	});
+
+/***/ },
+/* 491 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _react = __webpack_require__(1);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = _react2.default.createClass({
+	  displayName: "logincontainer",
+	  render: function render() {
+	    return _react2.default.createElement(
+	      "div",
+	      { id: "login-container" },
+	      this.props.children
+	    );
+	  }
+	});
+
+/***/ },
+/* 492 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _react = __webpack_require__(1);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = _react2.default.createClass({
+	  displayName: 'applicationcontainer',
+	  render: function render() {
+	    return _react2.default.createElement(
+	      'div',
+	      null,
+	      this.props.children
 	    );
 	  }
 	});

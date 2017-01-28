@@ -10,7 +10,3 @@ def index(request):
         print("SAD.")
 
     return render(request, 'kipventory/index.html', context)
-
-
-def login(request):
-    return render(request, 'kipventory/login.html')

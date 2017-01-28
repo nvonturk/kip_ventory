@@ -22,6 +22,5 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('api.urls')),
     # catch-all to let Reach handle routing on the client side
-    url(r'^app/', views.index),
-    url(r'', views.login),
+    url(r'', views.index),
 ]
