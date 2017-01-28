@@ -9,7 +9,7 @@ http://people.duke.edu/~tkb13/courses/ece458/ev1.pdf
 Clone.
 ```
 git clone https://github.com/nbv3/inventory_system
-cd inventory_system
+cd kip_ventory
 ```
 
 Create/activate new Python 3 ```virtualenv```.

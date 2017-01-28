@@ -16,10 +16,13 @@ Including another URLconf
 from django.conf.urls import url
 from rest_framework.urlpatterns import format_suffix_patterns
 
-from . import views
+from . import views, auth
 
 urlpatterns = [
     url(r'^items/$', views.ItemListView.as_view()),
+    # url(r'^items/(?P<category>.+)/$', views.ItemListView.as_view()),
+    url(r'^auth/', views.AuthView.as_view()),
+
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
