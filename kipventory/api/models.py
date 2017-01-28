@@ -18,7 +18,7 @@ class Tag(models.Model):
         return self.name
 
 class Item(models.Model):
-    part_no = models.CharField(max_length=100, unique=None)
+    part_no = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=100)
     quantity = models.IntegerField(default=0)
