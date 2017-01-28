@@ -43,7 +43,7 @@ class AuthView(APIView):
             else:
                 #First time login, create new token for user
                 token = Token.objects.create(user=thisuser)
-                return Response({"token": token})
+                return Response({"token": token.key})
 
             # login(request, user) I DON'T THINK WE NEED TO USE THIS, ITS NORMAL DJANGO
             #MIGHT NEED FOR LOGGING USER SESSIONS

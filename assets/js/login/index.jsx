@@ -8,6 +8,6 @@ import LoginForm from './loginform'
 
 render((
   <Router history={browserHistory}>
-    <Route path="/" component={LoginForm}/>
+    <Route path="/" component={LoginForm} />
   </Router>
 ), document.getElementById('root'))
