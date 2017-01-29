@@ -12,3 +12,9 @@ class Tag(serializers.ModelSerializer):
 	class Meta:
 		model = models.Tag
 		fields = ('name')
+
+
+class User(serializers.ModelSerializer):
+    class Meta:
+        model = models.User
+        fields = ()
