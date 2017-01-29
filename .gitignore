@@ -57,4 +57,4 @@ build/
 tests/report/
 
 migrations/0*
-db.sqlite3
+*.sqlite3
