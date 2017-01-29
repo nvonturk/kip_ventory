@@ -8,7 +8,7 @@ const LoginForm = React.createClass({
       username: '',
       email: '',
       password: '',
-      password2: ''
+      password2: '',
       PasswordError: 0
     };
   },
@@ -24,19 +24,20 @@ const LoginForm = React.createClass({
 
   onSubmit(event) {
     event.preventDefault();
+
     if (this.state.password != this.state.password2) {
       this.state.PasswordError = 1;
     }
     else {
       this.state.PasswordError = 0;
     }
-    data = {
+    var data = {
       username: this.state.username,
       email: this.state.email,
       password: this.state.password,
     }
-    this.authFunc(this.state);
-  }
+    this.props.authFunc(data);
+  },
 
   render() {
     return (

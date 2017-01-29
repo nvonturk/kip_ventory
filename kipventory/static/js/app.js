@@ -45666,7 +45666,8 @@
 	      username: '',
 	      email: '',
 	      password: '',
-	      password2: ''
+	      password2: '',
+	      PasswordError: 0
 	    };
 	  },
 	  handleChange: function handleChange(event) {
@@ -45675,10 +45676,25 @@
 	    var name = target.name;
 	    this.setState(_defineProperty({}, name, value));
 	  },
+	  onSubmit: function onSubmit(event) {
+	    event.preventDefault();
+
+	    if (this.state.password != this.state.password2) {
+	      this.state.PasswordError = 1;
+	    } else {
+	      this.state.PasswordError = 0;
+	    }
+	    var data = {
+	      username: this.state.username,
+	      email: this.state.email,
+	      password: this.state.password
+	    };
+	    this.props.authFunc(data);
+	  },
 	  render: function render() {
 	    return _react2.default.createElement(
 	      _reactBootstrap.Form,
-	      { id: 'login-form', onSubmit: this.props.authFunc(this.state) },
+	      { id: 'login-form', onSubmit: this.onSubmit },
 	      _react2.default.createElement(
 	        _reactBootstrap.FormGroup,
 	        { controlId: 'email' },
@@ -45766,11 +45782,8 @@
 	    );
 	  },
 
-	  authenticateUser: function authenticateUser(event) {
-	    event.preventDefault();
-	    console.log(event);
-	    console.log(event.target.email.value);
-	    console.log(event.target.username.value);
+	  authenticateUser: function authenticateUser(data) {
+	    console.log(data);
 	  }
 
 	});

@@ -16,16 +16,17 @@ class Item(models.Model):
     model       = models.CharField(max_length=100)
     quantity    = models.IntegerField(default=0)
     description = models.TextField(max_length=500)
-    tags = models.ManyToManyField(Tag, related_name='items', blank=True)
+    tags = models.ManyToManyField(Tag, blank=True)
 
     def __str__(self):
         return self.name
 
 
 class Request(models.Model):
-    requester = models.ForeignKey(User, related_name='requests', on_delete=models.CASCADE)
-    items     = models.ManyToManyField(Item, related_name='requests')
+    requester = models.ForeignKey(User, on_delete=models.CASCADE)
+    item      = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity  = models.IntegerField()
     date_open = models.DateTimeField()
 
     def __str__(self):
-        return "{} {}".format(self.requester, self.items)
+        return "{} {}".format(self.requester, self.item)

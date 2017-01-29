@@ -57,5 +57,5 @@ build/
 tests/report/
 
 .DS_*
-migrations/0*
+migrations/
 *.sqlite3

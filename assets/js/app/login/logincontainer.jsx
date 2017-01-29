@@ -11,11 +11,8 @@ export default React.createClass({
     );
   },
 
-  authenticateUser: function(event) {
-    event.preventDefault()
-    console.log(event)
-    console.log(event.target.email.value)
-    console.log(event.target.username.value)
+  authenticateUser: function(data) {
+    console.log(data);
   },
 
 
