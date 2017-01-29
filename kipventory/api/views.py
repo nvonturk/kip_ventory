@@ -26,6 +26,16 @@ class ItemListView(generics.ListAPIView):
         return queryset
 
 
+# Create your views here.
+class RequestListView(generics.ListAPIView):
+    serializer_class = serializers.RequestSerializer
+
+    def get_queryset(self):
+        queryset = models.Request.objects.all()
+        return queryset
+
+
+
 class AuthView(APIView):
     permission_classes = (AllowAny,)
 

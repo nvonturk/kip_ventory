@@ -19,9 +19,7 @@ render((
 
     <Route path="/" component={ApplicationContainer}>
 
-      <Route path="login" component={LoginContainer}>
-        <IndexRoute component={LoginForm} />
-      </Route>
+      <Route path="login" component={LoginContainer} />
 
       <Route path="app" component={KipNav}>
         <IndexRoute component={Home} />

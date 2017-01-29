@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import Item, Tag, KUser, Request
+
+
+from . import models
 
 # Register your models here.
-admin.site.register(Item)
-admin.site.register(KUser)
-admin.site.register(Tag)
-admin.site.register(Request)
+admin.site.register(models.Item)
+admin.site.register(models.Tag)
+admin.site.register(models.Request)

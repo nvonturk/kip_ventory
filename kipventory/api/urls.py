@@ -20,6 +20,7 @@ from . import views, auth
 
 urlpatterns = [
     url(r'^items/$', views.ItemListView.as_view()),
+    url(r'^requests/$', views.RequestListView.as_view()),
     # url(r'^items/(?P<category>.+)/$', views.ItemListView.as_view()),
     url(r'^auth/', views.AuthView.as_view()),
 

@@ -1,45 +1,74 @@
 import React from 'react'
-import { Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel } from 'react-bootstrap'
+import {Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel, HelpBlock } from 'react-bootstrap'
 
-export default React.createClass({
+const LoginForm = React.createClass({
+
+  getInitialState() {
+    return {
+      username: '',
+      email: '',
+      password: '',
+      password2: ''
+      PasswordError: 0
+    };
+  },
+
+  handleChange(event) {
+    const target = event.target;
+    const value = target.value;
+    const name = target.name;
+    this.setState({
+      [name]: value
+    });
+  },
+
+  onSubmit(event) {
+    event.preventDefault();
+    if (this.state.password != this.state.password2) {
+      this.state.PasswordError = 1;
+    }
+    else {
+      this.state.PasswordError = 0;
+    }
+    data = {
+      username: this.state.username,
+      email: this.state.email,
+      password: this.state.password,
+    }
+    this.authFunc(this.state);
+  }
+
   render() {
     return (
+      <Form id="login-form" onSubmit={this.onSubmit}>
 
-      <Form horizontal>
-
-        <FormGroup controlId="formHorizontalEmail">
-          <Col componentClass={ControlLabel} sm={2}>
-            Email
-          </Col>
-          <Col sm={10}>
-            <FormControl type="email" placeholder="Email" />
-          </Col>
+        <FormGroup controlId="email">
+          <ControlLabel>Email</ControlLabel>
+          <FormControl type="email" value={this.state.email} name="email" placeholder="Email" onChange={this.handleChange} />
         </FormGroup>
 
-        <FormGroup controlId="formHorizontalPassword">
-          <Col componentClass={ControlLabel} sm={2}>
-            Password
-          </Col>
-          <Col sm={10}>
-            <FormControl type="password" placeholder="Password" />
-          </Col>
+        <FormGroup controlId="username">
+          <ControlLabel>Username</ControlLabel>
+          <FormControl type="text" value={this.state.username} name="username" placeholder="Username" onChange={this.handleChange} />
         </FormGroup>
 
-        <FormGroup>
-          <Col smOffset={2} sm={10}>
-            <Checkbox>Remember me</Checkbox>
-          </Col>
+        <FormGroup controlId="password">
+          <ControlLabel>Password</ControlLabel>
+          <FormControl type="password" value={this.state.password} name="password" placeholder="Password" onChange={this.handleChange} />
+        </FormGroup>
+        <FormGroup controlId="password">
+          <ControlLabel>Confirm Password</ControlLabel>
+          <FormControl type="password" value={this.state.password2} name="password2" placeholder="Confirm Password" onChange={this.handleChange} />
         </FormGroup>
 
         <FormGroup>
-          <Col smOffset={2} sm={10}>
-            <Button type='submit'>
-              Sign in
-            </Button>
-          </Col>
+          <Button type="submit">
+            Sign in
+          </Button>
         </FormGroup>
-
       </Form>
     );
   }
-})
+});
+
+export default LoginForm;

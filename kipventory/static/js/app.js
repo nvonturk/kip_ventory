@@ -90,11 +90,7 @@
 	  _react2.default.createElement(
 	    _reactRouter.Route,
 	    { path: '/', component: _applicationcontainer2.default },
-	    _react2.default.createElement(
-	      _reactRouter.Route,
-	      { path: 'login', component: _logincontainer2.default },
-	      _react2.default.createElement(_reactRouter.IndexRoute, { component: _loginform2.default })
-	    ),
+	    _react2.default.createElement(_reactRouter.Route, { path: 'login', component: _logincontainer2.default }),
 	    _react2.default.createElement(
 	      _reactRouter.Route,
 	      { path: 'app', component: _kipnav2.default },
@@ -45661,69 +45657,82 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	exports.default = _react2.default.createClass({
-	  displayName: 'loginform',
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	var LoginForm = _react2.default.createClass({
+	  displayName: 'LoginForm',
+	  getInitialState: function getInitialState() {
+	    return {
+	      username: '',
+	      email: '',
+	      password: '',
+	      password2: ''
+	    };
+	  },
+	  handleChange: function handleChange(event) {
+	    var target = event.target;
+	    var value = target.value;
+	    var name = target.name;
+	    this.setState(_defineProperty({}, name, value));
+	  },
 	  render: function render() {
 	    return _react2.default.createElement(
 	      _reactBootstrap.Form,
-	      { horizontal: true },
+	      { id: 'login-form', onSubmit: this.props.authFunc(this.state) },
 	      _react2.default.createElement(
 	        _reactBootstrap.FormGroup,
-	        { controlId: 'formHorizontalEmail' },
+	        { controlId: 'email' },
 	        _react2.default.createElement(
-	          _reactBootstrap.Col,
-	          { componentClass: _reactBootstrap.ControlLabel, sm: 2 },
+	          _reactBootstrap.ControlLabel,
+	          null,
 	          'Email'
 	        ),
-	        _react2.default.createElement(
-	          _reactBootstrap.Col,
-	          { sm: 10 },
-	          _react2.default.createElement(_reactBootstrap.FormControl, { type: 'email', placeholder: 'Email' })
-	        )
+	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'email', value: this.state.email, name: 'email', placeholder: 'Email', onChange: this.handleChange })
 	      ),
 	      _react2.default.createElement(
 	        _reactBootstrap.FormGroup,
-	        { controlId: 'formHorizontalPassword' },
+	        { controlId: 'username' },
 	        _react2.default.createElement(
-	          _reactBootstrap.Col,
-	          { componentClass: _reactBootstrap.ControlLabel, sm: 2 },
+	          _reactBootstrap.ControlLabel,
+	          null,
+	          'Username'
+	        ),
+	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'text', value: this.state.username, name: 'username', placeholder: 'Username', onChange: this.handleChange })
+	      ),
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
+	        { controlId: 'password' },
+	        _react2.default.createElement(
+	          _reactBootstrap.ControlLabel,
+	          null,
 	          'Password'
 	        ),
+	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', value: this.state.password, name: 'password', placeholder: 'Password', onChange: this.handleChange })
+	      ),
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
+	        { controlId: 'password' },
 	        _react2.default.createElement(
-	          _reactBootstrap.Col,
-	          { sm: 10 },
-	          _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', placeholder: 'Password' })
-	        )
+	          _reactBootstrap.ControlLabel,
+	          null,
+	          'Confirm Password'
+	        ),
+	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', value: this.state.password2, name: 'password2', placeholder: 'Confirm Password', onChange: this.handleChange })
 	      ),
 	      _react2.default.createElement(
 	        _reactBootstrap.FormGroup,
 	        null,
 	        _react2.default.createElement(
-	          _reactBootstrap.Col,
-	          { smOffset: 2, sm: 10 },
-	          _react2.default.createElement(
-	            _reactBootstrap.Checkbox,
-	            null,
-	            'Remember me'
-	          )
-	        )
-	      ),
-	      _react2.default.createElement(
-	        _reactBootstrap.FormGroup,
-	        null,
-	        _react2.default.createElement(
-	          _reactBootstrap.Col,
-	          { smOffset: 2, sm: 10 },
-	          _react2.default.createElement(
-	            _reactBootstrap.Button,
-	            { type: 'submit' },
-	            'Sign in'
-	          )
+	          _reactBootstrap.Button,
+	          { type: 'submit' },
+	          'Sign in'
 	        )
 	      )
 	    );
 	  }
 	});
+
+	exports.default = LoginForm;
 
 /***/ },
 /* 491 */
@@ -45739,17 +45748,31 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _loginform = __webpack_require__(490);
+
+	var _loginform2 = _interopRequireDefault(_loginform);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	exports.default = _react2.default.createClass({
 	  displayName: 'logincontainer',
+
+
 	  render: function render() {
 	    return _react2.default.createElement(
 	      'div',
 	      null,
-	      this.props.children
+	      _react2.default.createElement(_loginform2.default, { authFunc: this.authenticateUser })
 	    );
+	  },
+
+	  authenticateUser: function authenticateUser(event) {
+	    event.preventDefault();
+	    console.log(event);
+	    console.log(event.target.email.value);
+	    console.log(event.target.username.value);
 	  }
+
 	});
 
 /***/ },
