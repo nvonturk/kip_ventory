@@ -55,3 +55,6 @@ tests/coverage_html/
 tests/.coverage
 build/
 tests/report/
+
+migrations/0*
+*.sqlite3
