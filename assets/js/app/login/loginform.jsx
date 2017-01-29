@@ -4,7 +4,9 @@ import { Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel } fro
 export default React.createClass({
   render() {
     return (
+
       <Form horizontal>
+
         <FormGroup controlId="formHorizontalEmail">
           <Col componentClass={ControlLabel} sm={2}>
             Email
@@ -31,11 +33,12 @@ export default React.createClass({
 
         <FormGroup>
           <Col smOffset={2} sm={10}>
-            <Button type="submit">
+            <Button type='submit'>
               Sign in
             </Button>
           </Col>
         </FormGroup>
+
       </Form>
     );
   }

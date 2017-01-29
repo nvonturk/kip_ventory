@@ -45729,7 +45729,7 @@
 /* 491 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -45742,11 +45742,11 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	exports.default = _react2.default.createClass({
-	  displayName: "logincontainer",
+	  displayName: 'logincontainer',
 	  render: function render() {
 	    return _react2.default.createElement(
-	      "div",
-	      { id: "login-container" },
+	      'div',
+	      null,
 	      this.props.children
 	    );
 	  }

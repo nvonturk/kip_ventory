@@ -5,12 +5,12 @@ module.exports = {
   context: __dirname,
 
   entry: {
-    app: './assets/js/app/index',
+    app: './assets/js/app/app',
   }, // entry point of our app. assets/js/index.js should require other js modules and dependencies it needs
 
   output: {
       path: path.resolve('./kipventory/static/js/'),
-      filename: "[name]-index.js",
+      filename: "[name].js",
   },
 
   plugins: [

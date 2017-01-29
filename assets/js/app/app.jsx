@@ -7,8 +7,8 @@ import Home from './home'
 import Requests from './requests'
 import Profile from './profile'
 
-import LoginForm from './loginform'
-import LoginContainer from './logincontainer'
+import LoginForm from './login/loginform'
+import LoginContainer from './login/logincontainer'
 
 import ApplicationContainer from './applicationcontainer'
 
@@ -16,6 +16,7 @@ import ApplicationContainer from './applicationcontainer'
 
 render((
   <Router history={browserHistory}>
+
     <Route path="/" component={ApplicationContainer}>
 
       <Route path="login" component={LoginContainer}>
