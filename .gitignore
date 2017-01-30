@@ -58,5 +58,5 @@ tests/report/
 
 .DS_*
 migrations/
-static/
+static/js/
 db.sqlite3
