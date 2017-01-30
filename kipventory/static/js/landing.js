@@ -40476,6 +40476,15 @@
 	          'p',
 	          null,
 	          'Your one-stop-shop for any hardware-related needs!'
+	        ),
+	        _react2.default.createElement(
+	          _reactBootstrap.Well,
+	          null,
+	          _react2.default.createElement(
+	            'a',
+	            { href: '/login/' },
+	            'Login Link (testing)'
+	          )
 	        )
 	      )
 	    );
