@@ -24,5 +24,5 @@ urlpatterns = [
     url(r'^api/', include('api.urls')),
     url(r'^login/?', auth_views.login, {'template_name': 'kipventory/login.html'}, name='login'),
     url(r'^app', views.app, name='app'),
-    url(r'$', views.index, name='home'),
+    url(r'$', views.landing, name='landing'),
 ]

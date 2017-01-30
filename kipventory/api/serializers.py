@@ -4,15 +4,15 @@ from django.contrib.auth.models import User
 
 
 class TagSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = models.Tag
-		fields = ['name']
+    class Meta:
+        model = models.Tag
+        fields = ['name']
 
 
 class UserSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = User
-		fields = ['first_name', 'last_name', 'email']
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
 
 
 
@@ -26,9 +26,9 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 class RequestSerializer(serializers.ModelSerializer):
-	requester = UserSerializer(read_only=True, many=False)
-	item = ItemSerializer(read_only=True, many=False)
+    requester = UserSerializer(read_only=True, many=False)
+    item = ItemSerializer(read_only=True, many=False)
 
-	class Meta:
-		model = models.Request
-		fields = ['requester', 'item', 'quantity', 'date_open']
+    class Meta:
+        model = models.Request
+        fields = ['requester', 'item', 'quantity', 'date_open']

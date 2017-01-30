@@ -10,4 +10,4 @@ const AppContainer = React.createClass({
   }
 })
 
-export default AppContainer;
+export default AppContainer
