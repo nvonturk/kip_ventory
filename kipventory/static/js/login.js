@@ -40488,8 +40488,7 @@
 	          null,
 	          'Password'
 	        ),
-	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', value: this.state.password, name: 'password', placeholder: 'Password', onChange: this.handleChange }),
-	        _react2.default.createElement(_reactBootstrap.FormControl.Feedback, null)
+	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', value: this.state.password, name: 'password', placeholder: 'Password', onChange: this.handleChange })
 	      ),
 	      _react2.default.createElement(
 	        _reactBootstrap.FormGroup,

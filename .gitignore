@@ -58,4 +58,4 @@ tests/report/
 
 .DS_*
 migrations/
-*.sqlite3
+kipventory/db.sqlite3
