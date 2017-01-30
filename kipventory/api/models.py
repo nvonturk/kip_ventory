@@ -41,7 +41,7 @@ class Request(models.Model):
         (APPROVED, 'Approved'),
         (COMPLETE, 'Complete'),
     )
-    status          = models.CharField(max_length = 10, choices = status_choices, default = OUTSTANDING)
+    status          = models.CharField(max_length = 10, choices=status_choices, default = OUTSTANDING)
 
 
     def __str__(self):
