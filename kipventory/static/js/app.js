@@ -26582,6 +26582,15 @@
 
 	var KipNav = _react2.default.createClass({
 	  displayName: 'KipNav',
+
+
+	  goToURL: function goToURL(url) {
+	    return function (event) {
+	      event.preventDefault();
+	      window.location.assign(url);
+	    };
+	  },
+
 	  render: function render() {
 	    return _react2.default.createElement(
 	      'div',
@@ -26611,11 +26620,20 @@
 	            null,
 	            _react2.default.createElement(
 	              _reactRouterBootstrap.LinkContainer,
-	              { to: '/app/requests' },
+	              { to: '/app/requests/' },
 	              _react2.default.createElement(
 	                _reactBootstrap.NavItem,
 	                { eventKey: 1 },
 	                'Requests'
+	              )
+	            ),
+	            _react2.default.createElement(
+	              _reactRouterBootstrap.LinkContainer,
+	              { to: '/app/profile/' },
+	              _react2.default.createElement(
+	                _reactBootstrap.NavItem,
+	                { eventKey: 2 },
+	                'Profile'
 	              )
 	            )
 	          ),
@@ -26623,13 +26641,9 @@
 	            _reactBootstrap.Nav,
 	            { pullRight: true },
 	            _react2.default.createElement(
-	              _reactRouterBootstrap.LinkContainer,
-	              { to: '/app/profile' },
-	              _react2.default.createElement(
-	                _reactBootstrap.NavItem,
-	                { eventKey: 2 },
-	                'Profile'
-	              )
+	              _reactBootstrap.NavItem,
+	              { eventKey: 2, onClick: this.goToURL('/logout/') },
+	              'Logout'
 	            )
 	          )
 	        )
