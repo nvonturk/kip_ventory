@@ -23,11 +23,7 @@ import json
 class ItemListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = serializers.ItemSerializer
-<<<<<<< HEAD
-=======
-    #filter_fields = ('field1', 'field2')
 
->>>>>>> c53a574f0145eddcd96723dc5cf121a56bd042fd
     def get_queryset(self):
         search = self.request.query_params.get("search")
         q_objs = Q()
