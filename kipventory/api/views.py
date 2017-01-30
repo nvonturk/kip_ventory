@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from . import models, serializers
+from django.db.models import Q
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -20,11 +21,16 @@ import json
 # Create your views here.
 class ItemListView(generics.ListAPIView):
     serializer_class = serializers.ItemSerializer
+    #filter_fields = ('field1', 'field2')
 
     def get_queryset(self):
-        queryset = models.Item.objects.all()
-        return queryset
+        search = self.request.query_params.get("search")
+        q_objs = Q()
+        if search is not None:
+            q_objs = Q(name__icontains=search) | Q(model__icontains=search)
 
+        queryset = models.Item.objects.filter(q_objs)
+        return queryset
 
 # Create your views here.
 class RequestListView(generics.ListAPIView):
@@ -59,3 +65,31 @@ class AuthView(APIView):
             #MIGHT NEED FOR LOGGING USER SESSIONS
         else:
             return Response({"token" : "Failure"})
+
+class RequestListView(generics.ListAPIView):
+    serializer_class = serializers.RequestSerializer
+
+    def get_queryset(self):
+        filters = {}
+        '''
+        user = self.request.query_params.get("user")
+        item = self.request.query_params.get("item")
+        status = self.request.query_params.get("status")
+        if user:
+        	filters["user"] = user
+        if item:
+        	filters["item"] = item
+        if status:
+        	filters["status"] = status
+        '''
+        queryset = models.Item.objects.filter(**filters)
+
+        return queryset
+
+
+class TagListView(generics.ListAPIView):
+    serializer_class = serializers.TagSerializer
+
+    def get_queryset(self):
+        queryset = models.Tag.objects.all()
+        return queryset
