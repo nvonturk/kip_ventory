@@ -29,5 +29,5 @@ urlpatterns = [
     # Main view for our Single Page App (React, client side)
     url(r'^app/', views.app, name='app'),
     # Landing page (no auth necessary)
-    url(r'$', views.index, name='home'),
+    url(r'$', views.landing, name='landing'),
 ]
