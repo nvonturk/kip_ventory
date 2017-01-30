@@ -15,12 +15,14 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 
 from . import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('api.urls')),
-    # catch-all to let Reach handle routing on the client side
-    url(r'', views.index),
+    url(r'^login/?', auth_views.login, {'template_name': 'kipventory/login.html'}, name='login'),
+    url(r'^app', views.app, name='app'),
+    url(r'$', views.index, name='home'),
 ]

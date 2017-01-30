@@ -1,7 +1,9 @@
 import React from 'react'
 
-export default React.createClass({
+const Requests = React.createClass({
   render() {
     return <div>Requests</div>
   }
 })
+
+export default Requests;

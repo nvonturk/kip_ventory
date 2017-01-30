@@ -1,7 +1,9 @@
 import React from 'react'
 
-export default React.createClass({
+const Profile = React.createClass({
   render() {
     return <div>Profile</div>
   }
 })
+
+export default Profile

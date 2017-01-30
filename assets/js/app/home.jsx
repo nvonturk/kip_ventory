@@ -1,7 +1,9 @@
 import React from 'react'
 
-export default React.createClass({
+const Home = React.createClass({
   render() {
     return <div>Home</div>
   }
 })
+
+export default Home;
