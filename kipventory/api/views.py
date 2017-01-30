@@ -15,11 +15,10 @@ from rest_framework.authtoken.models import Token
 
 from django.shortcuts import redirect
 
-
+import json
 
 # Create your views here.
 class ItemListView(generics.ListAPIView):
-
     serializer_class = serializers.ItemSerializer
 
     def get_queryset(self):
@@ -27,12 +26,22 @@ class ItemListView(generics.ListAPIView):
         return queryset
 
 
+# Create your views here.
+class RequestListView(generics.ListAPIView):
+    serializer_class = serializers.RequestSerializer
+
+    def get_queryset(self):
+        queryset = models.Request.objects.all()
+        return queryset
+
+
 class AuthView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request, format=None):
-        username = request.query_params["username"]
-        password = request.query_params["password"]
+    def post(self, request, format=None):
+        body = json.loads(request.body.decode('utf8'))
+        username = body["username"]
+        password = body["password"]
         thisuser = authenticate(username=username, password=password)
 
         if thisuser is not None:
@@ -44,7 +53,7 @@ class AuthView(APIView):
             else:
                 #First time login, create new token for user
                 token = Token.objects.create(user=thisuser)
-                return Response({"token": token})
+                return Response({"token": token.key})
 
             # login(request, user) I DON'T THINK WE NEED TO USE THIS, ITS NORMAL DJANGO
             #MIGHT NEED FOR LOGGING USER SESSIONS

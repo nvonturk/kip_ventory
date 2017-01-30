@@ -52,13 +52,28 @@
 
 	var _reactDom = __webpack_require__(32);
 
-	var _LandingPageContainer = __webpack_require__(491);
+	var _reactBootstrap = __webpack_require__(234);
 
-	var _LandingPageContainer2 = _interopRequireDefault(_LandingPageContainer);
+	var _LoginContainer = __webpack_require__(493);
+
+	var _LoginContainer2 = _interopRequireDefault(_LoginContainer);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	(0, _reactDom.render)(_react2.default.createElement(_LandingPageContainer2.default, null), document.getElementById('root'));
+	function LoginErrorMessage(props) {
+	  return _react2.default.createElement(
+	    _reactBootstrap.Well,
+	    { id: 'login-error-message' },
+	    'Your username or password was incorrect. Try again.'
+	  );
+	}
+
+	(0, _reactDom.render)(_react2.default.createElement(_LoginContainer2.default, null), document.getElementById('root'));
+
+	var node = document.getElementById('login-error');
+	if (node != null) {
+	  (0, _reactDom.render)(_react2.default.createElement(LoginErrorMessage, null), node);
+	}
 
 /***/ },
 /* 1 */
@@ -40381,7 +40396,9 @@
 /* 488 */,
 /* 489 */,
 /* 490 */,
-/* 491 */
+/* 491 */,
+/* 492 */,
+/* 493 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -40394,9 +40411,9 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _LandingPage = __webpack_require__(492);
+	var _LoginForm = __webpack_require__(494);
 
-	var _LandingPage2 = _interopRequireDefault(_LandingPage);
+	var _LoginForm2 = _interopRequireDefault(_LoginForm);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -40405,15 +40422,18 @@
 	  getInitialState: function getInitialState() {
 	    return {};
 	  },
+
+
 	  render: function render() {
-	    return _react2.default.createElement(_LandingPage2.default, null);
+	    return _react2.default.createElement(_LoginForm2.default, null);
 	  }
+
 	});
 
 	exports.default = LandingPageContainer;
 
 /***/ },
-/* 492 */
+/* 494 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -40430,34 +40450,60 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var LandingPage = _react2.default.createClass({
-	  displayName: 'LandingPage',
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	var LoginForm = _react2.default.createClass({
+	  displayName: 'LoginForm',
 	  getInitialState: function getInitialState() {
-	    return {};
+	    return {
+	      username: '',
+	      password: ''
+	    };
+	  },
+	  handleChange: function handleChange(event) {
+	    var target = event.target;
+	    var value = target.value;
+	    var name = target.name;
+	    this.setState(_defineProperty({}, name, value));
 	  },
 	  render: function render() {
 	    return _react2.default.createElement(
 	      'div',
 	      null,
 	      _react2.default.createElement(
-	        _reactBootstrap.Jumbotron,
+	        _reactBootstrap.FormGroup,
+	        { controlId: 'username' },
+	        _react2.default.createElement(
+	          _reactBootstrap.ControlLabel,
+	          null,
+	          'Username'
+	        ),
+	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'text', value: this.state.username, name: 'username', placeholder: 'Username', onChange: this.handleChange })
+	      ),
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
+	        { controlId: 'password' },
+	        _react2.default.createElement(
+	          _reactBootstrap.ControlLabel,
+	          null,
+	          'Password'
+	        ),
+	        _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', value: this.state.password, name: 'password', placeholder: 'Password', onChange: this.handleChange })
+	      ),
+	      _react2.default.createElement(
+	        _reactBootstrap.FormGroup,
 	        null,
 	        _react2.default.createElement(
-	          'h1',
-	          null,
-	          'kip-ventory'
-	        ),
-	        _react2.default.createElement(
-	          'p',
-	          null,
-	          'Your one-stop-shop for any hardware-related needs!'
+	          _reactBootstrap.Button,
+	          { type: 'submit' },
+	          'Sign in'
 	        )
 	      )
 	    );
 	  }
 	});
 
-	exports.default = LandingPage;
+	exports.default = LoginForm;
 
 /***/ }
 /******/ ]);

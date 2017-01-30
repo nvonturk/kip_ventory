@@ -1,26 +1,34 @@
 from rest_framework import serializers
 from . import models
+from django.contrib.auth.models import User
+
+
+class TagSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = models.Tag
+		fields = ['name']
+
+
+class UserSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = User
+		fields = ['first_name', 'last_name', 'email']
+
 
 
 class ItemSerializer(serializers.ModelSerializer):
-     class Meta:
+    tags = TagSerializer(read_only=True, many=True)
+
+    class Meta:
         model = models.Item
-        fields = ('part_no', 'name', 'location', 'quantity', 'description')
+        fields = ['name', 'location', 'model', 'quantity', 'description', 'tags']
 
-class CategorySerializer(serializers.ModelSerializer):
-    name = serializers.StringRelatedField(many=True)
-    class Meta:
-        model = models.Category
-        fields = ('name')
 
-class Tag(serializers.ModelSerializer):
+
+class RequestSerializer(serializers.ModelSerializer):
+	requester = UserSerializer(read_only=True, many=False)
+	item = ItemSerializer(read_only=True, many=False)
+
 	class Meta:
-		model = models.Tag
-		fields = ('name')
-
-class User(serializers.ModelSerializer):
-    class Meta:
-        model = models.User
-        fields = ()
-
-
+		model = models.Request
+		fields = ['requester', 'item', 'quantity', 'date_open']

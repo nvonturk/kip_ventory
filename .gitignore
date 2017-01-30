@@ -56,5 +56,6 @@ tests/.coverage
 build/
 tests/report/
 
-migrations/0*
-*.sqlite3
+.DS_*
+migrations/
+kipventory/db.sqlite3

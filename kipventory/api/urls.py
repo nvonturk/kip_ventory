@@ -16,12 +16,14 @@ Including another URLconf
 from django.conf.urls import url
 from rest_framework.urlpatterns import format_suffix_patterns
 
-from . import views, auth
+from . import views
+# from rest_framework.authtoken import views as authviews
+
 
 urlpatterns = [
-    url(r'^items/$', views.ItemListView.as_view()),
-    # url(r'^items/(?P<category>.+)/$', views.ItemListView.as_view()),
-    url(r'^auth/', views.AuthView.as_view()),
+    url(r'^items/?$', views.ItemListView.as_view()),
+    url(r'^requests/?$', views.RequestListView.as_view()),
+    url(r'^auth/?$', views.AuthView.as_view()),
 
 ]
 

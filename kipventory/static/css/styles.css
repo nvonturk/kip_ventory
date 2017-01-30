@@ -1,3 +1,7 @@
 #main-title {
   color: red;
 }
+
+#login-error-message {
+  color: red;
+}
