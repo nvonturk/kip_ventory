@@ -1,9 +1,15 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link, browserHistory } from 'react-router'
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap';
 
 const KipNav = React.createClass({
+
+  goToURL: url => event => {
+    event.preventDefault();
+    window.location.assign(url);
+  },
+
   render() {
     return (
       <div id="container">
@@ -16,14 +22,15 @@ const KipNav = React.createClass({
           </Navbar.Header>
           <Navbar.Collapse>
             <Nav>
-              <LinkContainer to="/app/requests">
+              <LinkContainer to="/app/requests/">
                 <NavItem eventKey={1}>Requests</NavItem>
+              </LinkContainer>
+              <LinkContainer to="/app/profile/">
+                <NavItem eventKey={2}>Profile</NavItem>
               </LinkContainer>
             </Nav>
             <Nav pullRight>
-              <LinkContainer to="/app/profile">
-                <NavItem eventKey={2}>Profile</NavItem>
-              </LinkContainer>
+              <NavItem eventKey={2} onClick={this.goToURL('/logout/')}>Logout</NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>

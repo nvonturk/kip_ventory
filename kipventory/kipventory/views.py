@@ -1,11 +1,15 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
+
+# Landing page for our application - no login required
+# This is the index page at "/"
 def landing(request):
-    context = {'var': "good" if request.user.is_authenticated else "SAD."}
+    context = {'var': "Logged In" if request.user.is_authenticated else "Not Logged In"}
     return render(request, 'kipventory/landing.html', context)
 
-
-#@login_required(login_url='/login/')
+# Main page for our Single Page App (SPA)
+@login_required(login_url='/login/')
 def app(request):
-    return render(request, 'kipventory/app.html')
+    context = {'var': "Logged In" if request.user.is_authenticated else "Not Logged In"}
+    return render(request, 'kipventory/app.html', context)

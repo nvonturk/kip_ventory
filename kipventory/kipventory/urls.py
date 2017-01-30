@@ -21,8 +21,13 @@ from . import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    # URLs for our REST API endpoints
     url(r'^api/', include('api.urls')),
+    # Django built in Auth views to handle user login/logout
     url(r'^login/?', auth_views.login, {'template_name': 'kipventory/login.html'}, name='login'),
-    url(r'^app', views.app, name='app'),
+    url(r'^logout/?', auth_views.logout, name='logout'),
+    # Main view for our Single Page App (React, client side)
+    url(r'^app/?', views.app, name='app'),
+    # Landing page (no auth necessary)
     url(r'$', views.landing, name='landing'),
 ]

@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 
 from rest_framework.authtoken.models import Token
 
@@ -20,8 +21,8 @@ import json
 
 # Create your views here.
 class ItemListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
     serializer_class = serializers.ItemSerializer
-    #filter_fields = ('field1', 'field2')
 
     def get_queryset(self):
         search = self.request.query_params.get("search")
@@ -31,6 +32,9 @@ class ItemListView(generics.ListAPIView):
 
         queryset = models.Item.objects.filter(q_objs)
         return queryset
+
+
+
 
 # Create your views here.
 class RequestListView(generics.ListAPIView):
