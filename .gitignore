@@ -58,4 +58,5 @@ tests/report/
 
 .DS_*
 migrations/
+static/
 kipventory/db.sqlite3
