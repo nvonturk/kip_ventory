@@ -25,7 +25,6 @@ class CartContainer extends Component {
 
   render() {
     var items = this.state.items
-    console.log(items)
     return <ShoppingCart cartItems={items} />
   }
 
