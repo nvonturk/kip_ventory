@@ -24,10 +24,20 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 
+class CartItemSerializer(serializers.ModelSerializer):
+    item = ItemSerializer(read_only=True, many=False)
+    user = UserSerializer(read_only=True, many=False)
+
+    class Meta:
+        model = models.CartItem
+        fields = ['item', 'user', 'quantity']
+
+
+
 class RequestSerializer(serializers.ModelSerializer):
     requester = UserSerializer(read_only=True, many=False)
     item      = ItemSerializer(read_only=True, many=False)
-    
+
     class Meta:
         model = models.Request
         fields = ['requester', 'item', 'quantity']

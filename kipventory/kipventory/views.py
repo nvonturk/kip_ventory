@@ -13,3 +13,8 @@ def landing(request):
 def app(request):
     context = {'var': "Logged In" if request.user.is_authenticated else "Not Logged In"}
     return render(request, 'kipventory/app.html', context)
+
+# Shopping cart page
+@login_required(login_url='/login/')
+def cart(request):
+    return render(request, 'kipventory/cart.html')

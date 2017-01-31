@@ -25,3 +25,8 @@ render((
     </Route>
   </Router>
 ), document.getElementById('root'))
+
+var node = document.getElementById('admin-views')
+if node != null {
+  render(<AdminView />, node)
+}

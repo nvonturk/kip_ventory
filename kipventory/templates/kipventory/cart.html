@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+    <div id="variables">{{ var }}</div>
+    <div id="cart-items"></div>
+    <script src="{% static 'js/cart.js' %}" type=text/javascript></script>
+
+{% endblock content %}

@@ -38,6 +38,23 @@ class ItemListView(generics.ListAPIView):
         queryset = models.Item.objects.filter(q_objs).distinct()
         return queryset
 
+
+class CartItemListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.CartItemSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = None
+        if user.is_staff:
+            queryset = models.CartItem.objects.all()
+        else:
+            filters = {"owner__username": self.request.user.username}
+            queryset = models.CartItem.objects.filter(**filters)
+
+        return queryset
+
+
 class AuthView(APIView):
     permission_classes = (AllowAny,)
 
@@ -63,7 +80,10 @@ class AuthView(APIView):
         else:
             return Response({"token" : "Failure"})
 
+
+
 class RequestListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
     serializer_class = serializers.RequestSerializer
 
     def get_queryset(self):
@@ -85,6 +105,7 @@ class RequestListView(generics.ListAPIView):
 
 
 class TagListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
     serializer_class = serializers.TagSerializer
 
     def get_queryset(self):
