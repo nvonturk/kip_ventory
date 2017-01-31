@@ -19,7 +19,7 @@ class TagDropdown extends Component {
 
   getAllTags() {
   	var thisobj = this;
-  	$.getJSON("http://localhost:8000/api/tags.json", function(data) {
+  	$.getJSON("/api/tags.json", function(data) {
   		thisobj.setTags(data);
   	});
   }

@@ -7,7 +7,7 @@ import MultiSelect from './multiselect';
 class TagMultiSelect extends Component {
   constructor(props) {
     super(props);
-    
+
     this.state = {
     	tags: [],
     };
@@ -18,7 +18,7 @@ class TagMultiSelect extends Component {
 
   getAllTags() {
   	var thisobj = this;
-  	$.getJSON("http://localhost:8000/api/tags.json", function(data) {
+  	$.getJSON("/api/tags.json", function(data) {
   		for(var i = 0; i < data.length; i++) {
   			var tag = data[i];
   			tag["value"] = tag.name;
