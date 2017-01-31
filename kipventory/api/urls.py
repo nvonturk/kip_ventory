@@ -23,6 +23,7 @@ from . import views
 urlpatterns = [
     url(r'^items/?$', views.ItemListView.as_view()),
     url(r'^requests/?$', views.RequestListView.as_view()),
+    url(r'^cart/?$', views.CartItemListView.as_view()),
     url(r'^auth/?$', views.AuthView.as_view()),
     url(r'^tags/$', views.TagListView.as_view())
 ]
