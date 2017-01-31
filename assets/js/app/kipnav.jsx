@@ -28,9 +28,12 @@ const KipNav = React.createClass({
               <LinkContainer to="/app/profile/">
                 <NavItem eventKey={2}>Profile</NavItem>
               </LinkContainer>
+              <LinkContainer to="/app/cart/">
+                <NavItem eventKey={3}>Cart</NavItem>
+              </LinkContainer>
             </Nav>
             <Nav pullRight>
-              <NavItem eventKey={2} onClick={this.goToURL('/logout/')}>Logout</NavItem>
+              <NavItem eventKey={4} onClick={this.goToURL('/logout/')}>Logout</NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>

@@ -33,13 +33,13 @@ class ItemListView(generics.ListAPIView):
         if tags is not None and tags != '':
         	#todo do we want OR or AND logic? right not it is OR
         	tagsArray = tags.split(",")
-        	q_objs |= Q(tags__name__in=tagsArray)
+        	q_objs &= Q(tags__name__in=tagsArray)
 
         queryset = models.Item.objects.filter(q_objs).distinct()
         return queryset
 
 
-class CartItemListView(generics.ListAPIView):
+class CartItemListView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = serializers.CartItemSerializer
 

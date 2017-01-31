@@ -31,6 +31,5 @@
     "react-select": "^1.0.0-rc.2",
     "style-loader": "^0.13.1",
     "webpack": "^1.14.0",
-    "whatwg-fetch": "^2.0.2"
   }
 }

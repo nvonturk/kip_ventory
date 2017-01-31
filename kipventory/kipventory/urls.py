@@ -28,7 +28,7 @@ urlpatterns = [
     url(r'^logout/?', auth_views.logout, name='logout'),
 
     # Main view for our Single Page App (React, client side)
-    url(r'^app/cart/?', views.cart, name='cart'),
+    # url(r'^app/cart/?', views.cart, name='cart'),
     url(r'^app/?', views.app, name='app'),
     # Landing page (no auth necessary)
     url(r'$', views.landing, name='landing'),

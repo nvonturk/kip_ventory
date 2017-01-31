@@ -12,7 +12,7 @@ class TagSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email']
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_staff']
 
 
 
@@ -25,12 +25,12 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    item = ItemSerializer(read_only=True, many=False)
-    user = UserSerializer(read_only=True, many=False)
+    item = ItemSerializer(read_only=False, many=False)
+    owner = UserSerializer(read_only=False, many=False)
 
     class Meta:
         model = models.CartItem
-        fields = ['item', 'user', 'quantity']
+        fields = ['item', 'owner', 'quantity']
 
 
 
