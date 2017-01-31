@@ -8,7 +8,7 @@ function InventoryGridHeader(props) {
 	var columnContents = [
 		<Button onClick={props.getAllItemsCallback}>Get all items</Button>,
 		<SearchBar onUserInput={props.searchHandler}/>,
-		<TagMultiSelect callback={props.tagHandler}/>
+		<TagMultiSelect tagsSelected={props.tagsSelected} tagHandler={props.tagHandler}/>
 	];
 
 	return (

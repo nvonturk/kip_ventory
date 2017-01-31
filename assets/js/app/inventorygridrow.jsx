@@ -12,7 +12,7 @@ function InventoryGridRow(props) {
   	columnContents.push(<ItemDetailModal item={props.items[i]}/>);
   }
 
-  return <SimpleRow columnContents={columnContents}/>
+  return <SimpleRow width="4" columnContents={columnContents}/>
 }
 
 export default InventoryGridRow

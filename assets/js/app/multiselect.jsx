@@ -9,28 +9,22 @@ import 'react-select/dist/react-select.css'
 class MultiSelect extends Component {
   constructor(props) {
     super(props);
+    
     this.state = {
-      value: [],
+      value: props.value,
     };
-    this.handleSelectChange = this.handleSelectChange.bind(this);
-
   }
 
   handleSelectChange (value) {
     console.log('You\'ve selected:', value);
-    //this.setState({ value });
-    
-    this.setState({
-      value: value,
-    
-    });
-
+    this.setState({ value });
+    console.log(this.state);
   }
 
   render () {
     return (
       <div>
-        <Select multi simpleValue value={this.state.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.handleSelectChange.bind(this)} />
+        <Select multi simpleValue value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
       </div>
     );
   }
