@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 import $ from "jquery"
+import RequestSelectFilter from './requestselectfilter.jsx'
+
 
 
 class UserRequestContainer extends Component {
@@ -7,15 +9,15 @@ class UserRequestContainer extends Component {
     super(props);
     this.state = {
       requests:[],
-      types: {
-        "oustanding",
-        "approved",
-        "denied",
-        "all",
-      },
-      filter_type: "all"
+      types: [
+        "All",
+        "Oustanding",
+        "Approved",
+        "Denied",
+      ],
+      selected_type: "Outstanding"
     };
-    getMyRequests();
+    this.getMyRequests();
   }
 
   setRequests(requests){
@@ -26,8 +28,9 @@ class UserRequestContainer extends Component {
 
   setFilter(type){
     this.setState({
-      filter_type : type
+      selected_type : type
     });
+    console.log(this.state.selected_type);
   }
 
 
@@ -50,6 +53,7 @@ class UserRequestContainer extends Component {
     return (
       <div>
       Hello World
+        <RequestSelectFilter types={this.state.types} selectHandler={this.setFilter} selected={this.state.selected_type}/>
       </div>
     );
   }

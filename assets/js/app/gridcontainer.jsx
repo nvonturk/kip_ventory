@@ -21,7 +21,7 @@ class GridContainer extends Component {
 
   getAllItems() {
   	var thisobj = this;
-  	$.getJSON("/api/items.json", function(data) {
+  	$.getJSON("ca/api/items.json", function(data) {
   		thisobj.setItems(data);
   	});
   }
