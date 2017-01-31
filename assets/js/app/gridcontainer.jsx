@@ -21,7 +21,7 @@ class GridContainer extends Component {
 
   getAllItems() {
   	var thisobj = this;
-  	$.getJSON("http://localhost:8000/api/items.json", function(data) {
+  	$.getJSON("/api/items.json", function(data) {
   		thisobj.setItems(data);
   	});
   }
@@ -29,7 +29,7 @@ class GridContainer extends Component {
   handleSearch(text) {
     console.log(text);
     var thisobj = this;
-    var url = "http://localhost:8000/api/items.json" + "?search=" + text;
+    var url = "/api/items.json" + "?search=" + text;
   	$.getJSON(url, function(data) {
   		thisobj.setItems(data);
   	});
@@ -39,7 +39,7 @@ class GridContainer extends Component {
     console.log("tag: " + value);
     this.setState({tagsSelected: value});
     var thisobj = this;
-    var url = "http://localhost:8000/api/items.json" + "?tags=" + value;
+    var url = "/api/items.json" + "?tags=" + value;
     $.getJSON(url, function(data) {
       thisobj.setItems(data);
     });

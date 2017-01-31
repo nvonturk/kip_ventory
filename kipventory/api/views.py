@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics
 from rest_framework import status
+# from rest_framework import pagination
 from rest_framework.response import Response
 
 from . import models, serializers
@@ -65,23 +66,17 @@ class AuthView(APIView):
 
 class RequestListView(generics.ListAPIView):
     serializer_class = serializers.RequestSerializer
+    # pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        filters = {}
-        '''
-        user = self.request.query_params.get("user")
-        item = self.request.query_params.get("item")
-        status = self.request.query_params.get("status")
-        if user:
-        	filters["user"] = user
-        if item:
-        	filters["item"] = item
-        if status:
-        	filters["status"] = status
-        '''
-        queryset = models.Request.objects.filter(**filters)
+        user  = self.request.user
+        if not user.is_staff:
+            return models.Request.objects.filter(user=user)
+        else:
+            #Need pagination
+            return models.Request.objects.all()
 
-        return queryset
+
 
 
 class TagListView(generics.ListAPIView):
