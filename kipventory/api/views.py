@@ -26,24 +26,17 @@ class ItemListView(generics.ListAPIView):
 
     def get_queryset(self):
         search = self.request.query_params.get("search")
+        tags = self.request.query_params.get("tags")
         q_objs = Q()
         if search is not None:
-            q_objs = Q(name__icontains=search) | Q(model__icontains=search)
+            q_objs |= Q(name__icontains=search) | Q(model__icontains=search)
+        if tags is not None and tags != '':
+        	#todo do we want OR or AND logic? right not it is OR
+        	tagsArray = tags.split(",")
+        	q_objs |= Q(tags__name__in=tagsArray)
 
-        queryset = models.Item.objects.filter(q_objs)
+        queryset = models.Item.objects.filter(q_objs).distinct()
         return queryset
-
-
-
-
-# Create your views here.
-class RequestListView(generics.ListAPIView):
-    serializer_class = serializers.RequestSerializer
-
-    def get_queryset(self):
-        queryset = models.Request.objects.all()
-        return queryset
-
 
 class AuthView(APIView):
     permission_classes = (AllowAny,)
@@ -86,7 +79,7 @@ class RequestListView(generics.ListAPIView):
         if status:
         	filters["status"] = status
         '''
-        queryset = models.Item.objects.filter(**filters)
+        queryset = models.Request.objects.filter(**filters)
 
         return queryset
 

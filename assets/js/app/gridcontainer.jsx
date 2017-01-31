@@ -7,14 +7,16 @@ import $ from "jquery"
 class GridContainer extends Component {
   constructor(props) {
     super(props);
-    // maybe make database call here to get items
-    this.state = {items:[]};
+    this.state = {
+      items:[],
+      tagsSelected: []
+    };
     this.setItems = this.setItems.bind(this);
     this.getAllItems = this.getAllItems.bind(this);
-    this.handleTagSearch = this.handleTagSearch.bind(this);
+    this.handleSearch = this.handleSearch.bind(this);
+    this.handleTagSelection = this.handleTagSelection.bind(this);
 
     this.getAllItems();
-
   }
 
   getAllItems() {
@@ -24,13 +26,23 @@ class GridContainer extends Component {
   	});
   }
 
-  handleTagSearch(text) {
+  handleSearch(text) {
     console.log(text);
     var thisobj = this;
     var url = "http://localhost:8000/api/items.json" + "?search=" + text;
   	$.getJSON(url, function(data) {
   		thisobj.setItems(data);
   	});
+  }
+
+  handleTagSelection(value) {
+    console.log("tag: " + value);
+    this.setState({tagsSelected: value});
+    var thisobj = this;
+    var url = "http://localhost:8000/api/items.json" + "?tags=" + value;
+    $.getJSON(url, function(data) {
+      thisobj.setItems(data);
+    });
   }
 
   setItems(items) {
@@ -42,7 +54,7 @@ class GridContainer extends Component {
   render() {
     return (
       <div>
-        <InventoryGridHeader getAllItemsCallback={this.getAllItems} searchHandler={this.handleTagSearch} tagHandler={this.handleTagSearch}/>
+        <InventoryGridHeader getAllItemsCallback={this.getAllItems} searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
       	<InventoryGrid items={this.state.items}></InventoryGrid>
       </div>
     );
