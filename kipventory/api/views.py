@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import generics
+from rest_framework import generics, mixins
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -20,9 +20,12 @@ from django.shortcuts import redirect
 import json
 
 # Create your views here.
-class ItemListView(generics.ListAPIView):
+class ItemView(generics.GenericAPIView,
+               mixins.ListModelMixin,
+               mixins.RetrieveModelMixin,
+               mixins.CreateModelMixin,
+               mixins.DestroyModelMixin):
     permission_classes = (IsAuthenticated,)
-    serializer_class = serializers.ItemSerializer
 
     def get_queryset(self):
         search = self.request.query_params.get("search")
@@ -38,70 +41,87 @@ class ItemListView(generics.ListAPIView):
         queryset = models.Item.objects.filter(q_objs).distinct()
         return queryset
 
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return serializers.ItemPOSTSerializer
+        return serializers.ItemGETSerializer
 
-class CartItemListView(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        if 'pk' in kwargs.keys():
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, args, kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, args, kwargs)
+
+
+class CartView(generics.GenericAPIView,
+               mixins.ListModelMixin,
+               mixins.RetrieveModelMixin,
+               mixins.CreateModelMixin,
+               mixins.UpdateModelMixin,
+               mixins.DestroyModelMixin):
     permission_classes = (IsAuthenticated,)
-    serializer_class = serializers.CartItemSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        queryset = None
-        if user.is_staff:
-            queryset = models.CartItem.objects.all()
-        else:
-            filters = {"owner__username": self.request.user.username}
-            queryset = models.CartItem.objects.filter(**filters)
+        ''' Only allow a user/admin to see his own cart items'''
+        return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
 
-        return queryset
+    def get_serializer_class(self):
+        '''Use a smaller representation if we're POSTing'''
+        if self.request.method == "POST":
+            return serializers.CartItemPOSTSerializer
+        return serializers.CartItemGETSerializer
 
+    def get(self, request, *args, **kwargs):
+        if 'pk' in kwargs.keys():
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
 
-class AuthView(APIView):
-    permission_classes = (AllowAny,)
+    def post(self, request, *args, **kwargs):
+        print(args)
+        print(kwargs)
+        return self.create(request, args, kwargs)
 
-    def post(self, request, format=None):
-        body = json.loads(request.body.decode('utf8'))
-        username = body["username"]
-        password = body["password"]
-        thisuser = authenticate(username=username, password=password)
+    def put(self, request, *args, **kwargs):
+        return self.update(request, args, kwargs)
 
-        if thisuser is not None:
-            #Should only be one
-            if Token.objects.filter(user=thisuser).count() == 1:
-                #User has a token lets create a new one
-                Token.objects.filter(user=thisuser).update(key=Token.generate_key(Token))
-                return Response({"token": Token.objects.get(user=thisuser).key})
-            else:
-                #First time login, create new token for user
-                token = Token.objects.create(user=thisuser)
-                return Response({"token": token.key})
-
-            # login(request, user) I DON'T THINK WE NEED TO USE THIS, ITS NORMAL DJANGO
-            #MIGHT NEED FOR LOGGING USER SESSIONS
-        else:
-            return Response({"token" : "Failure"})
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
 
 
 
-class RequestListView(generics.ListAPIView):
+
+class RequestView(generics.GenericAPIView,
+                  mixins.ListModelMixin,
+                  mixins.CreateModelMixin,
+                  mixins.DestroyModelMixin):
     permission_classes = (IsAuthenticated,)
-    serializer_class = serializers.RequestSerializer
 
     def get_queryset(self):
-        filters = {}
-        '''
-        user = self.request.query_params.get("user")
-        item = self.request.query_params.get("item")
-        status = self.request.query_params.get("status")
-        if user:
-        	filters["user"] = user
-        if item:
-        	filters["item"] = item
-        if status:
-        	filters["status"] = status
-        '''
-        queryset = models.Request.objects.filter(**filters)
+        ''' Only allow a user/admin to see his own cart items'''
+        return models.Request.objects.filter(requester__pk=self.request.user.pk)
 
-        return queryset
+    def get_serializer_class(self):
+        '''Use a smaller representation if we're POSTing'''
+        if self.request.method == "POST":
+            return serializers.RequestPOSTSerializer
+        return serializers.RequestGETSerializer
+
+    def get(self, request, *args, **kwargs):
+        if 'pk' in kwargs.keys():
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, args, kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
 
 
 class TagListView(generics.ListAPIView):
