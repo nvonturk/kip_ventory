@@ -6,38 +6,54 @@ from django.contrib.auth.models import User
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Tag
-        fields = ['name']
+        fields = ["id", 'name']
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'is_staff']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
 
 
 
-class ItemSerializer(serializers.ModelSerializer):
+
+
+class ItemGETSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
     class Meta:
         model = models.Item
-        fields = ['name', 'location', 'model', 'quantity', 'description', 'tags']
+        fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags']
+
+
+class ItemPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Item
+        fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags']
 
 
 
-class CartItemSerializer(serializers.ModelSerializer):
-    item = ItemSerializer(read_only=False, many=False)
-    owner = UserSerializer(read_only=False, many=False)
 
+class CartItemGETSerializer(serializers.ModelSerializer):
+    item = ItemGETSerializer(read_only=True, many=False)
+    owner = UserSerializer(read_only=True, many=False)
     class Meta:
         model = models.CartItem
-        fields = ['item', 'owner', 'quantity']
+        fields = ['id', 'item', 'owner', 'quantity']
 
+class CartItemPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CartItem
+        fields = ['id', 'item', 'owner', 'quantity']
 
-
-class RequestSerializer(serializers.ModelSerializer):
+class RequestGETSerializer(serializers.ModelSerializer):
     requester = UserSerializer(read_only=True, many=False)
-    item      = ItemSerializer(read_only=True, many=False)
-
+    item      = ItemGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Request
-        fields = ['requester', 'item', 'quantity']
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason', 'status']
+
+
+class RequestPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
