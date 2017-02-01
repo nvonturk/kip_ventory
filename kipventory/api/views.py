@@ -134,6 +134,9 @@ class CurrentUserView(generics.GenericAPIView, mixins.ListModelMixin):
     def get(self, request, *args, **kwargs):
         return self.list(request, args, kwargs)
 
+    def get_serializer_class(self):
+        return serializers.UserSerializer
+
 
 class TagListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)

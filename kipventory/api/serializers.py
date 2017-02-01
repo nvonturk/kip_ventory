@@ -14,10 +14,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
 
-
-
-
-
 class ItemGETSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
     class Meta:

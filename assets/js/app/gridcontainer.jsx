@@ -22,10 +22,18 @@ class GridContainer extends Component {
 
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
+<<<<<<< HEAD
 
     this.getItems();
     this.getCurrentUser();
 
+=======
+    this.getAllItems();
+    var thisobj = this;
+    $.getJSON("/api/currentuser.json", function(data){
+      thisobj.setCurrentUser(data.id)
+    });
+>>>>>>> 7d0eb934a5c9bfbd46748c45be1e3017918a7e2e
   }
 
   getItems() {
@@ -62,8 +70,9 @@ class GridContainer extends Component {
   }
 
   setCurrentUser(user){
-    console.log("2")
-    console.log(user[0])
+    // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView
+    // ListModelMixin is configured to return an array, even if it only contains a single element
+    // I'm sure we can find a way to use the RetrieveModelMixin instead, which will return a single JSON object.
     this.setState({
       user: user[0]
     })
