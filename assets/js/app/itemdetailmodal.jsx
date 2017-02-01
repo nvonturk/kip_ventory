@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import { Button, Modal}  from 'react-bootstrap'
 import QuantityBox from './quantitybox'
+import $ from "jquery"
+
 
 class ItemDetailModal extends Component {
   constructor(props) {
@@ -28,16 +30,16 @@ class ItemDetailModal extends Component {
   }
 
   addToCart(){
-    fetch('/addtocart/', {
-  method: 'POST',
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    quantity: this.state.quantity,
-  })
-})
+    $.ajax({
+    url:"/api/addtocart/",
+    type: "POST",
+    data: {quantity: this.state.quantity},
+    success:function(response){},
+    complete:function(){},
+    error:function (xhr, textStatus, thrownError){
+        alert("error doing something");
+    }
+});
   }
 
 
