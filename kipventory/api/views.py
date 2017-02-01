@@ -126,11 +126,13 @@ class RequestView(generics.GenericAPIView,
 class CurrentUserView(generics.GenericAPIView, mixins.ListModelMixin):
 
     def get_queryset(self):
-        ''' Only allow a user/admin to see his own cart items'''
         return User.objects.filter(pk= self.request.user.pk)
 
     def get(self, request, *args, **kwargs):
         return self.list(request, args, kwargs)
+
+    def get_serializer_class(self):
+        return serializers.UserSerializer
 
 
 class TagListView(generics.ListAPIView):

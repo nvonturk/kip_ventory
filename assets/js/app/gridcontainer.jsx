@@ -17,6 +17,10 @@ class GridContainer extends Component {
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
     this.getAllItems();
+    var thisobj = this;
+    $.getJSON("/api/currentuser.json", function(data){
+      thisobj.setCurrentUser(data.id)
+    });
   }
 
   getAllItems() {
@@ -46,6 +50,7 @@ class GridContainer extends Component {
   }
 
   setCurrentUser(currentuser){
+    console.log(JSON.stringify(currentuser))
     this.setState({
       userid: currentuser
     })
