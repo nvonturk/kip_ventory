@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from . import models, serializers
 from django.db.models import Q
 
+from django.http.request import QueryDict
+
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -61,6 +63,7 @@ class ItemView(generics.GenericAPIView,
 
 class CartView(generics.GenericAPIView,
                mixins.ListModelMixin,
+               mixins.RetrieveModelMixin,
                mixins.CreateModelMixin,
                mixins.UpdateModelMixin,
                mixins.DestroyModelMixin):
@@ -77,14 +80,24 @@ class CartView(generics.GenericAPIView,
         return serializers.CartItemGETSerializer
 
     def get(self, request, *args, **kwargs):
+        if 'pk' in kwargs.keys():
+            return self.retrieve(request, args, kwargs)
         return self.list(request, args, kwargs)
 
     def post(self, request, *args, **kwargs):
-        print(args)
-        print(kwargs)
+        """
+        Check if there is already a CartItem with this item and owner.
+        If so, update the quantity on that CartItem instead of creating a new one.
+        """
+        queryset = self.get_queryset().filter(item__pk=request.data['item'])
+        flag = (queryset.count() > 0)
+        if flag:
+            self.kwargs['pk'] = queryset.first().pk
+            return self.update(request, args, self.kwargs)
         return self.create(request, args, kwargs)
 
     def put(self, request, *args, **kwargs):
+        print(request.data)
         return self.update(request, args, kwargs)
 
     def delete(self, request, *args, **kwargs):
