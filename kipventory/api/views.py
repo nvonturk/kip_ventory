@@ -61,7 +61,6 @@ class ItemView(generics.GenericAPIView,
 
 class CartView(generics.GenericAPIView,
                mixins.ListModelMixin,
-               mixins.RetrieveModelMixin,
                mixins.CreateModelMixin,
                mixins.UpdateModelMixin,
                mixins.DestroyModelMixin):
@@ -78,8 +77,6 @@ class CartView(generics.GenericAPIView,
         return serializers.CartItemGETSerializer
 
     def get(self, request, *args, **kwargs):
-        if 'pk' in kwargs.keys():
-            return self.retrieve(request, args, kwargs)
         return self.list(request, args, kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -123,11 +120,16 @@ class RequestView(generics.GenericAPIView,
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
 
+
+
 class CurrentUserView(generics.GenericAPIView, mixins.ListModelMixin):
 
     def get_queryset(self):
         ''' Only allow a user/admin to see his own cart items'''
-        return User.objects.filter(pk= self.request.user.pk)
+        return User.objects.filter(pk=self.request.user.pk)
+
+    def get_serializer_class(self):
+        return serializers.UserSerializer
 
     def get(self, request, *args, **kwargs):
         return self.list(request, args, kwargs)

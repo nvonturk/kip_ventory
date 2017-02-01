@@ -7,23 +7,39 @@ import $ from "jquery"
 class GridContainer extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
       items:[],
       tagsSelected: [],
-      userid: 0
+      user: {},
     };
+
+    this.getItems = this.getItems.bind(this);
     this.setItems = this.setItems.bind(this);
-    this.getAllItems = this.getAllItems.bind(this);
+
+    this.setCurrentUser = this.setCurrentUser.bind(this);
+    this.getCurrentUser = this.getCurrentUser.bind(this);
+
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
-    this.getAllItems();
+
+    this.getItems();
+    this.getCurrentUser();
+
   }
 
-  getAllItems() {
+  getItems() {
   	var thisobj = this;
   	$.getJSON("/api/items.json", function(data) {
   		thisobj.setItems(data);
   	});
+  }
+
+  getCurrentUser() {
+    var thisobj = this;
+    $.getJSON("/api/currentuser.json", function(data) {
+      thisobj.setCurrentUser(data)
+    })
   }
 
   handleSearch(text) {
@@ -45,9 +61,11 @@ class GridContainer extends Component {
     });
   }
 
-  setCurrentUser(currentuser){
+  setCurrentUser(user){
+    console.log("2")
+    console.log(user[0])
     this.setState({
-      userid: currentuser
+      user: user[0]
     })
   }
 
@@ -60,8 +78,8 @@ class GridContainer extends Component {
   render() {
     return (
       <div>
-        <InventoryGridHeader getAllItemsCallback={this.getAllItems} searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
-      	<InventoryGrid items={this.state.items}></InventoryGrid>
+        <InventoryGridHeader getAllItemsCallback={this.getItems} searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
+      	<InventoryGrid items={this.state.items} user={this.state.user}></InventoryGrid>
       </div>
     );
   }

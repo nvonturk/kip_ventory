@@ -3,6 +3,7 @@ import { Button, Modal}  from 'react-bootstrap'
 import QuantityBox from './quantitybox'
 import $ from "jquery"
 
+import { getCookie } from '../csrf/DjangoCSRFToken'
 
 class ItemDetailModal extends Component {
   constructor(props) {
@@ -30,15 +31,26 @@ class ItemDetailModal extends Component {
   }
 
   addToCart(){
+    var thisobj = this
     $.ajax({
     url:"/api/cart/",
     type: "POST",
-    data: {item: this.props.item.id, owner: this.props.userid,
-      quantity: this.state.quantity},
+    beforeSend: function(request) {
+      console.log()
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    data: {
+      item: thisobj.props.item.id,
+      owner: thisobj.props.user.id,
+      quantity: thisobj.state.quantity
+    },
     success:function(response){},
     complete:function(){},
     error:function (xhr, textStatus, thrownError){
         alert("error doing something");
+        console.log(xhr)
+        console.log(textStatus)
+        console.log(thrownError)
     }
 });
   }
@@ -62,6 +74,7 @@ class ItemDetailModal extends Component {
           <Modal.Body>
             <p>Name: {this.props.item.name}</p>
             <p>Model No: {this.props.item.model}</p>
+            <p>User: {this.props.user.id}</p>
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={this.addToCart}>Add to Cart</Button>

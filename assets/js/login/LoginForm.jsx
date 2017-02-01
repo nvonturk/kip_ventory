@@ -1,7 +1,7 @@
 import React from 'react'
 import {Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel, HelpBlock } from 'react-bootstrap'
 
-import DjangoCSRFToken from '../csrf/DjangoCSRFToken'
+import { CSRFToken } from '../csrf/DjangoCSRFToken'
 
 const LoginForm = React.createClass({
 
@@ -24,7 +24,7 @@ const LoginForm = React.createClass({
   render() {
     return (
       <form method="post" action="/login/">
-        <DjangoCSRFToken />
+        <CSRFToken />
         <FormGroup controlId="username">
           <ControlLabel>Username</ControlLabel>
           <FormControl type="text" value={this.state.username} name="username" placeholder="Username" onChange={this.handleChange} />
