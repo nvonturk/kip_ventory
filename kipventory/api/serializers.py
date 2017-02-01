@@ -45,9 +45,6 @@ class CartItemPOSTSerializer(serializers.ModelSerializer):
         model = models.CartItem
         fields = ['id', 'item', 'owner', 'quantity']
 
-
-
-
 class RequestGETSerializer(serializers.ModelSerializer):
     requester = UserSerializer(read_only=True, many=False)
     item      = ItemGETSerializer(read_only=True, many=False)

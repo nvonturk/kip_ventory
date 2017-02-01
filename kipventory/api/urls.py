@@ -15,7 +15,8 @@ urlpatterns = [
     url(r'^cart/?$', views.CartView.as_view()),
     url(r'^cart/(?P<pk>[0-9]+)/$', views.CartView.as_view()),
 
-    url(r'^tags/$', views.TagListView.as_view())
+    url(r'^tags/$', views.TagListView.as_view()),
+    url(r'^currentuser/$', views.CurrentUserView.as_view())
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
