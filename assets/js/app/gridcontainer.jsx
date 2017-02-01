@@ -9,19 +9,19 @@ class GridContainer extends Component {
     super(props);
     this.state = {
       items:[],
-      tagsSelected: []
+      tagsSelected: [],
+      userid: 0
     };
     this.setItems = this.setItems.bind(this);
     this.getAllItems = this.getAllItems.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
-
     this.getAllItems();
   }
 
   getAllItems() {
   	var thisobj = this;
-  	$.getJSON("http://localhost:8000/api/items.json", function(data) {
+  	$.getJSON("/api/items.json", function(data) {
   		thisobj.setItems(data);
   	});
   }
@@ -29,7 +29,7 @@ class GridContainer extends Component {
   handleSearch(text) {
     console.log(text);
     var thisobj = this;
-    var url = "http://localhost:8000/api/items.json" + "?search=" + text;
+    var url = "/api/items.json" + "?search=" + text;
   	$.getJSON(url, function(data) {
   		thisobj.setItems(data);
   	});
@@ -39,10 +39,16 @@ class GridContainer extends Component {
     console.log("tag: " + value);
     this.setState({tagsSelected: value});
     var thisobj = this;
-    var url = "http://localhost:8000/api/items.json" + "?tags=" + value;
+    var url = "/api/items.json" + "?tags=" + value;
     $.getJSON(url, function(data) {
       thisobj.setItems(data);
     });
+  }
+
+  setCurrentUser(currentuser){
+    this.setState({
+      userid: currentuser
+    })
   }
 
   setItems(items) {

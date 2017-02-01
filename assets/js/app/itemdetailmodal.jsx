@@ -31,9 +31,10 @@ class ItemDetailModal extends Component {
 
   addToCart(){
     $.ajax({
-    url:"/api/addtocart/",
+    url:"/api/cart/",
     type: "POST",
-    data: {quantity: this.state.quantity},
+    data: {item: this.props.item.id, owner: this.props.userid,
+      quantity: this.state.quantity},
     success:function(response){},
     complete:function(){},
     error:function (xhr, textStatus, thrownError){

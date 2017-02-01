@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 
 from rest_framework.authtoken.models import Token
@@ -122,6 +123,14 @@ class RequestView(generics.GenericAPIView,
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
 
+class CurrentUserView(generics.GenericAPIView, mixins.ListModelMixin):
+
+    def get_queryset(self):
+        ''' Only allow a user/admin to see his own cart items'''
+        return User.objects.filter(pk= self.request.user.pk)
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, args, kwargs)
 
 
 class TagListView(generics.ListAPIView):
