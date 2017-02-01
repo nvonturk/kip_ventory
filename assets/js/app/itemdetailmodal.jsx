@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Button, Modal }  from 'react-bootstrap'
+import { Button, Modal}  from 'react-bootstrap'
 import QuantityBox from './quantitybox'
 
 class ItemDetailModal extends Component {
@@ -23,13 +23,23 @@ class ItemDetailModal extends Component {
     this.setState({ showModal: true });
   }
 
-  addToCart() {
-    this.setState({ showModal: false});
-  }
-
   setQuantity(value){
     this.setState({quantity:value});
   }
+
+  addToCart(){
+    fetch('/addtocart/', {
+  method: 'POST',
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    quantity: this.state.quantity,
+  })
+})
+  }
+
 
   render() {
     return (
