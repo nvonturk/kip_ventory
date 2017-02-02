@@ -33,7 +33,7 @@ class CartItem extends Component {
             <Col xs={6} md={6}>
               <Well>{this.props.cartItem['item']['description']}</Well>
             </Col>
-            <Col xs={1} md={1}>
+            <Col xs={2} md={1}>
               <FormGroup controlId="formQuantity">
                 <ControlLabel>Quantity</ControlLabel>
                 <FormControl

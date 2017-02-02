@@ -25,8 +25,8 @@ class GridContainer extends Component {
 
     this.getItems();
     this.getCurrentUser();
-
   }
+
 
   getItems() {
   	var thisobj = this;
@@ -39,7 +39,7 @@ class GridContainer extends Component {
     var thisobj = this;
     $.getJSON("/api/currentuser.json", function(data) {
       thisobj.setCurrentUser(data)
-    })
+    });
   }
 
   handleSearch(text) {

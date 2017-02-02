@@ -31,6 +31,7 @@ class ItemDetailModal extends Component {
   }
 
   addToCart(){
+    this.setState({showModal: false});
     var thisobj = this
     $.ajax({
     url:"/api/cart/",
