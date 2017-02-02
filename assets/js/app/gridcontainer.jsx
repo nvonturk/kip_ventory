@@ -22,18 +22,10 @@ class GridContainer extends Component {
 
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
-<<<<<<< HEAD
 
     this.getItems();
     this.getCurrentUser();
 
-=======
-    this.getAllItems();
-    var thisobj = this;
-    $.getJSON("/api/currentuser.json", function(data){
-      thisobj.setCurrentUser(data.id)
-    });
->>>>>>> 7d0eb934a5c9bfbd46748c45be1e3017918a7e2e
   }
 
   getItems() {

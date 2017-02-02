@@ -1,5 +1,5 @@
 import React from 'react'
-import { } from 'react-bootstrap'
+import { Row, Col } from 'react-bootstrap'
 
 import CartItem from './CartItem'
 
@@ -12,13 +12,15 @@ const ShoppingCart = React.createClass({
   render() {
     var cartItems = this.props.cartItems
     return (
-      <div>
+      <Row>
+        <Col xs={10} xsOffset={1}>
         {this.props.cartItems.map(function(cartItem, i) {
           return (
             <CartItem key={i} cartItem={cartItem} />
           )
         })}
-      </div>
+        </Col>
+      </Row>
     );
   }
 });
