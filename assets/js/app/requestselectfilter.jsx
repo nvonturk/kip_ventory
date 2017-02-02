@@ -1,19 +1,27 @@
 import React, { Component } from 'react'
 import { SplitButton, MenuItem } from 'react-bootstrap'
+import SimpleDropdown from './simpledropdown'
 
 
 
 function RequestSelectFilter(props){
   return(
     <div>
-      <select>
-        <option>All</option>
-        <option>Outstanding</option>
-        <option>Approved</option>
-        <option>Denied</option>s
+
+      <SimpleDropdown title="Status" items={[{name: "name1"}, {name: "name2"}]} callback={changeFilter(props)}/>
+
+      <select id="userRequestSelect" defaultValue="all" onChange={changeFilter(props)}>
+        <option value="all">All</option>
+        <option value="outstanding">Outstanding</option>
+        <option value="approved">Approved</option>
+        <option value="denied">Denied</option>s
       </select>
     </div>
   )
+}
+
+function changeFilter(props){
+  // console.log("later");
 }
 
 

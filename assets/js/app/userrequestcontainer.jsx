@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import $ from "jquery"
-import RequestSelectFilter from './requestselectfilter.jsx'
+import RequestSelectFilter from './requestselectfilter'
+import RequestList from './requestlist'
 
 
 
@@ -17,6 +18,10 @@ class UserRequestContainer extends Component {
       ],
       selected_type: "Outstanding"
     };
+    this.setRequests = this.setRequests.bind(this);
+    this.setFilter = this.setFilter.bind(this);
+
+
     this.getMyRequests();
   }
 
@@ -30,7 +35,6 @@ class UserRequestContainer extends Component {
     this.setState({
       selected_type : type
     });
-    console.log(this.state.selected_type);
   }
 
 
@@ -39,7 +43,6 @@ class UserRequestContainer extends Component {
     $.getJSON("/api/requests.json", function(data){
       thisobj.setRequests(data);
     });
-    console.log(this.state.requests);
   }
 
   handleFilterSelect(selected){
@@ -53,7 +56,8 @@ class UserRequestContainer extends Component {
     return (
       <div>
       Hello World
-        <RequestSelectFilter types={this.state.types} selectHandler={this.setFilter} selected={this.state.selected_type}/>
+        <RequestSelectFilter types={this.state.types} selectHandler={this.setFilter} />
+        <RequestList requests={this.state.requests} selected_type={this.state.selected_type}/>
       </div>
     );
   }

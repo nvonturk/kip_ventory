@@ -35,11 +35,13 @@ class Request(models.Model):
     OUTSTANDING = 'O'
     APPROVED = 'A'
     COMPLETE = 'C'
+    DENIED = 'D'
     ### Status Choices ###
     status_choices      = (
         (OUTSTANDING, 'Outstanding'),
         (APPROVED, 'Approved'),
         (COMPLETE, 'Complete'),
+        (DENIED, 'Denied'),
     )
     status          = models.CharField(max_length = 10, choices=status_choices, default = OUTSTANDING)
 
