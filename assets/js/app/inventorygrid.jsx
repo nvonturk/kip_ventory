@@ -10,7 +10,7 @@ function InventoryGrid(props) {
 
   for (var i = 0; i < numRows; i++) {
     var rowItems = props.items.slice(i*NUM_ROWS, i*NUM_ROWS + NUM_ROWS);
-    rows.push(<InventoryGridRow key={i} items={rowItems}/>);
+    rows.push(<InventoryGridRow key={i} items={rowItems} user={props.user}/>);
   }
   return <Grid>{rows}</Grid>
 }

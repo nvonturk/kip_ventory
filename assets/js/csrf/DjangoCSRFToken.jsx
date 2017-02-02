@@ -19,10 +19,14 @@ function getCookie(name) {
   return cookieValue;
 }
 
-
-export default class DjangoCSRFToken extends React.Component {
+class DjangoCSRFToken extends React.Component {
     render(){
         var csrf_token = getCookie('csrftoken');
         return (<input type="hidden" name="csrfmiddlewaretoken" value={ csrf_token }/>);
     }
+}
+
+module.exports = {
+    getCookie: getCookie,
+    CSRFToken: DjangoCSRFToken
 }
