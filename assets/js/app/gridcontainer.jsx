@@ -12,6 +12,7 @@ class GridContainer extends Component {
       items:[],
       tagsSelected: [],
       user: {},
+      searchText: ""
     };
 
     this.getItems = this.getItems.bind(this);
@@ -22,11 +23,11 @@ class GridContainer extends Component {
 
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
+    this.filterItems = this.filterItems.bind(this);
 
     this.getItems();
     this.getCurrentUser();
   }
-
 
   getItems() {
   	var thisobj = this;
@@ -34,7 +35,9 @@ class GridContainer extends Component {
   	$.getJSON("/api/items.json", function(data) {
   		thisobj.setItems(data);
   	});
+
   }
+
 
   getCurrentUser() {
     var thisobj = this;
@@ -44,19 +47,22 @@ class GridContainer extends Component {
   }
 
   handleSearch(text) {
-    console.log(text);
-    var thisobj = this;
-    var url = "/api/items.json" + "?search=" + text;
-  	$.getJSON(url, function(data) {
-  		thisobj.setItems(data);
-  	});
+    console.log("Search text: " + text);
+    this.setState({searchText: text});
+    this.filterItems(text, this.state.tagsSelected);
   }
 
-  handleTagSelection(value) {
-    console.log("tag: " + value);
-    this.setState({tagsSelected: value});
+  handleTagSelection(tagsSelected) {
+    console.log("tag: " + tagsSelected);
+    this.setState({tagsSelected: tagsSelected});
+    this.filterItems(this.state.searchText, tagsSelected);
+  }
+
+  filterItems(search, tags) {
+    var url = "api/items.json" + "?search=" + search + "&tags=" + tags;
+    console.log(url)
+
     var thisobj = this;
-    var url = "/api/items.json" + "?tags=" + value;
     $.getJSON(url, function(data) {
       thisobj.setItems(data);
     });

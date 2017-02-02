@@ -26,10 +26,12 @@ class ItemView(generics.GenericAPIView,
     def get_queryset(self):
         search = self.request.query_params.get("search")
         tags = self.request.query_params.get("tags")
+        print(search)
+        print(tags)
         q_objs = Q()
 
-        if search is not None:
-            q_objs |= Q(name__icontains=search) | Q(model__icontains=search)
+        if search is not None and search!='':
+            q_objs &= (Q(name__icontains=search) | Q(model__icontains=search))
 
         queryset = models.Item.objects.filter(q_objs).distinct()
 
@@ -37,6 +39,15 @@ class ItemView(generics.GenericAPIView,
             tagsArray = tags.split(",")
             for tag in tagsArray:
                 queryset = queryset.filter(tags__name=tag)
+
+
+        ''' OR logic
+        if tags is not None and tags != '':
+        	#todo do we want OR or AND logic? right not it is OR
+        	tagsArray = tags.split(",")
+        	q_objs |= Q(tags__name__in=tagsArray)
+
+        '''
 
         return queryset
 
