@@ -86,7 +86,7 @@ class GridContainer extends Component {
   render() {
     return (
       <div>
-        <InventoryGridHeader getAllItemsCallback={this.getItems} searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
+        <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
       	<InventoryGrid items={this.state.items} user={this.state.user}></InventoryGrid>
       </div>
     );
