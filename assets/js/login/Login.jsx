@@ -4,7 +4,7 @@ import { render } from 'react-dom'
 import { Well } from 'react-bootstrap'
 
 
-import LoginContainer from './LoginContainer'
+import LoginSignupContainer from './LoginSignupContainer'
 
 
 function LoginErrorMessage(props) {
@@ -12,7 +12,7 @@ function LoginErrorMessage(props) {
 }
 
 
-render(<LoginContainer />, document.getElementById('root'))
+render(<LoginSignupContainer />, document.getElementById('root'))
 
 var node = document.getElementById('login-error')
 if (node != null) {

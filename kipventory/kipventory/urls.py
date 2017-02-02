@@ -20,16 +20,19 @@ from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
+    # admin site for quick dev testing
+    url(r'^admin/?', admin.site.urls),
+
     # URLs for our REST API endpoints
     url(r'^api/', include('api.urls')),
-    # Django built in Auth views to handle user login/logout
+
+    # Login page
     url(r'^login/?', auth_views.login, {'template_name': 'kipventory/login.html'}, name='login'),
     url(r'^logout/?', auth_views.logout, name='logout'),
 
     # Main view for our Single Page App (React, client side)
-    # url(r'^app/cart/?', views.cart, name='cart'),
     url(r'^app/?', views.app, name='app'),
+
     # Landing page (no auth necessary)
     url(r'$', views.landing, name='landing'),
 ]

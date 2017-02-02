@@ -34,14 +34,17 @@ class ItemView(generics.GenericAPIView,
         search = self.request.query_params.get("search")
         tags = self.request.query_params.get("tags")
         q_objs = Q()
+
         if search is not None:
             q_objs |= Q(name__icontains=search) | Q(model__icontains=search)
-        if tags is not None and tags != '':
-        	#todo do we want OR or AND logic? right not it is OR
-        	tagsArray = tags.split(",")
-        	q_objs &= Q(tags__name__in=tagsArray)
 
         queryset = models.Item.objects.filter(q_objs).distinct()
+
+        if tags is not None and tags != '':
+            tagsArray = tags.split(",")
+            for tag in tagsArray:
+                queryset = queryset.filter(tags__name=tag)
+
         return queryset
 
     def get_serializer_class(self):

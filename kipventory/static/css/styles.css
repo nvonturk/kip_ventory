@@ -9,3 +9,12 @@
 .quantityButton {
   margin-top: 25px;
 }
+
+#login-signup {
+  margin: 50px 0px;
+}
+
+.clickable
+{
+    cursor: pointer;
+}

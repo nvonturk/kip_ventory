@@ -10,8 +10,6 @@ import Profile from './Profile'
 import AppContainer from './AppContainer'
 import CartContainer from '../cart/CartContainer'
 
-import LoginContainer from '../login/LoginContainer'
-
 render((
   <Router history={browserHistory}>
 

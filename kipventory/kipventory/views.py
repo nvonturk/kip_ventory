@@ -15,3 +15,7 @@ def landing(request):
 @login_required(login_url='/login/')
 def app(request):
     return render(request, 'kipventory/app.html')
+
+
+def login(request):
+    return render(request, 'kipventory/login.html')

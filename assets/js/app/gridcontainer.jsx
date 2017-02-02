@@ -26,7 +26,7 @@ class GridContainer extends Component {
     this.getItems();
     this.getCurrentUser();
   }
-  
+
 
   getItems() {
   	var thisobj = this;
