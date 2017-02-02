@@ -7,7 +7,8 @@ module.exports = {
   entry: {
     landing: './assets/js/landing/Landing',
     app: './assets/js/app/App',
-    login: './assets/js/login/Login'
+    login: './assets/js/login/Login',
+    cart: './assets/js/cart/Cart'
   }, // entry point of our app. assets/js/index.js should require other js modules and dependencies it needs
 
   output: {

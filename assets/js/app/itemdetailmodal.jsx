@@ -1,14 +1,21 @@
 import React, { Component } from 'react'
-import { Button, Modal }  from 'react-bootstrap'
+import { Button, Modal}  from 'react-bootstrap'
+import QuantityBox from './quantitybox'
+import $ from "jquery"
+
+import { getCookie } from '../csrf/DjangoCSRFToken'
 
 class ItemDetailModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      quantity:0,
     	showModal: false
     };
     this.close = this.close.bind(this);
     this.open = this.open.bind(this);
+    this.addToCart = this.addToCart.bind(this);
+    this.setQuantity = this.setQuantity.bind(this);
   }
 
   close() {
@@ -18,6 +25,37 @@ class ItemDetailModal extends Component {
   open() {
     this.setState({ showModal: true });
   }
+
+  setQuantity(value){
+    this.setState({quantity:value});
+  }
+
+  addToCart(){
+    this.setState({showModal: false});
+    var thisobj = this
+    $.ajax({
+    url:"/api/cart/",
+    type: "POST",
+    beforeSend: function(request) {
+      console.log()
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    data: {
+      item: thisobj.props.item.id,
+      owner: thisobj.props.user.id,
+      quantity: thisobj.state.quantity
+    },
+    success:function(response){},
+    complete:function(){},
+    error:function (xhr, textStatus, thrownError){
+        alert("error doing something");
+        console.log(xhr)
+        console.log(textStatus)
+        console.log(thrownError)
+    }
+});
+  }
+
 
   render() {
     return (
@@ -37,8 +75,11 @@ class ItemDetailModal extends Component {
           <Modal.Body>
             <p>Name: {this.props.item.name}</p>
             <p>Model No: {this.props.item.model}</p>
+            <p>User: {this.props.user.id}</p>
           </Modal.Body>
           <Modal.Footer>
+            <Button onClick={this.addToCart}>Add to Cart</Button>
+            <QuantityBox onUserInput={this.setQuantity}/>
             <Button onClick={this.close}>Close</Button>
           </Modal.Footer>
         </Modal>

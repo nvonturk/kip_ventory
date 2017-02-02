@@ -1,6 +1,8 @@
 import React from 'react'
 import {Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel, HelpBlock } from 'react-bootstrap'
 
+import { CSRFToken } from '../csrf/DjangoCSRFToken'
+
 const LoginForm = React.createClass({
 
   getInitialState() {
@@ -21,7 +23,8 @@ const LoginForm = React.createClass({
 
   render() {
     return (
-      <div>
+      <form method="post" action="/login/">
+        <CSRFToken />
         <FormGroup controlId="username">
           <ControlLabel>Username</ControlLabel>
           <FormControl type="text" value={this.state.username} name="username" placeholder="Username" onChange={this.handleChange} />
@@ -37,7 +40,7 @@ const LoginForm = React.createClass({
             Sign in
           </Button>
         </FormGroup>
-      </div>
+      </form>
     );
   }
 });

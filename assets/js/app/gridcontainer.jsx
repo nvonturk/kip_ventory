@@ -7,23 +7,40 @@ import $ from "jquery"
 class GridContainer extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
       items:[],
-      tagsSelected: []
+      tagsSelected: [],
+      user: {},
     };
+
+    this.getItems = this.getItems.bind(this);
     this.setItems = this.setItems.bind(this);
-    this.getAllItems = this.getAllItems.bind(this);
+
+    this.setCurrentUser = this.setCurrentUser.bind(this);
+    this.getCurrentUser = this.getCurrentUser.bind(this);
+
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
 
-    this.getAllItems();
+    this.getItems();
+    this.getCurrentUser();
   }
 
-  getAllItems() {
+
+  getItems() {
   	var thisobj = this;
-  	$.getJSON("ca/api/items.json", function(data) {
+
+  	$.getJSON("/api/items.json", function(data) {
   		thisobj.setItems(data);
   	});
+  }
+
+  getCurrentUser() {
+    var thisobj = this;
+    $.getJSON("/api/currentuser.json", function(data) {
+      thisobj.setCurrentUser(data)
+    });
   }
 
   handleSearch(text) {
@@ -45,6 +62,15 @@ class GridContainer extends Component {
     });
   }
 
+  setCurrentUser(user){
+    // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView
+    // ListModelMixin is configured to return an array, even if it only contains a single element
+    // I'm sure we can find a way to use the RetrieveModelMixin instead, which will return a single JSON object.
+    this.setState({
+      user: user[0]
+    })
+  }
+
   setItems(items) {
   	this.setState({
   		items: items
@@ -54,8 +80,8 @@ class GridContainer extends Component {
   render() {
     return (
       <div>
-        <InventoryGridHeader getAllItemsCallback={this.getAllItems} searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
-      	<InventoryGrid items={this.state.items}></InventoryGrid>
+        <InventoryGridHeader getAllItemsCallback={this.getItems} searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
+      	<InventoryGrid items={this.state.items} user={this.state.user}></InventoryGrid>
       </div>
     );
   }

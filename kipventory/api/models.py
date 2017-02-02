@@ -22,15 +22,24 @@ class Item(models.Model):
         return self.name
 
 
+class CartItem(models.Model):
+    item     = models.ForeignKey(Item, on_delete=models.CASCADE)
+    owner    = models.ForeignKey(User, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+
+    def __str__(self):
+        return "Item: {}, Owner: {}, Quantity: {}".format(self.item, self.owner, self.quantity)
+
+
 class Request(models.Model):
     requester       = models.ForeignKey(User, on_delete=models.CASCADE)
     item            = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity        = models.IntegerField()
     date_open       = models.DateTimeField()
     open_reason     = models.TextField(max_length=500)
-    date_closed     = models.DateTimeField()
-    closed_comment  = models.TextField(max_length=500)
-    administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated')
+    date_closed     = models.DateTimeField(blank=True, null=True)
+    closed_comment  = models.TextField(max_length=500, blank=True)
+    administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
     OUTSTANDING = 'O'
     APPROVED = 'A'
@@ -43,7 +52,7 @@ class Request(models.Model):
         (COMPLETE, 'Complete'),
         (DENIED, 'Denied'),
     )
-    status          = models.CharField(max_length = 10, choices=status_choices, default = OUTSTANDING)
+    status          = models.CharField(max_length = 10, choices=status_choices, default=OUTSTANDING)
 
 
     def __str__(self):

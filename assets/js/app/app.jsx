@@ -8,8 +8,7 @@ import Requests from './Requests'
 import Profile from './Profile'
 
 import AppContainer from './AppContainer'
-
-
+import CartContainer from '../cart/CartContainer'
 
 render((
   <Router history={browserHistory}>
@@ -20,6 +19,7 @@ render((
         <IndexRoute component={Home} />
         <Route path="requests" component={Requests} />
         <Route path="profile" component={Profile} />
+        <Route path="cart" component={CartContainer} />
       </Route>
 
     </Route>
