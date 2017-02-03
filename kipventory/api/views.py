@@ -26,29 +26,23 @@ class ItemView(generics.GenericAPIView,
     def get_queryset(self):
         search = self.request.query_params.get("search")
         tags = self.request.query_params.get("tags")
-        print(search)
-        print(tags)
         q_objs = Q()
 
+        # Search filter
         if search is not None and search!='':
             q_objs &= (Q(name__icontains=search) | Q(model__icontains=search))
 
         queryset = models.Item.objects.filter(q_objs).distinct()
 
+        # Tags filter
         if tags is not None and tags != '':
             tagsArray = tags.split(",")
             for tag in tagsArray:
                 queryset = queryset.filter(tags__name=tag)
 
-
-        ''' OR logic
-        if tags is not None and tags != '':
-        	#todo do we want OR or AND logic? right not it is OR
-        	tagsArray = tags.split(",")
-        	q_objs |= Q(tags__name__in=tagsArray)
-
-        '''
-
+        # how to filter to only include some requests?
+        #queryset.request_set.filter(status="O")
+      
         return queryset
 
 
@@ -60,6 +54,27 @@ class ItemView(generics.GenericAPIView,
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)
+        #print(serializers.ItemGETSerializer(self.get_queryset()[0]).data)
+        '''
+        items = self.get_queryset()
+        toReturn = []
+        for item in items:
+            serializer = serializers.ItemGETSerializer(item)
+            itemToAdd = serializer.data
+            print(request)
+            requests = models.Request.objects.filter(item=item.id, status="O") #requester=user
+            if requests is not None:
+                requestsToAdd = []
+                for request in requests:
+                    reqSerializer = serializers.ItemRequestGETSerializer(request)
+                    requestsToAdd.append(reqSerializer.data)
+                itemToAdd["request"] = requestsToAdd
+            print(itemToAdd)
+            toReturn.append(itemToAdd)
+
+        print(toReturn)
+        return Response(toReturn)
+        '''
         return self.list(request, args, kwargs)
 
     def post(self, request, *args, **kwargs):

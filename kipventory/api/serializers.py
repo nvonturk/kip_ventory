@@ -2,14 +2,10 @@ from rest_framework import serializers
 from . import models
 from django.contrib.auth.models import User
 
-
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Tag
         fields = ["id", 'name']
-
-
-
 
 class UserGETSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,25 +17,23 @@ class UserPOSTSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
 
-
-
-
+class ItemRequestGETSerializer(serializers.ModelSerializer):
+    requester = UserGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'quantity', 'date_open', 'open_reason', 'status']
 
 class ItemGETSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
+    request_set = ItemRequestGETSerializer(read_only=True, many=True)
     class Meta:
         model = models.Item
-        fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags']
+        fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags', 'request_set']
 
 class ItemPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Item
         fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags']
-
-
-
-
-
 
 class CartItemGETSerializer(serializers.ModelSerializer):
     item = ItemGETSerializer(read_only=True, many=False)
@@ -52,10 +46,6 @@ class CartItemPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CartItem
         fields = ['id', 'item', 'owner', 'quantity']
-
-
-
-
 
 class RequestGETSerializer(serializers.ModelSerializer):
     requester = UserGETSerializer(read_only=True, many=False)

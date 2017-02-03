@@ -33,11 +33,11 @@ class GridContainer extends Component {
   	var thisobj = this;
 
   	$.getJSON("/api/items.json", function(data) {
+      console.log(data);
   		thisobj.setItems(data);
   	});
 
   }
-
 
   getCurrentUser() {
     var thisobj = this;

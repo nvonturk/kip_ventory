@@ -10,7 +10,8 @@ class ItemDetailModal extends Component {
     super(props);
     this.state = {
       quantity:0,
-    	showModal: false
+    	showModal: false,
+      requests: []
     };
     this.close = this.close.bind(this);
     this.open = this.open.bind(this);
@@ -56,7 +57,29 @@ class ItemDetailModal extends Component {
   }
 
 
+
   render() {
+
+    console.log(this.props.item.request_set);
+    var requests=[];
+
+    if(this.props.item.request_set.length == 0) {
+      requests = "No outstanding requests."
+    }
+
+    //for(var key,request in this.props.item.request_set) {
+    for (var i = 0; i < this.props.item.request_set.length; i++) {
+      var request = this.props.item.request_set[i];
+      console.log(request);
+      var requestInfo= (
+        <Modal.Header>
+         <p>Request quantity {request.quantity}</p>
+         <p>Request date {request.date_open}</p>
+         </Modal.Header>
+      )
+      requests.push(requestInfo);
+    }
+
     return (
       <div>
         <Button
@@ -74,7 +97,13 @@ class ItemDetailModal extends Component {
           <Modal.Body>
             <p>Name: {this.props.item.name}</p>
             <p>Model No: {this.props.item.model}</p>
+            <p>Description: {this.props.item.description}</p>
+            <p>Quantity Available: {this.props.item.quantity}</p>
             <p>User: {this.props.user.id}</p>
+          </Modal.Body>
+          <Modal.Body>
+            <h3>Outstanding Requests</h3>
+            {requests}
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={this.addToCart}>Add to Cart</Button>
