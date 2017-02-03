@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Well, Panel, Row, Col, FormGroup, FormControl, ControlLabel, Button } from 'react-bootstrap'
 import $ from 'jquery'
-import { getCookie } from '../csrf/DjangoCSRFToken'
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 
 
 class CartItem extends Component {

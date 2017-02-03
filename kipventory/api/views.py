@@ -3,25 +3,17 @@ from rest_framework import generics, mixins
 from rest_framework import status
 # from rest_framework import pagination
 from rest_framework.response import Response
-
-from . import models, serializers
-from django.db.models import Q
-
-from django.http.request import QueryDict
-
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+
+from django.db.models import Q
+from django.http.request import QueryDict
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
 
-from rest_framework.authtoken.models import Token
+from . import models, serializers
 
-from django.shortcuts import redirect
-
-import json
 
 # Create your views here.
 class ItemView(generics.GenericAPIView,
@@ -102,7 +94,6 @@ class CartView(generics.GenericAPIView,
         return self.create(request, args, kwargs)
 
     def put(self, request, *args, **kwargs):
-        print(request.data)
         return self.update(request, args, kwargs)
 
     def delete(self, request, *args, **kwargs):
@@ -140,19 +131,61 @@ class RequestView(generics.GenericAPIView,
 
 
 
+@api_view(['POST'])
+def login_view(request):
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        login(request, user)
+        return redirect('/app/')
+    else:
+        # Return an 'invalid login' error message.
+        from django.contrib import messages
+        messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
+        return redirect('/login/', login_warning='invalid credentials')
+
 
 class CurrentUserView(generics.GenericAPIView,
                       mixins.ListModelMixin):
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         ''' Only allow a user/admin to see his own cart items'''
         return User.objects.filter(pk=self.request.user.pk)
 
     def get_serializer_class(self):
-        return serializers.UserSerializer
+        return serializers.UserGETSerializer
 
     def get(self, request, *args, **kwargs):
         return self.list(request, args, kwargs)
+
+
+class SignupUserView(generics.GenericAPIView,
+                 mixins.CreateModelMixin):
+    permission_classes = (AllowAny,)
+
+    def get_queryset(self):
+        return User.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.UserPOSTSerializer
+
+    def post(self, request, *args, **kwargs):
+        username = request.data['username']
+        password = request.data['password']
+        first_name = request.data['first_name']
+        last_name = request.data['last_name']
+        email = request.data['email']
+        user = User.objects.create_user(
+                                username=username,
+                                email=email,
+                                password=password,
+                                first_name=first_name,
+                                last_name=last_name)
+        return redirect('/login/')
+
+
 
 
 class TagListView(generics.ListAPIView):

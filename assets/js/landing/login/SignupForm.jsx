@@ -1,7 +1,7 @@
 import React from 'react'
 import {FormGroup, Col, Row, FormControl, Button, ControlLabel } from 'react-bootstrap'
 
-import { CSRFToken } from '../csrf/DjangoCSRFToken'
+import { CSRFToken } from '../../csrf/DjangoCSRFToken'
 
 // Basic Login Form
 const SignupForm = React.createClass({
@@ -27,7 +27,7 @@ const SignupForm = React.createClass({
   render() {
     return (
       <div id="signup-form">
-        <form method="post" action="/signup/">
+        <form method="post" action="/api/signup/">
           <CSRFToken />
           <FormGroup controlId="first_name">
             <ControlLabel>First Name</ControlLabel>
