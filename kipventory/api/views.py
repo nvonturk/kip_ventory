@@ -54,28 +54,32 @@ class ItemView(generics.GenericAPIView,
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)
-        #print(serializers.ItemGETSerializer(self.get_queryset()[0]).data)
-        '''
+        
         items = self.get_queryset()
         toReturn = []
         for item in items:
             serializer = serializers.ItemGETSerializer(item)
             itemToAdd = serializer.data
-            print(request)
-            requests = models.Request.objects.filter(item=item.id, status="O") #requester=user
+            print(request.user)
+            requests = None
+            if request.user.is_staff:
+                requests = models.Request.objects.filter(item=item.id, status="O")
+            else:
+                requests = models.Request.objects.filter(item=item.id, status="O", requester=request.user.pk)
+
             if requests is not None:
                 requestsToAdd = []
-                for request in requests:
-                    reqSerializer = serializers.ItemRequestGETSerializer(request)
+                for req in requests:
+                    reqSerializer = serializers.ItemRequestGETSerializer(req)
                     requestsToAdd.append(reqSerializer.data)
-                itemToAdd["request"] = requestsToAdd
-            print(itemToAdd)
+                print(itemToAdd)
+                itemToAdd["request_set"] = requestsToAdd
+                print(itemToAdd)
             toReturn.append(itemToAdd)
 
-        print(toReturn)
         return Response(toReturn)
-        '''
-        return self.list(request, args, kwargs)
+        
+        #return self.list(request, args, kwargs)
 
     def post(self, request, *args, **kwargs):
         return self.create(request, args, kwargs)

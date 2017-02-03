@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Button, Modal}  from 'react-bootstrap'
 import QuantityBox from './quantitybox'
 import SimpleRequest from './simplerequest'
+import RequestList from './requestlist'
 import $ from "jquery"
 
 import { getCookie } from '../csrf/DjangoCSRFToken'
@@ -68,17 +69,31 @@ class ItemDetailModal extends Component {
       requests = "No outstanding requests."
     }
 
-    //for(var key,request in this.props.item.request_set) {
+    //Todo: make sure it's only returning items for this user
+    //if admin, get all requests
+    //count doesn't matter, b/c there should never really be that many outstanding requests for a single item at one time
+    else {
+      var outstandingRequests = this.props.item.request_set.filter(function(request){
+        return "O" == request.status;
+      });
+      requests = <RequestList simple requests={outstandingRequests} />
+    }
+    /*
     for (var i = 0; i < this.props.item.request_set.length; i++) {
       var request = this.props.item.request_set[i];
       console.log(request);
-      var requestInfo= (
-        <Modal.Header>
-         <SimpleRequest request={request}/>
-         </Modal.Header>
-      )
-      requests.push(requestInfo);
+      if(request.status=='Outstanding') {
+        var requestInfo= (
+          <Modal.Header>
+           <SimpleRequest request={request}/>
+           </Modal.Header>
+        )
+        requests.push(requestInfo);
+      }
+      
+
     }
+    */
 
     return (
       <div>

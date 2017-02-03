@@ -16,7 +16,8 @@ function SimpleRequest(props){
   if(label == null){
     console.log("Label equals null for " + props.request.status);
   }
-  return <div> <b>Quantity:</b> {props.request.quantity}        <b>Opened:</b> {props.request.date_open.substring(0,9)} {label}</div>
+
+  return <div><b>Requester:</b> {props.request.requester.username} <b>Quantity:</b> {props.request.quantity}        <b>Opened:</b> {props.request.date_open.substring(0,9)} {label}</div>
 }
 
 export default SimpleRequest
