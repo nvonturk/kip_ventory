@@ -7,7 +7,6 @@ import Select from 'react-select';
 class RequestSelectFilter extends Component{
     constructor(props) {
       super(props);
-      console.log(props.requests);
       this.state = {
         value: props.value,
       };

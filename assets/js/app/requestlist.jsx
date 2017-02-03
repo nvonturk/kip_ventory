@@ -15,7 +15,7 @@ class RequestList extends Component{
 
   render(){
     var list = [];
-    
+
     this.props.requests.forEach(function(request){
       var label = null;
       if(request.status=="O") {
@@ -31,7 +31,7 @@ class RequestList extends Component{
       if(label == null){
         console.log("Label equals null for " + request.status);
       }
-      list.push(<ListGroupItem>{request.item.name} Opened: {request.date_open} {label}</ListGroupItem>)
+      list.push(<ListGroupItem><b>Item:</b> {request.item.name}   <b>Quantity:</b> {request.quantity}        <b>Opened:</b> {request.date_open.substring(0,9)} {label}</ListGroupItem>)
     });
     return(
       <ListGroup>

@@ -46,7 +46,6 @@ class UserRequestContainer extends Component {
       value : type.value,
       requests: this.filterRequests(type.value)
     });
-    // this.filterRequests(this.state.value);
   }
 
 
@@ -72,7 +71,6 @@ class UserRequestContainer extends Component {
   render() {
     return (
       <div>
-      Hello World
         <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
         <RequestList requests={this.state.requests} />
       </div>
