@@ -26,9 +26,6 @@ class ItemPOSTSerializer(serializers.ModelSerializer):
         model = models.Item
         fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags']
 
-
-
-
 class CartItemGETSerializer(serializers.ModelSerializer):
     item = ItemGETSerializer(read_only=True, many=False)
     owner = UserSerializer(read_only=True, many=False)

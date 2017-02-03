@@ -1,8 +1,11 @@
 import React from 'react'
+import UserRequestContainer from "./userrequestcontainer.jsx"
 
 const Requests = React.createClass({
   render() {
-    return <div>Requests</div>
+    return <div>
+      <UserRequestContainer/>
+    </div>
   }
 })
 
