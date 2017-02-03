@@ -1,7 +1,7 @@
 import React from 'react'
 import {FormGroup, Col, Row, FormControl, Button, ControlLabel } from 'react-bootstrap'
 
-import { CSRFToken } from '../csrf/DjangoCSRFToken'
+import { CSRFToken } from '../../csrf/DjangoCSRFToken'
 
 // Basic Login Form
 const SignupForm = React.createClass({

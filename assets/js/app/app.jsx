@@ -7,10 +7,7 @@ import Home from './Home'
 import Requests from './Requests'
 import Profile from './Profile'
 
-import AppContainer from './AppContainer'
-import CartContainer from '../cart/CartContainer'
-
-import LoginSignupContainer from '../login/LoginSignupContainer'
+import CartContainer from './cart/CartContainer'
 
 render((
   <Router history={browserHistory}>
