@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 import { Well, Panel, Row, Col, FormGroup, FormControl, ControlLabel, Button } from 'react-bootstrap'
+import $ from 'jquery'
+import { getCookie } from '../csrf/DjangoCSRFToken'
 
 
 class CartItem extends Component {
@@ -13,6 +15,7 @@ class CartItem extends Component {
   }
 
   handleChange(event) {
+    console.log(event.target.value)
     this.setState({ [event.target.name]: event.target.value });
   }
 
@@ -21,6 +24,31 @@ class CartItem extends Component {
       console.log("No effect.")
     } else {
       console.log("Changing cart item quantity to: " + this.state.quantity)
+      this.props.cartItem['quantity'] = this.state.quantity
+      console.log(this.props.cartItem)
+
+      var thisobj = this
+      $.ajax({
+      url:"/api/cart/",
+      type: "POST",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      data: {
+        item: thisobj.props.cartItem.item.id,
+        owner: thisobj.props.cartItem.owner.id,
+        quantity: thisobj.state.quantity
+      },
+      success:function(response){},
+      complete:function(){},
+      error:function (xhr, textStatus, thrownError){
+          alert("error doing something");
+          console.log(xhr)
+          console.log(textStatus)
+          console.log(thrownError)
+      }
+  });
+
     }
   }
 
