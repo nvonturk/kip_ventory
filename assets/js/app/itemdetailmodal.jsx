@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Button, Modal}  from 'react-bootstrap'
 import QuantityBox from './quantitybox'
+import SimpleRequest from './simplerequest'
 import $ from "jquery"
 
 import { getCookie } from '../csrf/DjangoCSRFToken'
@@ -73,8 +74,7 @@ class ItemDetailModal extends Component {
       console.log(request);
       var requestInfo= (
         <Modal.Header>
-         <p>Request quantity {request.quantity}</p>
-         <p>Request date {request.date_open}</p>
+         <SimpleRequest request={request}/>
          </Modal.Header>
       )
       requests.push(requestInfo);

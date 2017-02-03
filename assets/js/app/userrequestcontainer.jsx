@@ -57,15 +57,15 @@ class UserRequestContainer extends Component {
   }
 
   filterRequests(option){
+    var new_reqs;
     if(option == "all"){
-        var new_reqs = this.state.all_requests.slice();
-        return new_reqs;
+        new_reqs = this.state.all_requests.slice();
     } else{
-        var new_reqs = this.state.all_requests.filter(function(request){
+        new_reqs = this.state.all_requests.filter(function(request){
           return option == request.status;
         });
-        return new_reqs;
     }
+    return new_reqs;
   }
 
   render() {
