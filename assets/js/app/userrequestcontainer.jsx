@@ -10,16 +10,19 @@ class UserRequestContainer extends Component {
     super(props);
     this.state = {
       requests:[],
-      types: [
-        "All",
-        "Oustanding",
-        "Approved",
-        "Denied",
-      ],
-      selected_type: "Outstanding"
+      all_requests:[],
+      options: [
+                { value: 'O', label: 'Outstanding' },
+                { value: 'A', label: 'Approved' },
+                { value: 'D', label: 'Denied' },
+                { value: 'all', label: 'All' }
+            ],
+      value: "all",
+      placeholder: "Request Types"
     };
     this.setRequests = this.setRequests.bind(this);
     this.setFilter = this.setFilter.bind(this);
+
 
 
     this.getMyRequests();
@@ -31,33 +34,47 @@ class UserRequestContainer extends Component {
     });
   }
 
-  setFilter(type){
+  setAllRequests(requests){
     this.setState({
-      selected_type : type
+      all_requests: requests
     });
+  }
+
+  setFilter(type){
+    console.log(type);
+    this.setState({
+      value : type.value,
+      requests: this.filterRequests(type.value)
+    });
+    // this.filterRequests(this.state.value);
   }
 
 
   getMyRequests(){
     var thisobj = this;
     $.getJSON("/api/requests.json", function(data){
+      thisobj.setAllRequests(data);
       thisobj.setRequests(data);
     });
   }
 
-  handleFilterSelect(selected){
-
+  filterRequests(option){
+    if(option == "all"){
+        var new_reqs = this.state.all_requests.slice();
+    } else{
+        var new_reqs = this.state.all_requests.filter(function(request){
+          return option == request.status;
+        });
+        return new_reqs;
+    }
   }
-
-
-
 
   render() {
     return (
       <div>
       Hello World
-        <RequestSelectFilter types={this.state.types} selectHandler={this.setFilter} />
-        <RequestList requests={this.state.requests} selected_type={this.state.selected_type}/>
+        <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
+        <RequestList requests={this.state.requests} />
       </div>
     );
   }

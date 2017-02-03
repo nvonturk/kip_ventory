@@ -6,29 +6,32 @@ import { ListGroup, ListGroupItem, Label } from 'react-bootstrap'
 class RequestList extends Component{
   constructor(props) {
     super(props);
+    this.state = {
+      requests: [],
+    };
 
   };
 
+
   render(){
     var list = [];
-
+    
     this.props.requests.forEach(function(request){
       var label = null;
-      if(request.item.status=="Outstanding") {
-        label = <Label bsStyle="warning">Outstanding</Label>
+      if(request.status=="O") {
+        var label = <Label className="pull-right" bsStyle="warning">Outstanding</Label>
+      }
+      if(request.status=="A") {
+        var label = <Label className="pull-right" bsStyle="success">Approved</Label>
+      }
+      if(request.status=="D") {
+        var label = <Label className="pull-right" bsStyle="danger">Denied</Label>
+      }
 
-      }
-      if(request.item.status=="Approved") {
-        label = <Label bsStyle="success">Outstanding</Label>
-
-      }
-      if(request.item.status=="Denied") {
-        label = <Label bsStyle="danger">Outstanding</Label>
-      }
       if(label == null){
         console.log("Label equals null for " + request.status);
       }
-      list.push(<ListGroupItem>{request.item.name} {request.status} {label}</ListGroupItem>)
+      list.push(<ListGroupItem>{request.item.name} Opened: {request.date_open} {label}</ListGroupItem>)
     });
     return(
       <ListGroup>
