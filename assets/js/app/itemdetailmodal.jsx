@@ -37,7 +37,6 @@ class ItemDetailModal extends Component {
     url:"/api/cart/",
     type: "POST",
     beforeSend: function(request) {
-      console.log()
       request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
     },
     data: {

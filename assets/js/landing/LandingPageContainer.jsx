@@ -1,6 +1,5 @@
 import React from 'react'
 
-import LandingPage from './LandingPage'
 
 const LandingPageContainer = React.createClass({
   getInitialState() {
@@ -8,7 +7,11 @@ const LandingPageContainer = React.createClass({
   },
 
   render() {
-    return <LandingPage />;
+    return (
+      <div>
+        {this.props.children}
+      </div>
+    )
   }
 });
 

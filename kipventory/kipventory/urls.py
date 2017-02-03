@@ -26,10 +26,6 @@ urlpatterns = [
     # URLs for our REST API endpoints
     url(r'^api/', include('api.urls')),
 
-    # Login page
-    url(r'^login/?', auth_views.login, {'template_name': 'kipventory/login.html'}, name='login'),
-    url(r'^logout/?', auth_views.logout, name='logout'),
-
     # Main view for our Single Page App (React, client side)
     url(r'^app/?', views.app, name='app'),
 

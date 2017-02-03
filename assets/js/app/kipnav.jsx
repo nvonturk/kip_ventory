@@ -13,7 +13,7 @@ const KipNav = React.createClass({
   render() {
     return (
       <div id="container">
-        <Navbar collapseOnSelect inverse>
+        <Navbar staticTop collapseOnSelect inverse>
           <Navbar.Header>
             <Navbar.Brand>
               <Link to="/app">kip-ventory</Link>
@@ -33,7 +33,7 @@ const KipNav = React.createClass({
               </LinkContainer>
             </Nav>
             <Nav pullRight>
-              <NavItem eventKey={4} onClick={this.goToURL('/logout/')}>Logout</NavItem>
+              <NavItem eventKey={4} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>

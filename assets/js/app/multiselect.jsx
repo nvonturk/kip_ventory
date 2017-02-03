@@ -9,7 +9,7 @@ import 'react-select/dist/react-select.css'
 class MultiSelect extends Component {
   constructor(props) {
     super(props);
-    
+
     this.state = {
       value: props.value,
     };
