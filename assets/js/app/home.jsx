@@ -4,7 +4,7 @@ import GridContainer from './gridcontainer'
 const Home = React.createClass({
   render() {
     return (
-    <div>        
+    <div>
     	<GridContainer/>
 	</div>
 	)

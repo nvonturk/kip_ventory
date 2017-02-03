@@ -40,6 +40,7 @@ class ItemPOSTSerializer(serializers.ModelSerializer):
 
 
 
+
 class CartItemGETSerializer(serializers.ModelSerializer):
     item = ItemGETSerializer(read_only=True, many=False)
     owner = UserGETSerializer(read_only=True, many=False)

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics, mixins
 from rest_framework import status
+# from rest_framework import pagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view
@@ -12,21 +13,6 @@ from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
 
 from . import models, serializers
-
-
-@api_view(['POST'])
-def login_view(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        login(request, user)
-        return redirect('/app/')
-    else:
-        # Return an 'invalid login' error message.
-        from django.contrib import messages
-        messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
-        return redirect('/login/', login_warning='invalid credentials')
 
 
 # Create your views here.
@@ -53,6 +39,7 @@ class ItemView(generics.GenericAPIView,
                 queryset = queryset.filter(tags__name=tag)
 
         return queryset
+
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -144,6 +131,20 @@ class RequestView(generics.GenericAPIView,
         return self.destroy(request, *args, **kwargs)
 
 
+
+@api_view(['POST'])
+def login_view(request):
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        login(request, user)
+        return redirect('/app/')
+    else:
+        # Return an 'invalid login' error message.
+        from django.contrib import messages
+        messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
+        return redirect('/login/', login_warning='invalid credentials')
 
 
 class CurrentUserView(generics.GenericAPIView,
