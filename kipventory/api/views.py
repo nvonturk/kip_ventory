@@ -94,7 +94,6 @@ class CartView(generics.GenericAPIView,
         return self.create(request, args, kwargs)
 
     def put(self, request, *args, **kwargs):
-        print(request.data)
         return self.update(request, args, kwargs)
 
     def delete(self, request, *args, **kwargs):
