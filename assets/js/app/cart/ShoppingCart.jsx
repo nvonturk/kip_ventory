@@ -1,6 +1,7 @@
 import React from 'react'
-import { Row, Col } from 'react-bootstrap'
-
+import { Row, Col, Button } from 'react-bootstrap'
+import $ from 'jquery'
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 import CartItem from './CartItem'
 
 const ShoppingCart = React.createClass({
@@ -16,9 +17,14 @@ const ShoppingCart = React.createClass({
         <Col xs={10} xsOffset={1}>
         {this.props.cartItems.map(function(cartItem, i) {
           return (
-            <CartItem key={i} cartItem={cartItem} />
+            <div key={i}>
+            <Row>
+              <CartItem cartItem={cartItem} />
+              <Button bsStyle="primary" onClick={() => this.props.reRender(cartItem.id)} className="deleteButton">Delete</Button>
+            </Row>
+            </div>
           )
-        })}
+        }.bind(this))}
         </Col>
       </Row>
     );
