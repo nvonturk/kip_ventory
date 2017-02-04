@@ -20,29 +20,43 @@ class CartContainer extends Component {
     this.getCartItems()
   }
 
-  makeRequest(cartItem){
+  makeRequest(cartItem, comment){
+    // CHeck to make sure the quantity is possible
     var thisobj = this
-    $.ajax({
-    url:"/api/requests/",
-    type: "POST",
-    beforeSend: function(request) {
-      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-    },
-    data: {
-      item: cartItem.item.id,
-      requester: cartItem.owner.id,
-      quantity: cartItem.quantity
-    },
-    success:function(response){},
-    complete:function(){},
-    error:function (xhr, textStatus, thrownError){
-        alert("error doing something");
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
+    console.log(cartItem.item.quantity)
+    console.log(cartItem.quantity)
+    if(cartItem.item.quantity >= cartItem.quantity){
+      var d = new Date();
+      var n = d.toISOString();
+      console.log(d)
+      console.log(n)
+      $.ajax({
+      url:"/api/requests/",
+      type: "POST",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      data: {
+        item: cartItem.item.id,
+        requester: cartItem.owner.id,
+        quantity: cartItem.quantity,
+        open_reason: comment,
+        date_open: n
+      },
+      success:function(response){},
+      complete:function(){},
+      error:function (xhr, textStatus, thrownError){
+          alert("error doing something");
+          console.log(xhr)
+          console.log(textStatus)
+          console.log(thrownError)
+      }
+  });
+      thisobj.reRender(cartItem.id)
     }
-});
-    thisobj.reRender(cartItem.id)
+    else {
+      alert("Quantity Exceeds Capacity. Current quantity for " + cartItem.item.name + " is: " + cartItem.item.quantity)
+    }
   }
 
   reRender(itemID) {
@@ -69,7 +83,6 @@ class CartContainer extends Component {
     }
     });
 
-    // this.getCartItems()
   }
 
   getCartItems() {

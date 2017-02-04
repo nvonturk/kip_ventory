@@ -16,14 +16,14 @@ class RequestList extends Component{
 
   render(){
     var list = [];
-    
+
     if(this.props.simple) {
-      this.props.requests.forEach(function(request){
-        list.push(<ListGroupItem><SimpleRequest request={request}/></ListGroupItem>);
+      this.props.requests.map(function(request, i){
+        list.push(<ListGroupItem  key={i}><SimpleRequest request={request}/></ListGroupItem>);
       });
     } else {
-      this.props.requests.forEach(function(request){
-        list.push(<ListGroupItem><Request request={request}/></ListGroupItem>);
+      this.props.requests.map(function(request, i){
+        list.push(<ListGroupItem key={i}><Request request={request}/></ListGroupItem>);
       });
     }
 
