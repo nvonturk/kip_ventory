@@ -3,6 +3,9 @@ import React, { Component } from 'react'
 class AdminRequestContainer extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+
+    };
 
   }
 
@@ -16,3 +19,6 @@ class AdminRequestContainer extends Component {
 
 
 }
+
+
+export default AdminRequestContainer

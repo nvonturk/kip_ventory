@@ -11,4 +11,4 @@ const Approvals = React.createClass({
   }
 })
 
-export default Requests;
+export default Approvals;
