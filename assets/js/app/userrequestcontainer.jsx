@@ -41,7 +41,6 @@ class UserRequestContainer extends Component {
   }
 
   setFilter(type){
-    console.log(type);
     this.setState({
       value : type.value,
       requests: this.filterRequests(type.value)
@@ -60,6 +59,7 @@ class UserRequestContainer extends Component {
   filterRequests(option){
     if(option == "all"){
         var new_reqs = this.state.all_requests.slice();
+        return new_reqs;
     } else{
         var new_reqs = this.state.all_requests.filter(function(request){
           return option == request.status;

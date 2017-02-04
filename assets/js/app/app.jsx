@@ -5,7 +5,9 @@ import { Router, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
 import Home from './Home'
 import Requests from './Requests'
+// import Approvals from './Approvals'
 import Profile from './Profile'
+
 
 import CartContainer from './cart/CartContainer'
 
@@ -18,6 +20,7 @@ render((
       <Route path="requests" component={Requests} />
       <Route path="profile" component={Profile} />
       <Route path="cart" component={CartContainer} />
+      {/*}<Route path="approvals" component={Approvals} />*/}
     </Route>
 
   </Router>
