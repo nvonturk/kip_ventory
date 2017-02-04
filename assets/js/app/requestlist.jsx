@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { ListGroup, ListGroupItem, Label } from 'react-bootstrap'
-
+import Request from './request'
+import SimpleRequest from './simplerequest'
 
 
 class RequestList extends Component{
@@ -15,24 +16,17 @@ class RequestList extends Component{
 
   render(){
     var list = [];
+    
+    if(this.props.simple) {
+      this.props.requests.forEach(function(request){
+        list.push(<ListGroupItem><SimpleRequest request={request}/></ListGroupItem>);
+      });
+    } else {
+      this.props.requests.forEach(function(request){
+        list.push(<ListGroupItem><Request request={request}/></ListGroupItem>);
+      });
+    }
 
-    this.props.requests.forEach(function(request){
-      var label = null;
-      if(request.status=="O") {
-        var label = <Label className="pull-right" bsStyle="warning">Outstanding</Label>
-      }
-      if(request.status=="A") {
-        var label = <Label className="pull-right" bsStyle="success">Approved</Label>
-      }
-      if(request.status=="D") {
-        var label = <Label className="pull-right" bsStyle="danger">Denied</Label>
-      }
-
-      if(label == null){
-        console.log("Label equals null for " + request.status);
-      }
-      list.push(<ListGroupItem><b>Item:</b> {request.item.name}   <b>Quantity:</b> {request.quantity}        <b>Opened:</b> {request.date_open.substring(0,9)} {label}</ListGroupItem>)
-    });
     return(
       <ListGroup>
         {list}

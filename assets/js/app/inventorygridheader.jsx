@@ -1,20 +1,24 @@
 import React from 'react'
 import SearchBar from './searchbar'
-import { Button } from 'react-bootstrap'
+import { Button, Grid, Row, Col } from 'react-bootstrap'
 import SimpleRow from './simplerow'
 import TagMultiSelect from './tagmultiselect'
 
 function InventoryGridHeader(props) {
 	var columnContents = [
-		<Button onClick={props.getAllItemsCallback}>Get all items</Button>,
 		<SearchBar onUserInput={props.searchHandler}/>,
-		<TagMultiSelect tagsSelected={props.tagsSelected} tagHandler={props.tagHandler}/>
+		<h1> Inventory </h1>,
+		<TagMultiSelect className="tag-multi-select" tagsSelected={props.tagsSelected} tagHandler={props.tagHandler}/>
 	];
 
 	return (
-		<div>
-	      	<SimpleRow columnContents={columnContents}/>
-      	</div>
+		<Grid>
+		    <Row className="show-grid">
+		      <Col xs="3">{columnContents[0]}</Col>
+		      <Col xs="6">{columnContents[1]}</Col>
+		      <Col xs="3">{columnContents[2]}</Col>
+		    </Row>
+    	</Grid>
 	)
 }
 

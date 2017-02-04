@@ -12,6 +12,7 @@ class Tag(models.Model):
 
 class Item(models.Model):
     name        = models.CharField(max_length=100, unique=True)
+    photo_src   = models.CharField(max_length=100, blank=True, default="")
     location    = models.CharField(max_length=100)
     model       = models.CharField(max_length=100)
     quantity    = models.IntegerField(default=0)

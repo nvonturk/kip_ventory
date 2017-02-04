@@ -28,16 +28,21 @@ class ItemView(generics.GenericAPIView,
         tags = self.request.query_params.get("tags")
         q_objs = Q()
 
-        if search is not None:
-            q_objs |= Q(name__icontains=search) | Q(model__icontains=search)
+        # Search filter
+        if search is not None and search!='':
+            q_objs &= (Q(name__icontains=search) | Q(model__icontains=search))
 
         queryset = models.Item.objects.filter(q_objs).distinct()
 
+        # Tags filter
         if tags is not None and tags != '':
             tagsArray = tags.split(",")
             for tag in tagsArray:
                 queryset = queryset.filter(tags__name=tag)
 
+        # how to filter to only include some requests?
+        #queryset.request_set.filter(status="O") #not correct
+      
         return queryset
 
 
@@ -49,7 +54,29 @@ class ItemView(generics.GenericAPIView,
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)
-        return self.list(request, args, kwargs)
+        
+        items = self.get_queryset()
+        toReturn = []
+        for item in items:
+            serializer = serializers.ItemGETSerializer(item)
+            itemToAdd = serializer.data
+            requests = None
+            if request.user.is_staff:
+                requests = models.Request.objects.filter(item=item.id, status="O")
+            else:
+                requests = models.Request.objects.filter(item=item.id, status="O", requester=request.user.pk)
+
+            if requests is not None:
+                requestsToAdd = []
+                for req in requests:
+                    reqSerializer = serializers.ItemRequestGETSerializer(req)
+                    requestsToAdd.append(reqSerializer.data)
+                itemToAdd["request_set"] = requestsToAdd
+            toReturn.append(itemToAdd)
+
+        return Response(toReturn)
+        
+        #return self.list(request, args, kwargs)
 
     def post(self, request, *args, **kwargs):
         return self.create(request, args, kwargs)

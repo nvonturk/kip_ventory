@@ -15,7 +15,7 @@ class RequestSelectFilter extends Component{
     render(){
       return (
         <div>
-          <Select value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
+          <Select value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} clearable={false}/>
         </div>
       )
     }

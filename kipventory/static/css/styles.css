@@ -18,3 +18,61 @@
 {
     cursor: pointer;
 }
+
+.tag-multi-select {
+  margin: 10px 10px 10px 10px;
+}
+
+body, html {
+    height: 100%;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(rgb(104, 145, 162), rgb(12, 97, 33));
+}
+/**
+ * Profile image component
+ */
+.profile-header-container{
+    margin: 10px;
+    text-align: center;
+}
+
+.profile-header-img {
+    padding: 5px;
+}
+
+.profile-header-img > img.img-circle {
+    width: 100px;
+    height: 100px;
+    border: 2px solid #51D2B7;
+    border-radius: 5%;
+}
+
+.profile-header {
+    margin-top: 43px;
+}
+
+/**
+ * Ranking component
+ */
+.rank-label-container {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.rank-label {
+    /*background-color: rgb(81, 210, 183);*/
+    /*padding: 5px 10px 5px 10px;*/
+    border-radius: 5%;
+    font-size: 20px;
+}
+
+.rect {
+	border:5px solid #d3d3d3;
+	border-radius: 5%;
+	background-color: white;
+	width: 200px;
+}
+
+.rect:hover {
+	background-color: gray;
+}

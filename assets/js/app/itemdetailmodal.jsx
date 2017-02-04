@@ -1,8 +1,10 @@
 import React, { Component } from 'react'
 import { Button, Modal}  from 'react-bootstrap'
 import QuantityBox from './quantitybox'
+import SimpleRequest from './simplerequest'
+import RequestList from './requestlist'
 import $ from "jquery"
-
+import Item from './item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 
 class ItemDetailModal extends Component {
@@ -10,7 +12,8 @@ class ItemDetailModal extends Component {
     super(props);
     this.state = {
       quantity:0,
-    	showModal: false
+    	showModal: false,
+      requests: []
     };
     this.close = this.close.bind(this);
     this.open = this.open.bind(this);
@@ -56,16 +59,26 @@ class ItemDetailModal extends Component {
   }
 
 
+
   render() {
+
+    var requests=[];
+
+    if(this.props.item.request_set.length == 0) {
+      requests = "No outstanding requests."
+    }
+
+    else {
+      var outstandingRequests = this.props.item.request_set.filter(function(request){
+        return "O" == request.status;
+      });
+      requests = <RequestList simple requests={outstandingRequests} />
+    }
+
     return (
       <div>
-        <Button
-          bsStyle="primary"
-          bsSize="large"
-          onClick={this.open}
-        >
-          {this.props.item.name}
-        </Button>
+
+        <Item onClick={this.open} item={this.props.item}/>
 
         <Modal show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>
@@ -74,7 +87,13 @@ class ItemDetailModal extends Component {
           <Modal.Body>
             <p>Name: {this.props.item.name}</p>
             <p>Model No: {this.props.item.model}</p>
-            <p>User: {this.props.user.id}</p>
+            <p>Description: {this.props.item.description}</p>
+            <p>Quantity Available: {this.props.item.quantity}</p>
+            <p>Location: {this.props.item.location}</p>
+          </Modal.Body>
+          <Modal.Body>
+            <h3>Outstanding Requests</h3>
+            {requests}
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={this.addToCart}>Add to Cart</Button>
