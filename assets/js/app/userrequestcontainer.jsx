@@ -2,8 +2,7 @@ import React, { Component } from 'react'
 import $ from "jquery"
 import RequestSelectFilter from './requestselectfilter'
 import RequestList from './requestlist'
-
-
+import { getCookie } from '../csrf/DjangoCSRFToken'
 
 class UserRequestContainer extends Component {
   constructor(props) {
@@ -22,6 +21,7 @@ class UserRequestContainer extends Component {
     };
     this.setRequests = this.setRequests.bind(this);
     this.setFilter = this.setFilter.bind(this);
+    this.deleteRequest = this.deleteRequest.bind(this);
 
 
 
@@ -38,6 +38,32 @@ class UserRequestContainer extends Component {
     this.setState({
       all_requests: requests
     });
+  }
+
+  deleteRequest(request){
+    var thisobj = this
+    $.ajax({
+    url:"/api/requests/" + request.id,
+    type: "DELETE",
+    beforeSend: function(request) {
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    success:function(response){},
+    complete:function(){      var newrequests = thisobj.state.requests.filter(req => (req.id != request.id))
+          console.log("DELETED SUCCESSFULLY")
+          console.log(newrequests)
+          thisobj.setState({
+            requests: newrequests
+          })
+        },
+    error:function (xhr, textStatus, thrownError){
+        alert("error doing something");
+        console.log(xhr)
+        console.log(textStatus)
+        console.log(thrownError)
+    }
+    });
+
   }
 
   setFilter(type){
@@ -72,7 +98,7 @@ class UserRequestContainer extends Component {
     return (
       <div>
         <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
-        <RequestList requests={this.state.requests} />
+        <RequestList deleteRequest={this.deleteRequest} requests={this.state.requests} />
       </div>
     );
   }
