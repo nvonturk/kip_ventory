@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics, mixins
 from rest_framework import status
+
 # from rest_framework import pagination
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view
@@ -42,7 +44,7 @@ class ItemView(generics.GenericAPIView,
 
         # how to filter to only include some requests?
         #queryset.request_set.filter(status="O") #not correct
-      
+
         return queryset
 
 
@@ -54,7 +56,7 @@ class ItemView(generics.GenericAPIView,
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)
-        
+
         items = self.get_queryset()
         toReturn = []
         for item in items:
@@ -75,13 +77,19 @@ class ItemView(generics.GenericAPIView,
             toReturn.append(itemToAdd)
 
         return Response(toReturn)
-        
+
         #return self.list(request, args, kwargs)
 
     def post(self, request, *args, **kwargs):
+        if not self.request.user.is_staff:
+            content = {'error': "you're not authorized to modify items."}
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
         return self.create(request, args, kwargs)
 
     def delete(self, request, *args, **kwargs):
+        if not self.request.user.is_staff:
+            content = {'error': "you're not authorized to modify items."}
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
         return self.destroy(request, args, kwargs)
 
 
@@ -137,6 +145,8 @@ class RequestView(generics.GenericAPIView,
 
     def get_queryset(self):
         ''' Only allow a user/admin to see his own cart items'''
+        if self.request.user.is_staff:
+            return models.Request.objects.all()
         return models.Request.objects.filter(requester__pk=self.request.user.pk)
 
     def get_serializer_class(self):
@@ -170,7 +180,7 @@ def login_view(request):
         # Return an 'invalid login' error message.
         from django.contrib import messages
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
-        return redirect('/login/', login_warning='invalid credentials')
+        return redirect('/')
 
 
 class CurrentUserView(generics.GenericAPIView,

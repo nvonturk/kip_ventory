@@ -2,7 +2,7 @@ import React from 'react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 
-import {Row, Col, Button, Panel, Well, Nav, NavItem} from 'react-bootstrap';
+import {Button, Panel, Well, Nav, NavItem} from 'react-bootstrap';
 
 
 
@@ -42,13 +42,9 @@ const LoginSignupContainer = React.createClass({
   render() {
     return (
       <div id="login-signup">
-        <Row>
-          <Col xs={10} xsOffset={1} sm={10} smOffset={1} md={4} mdOffset={4} lg={4} lgOffset={4}>
-            <Panel header={this.getPanelHeader()}>
-              {this.getPanelContent()}
-            </Panel>
-          </Col>
-        </Row>
+        <Panel header={this.getPanelHeader()}>
+          {this.getPanelContent()}
+        </Panel>
       </div>
     );
   }
