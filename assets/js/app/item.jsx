@@ -7,7 +7,7 @@ function Item(props) {
 	            	<span className="rank-label">{props.item.name}</span>
 	            </div>   
 	    		<div className="profile-header-img">
-	            	<img className="img-circle" src="//lh3.googleusercontent.com/-6V8xOA6M7BA/AAAAAAAAAAI/AAAAAAAAAAA/rzlHcD0KYwo/photo.jpg?sz=120" />
+	            	<img className="img-circle" src={props.item.photo_src} />
 	            </div>
 	        </div> 
     )

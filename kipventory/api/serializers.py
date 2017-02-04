@@ -28,12 +28,12 @@ class ItemGETSerializer(serializers.ModelSerializer):
     request_set = ItemRequestGETSerializer(read_only=True, many=True)
     class Meta:
         model = models.Item
-        fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags', 'request_set']
+        fields = ['id', 'name', 'photo_src', 'location', 'model', 'quantity', 'description', 'tags', 'request_set']
 
 class ItemPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Item
-        fields = ['id', 'name', 'location', 'model', 'quantity', 'description', 'tags']
+        fields = ['id', 'name', 'photo_src', 'location', 'model', 'quantity', 'description', 'tags']
 
 class CartItemGETSerializer(serializers.ModelSerializer):
     item = ItemGETSerializer(read_only=True, many=False)
