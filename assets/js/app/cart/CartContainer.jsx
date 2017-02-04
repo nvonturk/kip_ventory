@@ -8,25 +8,30 @@ class CartContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      items: []
+      items: [],
     };
 
     this.getCartItems = this.getCartItems.bind(this);
     this.reRender = this.reRender.bind(this);
+    this.makeRequest = this.makeRequest.bind(this);
   }
 
   componentWillMount() {
     this.getCartItems()
   }
 
-  reRender(id) {
-    console.log("RERENDER")
-    console.log(id)
+  makeRequest(cartItem){
+    var thisobj = this
     $.ajax({
-    url:"/api/cart/" + id,
-    type: "DELETE",
+    url:"/api/requests/",
+    type: "POST",
     beforeSend: function(request) {
       request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    data: {
+      item: cartItem.item.id,
+      requester: cartItem.owner.id,
+      quantity: cartItem.quantity
     },
     success:function(response){},
     complete:function(){},
@@ -37,19 +42,46 @@ class CartContainer extends Component {
         console.log(thrownError)
     }
 });
-    this.getCartItems()
+    thisobj.reRender(cartItem.id)
+  }
+
+  reRender(itemID) {
+    var thisobj = this
+    $.ajax({
+    url:"/api/cart/" + itemID,
+    type: "DELETE",
+    beforeSend: function(request) {
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    success:function(response){},
+    complete:function(){      var items = thisobj.state.items.filter(item => (item.id != itemID))
+          console.log("DELETED SUCCESSFULLY")
+          console.log(items)
+          thisobj.setState({
+            items: items
+          })
+        },
+    error:function (xhr, textStatus, thrownError){
+        alert("error doing something");
+        console.log(xhr)
+        console.log(textStatus)
+        console.log(thrownError)
+    }
+    });
+
+    // this.getCartItems()
   }
 
   getCartItems() {
-    var this_ = this;
+    var thisobj = this
     $.getJSON("/api/cart/.json", function(data) {
-      this_.setState({items: data})
+      thisobj.setState({items: data,})
     });
   }
 
   render() {
     var items = this.state.items
-    return <ShoppingCart reRender={this.reRender} cartItems={items} />
+    return <ShoppingCart reRender={this.reRender} makeRequest={this.makeRequest} cartItems={items} />
   }
 
 }

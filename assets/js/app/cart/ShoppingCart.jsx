@@ -17,14 +17,10 @@ const ShoppingCart = React.createClass({
         <Col xs={10} xsOffset={1}>
         {this.props.cartItems.map(function(cartItem, i) {
           return (
-            <div key={i}>
-            <Row>
-              <CartItem cartItem={cartItem} />
-              <Button bsStyle="primary" onClick={() => this.props.reRender(cartItem.id)} className="deleteButton">Delete</Button>
+            <Row key = {cartItem.id}>
+              <CartItem reRender={this.props.reRender} makeRequest={this.props.makeRequest} cartItem={cartItem} />
             </Row>
-            </div>
-          )
-        }.bind(this))}
+          )}.bind(this))}
         </Col>
       </Row>
     );

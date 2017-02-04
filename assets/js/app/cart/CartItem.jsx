@@ -77,6 +77,10 @@ class CartItem extends Component {
               <Button bsStyle="primary" onClick={this.changeQuantity} className="quantityButton">Update</Button>
             </Col>
           </Row>
+          <Row>
+            <Button bsStyle="primary" onClick={() => this.props.reRender(this.props.cartItem.id)} className="deleteButton">Delete</Button>
+            <Button bsStyle="primary" onClick={() => this.props.makeRequest(this.props.cartItem)} className="requestButton">Make Request</Button>
+          </Row>
         </Panel>
       </div>
     );
