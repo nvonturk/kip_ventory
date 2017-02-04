@@ -3,7 +3,7 @@
 }
 
 #login-error-message {
-  color: red;
+  color: white;
 }
 
 .quantityButton {
@@ -12,6 +12,10 @@
 
 #login-signup {
   margin: 50px 0px;
+}
+
+.well {
+  background-color: #485563;
 }
 
 .clickable
@@ -25,8 +29,9 @@
 
 body, html {
     height: 100%;
-    background-repeat: no-repeat;
-    background-image: linear-gradient(rgb(104, 145, 162), rgb(12, 97, 33));
+    /*background-repeat: no-repeat;
+    background-image: linear-gradient(rgb(104, 145, 162), rgb(12, 97, 33));*/
+    /*background-color: #576070;*/
 }
 /**
  * Profile image component
