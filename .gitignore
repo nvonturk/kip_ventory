@@ -58,5 +58,6 @@ tests/report/
 
 .DS_*
 migrations/
-kipventory/static/js/
+static/js/
+media/
 db.sqlite3
