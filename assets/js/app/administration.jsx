@@ -1,7 +1,7 @@
 import React from 'react'
 import AdminRequestContainer from './adminrequestcontainer'
 
-const Approvals = React.createClass({
+const Administration = React.createClass({
   render() {
     return (
       <div>
@@ -11,4 +11,4 @@ const Approvals = React.createClass({
   }
 })
 
-export default Approvals;
+export default Administration;
