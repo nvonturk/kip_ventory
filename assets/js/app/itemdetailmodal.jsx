@@ -4,7 +4,7 @@ import QuantityBox from './quantitybox'
 import SimpleRequest from './simplerequest'
 import RequestList from './requestlist'
 import $ from "jquery"
-
+import Item from './item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 
 class ItemDetailModal extends Component {
@@ -97,13 +97,8 @@ class ItemDetailModal extends Component {
 
     return (
       <div>
-        <Button
-          bsStyle="primary"
-          bsSize="large"
-          onClick={this.open}
-        >
-          {this.props.item.name}
-        </Button>
+
+        <Item onClick={this.open} item={this.props.item}/>
 
         <Modal show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>
