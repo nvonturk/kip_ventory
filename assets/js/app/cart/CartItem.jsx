@@ -8,7 +8,8 @@ class CartItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      quantity: props.cartItem['quantity']
+      quantity: props.cartItem['quantity'],
+      comment: ""
     }
     this.handleChange = this.handleChange.bind(this);
     this.changeQuantity = this.changeQuantity.bind(this);
@@ -52,35 +53,65 @@ class CartItem extends Component {
     }
   }
 
+  getPanelHeader(){
+    return (
+      <div>
+      <Row>
+        <Col xs={2} md={2}>{this.props.cartItem['item']['name']}</Col>
+        <Col xs={6} md={6}>
+          <Well>{this.props.cartItem['item']['description']}</Well>
+        </Col>
+        <Col xs={2} md={2}>
+          <FormGroup controlId="formQuantity">
+            <ControlLabel>Quantity</ControlLabel>
+            <FormControl
+              type="number"
+              name="quantity"
+              value={this.state.quantity}
+              placeholder={this.state.quantity}
+              onChange={this.handleChange}
+            />
+          </FormGroup>
+        </Col>
+        <Col xs={2} md={2}>
+            <Row>
+              <Col xs={12}>
+              <Button bsStyle="primary" block onClick={this.changeQuantity} className="quantityButton">Update</Button>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col xs={12}>
+              <Button bsStyle="primary" block onClick={() => this.props.reRender(this.props.cartItem.id)} className="deleteButton">Delete</Button>
+              </Col>
+            </Row>
+        </Col>
+
+      </Row>
+      </div>
+    )
+
+  }
+
   render() {
     return (
       <div>
-        <Panel header={<h3>{this.props.cartItem['item']['name']}</h3>}>
-          <Row>
-            <Col xs={2} md={2}>{this.props.cartItem['item']['name']}</Col>
-            <Col xs={6} md={6}>
-              <Well>{this.props.cartItem['item']['description']}</Well>
-            </Col>
-            <Col xs={2} md={1}>
-              <FormGroup controlId="formQuantity">
-                <ControlLabel>Quantity</ControlLabel>
-                <FormControl
-                  type="number"
-                  name="quantity"
-                  value={this.state.quantity}
-                  placeholder={this.state.quantity}
-                  onChange={this.handleChange}
-                />
-              </FormGroup>
-            </Col>
-            <Col xs={1} md={1}>
-              <Button bsStyle="primary" onClick={this.changeQuantity} className="quantityButton">Update</Button>
-            </Col>
-          </Row>
-          <Row>
-            <Button bsStyle="primary" onClick={() => this.props.reRender(this.props.cartItem.id)} className="deleteButton">Delete</Button>
-            <Button bsStyle="primary" onClick={() => this.props.makeRequest(this.props.cartItem)} className="requestButton">Make Request</Button>
-          </Row>
+        <Panel collapsible header={this.getPanelHeader()}>
+          <div>
+            <Row>
+            <FormGroup controlId="formOpenComment">
+              <ControlLabel>Comment</ControlLabel>
+              <FormControl
+                type = "text"
+                name="comment"
+                value={this.state.comment}
+                placeholder={this.state.comment}
+                onChange={this.handleChange}
+              />
+            </FormGroup>
+              <Button bsStyle="primary" onClick={() => this.props.makeRequest(this.props.cartItem, this.state.comment)} className="requestButton">Make Request</Button>
+            </Row>
+          </div>
         </Panel>
       </div>
     );
