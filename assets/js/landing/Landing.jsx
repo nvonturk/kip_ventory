@@ -12,7 +12,6 @@ render((
 
     <Route path="/" component={LandingPageContainer}>
       <IndexRoute component={LandingPage} />
-      <Route path="login" component={LoginSignupContainer} />
     </Route>
 
   </Router>

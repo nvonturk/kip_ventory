@@ -58,5 +58,8 @@ tests/report/
 
 .DS_*
 migrations/
+!migrations/__init__.py
+!migrations/0001_initial.py
 kipventory/static/js/
+media/
 db.sqlite3
