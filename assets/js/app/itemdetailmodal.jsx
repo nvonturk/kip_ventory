@@ -62,38 +62,18 @@ class ItemDetailModal extends Component {
 
   render() {
 
-    console.log(this.props.item.request_set);
     var requests=[];
 
     if(this.props.item.request_set.length == 0) {
       requests = "No outstanding requests."
     }
 
-    //Todo: make sure it's only returning items for this user
-    //if admin, get all requests
-    //count doesn't matter, b/c there should never really be that many outstanding requests for a single item at one time
     else {
       var outstandingRequests = this.props.item.request_set.filter(function(request){
         return "O" == request.status;
       });
       requests = <RequestList simple requests={outstandingRequests} />
     }
-    /*
-    for (var i = 0; i < this.props.item.request_set.length; i++) {
-      var request = this.props.item.request_set[i];
-      console.log(request);
-      if(request.status=='Outstanding') {
-        var requestInfo= (
-          <Modal.Header>
-           <SimpleRequest request={request}/>
-           </Modal.Header>
-        )
-        requests.push(requestInfo);
-      }
-      
-
-    }
-    */
 
     return (
       <div>
@@ -109,7 +89,7 @@ class ItemDetailModal extends Component {
             <p>Model No: {this.props.item.model}</p>
             <p>Description: {this.props.item.description}</p>
             <p>Quantity Available: {this.props.item.quantity}</p>
-            <p>User: {this.props.user.id}</p>
+            <p>Location: {this.props.item.location}</p>
           </Modal.Body>
           <Modal.Body>
             <h3>Outstanding Requests</h3>

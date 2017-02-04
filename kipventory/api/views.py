@@ -41,7 +41,7 @@ class ItemView(generics.GenericAPIView,
                 queryset = queryset.filter(tags__name=tag)
 
         # how to filter to only include some requests?
-        #queryset.request_set.filter(status="O")
+        #queryset.request_set.filter(status="O") #not correct
       
         return queryset
 
@@ -60,7 +60,6 @@ class ItemView(generics.GenericAPIView,
         for item in items:
             serializer = serializers.ItemGETSerializer(item)
             itemToAdd = serializer.data
-            print(request.user)
             requests = None
             if request.user.is_staff:
                 requests = models.Request.objects.filter(item=item.id, status="O")
@@ -72,9 +71,7 @@ class ItemView(generics.GenericAPIView,
                 for req in requests:
                     reqSerializer = serializers.ItemRequestGETSerializer(req)
                     requestsToAdd.append(reqSerializer.data)
-                print(itemToAdd)
                 itemToAdd["request_set"] = requestsToAdd
-                print(itemToAdd)
             toReturn.append(itemToAdd)
 
         return Response(toReturn)
