@@ -6,7 +6,7 @@ import KipNav from './KipNav'
 import Home from './Home'
 import Requests from './Requests'
 import Profile from './Profile'
-import Approvals from './Approvals'
+import Administration from './Administration'
 
 
 
@@ -21,7 +21,7 @@ render((
       <Route path="requests" component={Requests} />
       <Route path="profile" component={Profile} />
       <Route path="cart" component={CartContainer} />
-      <Route path="approvals" component={Approvals} />
+      <Route path="administration" component={Administration} />
     </Route>
 
   </Router>
