@@ -59,7 +59,7 @@ class GridContainer extends Component {
   }
 
   filterItems(search, tags) {
-    var url = "api/items.json" + "?search=" + search + "&tags=" + tags;
+    var url = "/api/items.json" + "?search=" + search + "&tags=" + tags;
     console.log(url)
 
     var thisobj = this;
