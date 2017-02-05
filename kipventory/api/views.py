@@ -183,6 +183,26 @@ def login_view(request):
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
         return redirect('/')
 
+class RequestResponseView(generics.GenericAPIView,
+               mixins.ListModelMixin,
+               mixins.RetrieveModelMixin,
+               mixins.CreateModelMixin,
+               mixins.DestroyModelMixin):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        if 'pk' in kwargs.keys():
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, args, kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+
 
 class CurrentUserView(generics.GenericAPIView,
                       mixins.ListModelMixin):
@@ -222,8 +242,6 @@ class SignupUserView(generics.GenericAPIView,
                                 first_name=first_name,
                                 last_name=last_name)
         return redirect('/login/')
-
-
 
 
 class TagListView(generics.ListAPIView):
