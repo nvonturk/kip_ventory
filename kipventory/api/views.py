@@ -159,7 +159,7 @@ class RequestView(generics.GenericAPIView,
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)
-        return self.list(request, args, kwargs)
+        return self.list(request, args, kwargs) #this line throws an error
 
     def post(self, request, *args, **kwargs):
         return self.create(request, args, kwargs)

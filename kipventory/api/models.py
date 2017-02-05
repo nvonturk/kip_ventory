@@ -42,16 +42,16 @@ class Request(models.Model):
     def __str__(self):
         return "{} {}".format(self.requester, self.item)
 
-# class RequestResponse(models.Model):
-#     request         = models.ForeignKey(Request, on_delete=models.CASCADE)
-#     date_closed     = models.DateTimeField(blank=True, null=True)
-#     closed_comment  = models.TextField(max_length=500, blank=True, null=True)
-#     administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
-#     APPROVED = 'A'
-#     DENIED = 'D'
-#     ### Status Choices ###
-#     status_choices      = (
-#         (APPROVED, 'Approved'),
-#         (DENIED, 'Denied'),
-#     )
-#     status          = models.CharField(max_length = 10, choices=status_choices, default=DENIED)
+class RequestResponse(models.Model):
+    request         = models.ForeignKey(Request, on_delete=models.CASCADE)
+    date_closed     = models.DateTimeField(blank=True, null=True)
+    closed_comment  = models.TextField(max_length=500, blank=True, null=True)
+    administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
+    APPROVED = 'A'
+    DENIED = 'D'
+    ### Status Choices ###
+    status_choices      = (
+        (APPROVED, 'Approved'),
+        (DENIED, 'Denied'),
+    )
+    status          = models.CharField(max_length = 10, choices=status_choices, default=DENIED)
