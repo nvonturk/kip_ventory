@@ -6,12 +6,8 @@ function Request(props){
   var html = null;
   var constant_html = getReq(props);
 
-  if(props.request.status == "O"){
-    html = <Button bsStyle="primary" onClick={() => props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>
+  html = <Button bsStyle="primary" onClick={() => props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>
 
-  } else{
-    html = "Put expanded view here";
-  }
   return (<div>
     <Panel collapsible header={constant_html}>
     {html}
