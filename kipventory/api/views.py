@@ -64,9 +64,9 @@ class ItemView(generics.GenericAPIView,
             itemToAdd = serializer.data
             requests = None
             if request.user.is_staff:
-                requests = models.Request.objects.filter(item=item.id, status="O")
+                requests = models.Request.objects.filter(item=item.id)
             else:
-                requests = models.Request.objects.filter(item=item.id, status="O", requester=request.user.pk)
+                requests = models.Request.objects.filter(item=item.id, requester=request.user.pk)
 
             if requests is not None:
                 requestsToAdd = []
