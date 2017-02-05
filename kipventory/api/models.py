@@ -38,21 +38,20 @@ class Request(models.Model):
     quantity        = models.IntegerField()
     date_open       = models.DateTimeField(blank=True)
     open_reason     = models.TextField(max_length=500, blank=True)
+
+    def __str__(self):
+        return "{} {}".format(self.requester, self.item)
+
+class RequestResponse(models.Model):
+    request         = models.ForeignKey(Request, on_delete=models.CASCADE)
     date_closed     = models.DateTimeField(blank=True, null=True)
     closed_comment  = models.TextField(max_length=500, blank=True, null=True)
     administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
-
-    OUTSTANDING = 'O'
     APPROVED = 'A'
     DENIED = 'D'
     ### Status Choices ###
     status_choices      = (
-        (OUTSTANDING, 'Outstanding'),
         (APPROVED, 'Approved'),
         (DENIED, 'Denied'),
     )
-    status          = models.CharField(max_length = 10, choices=status_choices, default=OUTSTANDING)
-
-
-    def __str__(self):
-        return "{} {}".format(self.requester, self.item)
+    status          = models.CharField(max_length = 10, choices=status_choices, default=DENIED)

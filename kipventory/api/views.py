@@ -64,9 +64,9 @@ class ItemView(generics.GenericAPIView,
             itemToAdd = serializer.data
             requests = None
             if request.user.is_staff:
-                requests = models.Request.objects.filter(item=item.id, status="O")
+                requests = models.Request.objects.filter(item=item.id)
             else:
-                requests = models.Request.objects.filter(item=item.id, status="O", requester=request.user.pk)
+                requests = models.Request.objects.filter(item=item.id, requester=request.user.pk)
 
             if requests is not None:
                 requestsToAdd = []
@@ -159,7 +159,7 @@ class RequestView(generics.GenericAPIView,
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)
-        return self.list(request, args, kwargs)
+        return self.list(request, args, kwargs) #this line throws an error
 
     def post(self, request, *args, **kwargs):
         return self.create(request, args, kwargs)
@@ -182,6 +182,51 @@ def login_view(request):
         from django.contrib import messages
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
         return redirect('/')
+
+class RequestResponseView(generics.GenericAPIView,
+               mixins.ListModelMixin,
+               mixins.RetrieveModelMixin,
+               mixins.CreateModelMixin,
+               mixins.DestroyModelMixin):
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        ''' Only allow a user/admin to see his own RequestResponse items'''
+        responsetype = self.request.query_params.get("responsetype")
+
+        if self.request.user.is_staff:
+            if responsetype is not None and responsetype!='':
+                batch = models.RequestResponse.objects.all().filter(status=responsetype)
+            else:
+                batch =  models.RequestResponse.objects.all()
+        else:
+            if responsetype is not None and responsetype!='':
+                batch = models.RequestResponse.objects.filter(requester__pk=self.request.user.pk, status=responsetype)
+            else:
+                batch = models.RequestResponse.objects.filter(requester__pk=self.request.user.pk)
+
+        return batch
+
+
+
+    def get_serializer_class(self):
+        '''Use a smaller representation if we're POSTing'''
+        if self.request.method == "POST":
+            return serializers.RequestResponsePOSTSerializer
+        return serializers.RequestResponseGETSerializer
+
+    def get(self, request, *args, **kwargs):
+        if 'pk' in kwargs.keys():
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, args, kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
 
 
 class CurrentUserView(generics.GenericAPIView,
@@ -222,8 +267,6 @@ class SignupUserView(generics.GenericAPIView,
                                 first_name=first_name,
                                 last_name=last_name)
         return redirect('/login/')
-
-
 
 
 class TagListView(generics.ListAPIView):
