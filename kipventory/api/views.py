@@ -192,9 +192,22 @@ class RequestResponseView(generics.GenericAPIView,
 
     def get_queryset(self):
         ''' Only allow a user/admin to see his own RequestResponse items'''
+        responsetype = self.request.query_params.get("responsetype")
+
         if self.request.user.is_staff:
-            return models.RequestResponse.objects.all()
-        return models.RequestResponse.objects.filter(requester__pk=self.request.user.pk)
+            if responsetype is not None and responsetype!='':
+                batch = models.RequestResponse.objects.all().filter(status=responsetype)
+            else:
+                batch =  models.RequestResponse.objects.all()
+        else:
+            if responsetype is not None and responsetype!='':
+                batch = models.RequestResponse.objects.filter(requester__pk=self.request.user.pk, status=responsetype)
+            else:
+                batch = models.RequestResponse.objects.filter(requester__pk=self.request.user.pk)
+
+        return batch
+
+
 
     def get_serializer_class(self):
         '''Use a smaller representation if we're POSTing'''
