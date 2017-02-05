@@ -50,7 +50,7 @@ const SignupForm = React.createClass({
             <FormControl type="password" value={this.state.password} name="password" placeholder="Password" onChange={this.handleChange} />
           </FormGroup>
           <FormGroup>
-            <Button type="submit" onClick={e=>console.log(this.state)}>Sign up</Button>
+            <Button type="submit" block onClick={e=>console.log(this.state)}>Sign up</Button>
           </FormGroup>
         </form>
       </div>

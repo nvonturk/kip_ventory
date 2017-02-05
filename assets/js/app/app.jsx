@@ -29,6 +29,6 @@ function initialize(userData) {
 
 
 getJSON("/api/currentuser.json", function(data) {
-   var user = data[0]
+   var user = data
    initialize(user)
 })
