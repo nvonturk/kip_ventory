@@ -49,10 +49,11 @@ class CartItemPOSTSerializer(serializers.ModelSerializer):
 
 class RequestGETSerializer(serializers.ModelSerializer):
     requester = UserGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
     item      = ItemGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason', 'status']
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
 
 class RequestPOSTSerializer(serializers.ModelSerializer):
     class Meta:
