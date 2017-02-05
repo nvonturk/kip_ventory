@@ -38,6 +38,9 @@ class Request(models.Model):
     quantity        = models.IntegerField()
     date_open       = models.DateTimeField(blank=True)
     open_reason     = models.TextField(max_length=500, blank=True)
+    date_closed     = models.DateTimeField(blank=True, null=True)
+    closed_comment  = models.TextField(max_length=500, blank=True, null=True)
+    administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
     OUTSTANDING = 'O'
     APPROVED = 'A'
