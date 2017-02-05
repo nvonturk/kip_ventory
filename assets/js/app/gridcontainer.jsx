@@ -11,39 +11,26 @@ class GridContainer extends Component {
     this.state = {
       items:[],
       tagsSelected: [],
-      user: {},
+      user: props.user,
       searchText: ""
     };
 
     this.getItems = this.getItems.bind(this);
     this.setItems = this.setItems.bind(this);
-
-    this.setCurrentUser = this.setCurrentUser.bind(this);
-    this.getCurrentUser = this.getCurrentUser.bind(this);
-
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
     this.filterItems = this.filterItems.bind(this);
 
     this.getItems();
-    this.getCurrentUser();
   }
 
   getItems() {
   	var thisobj = this;
 
   	$.getJSON("/api/items.json", function(data) {
-      console.log(data);
   		thisobj.setItems(data);
   	});
 
-  }
-
-  getCurrentUser() {
-    var thisobj = this;
-    $.getJSON("/api/currentuser.json", function(data) {
-      thisobj.setCurrentUser(data)
-    });
   }
 
   handleSearch(text) {
@@ -66,15 +53,6 @@ class GridContainer extends Component {
     $.getJSON(url, function(data) {
       thisobj.setItems(data);
     });
-  }
-
-  setCurrentUser(user){
-    // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView
-    // ListModelMixin is configured to return an array, even if it only contains a single element
-    // I'm sure we can find a way to use the RetrieveModelMixin instead, which will return a single JSON object.
-    this.setState({
-      user: user[0]
-    })
   }
 
   setItems(items) {
