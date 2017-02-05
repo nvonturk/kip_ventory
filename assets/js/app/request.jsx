@@ -10,7 +10,7 @@ function Request(props){
     html = <Button bsStyle="primary" onClick={() => props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>
 
   } else{
-    html = "Hello World";
+    html = "Put expanded view here";
   }
   return (<div>
     <Panel collapsible header={constant_html}>
