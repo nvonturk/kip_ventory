@@ -1,8 +1,10 @@
 import React from 'react'
+import AdminRequestsContainer from './admin/adminrequestscontainer'
 
 const Profile = React.createClass({
   render() {
-    return <div>Profile</div>
+    // Need to return in a window all of the requests
+    return <AdminRequestsContainer />
   }
 })
 

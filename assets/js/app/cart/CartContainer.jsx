@@ -23,13 +23,15 @@ class CartContainer extends Component {
   makeRequest(cartItem, comment){
     // CHeck to make sure the quantity is possible
     var thisobj = this
-    console.log(cartItem.item.quantity)
-    console.log(cartItem.quantity)
-    if(cartItem.item.quantity >= cartItem.quantity){
+    if(cartItem.item.quantity < cartItem.quantity){
+      alert("Quantity Exceeds Capacity. Current quantity for " + cartItem.item.name + " is: " + cartItem.item.quantity)
+    }
+    else if(!comment){
+      alert("Justification Needed for Request")
+    }
+    else{
       var d = new Date();
       var n = d.toISOString();
-      console.log(d)
-      console.log(n)
       $.ajax({
       url:"/api/requests/",
       type: "POST",
@@ -54,9 +56,7 @@ class CartContainer extends Component {
   });
       thisobj.reRender(cartItem.id)
     }
-    else {
-      alert("Quantity Exceeds Capacity. Current quantity for " + cartItem.item.name + " is: " + cartItem.item.quantity)
-    }
+
   }
 
   reRender(itemID) {
