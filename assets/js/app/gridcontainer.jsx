@@ -57,12 +57,12 @@ class GridContainer extends Component {
     this.getItems(params);
   }
   
-  filterItems(search, tags, excludeTags, page) {
+  filterItems() {
     var params = {
-      search: search,
-      tags: tags,
-      excludeTags: excludeTags,
-      page: page,
+      search: this.state.searchText,
+      tags: this.state.tagsSelected,
+      excludeTags: this.state.excludeTagsSelected,
+      page: this.state.page,
       itemsPerPage: ITEMS_PER_PAGE
     }
 
@@ -79,20 +79,23 @@ class GridContainer extends Component {
 
   handleSearch(text) {
     console.log("Search text: " + text);
-    this.setState({searchText: text, page: 1});
-    this.filterItems(text, this.state.tagsSelected, this.state.excludeTagsSelected, 1);
+    this.setState({searchText: text, page: 1}, () => {
+      this.filterItems();
+    });
   }
 
   handleTagSelection(tagsSelected) {
     console.log("tags: " + tagsSelected);
-    this.setState({tagsSelected: tagsSelected, page: 1});
-    this.filterItems(this.state.searchText, tagsSelected, this.state.excludeTagsSelected, 1);
+    this.setState({tagsSelected: tagsSelected, page: 1}, () => {
+      this.filterItems();
+    });
   }
 
   handleExcludeTagSelection(excludeTagsSelected) {
     console.log("ex tags: " + excludeTagsSelected);
-    this.setState({excludeTagsSelected: excludeTagsSelected, page: 1});
-    this.filterItems(this.state.searchText, this.state.tagsSelected, excludeTagsSelected, 1);
+    this.setState({excludeTagsSelected: excludeTagsSelected, page: 1}, () => {
+      this.filterItems();
+    });
   }
 
   setCurrentUser(user){
@@ -110,7 +113,7 @@ class GridContainer extends Component {
     let page = data.selected + 1;
 
     this.setState({page: page}, () => {
-      this.filterItems(this.state.searchText, this.state.tagsSelected, this.state.excludeTagsSelected, this.state.page);
+      this.filterItems();
     });
   }
 
