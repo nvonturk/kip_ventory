@@ -13,9 +13,6 @@ urlpatterns = [
     url(r'^requests/?$', views.RequestView.as_view()),
     url(r'^requests/(?P<pk>[0-9]+)/?$', views.RequestView.as_view()),
 
-    url(r'^requestresponses/?$', views.RequestResponseView.as_view()),
-    url(r'^requestresponses/(?P<pk>[0-9]+)/?$', views.RequestResponseView.as_view()),
-
     url(r'^cart/?$', views.CartView.as_view()),
     url(r'^cart/(?P<pk>[0-9]+)/?$', views.CartView.as_view()),
 

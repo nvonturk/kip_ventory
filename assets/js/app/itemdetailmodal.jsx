@@ -62,17 +62,24 @@ class ItemDetailModal extends Component {
 
   render() {
 
-    var requests = null;
+    var requests=[];
 
     if(this.props.item.request_set.length == 0) {
       requests = "No outstanding requests."
     }
 
-    requests = <RequestList simple requests={this.props.item.request_set} />
+    else {
+      var outstandingRequests = this.props.item.request_set.filter(function(request){
+        return "O" == request.status;
+      });
+      requests = <RequestList simple requests={outstandingRequests} />
+    }
 
     return (
       <div>
+
         <Item onClick={this.open} item={this.props.item}/>
+
         <Modal show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>
             <Modal.Title>{this.props.item.name}</Modal.Title>
