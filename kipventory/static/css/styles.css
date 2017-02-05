@@ -23,10 +23,6 @@
     cursor: pointer;
 }
 
-.tag-multi-select {
-  margin: 10px 10px 10px 10px;
-}
-
 body, html {
     height: 100%;
     /*background-repeat: no-repeat;
@@ -80,4 +76,33 @@ body, html {
 
 .rect:hover {
 	background-color: gray;
+}
+
+.relative-container {
+	position: relative;
+	height: 100%;
+}
+
+.absolute-bottom {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.absolute-row {
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+.search-tag-container {
+	height: 75px; /*todo*/
+	padding-bottom: 5px;
+	border-bottom: 2px solid black;
+}
+
+.title-text {
+	text-align: center;
 }
