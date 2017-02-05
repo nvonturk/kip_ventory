@@ -34,7 +34,7 @@ class GridContainer extends Component {
     this.getItems(); //maybe move to componentDidMount()
     this.getCurrentUser();
 
-    this.perPage = 2;
+    this.perPage = 3;
   }
 
   getItems() {

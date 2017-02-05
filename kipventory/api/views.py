@@ -67,7 +67,7 @@ class ItemView(generics.GenericAPIView,
         queryset = self.get_queryset()
         itemsPerPage = self.request.GET.get('itemsPerPage')
         if itemsPerPage is None:
-            itemsPerPage = 2
+            itemsPerPage = 3
         paginator = Paginator(queryset, itemsPerPage)
         page = self.request.GET.get('page')
         try:
