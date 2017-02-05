@@ -22,7 +22,8 @@ urlpatterns = [
     url(r'^signup/?$', views.post_user_signup),
     url(r'^logout/?$', auth_views.logout),
 
-    url(r'^currentuser/?$', views.get_current_user)
+    url(r'^users/?$', views.get_all_users),
+    url(r'^users/current/?$', views.get_current_user),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

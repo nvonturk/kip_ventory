@@ -28,7 +28,7 @@ function initialize(userData) {
 }
 
 
-getJSON("/api/currentuser.json", function(data) {
+getJSON("/api/users/current/.json", function(data) {
    var user = data
    initialize(user)
 })
