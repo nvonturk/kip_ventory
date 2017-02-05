@@ -18,9 +18,6 @@ function InventoryGridHeader(props) {
 		      <Col xs={4} className="relative-container">{columnContents[1]}</Col>
 		      <Col xs={4} className="relative-container">{columnContents[2]}</Col>
 		    </Row>
-		    <Row className="show-grid">
-		      <Col xs={12}><h1 className="title-text">Inventory</h1></Col>
-		    </Row>
     	</Grid>
 	)
 }

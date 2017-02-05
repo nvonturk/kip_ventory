@@ -13,7 +13,7 @@ function InventoryGrid(props) {
     rows.push(<InventoryGridRow key={i} items={rowItems} user={props.user}/>);
   }
   
-  return <Grid class="inventory-grid">{rows}</Grid>
+  return <Grid className="inventory-grid">{rows}</Grid>
 }
 
 export default InventoryGrid

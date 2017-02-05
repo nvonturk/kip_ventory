@@ -25,10 +25,11 @@
 
 body, html {
     height: 100%;
-    /*background-repeat: no-repeat;
+    /*background-color: #eee8dc;
+    background-repeat: no-repeat;
     background-image: linear-gradient(rgb(104, 145, 162), rgb(12, 97, 33));*/
-    /*background-color: #576070;*/
 }
+
 /**
  * Profile image component
  */
@@ -69,14 +70,15 @@ body, html {
 }
 
 .rect {
-	border:5px solid darkgray;
+	border:5px solid #4a5a6c;
 	border-radius: 5%;
-	background-color: gray;
+	background-color: #4e5d6c;
+	/*background-color: #bf5a16;*/
 	width: 200px;
 }
 
 .rect:hover {
-	background-color: gray;
+	background-color: #2b3e50;
 }
 
 .relative-container {
@@ -128,5 +130,10 @@ body, html {
 }
 
 .inventory-grid {
-	margin-top: 10px;
+	margin-top: 40px;
+	margin-bottom: 20px;
+}
+
+.paginator-container {
+	margin: auto;
 }
