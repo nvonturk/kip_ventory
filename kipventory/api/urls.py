@@ -11,7 +11,7 @@ urlpatterns = [
     url(r'^items/(?P<pk>[0-9]+)/?$', views.ItemView.as_view()),
 
     url(r'^requests/?$', views.RequestView.as_view()),
-    url(r'^requests/(?P<status>[a-zA-Z]+)/?$', views.RequestView.as_view()),
+    url(r'^requests/(?P<pk>[0-9]+)/?$', views.RequestView.as_view()),
 
     url(r'^cart/?$', views.CartView.as_view()),
     url(r'^cart/(?P<pk>[0-9]+)/?$', views.CartView.as_view()),

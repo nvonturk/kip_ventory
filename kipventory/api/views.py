@@ -139,6 +139,7 @@ class CartView(generics.GenericAPIView,
 
 class RequestView(generics.GenericAPIView,
                   mixins.ListModelMixin,
+                  mixins.RetrieveModelMixin,
                   mixins.CreateModelMixin,
                   mixins.DestroyModelMixin):
     permission_classes = (IsAuthenticated,)
