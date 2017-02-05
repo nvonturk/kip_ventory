@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import InventoryGrid from './inventorygrid'
 import InventoryGridHeader from './inventorygridheader'
+import ReactPaginate from 'react-paginate';
 import $ from "jquery"
 
 
@@ -11,22 +12,29 @@ class GridContainer extends Component {
     this.state = {
       items:[],
       tagsSelected: [],
+      excludeTagsSelected: [],
       user: {},
-      searchText: ""
+      searchText: "",
+      page: 0,
+      pageCount:0
     };
 
     this.getItems = this.getItems.bind(this);
-    this.setItems = this.setItems.bind(this);
 
     this.setCurrentUser = this.setCurrentUser.bind(this);
     this.getCurrentUser = this.getCurrentUser.bind(this);
 
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
+    this.handleExcludeTagSelection = this.handleExcludeTagSelection.bind(this);
+
+    this.handlePageClick = this.handlePageClick.bind(this);
     this.filterItems = this.filterItems.bind(this);
 
-    this.getItems();
+    this.getItems(); //maybe move to componentDidMount()
     this.getCurrentUser();
+
+    this.perPage = 2;
   }
 
   getItems() {
@@ -34,7 +42,10 @@ class GridContainer extends Component {
 
   	$.getJSON("/api/items.json", function(data) {
       console.log(data);
-  		thisobj.setItems(data);
+  		thisobj.setState({
+        items: data.results,
+        pageCount: Math.ceil(data.num_pages),// data.paginator.num_pages
+      });
   	});
 
   }
@@ -49,22 +60,38 @@ class GridContainer extends Component {
   handleSearch(text) {
     console.log("Search text: " + text);
     this.setState({searchText: text});
-    this.filterItems(text, this.state.tagsSelected);
+    this.filterItems(text, this.state.tagsSelected, this.state.excludeTagsSelected);
   }
 
   handleTagSelection(tagsSelected) {
     console.log("tag: " + tagsSelected);
     this.setState({tagsSelected: tagsSelected});
-    this.filterItems(this.state.searchText, tagsSelected);
+    this.filterItems(this.state.searchText, tagsSelected, this.state.excludeTagsSelected);
   }
 
-  filterItems(search, tags) {
-    var url = "/api/items.json" + "?search=" + search + "&tags=" + tags;
+  handleExcludeTagSelection(excludeTagsSelected) {
+    console.log("ex tag: " + excludeTagsSelected);
+    this.setState({excludeTagsSelected: excludeTagsSelected});
+    this.filterItems(this.state.searchText, this.state.tagsSelected, excludeTagsSelected);
+  }
+
+  filterItems(search, tags, excludeTags) {
+    var url = "/api/items.json";//+ "?search=" + search + "&tags=" + tags;
     console.log(url)
+    var params = {
+      search: search,
+      tags: tags,
+      excludeTags: excludeTags,
+      page: this.state.page,
+      itemsPerPage: 2
+    }
 
     var thisobj = this;
-    $.getJSON(url, function(data) {
-      thisobj.setItems(data);
+    $.getJSON(url, params, function(data) {
+      thisobj.setState({
+        items: data.results, 
+        pageCount: Math.ceil(data.num_pages),
+      });
     });
   }
 
@@ -77,17 +104,32 @@ class GridContainer extends Component {
     })
   }
 
-  setItems(items) {
-  	this.setState({
-  		items: items
-  	});
+  handlePageClick(data) {
+    let selected = data.selected;
+    let offset = Math.ceil(selected * this.perPage);
+    let page = data.selected + 1;
+
+    this.setState({page: page}, () => {
+      this.filterItems(this.state.searchText, this.state.tagsSelected, this.state.excludeTagsSelected);
+    });
   }
 
   render() {
     return (
       <div>
-        <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
+        <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
       	<InventoryGrid items={this.state.items} user={this.state.user}></InventoryGrid>
+         <ReactPaginate previousLabel={"previous"}
+                       nextLabel={"next"}
+                       breakLabel={<a href="">...</a>}
+                       breakClassName={"break-me"}
+                       pageCount={this.state.pageCount}
+                       marginPagesDisplayed={2}
+                       pageRangeDisplayed={5}
+                       onPageChange={this.handlePageClick}
+                       containerClassName={"pagination"}
+                       subContainerClassName={"pages pagination"}
+                       activeClassName={"active"} />
       </div>
     );
   }
