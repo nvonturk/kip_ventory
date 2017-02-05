@@ -190,6 +190,18 @@ class RequestResponseView(generics.GenericAPIView,
                mixins.DestroyModelMixin):
     permission_classes = (IsAuthenticated,)
 
+    def get_queryset(self):
+        ''' Only allow a user/admin to see his own RequestResponse items'''
+        if self.request.user.is_staff:
+            return models.RequestResponse.objects.all()
+        return models.RequestResponse.objects.filter(requester__pk=self.request.user.pk)
+
+    def get_serializer_class(self):
+        '''Use a smaller representation if we're POSTing'''
+        if self.request.method == "POST":
+            return serializers.RequestResponsePOSTSerializer
+        return serializers.RequestResponseGETSerializer
+
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)

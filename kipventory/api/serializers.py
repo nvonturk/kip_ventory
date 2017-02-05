@@ -64,9 +64,9 @@ class RequestResponseGETSerializer(serializers.ModelSerializer):
     administrator = UserGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.RequestResponse
-        fields = ['id', 'request', 'date_closed', 'closed_comment', 'adminstrator', 'status']
+        fields = ['id', 'request', 'date_closed', 'closed_comment', 'administrator', 'status']
 
 class RequestResponsePOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.RequestResponse
-        fields = ['id', 'request', 'date_closed', 'closed_comment', 'adminstrator', 'status']
+        fields = ['id', 'request', 'date_closed', 'closed_comment', 'administrator', 'status']
