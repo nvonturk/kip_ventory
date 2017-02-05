@@ -30,8 +30,8 @@ class CartItem extends Component {
 
       var thisobj = this
       $.ajax({
-      url:"/api/cart/",
-      type: "POST",
+      url:"/api/cart/" + thisobj.props.cartItem.id,
+      type: "PUT",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
