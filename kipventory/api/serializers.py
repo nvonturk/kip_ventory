@@ -21,7 +21,7 @@ class ItemRequestGETSerializer(serializers.ModelSerializer):
     requester = UserGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Request
-        fields = ['id', 'requester', 'quantity', 'date_open', 'open_reason']
+        fields = ['id', 'requester', 'quantity', 'date_open', 'open_reason', 'status']
 
 class ItemGETSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
@@ -52,21 +52,9 @@ class RequestGETSerializer(serializers.ModelSerializer):
     item      = ItemGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason', 'status']
 
 class RequestPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Request
         fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
-
-class RequestResponseGETSerializer(serializers.ModelSerializer):
-    request       = RequestGETSerializer(read_only=True, many=False)
-    administrator = UserGETSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.RequestResponse
-        fields = ['id', 'request', 'date_closed', 'closed_comment', 'administrator', 'status']
-
-class RequestResponsePOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.RequestResponse
-        fields = ['id', 'request', 'date_closed', 'closed_comment', 'administrator', 'status']

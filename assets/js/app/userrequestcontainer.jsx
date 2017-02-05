@@ -49,9 +49,8 @@ class UserRequestContainer extends Component {
       request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
     },
     success:function(response){},
-    complete:function(response){      var newrequests = thisobj.state.requests.filter(req => (req.id != request.id))
+    complete:function(){      var newrequests = thisobj.state.requests.filter(req => (req.id != request.id))
           console.log("DELETED SUCCESSFULLY")
-          console.log(response)
           console.log(newrequests)
           thisobj.setState({
             requests: newrequests
