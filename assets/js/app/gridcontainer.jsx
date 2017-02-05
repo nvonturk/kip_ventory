@@ -1,8 +1,10 @@
 import React, { Component } from 'react'
 import InventoryGrid from './inventorygrid'
 import InventoryGridHeader from './inventorygridheader'
+import Paginator from './paginator'
 import $ from "jquery"
 
+const ITEMS_PER_PAGE = 1;
 
 class GridContainer extends Component {
   constructor(props) {
@@ -11,33 +13,62 @@ class GridContainer extends Component {
     this.state = {
       items:[],
       tagsSelected: [],
+      excludeTagsSelected: [],
       user: {},
-      searchText: ""
+      searchText: "",
+      page: 1,
+      pageCount: 0,
     };
 
     this.getItems = this.getItems.bind(this);
-    this.setItems = this.setItems.bind(this);
+    this.getAllItems = this.getAllItems.bind(this);
+    this.filterItems = this.filterItems.bind(this);
 
     this.setCurrentUser = this.setCurrentUser.bind(this);
     this.getCurrentUser = this.getCurrentUser.bind(this);
 
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
-    this.filterItems = this.filterItems.bind(this);
+    this.handleExcludeTagSelection = this.handleExcludeTagSelection.bind(this);
+    this.handlePageClick = this.handlePageClick.bind(this);
 
-    this.getItems();
+    this.getAllItems(); //maybe move to componentDidMount()
     this.getCurrentUser();
-  }
-
-  getItems() {
-  	var thisobj = this;
-
-  	$.getJSON("/api/items.json", function(data) {
-      console.log(data);
-  		thisobj.setItems(data);
-  	});
 
   }
+
+  getItems(params) {
+    var url = "/api/items.json";
+    var thisobj = this;
+    $.getJSON(url, params, function(data) {
+      thisobj.setState({
+        items: data.results, 
+        pageCount: Math.ceil(data.num_pages),
+      });
+    });
+  }
+
+  getAllItems() {
+    var params = {
+      page: 1,
+      itemsPerPage: ITEMS_PER_PAGE
+    }
+
+    this.getItems(params);
+  }
+  
+  filterItems() {
+    var params = {
+      search: this.state.searchText,
+      tags: this.state.tagsSelected,
+      excludeTags: this.state.excludeTagsSelected,
+      page: this.state.page,
+      itemsPerPage: ITEMS_PER_PAGE
+    }
+
+    this.getItems(params);
+  }
+
 
   getCurrentUser() {
     var thisobj = this;
@@ -48,23 +79,22 @@ class GridContainer extends Component {
 
   handleSearch(text) {
     console.log("Search text: " + text);
-    this.setState({searchText: text});
-    this.filterItems(text, this.state.tagsSelected);
+    this.setState({searchText: text, page: 1}, () => {
+      this.filterItems();
+    });
   }
 
   handleTagSelection(tagsSelected) {
-    console.log("tag: " + tagsSelected);
-    this.setState({tagsSelected: tagsSelected});
-    this.filterItems(this.state.searchText, tagsSelected);
+    console.log("tags: " + tagsSelected);
+    this.setState({tagsSelected: tagsSelected, page: 1}, () => {
+      this.filterItems();
+    });
   }
 
-  filterItems(search, tags) {
-    var url = "/api/items.json" + "?search=" + search + "&tags=" + tags;
-    console.log(url)
-
-    var thisobj = this;
-    $.getJSON(url, function(data) {
-      thisobj.setItems(data);
+  handleExcludeTagSelection(excludeTagsSelected) {
+    console.log("ex tags: " + excludeTagsSelected);
+    this.setState({excludeTagsSelected: excludeTagsSelected, page: 1}, () => {
+      this.filterItems();
     });
   }
 
@@ -77,17 +107,22 @@ class GridContainer extends Component {
     })
   }
 
-  setItems(items) {
-  	this.setState({
-  		items: items
-  	});
+  handlePageClick(data) {
+    let selected = data.selected;
+    let offset = Math.ceil(selected * ITEMS_PER_PAGE);
+    let page = data.selected + 1;
+
+    this.setState({page: page}, () => {
+      this.filterItems();
+    });
   }
 
   render() {
     return (
       <div>
-        <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected}/>
+        <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
       	<InventoryGrid items={this.state.items} user={this.state.user}></InventoryGrid>
+        <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
       </div>
     );
   }
