@@ -207,7 +207,7 @@ def request_modify_delete(request, pk, format=None):
     if request.method == 'DELETE':
         # only allow request owners to delete requests
         is_owner = (request_obj.pk == request.user.pk)
-        if not is_owner and not request.user.is_staff:
+        if not is_owner and not request.user.is_staff and not (request_obj.status == 'O'):
             return Response(status=status.HTTP_403_FORBIDDEN)
         request_obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -250,6 +250,16 @@ def post_user_signup(request, format=None):
                             last_name=last_name)
     messages.add_message(request._request, messages.SUCCESS, "user-created")
     return redirect('/')
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_all_users(request, format=None):
+    if not request.user.is_staff:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    users = User.objects.all()
+    serializer = serializers.UserGETSerializer(users, many=True)
+    return Response(serializer.data)
 
 
 @api_view(['GET'])
