@@ -15,6 +15,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from . import models, serializers
 from rest_framework import pagination
+from datetime import datetime
 
 # Create your views here.
 class ItemView(generics.GenericAPIView,
@@ -132,7 +133,6 @@ class ItemView(generics.GenericAPIView,
         return self.destroy(request, args, kwargs)
 
 
-
 class CartView(generics.GenericAPIView,
                mixins.ListModelMixin,
                mixins.RetrieveModelMixin,
@@ -175,8 +175,6 @@ class CartView(generics.GenericAPIView,
         return self.destroy(request, *args, **kwargs)
 
 
-
-
 class RequestView(generics.GenericAPIView,
                   mixins.ListModelMixin,
                   mixins.RetrieveModelMixin,
@@ -195,6 +193,7 @@ class RequestView(generics.GenericAPIView,
         if self.request.method == "POST":
             return serializers.RequestPOSTSerializer
         return serializers.RequestGETSerializer
+
 
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
@@ -251,6 +250,7 @@ def cart_detail_modify_delete(request, pk, format=None):
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def request_get_all_admin(request, format=None):
@@ -279,7 +279,6 @@ def request_get_create(request, format=None):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -316,7 +315,6 @@ def request_modify_delete(request, pk, format=None):
             return Response(status=status.HTTP_403_FORBIDDEN)
         request_obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 
 @api_view(['POST'])
@@ -382,3 +380,33 @@ class TagListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = models.Tag.objects.all()
         return queryset
+
+
+@api_view(['GET', 'POST'])
+@permission_classes((IsAuthenticated,))
+def transaction_get_create(request, format=None):
+    print(request.query_params)
+    if request.method == 'GET':
+        transactions = models.Transaction.objects.all()
+        serializer = serializers.TransactionGETSerializer(transactions, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        #todo do this in middleware
+        data = request.data.copy()
+        data['date'] = datetime.now()
+        data['administrator'] = request.user.pk
+        serializer = serializers.TransactionPOSTSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            item = models.Item.objects.get(pk=data['item'])
+            if data['category'] == 'Acquisition':#models.ACQUISITION:
+                item.quantity = item.quantity + int(data['quantity'])
+            elif data['category'] == 'Loss':#models.LOSS:
+                item.quantity = item.quantity - int(data['quantity'])
+            else:
+                #should never get here
+                pass
+            item.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
