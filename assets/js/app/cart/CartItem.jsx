@@ -23,7 +23,10 @@ class CartItem extends Component {
   changeQuantity(event) {
     if (this.state.quantity == this.props.cartItem['quantity']) {
       console.log("No effect.")
-    } else {
+    }
+    else if (!Number.isInteger(parseFloat(this.state.quantity)) || parseFloat(this.state.quantity)<=0){
+      alert("Must be a positive integer")
+    }else {
       console.log("Changing cart item quantity to: " + this.state.quantity)
       this.props.cartItem['quantity'] = this.state.quantity
       console.log(this.props.cartItem)

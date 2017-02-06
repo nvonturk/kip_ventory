@@ -94,11 +94,21 @@ class GridContainer extends Component {
     });
   }
 
+  handleChangeQuantity(index, quantity) {
+    this.setState(function(prevState, props) {
+      prevState.items[index].quantity = parseInt(prevState.items[index].quantity) + parseInt(quantity);
+      return {
+        items: prevState.items
+      };
+    });
+
+  }
+
   render() {
     return (
       <div>
         <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
-      	<InventoryGrid items={this.state.items} user={this.props.user}></InventoryGrid>
+      	<InventoryGrid items={this.state.items} user={this.props.user} handleChangeQuantity={this.handleChangeQuantity.bind(this)}></InventoryGrid>
         <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
       </div>
     );
