@@ -116,7 +116,7 @@ class CreateTransactionsContainer extends Component {
 
     return (
       <div>
-         <Button onClick={this.open}>Create Transaction</Button>
+         <Button bsStyle="success" onClick={this.open}>Create Transaction</Button>
 
          <Modal show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>

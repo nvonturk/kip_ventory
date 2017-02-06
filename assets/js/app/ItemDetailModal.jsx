@@ -47,29 +47,29 @@ class ItemDetailModal extends Component {
       alert("Quantity must be a positive integer")
     }
     else{
-    this.setState({showModal: false});
-    var thisobj = this
-    $.ajax({
-    url:"/api/cart/",
-    type: "POST",
-    beforeSend: function(request) {
-      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-    },
-    data: {
-      item: thisobj.props.item.id,
-      owner: thisobj.props.user.id,
-      quantity: thisobj.state.quantity
-    },
-    success:function(response){},
-    complete:function(){},
-    error:function (xhr, textStatus, thrownError){
-        alert("error doing something");
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
+      this.setState({showModal: false});
+      var thisobj = this;
+      $.ajax({
+        url:"/api/cart/",
+        type: "POST",
+        beforeSend: function(request) {
+          request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        },
+        data: {
+          item: thisobj.props.item.id,
+          owner: thisobj.props.user.id,
+          quantity: thisobj.state.quantity
+        },
+        success:function(response){},
+        complete:function(){},
+        error:function (xhr, textStatus, thrownError){
+            alert("error doing something");
+            console.log(xhr)
+            console.log(textStatus)
+            console.log(thrownError)
+        }
+      });
     }
-});
-}
   }
 
   render() {
@@ -86,19 +86,13 @@ class ItemDetailModal extends Component {
       requests = <RequestList simple requests={outstandingRequests} />
     }
 
-    var footer="";
+    var createTransactionButton = "";
     if(this.props.user.is_staff) {
-      footer =
-        <Modal.Footer>
+      createTransactionButton =
+        <Modal.Body>
+          <h4>Transactions</h4>
           <CreateTransactionsContainer itemIndex={this.props.itemIndex} updatePropQuantity = {this.props.handleChangeQuantity} item={this.props.item}/>
-        </Modal.Footer>
-    } else {
-      footer =
-        <Modal.Footer>
-          <Button onClick={this.addToCart}>Add to Cart</Button>
-          <QuantityBox onUserInput={this.setQuantity}/>
-          <Button onClick={this.close}>Close</Button>
-        </Modal.Footer>
+        </Modal.Body>
     }
 
     return (
@@ -118,10 +112,15 @@ class ItemDetailModal extends Component {
             <p>Location: {this.props.item.location}</p>
           </Modal.Body>
           <Modal.Body>
-            <h3>Outstanding Requests</h3>
+            <h4>Outstanding Requests</h4>
             {requests}
           </Modal.Body>
-          {footer}
+          {createTransactionButton}
+          <Modal.Footer>
+            <Button onClick={this.addToCart}>Add to Cart</Button>
+            <QuantityBox onUserInput={this.setQuantity}/>
+            <Button onClick={this.close}>Close</Button>
+          </Modal.Footer>
         </Modal>
       </div>
     );

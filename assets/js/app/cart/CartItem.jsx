@@ -39,8 +39,6 @@ class CartItem extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       data: {
-        item: thisobj.props.cartItem.item.id,
-        owner: thisobj.props.cartItem.owner.id,
         quantity: thisobj.state.quantity
       },
       success:function(response){},

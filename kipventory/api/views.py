@@ -229,7 +229,8 @@ def cart_detail_modify_delete(request, pk, format=None):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        serializer = serializers.CartItemPOSTSerializer(cartitem, data=request.data)
+        data = {'quantity': request.data['quantity']}
+        serializer = serializers.CartItemPOSTSerializer(cartitem, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -291,7 +292,7 @@ def request_modify_delete(request, pk, format=None):
         # only admins can modify requests (in order to change status)
         if not request.user.is_staff:# or (request.status != 'O'):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        serializer = serializers.RequestPUTSerializer(request_obj, data=request.data)
+        serializer = serializers.RequestPUTSerializer(request_obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
