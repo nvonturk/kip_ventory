@@ -17,6 +17,8 @@ from . import models, serializers
 from rest_framework import pagination
 from datetime import datetime
 
+from django.utils import timezone
+
 # Create your views here.
 class ItemView(generics.GenericAPIView,
                mixins.ListModelMixin,
@@ -133,6 +135,53 @@ class ItemView(generics.GenericAPIView,
         return self.destroy(request, args, kwargs)
 
 
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def disburse_to_user(request, format=None):
+    ## POST DATA
+    #   - item
+    #   - quantity
+    #   - user
+    #   - closed comment
+    ## AUTOFILL DATA
+    #   - open reason
+    #   - open date
+    #   - date closed
+    #   - administrator
+    if request.method == 'POST':
+        item = int(request.data['item'])
+        quantity = int(request.data['quantity'])
+        requester = request.data['requester']
+        closed_comment = request.data['closed_comment']
+
+        admin = request.user.pk
+        date_open = timezone.now()
+        date_closed = date_open
+        open_reason = "Administrative disbursement."
+
+        data = {
+            "requester": requester,
+            "item": item,
+            "quantity": quantity,
+            "date_open": date_open,
+            "open_reason": open_reason,
+            "date_closed": date_closed,
+            "closed_comment": closed_comment,
+            "administrator": admin,
+            "status": 'A'
+        }
+        serializer = serializers.RequestPUTSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            item = models.Item.objects.get(pk=item)
+            print(item)
+            item.quantity = (item.quantity - quantity)
+            item.save()
+            print(item)
+            return Response(serializer.data)
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'POST'])

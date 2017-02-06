@@ -35,14 +35,17 @@ class DisbursementContainer extends Component {
     $.getJSON("/api/users.json", function(data){
       thisObj.setState({users: data})
       thisObj.createUserlist(data)
+      console.log(data)
     });
   }
 
   getItems() {
   	var thisObj = this;
   	$.getJSON("/api/items.json", function(data) {
+      data = data.results
       thisObj.setState({items: data})
   		thisObj.createItemlist(data);
+      console.log(data)
   	});
   }
 
@@ -80,9 +83,6 @@ class DisbursementContainer extends Component {
   disburse(){
     // Need to delete quantity here
     var thisObj = this
-    console.log("INFOSTART")
-    console.log(Number.isInteger(parseFloat(this.state.quantity)))
-    console.log("INFOEND")
     if(this.state.currentitem == null || !this.state.currentuser == null || this.state.comment == ""){
       alert("Must use all fields to disburse")
     }
@@ -93,10 +93,8 @@ class DisbursementContainer extends Component {
       alert("Quantity must be positive integer")
     }
     else{
-      var d = new Date();
-      var n = d.toISOString();
       $.ajax({
-      url:"/api/requests/",
+      url:"/api/disburse/",
       type: "POST",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
@@ -106,8 +104,7 @@ class DisbursementContainer extends Component {
         item: thisObj.state.items[this.state.currentitem].id,
         requester: thisObj.state.users[this.state.currentuser].id,
         quantity: thisObj.state.quantity,
-        closed_comment: thisObj.state.comment,
-        date_open: n,
+        closed_comment: thisObj.state.comment
       },
       success:function(response){},
       complete:function(){
@@ -132,7 +129,7 @@ class DisbursementContainer extends Component {
   }
 
   render() {
-
+    console.log(this.state.itemlist)
     return (
       <div>
         <Row>

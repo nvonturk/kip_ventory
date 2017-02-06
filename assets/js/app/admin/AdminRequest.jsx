@@ -33,23 +33,24 @@ class AdminRequest extends Component {
     if(this.props.request.status == "O"){
       html.push(<Button bsStyle="primary" onClick={() => this.props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>);
       html.push(this.getForm(this.props));
-
     }
     else{
       html.push(this.getInfo(this.props));
     }
 
-    return (<div>
-      <Panel collapsible header={constant_html}>
-      {html}
-      </Panel>
+    return (
+      <div>
+        <Panel collapsible header={constant_html}>
+          {html}
+        </Panel>
       </div>);
   }
 
   getReq(props){
     return (
       <div>
-      <b>Item:</b> {props.request.item.name}  <SimpleRequest request={props.request}/>
+        <b>Item:</b> {props.request.item.name}
+        <SimpleRequest request={props.request}/>
       </div>
     );
   }
@@ -58,7 +59,7 @@ class AdminRequest extends Component {
       return (
         <div>
         <p><b>User Comments:</b> {props.request.open_reason} </p>
-        <p><b>Administrator:</b> {"test"} </p>
+        <p><b>Administrator:</b> {props.request.administrator.username} </p>
         <p><b>Admin Comments:</b> {props.request.closed_comment} </p>
         <p><b>Date Closed:</b> {props.request.date_closed.substring(0,9)} </p>
         </div>
@@ -89,7 +90,6 @@ class AdminRequest extends Component {
         <Button bsStyle="success" onClick={(e) => this.props.submit(e, this.props.request, "approved",this.state.quantity, this.state.closed_comment)}>Approve</Button>
         <Button bsStyle="danger" onClick={(e) => this.props.submit(e, this.props.request, "denied", this.state.quantity, this.state.closed_comment)}>Deny</Button>
       </div>
-
     );
   }
 }
