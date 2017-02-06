@@ -102,11 +102,8 @@ class AdminRequestsContainer extends Component {
 
     request.closed_comment = comment;
     request.quantity = quantity;
-
-    $.getJSON("/api/currentuser/", function(data){
-      var admin = data;
-      request.administrator = admin.id;
-    });
+    request.administrator = this.props.admin
+    request.date_closed = (new Date()).toISOString()
 
     if(decision == "approved"){
       request.status = "A";
@@ -128,12 +125,11 @@ class AdminRequestsContainer extends Component {
         item: request.item.id,
         requester: request.requester.id,
         quantity: request.quantity,
-        open_reason: request.quantity,
         date_open: request.date_open,
         open_reason: request.open_reason,
         date_closed: request.date_closed,
         closed_comment: request.closed_comment,
-        administrator: request.administrator,
+        administrator: request.administrator.id,
         status: request.status,
       },
       beforeSend: function(request) {
