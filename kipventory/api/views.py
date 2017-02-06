@@ -10,7 +10,7 @@ from django.http.request import QueryDict
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
-
+from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from . import models, serializers
@@ -133,66 +133,6 @@ class ItemView(generics.GenericAPIView,
         return self.destroy(request, args, kwargs)
 
 
-class CartView(generics.GenericAPIView,
-               mixins.ListModelMixin,
-               mixins.RetrieveModelMixin,
-               mixins.CreateModelMixin,
-               mixins.UpdateModelMixin,
-               mixins.DestroyModelMixin):
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        ''' Only allow a user/admin to see his own cart items'''
-        return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
-
-    def get_serializer_class(self):
-        '''Use a smaller representation if we're POSTing'''
-        if self.request.method == "POST":
-            return serializers.CartItemPOSTSerializer
-        return serializers.CartItemGETSerializer
-
-    def get(self, request, *args, **kwargs):
-        if 'pk' in kwargs.keys():
-            return self.retrieve(request, args, kwargs)
-        return self.list(request, args, kwargs)
-
-    def post(self, request, *args, **kwargs):
-        """
-        Check if there is already a CartItem with this item and owner.
-        If so, update the quantity on that CartItem instead of creating a new one.
-        """
-        queryset = self.get_queryset().filter(item__pk=request.data['item'])
-        flag = (queryset.count() > 0)
-        if flag:
-            self.kwargs['pk'] = queryset.first().pk
-            return self.update(request, args, self.kwargs)
-        return self.create(request, args, kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, args, kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
-
-
-class RequestView(generics.GenericAPIView,
-                  mixins.ListModelMixin,
-                  mixins.RetrieveModelMixin,
-                  mixins.CreateModelMixin,
-                  mixins.DestroyModelMixin):
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        ''' Only allow a user/admin to see his own cart items'''
-        if self.request.user.is_staff:
-            return models.Request.objects.all()
-        return models.Request.objects.filter(requester__pk=self.request.user.pk)
-
-    def get_serializer_class(self):
-        '''Use a smaller representation if we're POSTing'''
-        if self.request.method == "POST":
-            return serializers.RequestPOSTSerializer
-        return serializers.RequestGETSerializer
 
 
 @api_view(['GET', 'POST'])
