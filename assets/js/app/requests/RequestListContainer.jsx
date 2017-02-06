@@ -65,7 +65,7 @@ class RequestListContainer extends Component {
       <Grid>
         <Row>
           <div className="page-header" style={{margin:'25px 0px 25px'}}>
-            <h2>Requests</h2>
+            <h3>Your requests</h3>
           </div>
         </Row>
         <Row>
