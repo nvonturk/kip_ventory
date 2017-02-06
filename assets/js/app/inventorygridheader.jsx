@@ -6,17 +6,17 @@ import TagMultiSelect from './tagmultiselect'
 
 function InventoryGridHeader(props) {
 	var columnContents = [
-		<SearchBar onUserInput={props.searchHandler}/>,
-		<h1> Inventory </h1>,
-		<TagMultiSelect className="tag-multi-select" tagsSelected={props.tagsSelected} tagHandler={props.tagHandler}/>
+		<TagMultiSelect className="tag-multi-select absolute-bottom absolute-row" placeholder="Include tags" tagsSelected={props.tagsSelected} tagHandler={props.tagHandler}/>,
+		<SearchBar className="search-bar absolute-bottom absolute-row" onUserInput={props.searchHandler}/>,
+		<TagMultiSelect className="tag-multi-select absolute-bottom absolute-row" placeholder="Exclude tags" tagsSelected={props.excludeTagsSelected} tagHandler={props.excludeTagHandler}/>
 	];
 
 	return (
-		<Grid>
-		    <Row className="show-grid">
-		      <Col xs="3">{columnContents[0]}</Col>
-		      <Col xs="6">{columnContents[1]}</Col>
-		      <Col xs="3">{columnContents[2]}</Col>
+		<Grid className="search-tag-container">
+		    <Row className="show-grid relative-container">
+		      <Col xs={4} className="relative-container">{columnContents[0]}</Col>
+		      <Col xs={4} className="relative-container">{columnContents[1]}</Col>
+		      <Col xs={4} className="relative-container">{columnContents[2]}</Col>
 		    </Row>
     	</Grid>
 	)
