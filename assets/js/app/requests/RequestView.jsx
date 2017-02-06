@@ -28,7 +28,7 @@ class RequestContainer extends Component {
     var requester = request.requester
     var requester_url = "/app/profile/" + requester.id
     var requester_name = requester.first_name + " " + requester.last_name
-    var date = new Date(Date.parse(this.props.request.date_open)).toDateString()
+    var date = new Date(Date.parse(this.props.request.date_open)).toLocaleString()
     return (
       <Grid fluid>
 
