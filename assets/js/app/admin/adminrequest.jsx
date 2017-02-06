@@ -67,24 +67,29 @@ class AdminRequest extends Component {
 
   getForm(props){
     return (
-      <FormGroup controlId="requestForm">
-        <ControlLabel>Quantity</ControlLabel>
-        <FormControl
-          type="number"
-          name="quantity"
-          value={this.state.quantity}
-          placeholder={this.state.quantity}
-          onChange={this.handleChange.bind(this, 'quantity')}
-        />
-        <ControlLabel>Closed Comment</ControlLabel>
-        <FormControl
-          type="text"
-          name="closed_comment"
-          value={this.state.closed_comment}
-          placeholder={this.state.closed_comment}
-          onChange={this.handleChange.bind(this,'closed_comment')}
-        />
-      </FormGroup>
+      <div>
+        <FormGroup controlId="requestForm">
+          <ControlLabel>Quantity</ControlLabel>
+          <FormControl
+            type="number"
+            name="quantity"
+            value={this.state.quantity}
+            placeholder={this.state.quantity}
+            onChange={this.handleChange.bind(this, 'quantity')}
+          />
+          <ControlLabel>Closed Comment</ControlLabel>
+          <FormControl
+            type="text"
+            name="closed_comment"
+            value={this.state.closed_comment}
+            placeholder={this.state.closed_comment}
+            onChange={this.handleChange.bind(this,'closed_comment')}
+          />
+        </FormGroup>
+        <Button bsStyle="success" onClick={(e) => this.props.submit(e, this.props.request, "approved")}>Approve</Button>
+        <Button bsStyle="danger" onClick={(e) => this.props.submit(e, this.props.request, "denied")}>Deny</Button>
+      </div>
+
     );
   }
 }

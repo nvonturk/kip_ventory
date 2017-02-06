@@ -24,6 +24,7 @@ class AdminRequestsContainer extends Component {
     this.setRequests = this.setRequests.bind(this);
     this.setFilter = this.setFilter.bind(this);
     this.deleteRequest = this.deleteRequest.bind(this);
+    this.submitRequest = this.submitRequest.bind(this);
 
 
 
@@ -96,11 +97,20 @@ class AdminRequestsContainer extends Component {
     return new_reqs;
   }
 
+  submitRequest(e, request, decision){
+    e.preventDefault();
+    //build object
+    console.log("Hello World " + decision);
+    //make apache call
+
+    //rerender list on success, display error on failure
+  }
+
   render() {
     return (
       <div>
         <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
-        <AdminRequestList deleteRequest={this.deleteRequest} requests={this.state.requests} />
+        <AdminRequestList deleteRequest={this.deleteRequest} submit={this.submitRequest} requests={this.state.requests} />
       </div>
     );
   }

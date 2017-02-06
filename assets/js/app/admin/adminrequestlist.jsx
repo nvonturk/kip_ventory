@@ -25,7 +25,7 @@ class AdminRequestList extends Component{
       });
     } else {
       this.props.requests.map(function(request, i){
-        list.push(<ListGroupItem key={i}><AdminRequest deleteRequest={thisObj.props.deleteRequest} request={request}/></ListGroupItem>);
+        list.push(<ListGroupItem key={i}><AdminRequest deleteRequest={thisObj.props.deleteRequest} submit={thisObj.props.submit} request={request}/></ListGroupItem>);
       });
     }
 
