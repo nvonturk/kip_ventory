@@ -42,19 +42,20 @@ class CreateTransactionsContainer extends Component {
   }
 
   createTransaction() {
-
-
-    if (!Number.isInteger(parseFloat(this.state.quantity)) || parseFloat(this.state.quantity)<=0){
+    console.log(parseInt(this.props.item.quantity) - parseInt(this.state.quantity) < 0)
+    if (!Number.isInteger(parseInt(this.state.quantity)) || parseInt(this.state.quantity)<=0){
       alert("Must be a positive integer")
     }
-    // Maybe check for a comment
+    else if(parseInt(this.props.item.quantity) - parseInt(this.state.quantity) < 0 && this.state.category == "Loss"){
+      alert("Attempting to remove more items from the inventory than currently exists")
+    }
     else {
 
     var data={
       quantity: this.state.quantity,
       comment: this.comment,
       category: this.state.category,
-      item: this.props.item_id
+      item: this.props.item.id
     }
 
     var thisObj = this;
@@ -67,7 +68,7 @@ class CreateTransactionsContainer extends Component {
       },
       success:function(response){
         console.log(response);
-        thisObj.props.updatePropQuantity(thisObj.state.category == "Acquisition" ? thisObj.state.quantity : -(thisObj.state.quantity));
+        thisObj.props.updatePropQuantity(thisObj.props.itemIndex, thisObj.state.category == "Acquisition" ? thisObj.state.quantity : -(thisObj.state.quantity));
         thisObj.setState({
           showModal: false,
           category: "Acquisition",

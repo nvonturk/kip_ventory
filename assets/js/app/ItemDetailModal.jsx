@@ -90,7 +90,7 @@ class ItemDetailModal extends Component {
     if(this.props.user.is_staff) {
       footer =
         <Modal.Footer>
-          <CreateTransactionsContainer updatePropQuantity = {this.updatePropQuantity} item_id={this.props.item.id} />
+          <CreateTransactionsContainer itemIndex={this.props.itemIndex} updatePropQuantity = {this.props.handleChangeQuantity} item={this.props.item}/>
         </Modal.Footer>
     } else {
       footer =
@@ -114,7 +114,7 @@ class ItemDetailModal extends Component {
             <p>Name: {this.props.item.name}</p>
             <p>Model No: {this.props.item.model}</p>
             <p>Description: {this.props.item.description}</p>
-            <p>Quantity Available: {this.state.quantity}</p>
+            <p>Quantity Available: {this.props.item.quantity}</p>
             <p>Location: {this.props.item.location}</p>
           </Modal.Body>
           <Modal.Body>
