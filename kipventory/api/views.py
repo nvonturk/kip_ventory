@@ -132,8 +132,7 @@ class ItemView(generics.GenericAPIView,
         return self.destroy(request, args, kwargs)
 
 
-<<<<<<< HEAD
-=======
+
 class CartView(generics.GenericAPIView,
                mixins.ListModelMixin,
                mixins.RetrieveModelMixin,
@@ -196,7 +195,6 @@ class RequestView(generics.GenericAPIView,
         if self.request.method == "POST":
             return serializers.RequestPOSTSerializer
         return serializers.RequestGETSerializer
->>>>>>> admin-panel-joe
 
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
