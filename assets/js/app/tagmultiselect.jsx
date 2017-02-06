@@ -36,8 +36,8 @@ class TagMultiSelect extends Component {
 
   render() {
     return (
-      <div>
-      	<MultiSelect options={this.state.tags} value={this.props.tagsSelected} placeholder="Select tags" onChange={this.props.tagHandler}/>
+      <div className={this.props.className}>
+      	<MultiSelect options={this.state.tags} value={this.props.tagsSelected} placeholder={this.props.placeholder} onChange={this.props.tagHandler}/>
       </div>
     );
   }

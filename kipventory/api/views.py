@@ -1,9 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics, mixins
 from rest_framework import status
-
-# from rest_framework import pagination
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view, permission_classes
@@ -13,9 +10,10 @@ from django.http.request import QueryDict
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
-from django.contrib import messages
-from . import models, serializers
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
+from . import models, serializers
+from rest_framework import pagination
 
 # Create your views here.
 class ItemView(generics.GenericAPIView,
@@ -28,6 +26,7 @@ class ItemView(generics.GenericAPIView,
     def get_queryset(self):
         search = self.request.query_params.get("search")
         tags = self.request.query_params.get("tags")
+        excludeTags = self.request.query_params.get("excludeTags")
         q_objs = Q()
 
         # Search filter
@@ -41,6 +40,12 @@ class ItemView(generics.GenericAPIView,
             tagsArray = tags.split(",")
             for tag in tagsArray:
                 queryset = queryset.filter(tags__name=tag)
+
+        # Exclude tags filter
+        if excludeTags is not None and excludeTags != '':
+            excludeTagsArray = excludeTags.split(",")
+            for tag in excludeTagsArray:
+                queryset = queryset.exclude(tags__name=tag)
 
         # how to filter to only include some requests?
         #queryset.request_set.filter(status="O") #not correct
@@ -57,8 +62,35 @@ class ItemView(generics.GenericAPIView,
         if 'pk' in kwargs.keys():
             return self.retrieve(request, args, kwargs)
 
-        items = self.get_queryset()
-        toReturn = []
+        # Pagination: rest framework does it for you, but request stuff below messes it up so i'm doing it manually
+        
+        queryset = self.get_queryset()
+        itemsPerPage = self.request.GET.get('itemsPerPage')
+        if itemsPerPage is None:
+            itemsPerPage = 3
+        paginator = Paginator(queryset, itemsPerPage)
+        page = self.request.GET.get('page')
+        try:
+            queryset = paginator.page(page)
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page.
+            queryset = paginator.page(1)
+        except EmptyPage:
+            # If page is out of range (e.g. 9999), deliver last page of results.
+            queryset = paginator.page(paginator.num_pages)
+        
+        
+        
+        # Attach requests
+        items = queryset
+        
+        #items = self.get_queryset()
+        toReturn = {
+            "count" : paginator.count,
+            "num_pages" : paginator.num_pages,
+            "results" : []
+        }
+        itemsToReturn = []
         for item in items:
             serializer = serializers.ItemGETSerializer(item)
             itemToAdd = serializer.data
@@ -74,8 +106,9 @@ class ItemView(generics.GenericAPIView,
                     reqSerializer = serializers.ItemRequestGETSerializer(req)
                     requestsToAdd.append(reqSerializer.data)
                 itemToAdd["request_set"] = requestsToAdd
-            toReturn.append(itemToAdd)
+            itemsToReturn.append(itemToAdd)
 
+        toReturn["results"] = itemsToReturn
         return Response(toReturn)
 
     def post(self, request, *args, **kwargs):
@@ -91,6 +124,68 @@ class ItemView(generics.GenericAPIView,
         return self.destroy(request, args, kwargs)
 
 
+class CartView(generics.GenericAPIView,
+               mixins.ListModelMixin,
+               mixins.RetrieveModelMixin,
+               mixins.CreateModelMixin,
+               mixins.UpdateModelMixin,
+               mixins.DestroyModelMixin):
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        ''' Only allow a user/admin to see his own cart items'''
+        return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
+
+    def get_serializer_class(self):
+        '''Use a smaller representation if we're POSTing'''
+        if self.request.method == "POST":
+            return serializers.CartItemPOSTSerializer
+        return serializers.CartItemGETSerializer
+
+    def get(self, request, *args, **kwargs):
+        if 'pk' in kwargs.keys():
+            return self.retrieve(request, args, kwargs)
+        return self.list(request, args, kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Check if there is already a CartItem with this item and owner.
+        If so, update the quantity on that CartItem instead of creating a new one.
+        """
+        queryset = self.get_queryset().filter(item__pk=request.data['item'])
+        flag = (queryset.count() > 0)
+        if flag:
+            self.kwargs['pk'] = queryset.first().pk
+            return self.update(request, args, self.kwargs)
+        return self.create(request, args, kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, args, kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+
+
+class RequestView(generics.GenericAPIView,
+                  mixins.ListModelMixin,
+                  mixins.RetrieveModelMixin,
+                  mixins.CreateModelMixin,
+                  mixins.DestroyModelMixin):
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        ''' Only allow a user/admin to see his own cart items'''
+        if self.request.user.is_staff:
+            return models.Request.objects.all()
+        return models.Request.objects.filter(requester__pk=self.request.user.pk)
+
+    def get_serializer_class(self):
+        '''Use a smaller representation if we're POSTing'''
+        if self.request.method == "POST":
+            return serializers.RequestPOSTSerializer
+        return serializers.RequestGETSerializer
 
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
