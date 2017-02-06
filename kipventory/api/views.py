@@ -149,6 +149,7 @@ def disburse_to_user(request, format=None):
     #   - open date
     #   - date closed
     #   - administrator
+    #   - status
     if request.method == 'POST':
         item = int(request.data['item'])
         quantity = int(request.data['quantity'])
