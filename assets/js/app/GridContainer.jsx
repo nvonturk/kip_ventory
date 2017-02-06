@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
-import InventoryGrid from './inventorygrid'
-import InventoryGridHeader from './inventorygridheader'
-import Paginator from './paginator'
+import InventoryGrid from './InventoryGrid'
+import InventoryGridHeader from './InventoryGridHeader'
+import Paginator from './Paginator'
 import $ from "jquery"
 
 const ITEMS_PER_PAGE = 2;

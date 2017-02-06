@@ -1,6 +1,6 @@
 import React from 'react'
 import {Grid} from 'react-bootstrap'
-import InventoryGridRow from './inventorygridrow'
+import InventoryGridRow from './InventoryGridRow'
 
 const NUM_ROWS = 3;
 
@@ -12,7 +12,7 @@ function InventoryGrid(props) {
     var rowItems = props.items.slice(i*NUM_ROWS, i*NUM_ROWS + NUM_ROWS);
     rows.push(<InventoryGridRow key={i} items={rowItems} user={props.user}/>);
   }
-  
+
   return <Grid className="inventory-grid">{rows}</Grid>
 }
 

@@ -1,11 +1,10 @@
 import React, { Component } from 'react'
 import { ListGroup, ListGroupItem, Label } from 'react-bootstrap'
-import Request from '../request'
-import AdminRequest from './adminrequest'
-import SimpleRequest from '../simplerequest'
+import Request from './Request'
+import SimpleRequest from './SimpleRequest'
 
 
-class AdminRequestList extends Component{
+class RequestList extends Component{
   constructor(props) {
     super(props);
     this.state = {
@@ -25,19 +24,17 @@ class AdminRequestList extends Component{
       });
     } else {
       this.props.requests.map(function(request, i){
-        list.push(<ListGroupItem key={i}><AdminRequest deleteRequest={thisObj.props.deleteRequest} submit={thisObj.props.submit} request={request}/></ListGroupItem>);
+        list.push(<ListGroupItem key={i}><Request deleteRequest={thisObj.props.deleteRequest} request={request}/></ListGroupItem>);
       });
     }
 
     return(
       <ListGroup>
-        {list.map(function(li, i) {
-          return li;
-        })}
+        {list}
       </ListGroup>
     )
   }
 
 }
 
-export default AdminRequestList
+export default RequestList

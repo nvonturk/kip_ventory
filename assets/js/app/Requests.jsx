@@ -1,5 +1,5 @@
 import React from 'react'
-import UserRequestContainer from "./userrequestcontainer.jsx"
+import UserRequestContainer from "./UserRequestContainer.jsx"
 
 const Requests = React.createClass({
   render() {
