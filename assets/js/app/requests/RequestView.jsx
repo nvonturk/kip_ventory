@@ -35,7 +35,7 @@ class RequestContainer extends Component {
         <Row className="show-grid">
 
           <Col md={2}>
-            <Image responsive src={request.item.photo_src} alt={request.item.name} />
+            <Image src={request.item.photo_src} alt={request.item.name} style={{width:'100px', height:'100px'}}/>
           </Col>
 
           <Col md={3}>

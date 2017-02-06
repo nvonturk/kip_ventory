@@ -100,12 +100,13 @@ class AdminRequestsContainer extends Component {
   submitRequest(e, request, decision, quantity, comment){
     e.preventDefault();
 
-    var closed_comment = comment;
-    var admin = this.props.admin
-    var date_closed = new Date().toISOString()
-    var status = (decision === "approved") ? "A" : "D"
+    request.closed_comment = comment;
+    request.quantity = quantity;
+    request.administrator = this.props.admin
+    request.date_closed = (new Date()).toISOString()
+    request.status = (decision == "approved") ? "A" : "D"
 
-    if(request.item.quantity < quantity && status == "A"){
+    if(request.item.quantity < request.quantity && request.status == "A"){
       //THROW SOME ERROR OR INDICATION TO USER HERE, ASK BRODY, maybe do on backend as well
       alert("Error - attempted to disburse too many instances.");
     } else{
@@ -118,13 +119,13 @@ class AdminRequestsContainer extends Component {
       data: {
         item: request.item.id,
         requester: request.requester.id,
-        quantity: quantity,
-        open_reason: request.open_reason,
+        quantity: request.quantity,
         date_open: request.date_open,
-        date_closed: date_closed,
-        closed_comment: closed_comment,
-        administrator: admin.id,
-        status: status,
+        open_reason: request.open_reason,
+        date_closed: request.date_closed,
+        closed_comment: request.closed_comment,
+        administrator: request.administrator.id,
+        status: request.status,
       },
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
