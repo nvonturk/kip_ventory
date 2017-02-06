@@ -3,6 +3,7 @@ import $ from "jquery"
 import RequestSelectFilter from './requestselectfilter'
 import RequestList from './requestlist'
 import { getCookie } from '../csrf/DjangoCSRFToken'
+import { Grid, Row, Col } from 'react-bootstrap'
 
 class UserRequestContainer extends Component {
   constructor(props) {
@@ -22,8 +23,6 @@ class UserRequestContainer extends Component {
     this.setRequests = this.setRequests.bind(this);
     this.setFilter = this.setFilter.bind(this);
     this.deleteRequest = this.deleteRequest.bind(this);
-
-
 
     this.getMyRequests();
   }
@@ -48,14 +47,15 @@ class UserRequestContainer extends Component {
     beforeSend: function(request) {
       request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
     },
-    success:function(response){},
-    complete:function(){      var newrequests = thisobj.state.requests.filter(req => (req.id != request.id))
-          console.log("DELETED SUCCESSFULLY")
-          console.log(newrequests)
-          thisobj.setState({
-            requests: newrequests
-          })
-        },
+    success:function(response){
+      var newrequests = thisobj.state.requests.filter(req => (req.id != request.id))
+      console.log("DELETED SUCCESSFULLY")
+      console.log(newrequests)
+      thisobj.setState({
+        requests: newrequests
+      })
+    },
+    complete:function(){},
     error:function (xhr, textStatus, thrownError){
         alert("error doing something");
         console.log(xhr)
@@ -96,10 +96,18 @@ class UserRequestContainer extends Component {
 
   render() {
     return (
-      <div>
-        <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
-        <RequestList deleteRequest={this.deleteRequest} requests={this.state.requests} />
-      </div>
+      <Grid>
+        <Row>
+          <Col xs={12} xsOffset={0}>
+            <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
+          </Col>
+        </Row>
+        <Row>
+          <Col xs={12} xsOffset={0}>
+            <RequestList deleteRequest={this.deleteRequest} requests={this.state.requests} />
+          </Col>
+        </Row>
+      </Grid>
     );
   }
 }

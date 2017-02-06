@@ -1,5 +1,5 @@
 import React from 'react'
-import {Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel, HelpBlock } from 'react-bootstrap'
+import {Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel, } from 'react-bootstrap'
 
 import { CSRFToken } from '../../csrf/DjangoCSRFToken'
 
