@@ -10,17 +10,17 @@ const AdminContainer = React.createClass({
       <Grid>
         <Row>
           <Col xs={12}>
-            <DisbursementContainer admin={this.props.admin}/>
+            <DisbursementContainer admin={this.props.route.admin}/>
           </Col>
         </Row>
         <Row>
           <Col xs={12}>
-            <AdminRequestsContainer admin={this.props.admin}/>
+            <AdminRequestsContainer admin={this.props.route.admin}/>
           </Col>
         </Row>
         <Row>
           <Col xs={12}>
-            <TransactionsContainer admin={this.props.admin}/>
+            <TransactionsContainer admin={this.props.route.admin}/>
           </Col>
         </Row>
       </Grid>
