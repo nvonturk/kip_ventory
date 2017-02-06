@@ -9,7 +9,7 @@ function InventoryGridRow(props) {
   var numCols = props.items.length;
 
   for (var i = 0; i < numCols; i++) {
-  	columnContents.push(<ItemDetailModal user={props.user} item={props.items[i]}/>);
+  	columnContents.push(<ItemDetailModal user={props.user} item={props.items[i]} itemIndex={props.rowIndex+i} handleChangeQuantity={props.handleChangeQuantity}/>);
   }
 
   return <SimpleRow width="4" columnContents={columnContents}/>
