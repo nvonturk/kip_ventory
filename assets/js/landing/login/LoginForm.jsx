@@ -36,7 +36,7 @@ const LoginForm = React.createClass({
         </FormGroup>
 
         <FormGroup>
-          <Button type="submit">
+          <Button block type="submit">
             Sign in
           </Button>
         </FormGroup>

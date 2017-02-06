@@ -5,7 +5,7 @@ const Home = React.createClass({
   render() {
     return (
     <div>
-    	<GridContainer/>
+    	<GridContainer user={this.props.route.user}/>
 	</div>
 	)
   }

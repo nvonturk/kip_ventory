@@ -1,28 +1,36 @@
 import React from 'react'
 import { render } from 'react-dom'
 import { Router, Route, browserHistory, IndexRoute } from 'react-router'
-
 import KipNav from './KipNav'
 import Home from './Home'
 import Requests from './Requests'
-import Profile from './Profile'
-import Administration from './Administration'
-
-
-
+import AdminContainer from './admin/admincontainer'
 import CartContainer from './cart/CartContainer'
+import Profile from './profile'
+import {getJSON} from 'jquery'
 
-render((
-  <Router history={browserHistory}>
+
+function getRouteIfAdmin(userData) {
+  console.log(userData)
+  return userData.is_staff ? <Route path="admin" component={AdminContainer} admin={userData}/> : null
+}
+
+function initialize(userData) {
+  render((
+    <Router history={browserHistory}>
+      <Route path="app" component={KipNav} user={userData}>
+        <IndexRoute component={Home} user={userData}/>
+        <Route path="requests" component={Requests} user={userData} />
+        <Route path="profile" component={Profile} user={userData}/>
+        <Route path="cart" component={CartContainer} user={userData} />
+        {getRouteIfAdmin(userData)}
+      </Route>
+    </Router>),
+    document.getElementById('root'));
+}
 
 
-    <Route path="app" component={KipNav}>
-      <IndexRoute component={Home} />
-      <Route path="requests" component={Requests} />
-      <Route path="profile" component={Profile} />
-      <Route path="cart" component={CartContainer} />
-      <Route path="administration" component={Administration} />
-    </Route>
-
-  </Router>
-), document.getElementById('root'))
+getJSON("/api/users/current/.json", function(data) {
+   var user = data
+   initialize(user)
+})

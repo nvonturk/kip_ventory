@@ -4,7 +4,7 @@ import InventoryGridHeader from './inventorygridheader'
 import Paginator from './paginator'
 import $ from "jquery"
 
-const ITEMS_PER_PAGE = 1;
+const ITEMS_PER_PAGE = 2;
 
 class GridContainer extends Component {
   constructor(props) {
@@ -14,7 +14,7 @@ class GridContainer extends Component {
       items:[],
       tagsSelected: [],
       excludeTagsSelected: [],
-      user: {},
+      user: props.user,
       searchText: "",
       page: 1,
       pageCount: 0,
@@ -23,6 +23,7 @@ class GridContainer extends Component {
     this.getItems = this.getItems.bind(this);
     this.getAllItems = this.getAllItems.bind(this);
     this.filterItems = this.filterItems.bind(this);
+
 
     this.setCurrentUser = this.setCurrentUser.bind(this);
     this.getCurrentUser = this.getCurrentUser.bind(this);
@@ -33,6 +34,7 @@ class GridContainer extends Component {
     this.handlePageClick = this.handlePageClick.bind(this);
 
     this.getAllItems(); //maybe move to componentDidMount()
+
     this.getCurrentUser();
 
   }
@@ -42,7 +44,7 @@ class GridContainer extends Component {
     var thisobj = this;
     $.getJSON(url, params, function(data) {
       thisobj.setState({
-        items: data.results, 
+        items: data.results,
         pageCount: Math.ceil(data.num_pages),
       });
     });
@@ -56,7 +58,7 @@ class GridContainer extends Component {
 
     this.getItems(params);
   }
-  
+
   filterItems() {
     var params = {
       search: this.state.searchText,
@@ -68,7 +70,6 @@ class GridContainer extends Component {
 
     this.getItems(params);
   }
-
 
   getCurrentUser() {
     var thisobj = this;
@@ -97,6 +98,7 @@ class GridContainer extends Component {
       this.filterItems();
     });
   }
+
 
   setCurrentUser(user){
     // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView
