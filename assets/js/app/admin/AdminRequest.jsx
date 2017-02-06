@@ -7,7 +7,7 @@ class AdminRequest extends Component {
     super(props);
     this.state = {
       quantity: this.props.request.quantity,
-      closed_comment: "test"
+      closed_comment: this.props.request.closed_comment
     };
   }
 

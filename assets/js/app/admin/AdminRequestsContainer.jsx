@@ -100,23 +100,14 @@ class AdminRequestsContainer extends Component {
   submitRequest(e, request, decision, quantity, comment){
     e.preventDefault();
 
-    request.closed_comment = comment;
-    request.quantity = quantity;
+    var closed_comment = comment;
+    var admin = this.props.admin
+    var date_closed = new Date().toISOString()
+    var status = (decision === "approved") ? "A" : "D"
 
-    $.getJSON("/api/currentuser/", function(data){
-      var admin = data;
-      request.administrator = admin.id;
-    });
-
-    if(decision == "approved"){
-      request.status = "A";
-    }
-    else{
-      request.status = "D";
-    }
-    if(request.item.quantity < request.quantity && request.status == "A"){
+    if(request.item.quantity < quantity && status == "A"){
       //THROW SOME ERROR OR INDICATION TO USER HERE, ASK BRODY, maybe do on backend as well
-      console.log("ERROR THIS MUST BE HANDLED GRACEFULLY, ATTEMPT TO DISBURSE TOO MUCH, NO MAS!!");
+      alert("Error - attempted to disburse too many instances.");
     } else{
       //make apache call to put
 
@@ -127,22 +118,18 @@ class AdminRequestsContainer extends Component {
       data: {
         item: request.item.id,
         requester: request.requester.id,
-        quantity: request.quantity,
-        open_reason: request.quantity,
-        date_open: request.date_open,
+        quantity: quantity,
         open_reason: request.open_reason,
-        date_closed: request.date_closed,
-        closed_comment: request.closed_comment,
-        administrator: request.administrator,
-        status: request.status,
+        date_open: request.date_open,
+        date_closed: date_closed,
+        closed_comment: closed_comment,
+        administrator: admin.id,
+        status: status,
       },
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      sucess: function(result){
-        //Nothing seems to make this function call
-      },
-      complete: function(result){
+      success: function(result){
         console.log("we completed");
         console.log(result)
         thisobj.getMyRequests();
@@ -154,6 +141,7 @@ class AdminRequestsContainer extends Component {
           thisobj.modifyItem(request);
         }
       },
+      complete: function(result){},
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
           console.log(xhr)
