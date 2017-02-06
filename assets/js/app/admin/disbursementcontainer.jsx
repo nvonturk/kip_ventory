@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import { Row, Col, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap'
 import $ from 'jquery'
-import SimpleDropdown from '../simpledropdown'
+import SimpleDropdown from '../SimpleDropdown'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 
 class DisbursementContainer extends Component {

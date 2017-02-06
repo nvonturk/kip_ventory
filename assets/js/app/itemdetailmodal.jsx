@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Button, Modal}  from 'react-bootstrap'
 import QuantityBox from './QuantityBox'
-import SimpleRequest from './SimpleSequest'
+import SimpleRequest from './SimpleRequest'
 import RequestList from './RequestList'
 import $ from "jquery"
 import Item from './Item'

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import SimpleRequest from '../simplerequest'
+import SimpleRequest from '../SimpleRequest'
 import { Button, Panel, FormGroup, FormControl, ControlLabel } from 'react-bootstrap'
 
 class AdminRequest extends Component {

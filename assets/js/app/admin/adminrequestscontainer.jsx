@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import { Row, Col, Button } from 'react-bootstrap'
-import AdminRequestItem from './adminrequestitem'
+import AdminRequestItem from './AdminRequestItem'
 import $ from "jquery"
-import RequestSelectFilter from '../requestselectfilter'
-import AdminRequestList from './adminrequestlist'
+import RequestSelectFilter from '../RequestSelectFilter'
+import AdminRequestList from './AdminRequestList'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 
 class AdminRequestsContainer extends Component {

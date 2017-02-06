@@ -1,7 +1,7 @@
 import React from 'react'
-import AdminRequestContainer from "./adminrequestscontainer"
-import DisbursementContainer from "./disbursementcontainer"
-import TransactionsContainer from '../transactionsContainer'
+import AdminRequestContainer from "./AdminRequestsContainer"
+import DisbursementContainer from "./DisbursementContainer"
+import TransactionsContainer from '../TransactionsContainer'
 
 const AdminContainer = React.createClass({
   render() {
