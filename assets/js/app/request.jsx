@@ -1,5 +1,5 @@
 import React from 'react'
-import SimpleRequest from './simplerequest'
+import SimpleRequest from './SimpleRequest'
 import { Button, Panel } from 'react-bootstrap'
 
 function Request(props){

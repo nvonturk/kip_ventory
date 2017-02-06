@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { ListGroup, ListGroupItem, Label } from 'react-bootstrap'
-import Request from './request'
-import SimpleRequest from './simplerequest'
+import Request from './Request'
+import SimpleRequest from './SimpleRequest'
 
 
 class RequestList extends Component{

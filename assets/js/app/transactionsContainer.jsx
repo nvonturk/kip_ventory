@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import $ from "jquery"
-import TransactionList from './transactionlist'
+import TransactionList from './TransactionList'
 import Select from 'react-select'
 
 class TransactionsContainer extends Component {
