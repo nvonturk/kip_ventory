@@ -104,16 +104,11 @@ class AdminRequestsContainer extends Component {
     request.quantity = quantity;
     request.administrator = this.props.admin
     request.date_closed = (new Date()).toISOString()
+    request.status = (decision == "approved") ? "A" : "D"
 
-    if(decision == "approved"){
-      request.status = "A";
-    }
-    else{
-      request.status = "D";
-    }
     if(request.item.quantity < request.quantity && request.status == "A"){
       //THROW SOME ERROR OR INDICATION TO USER HERE, ASK BRODY, maybe do on backend as well
-      console.log("ERROR THIS MUST BE HANDLED GRACEFULLY, ATTEMPT TO DISBURSE TOO MUCH, NO MAS!!");
+      alert("Error - attempted to disburse too many instances.");
     } else{
       //make apache call to put
 
@@ -135,10 +130,7 @@ class AdminRequestsContainer extends Component {
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      sucess: function(result){
-        //Nothing seems to make this function call
-      },
-      complete: function(result){
+      success: function(result){
         console.log("we completed");
         console.log(result)
         thisobj.getMyRequests();
@@ -150,6 +142,7 @@ class AdminRequestsContainer extends Component {
           thisobj.modifyItem(request);
         }
       },
+      complete: function(result){},
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
           console.log(xhr)

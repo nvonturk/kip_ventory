@@ -33,15 +33,15 @@ const KipNav = React.createClass({
               <LinkContainer to="/app/requests/">
                 <NavItem eventKey={1}>Requests</NavItem>
               </LinkContainer>
-              <LinkContainer to="/app/profile/">
-                <NavItem eventKey={2}>Profile</NavItem>
-              </LinkContainer>
-              <LinkContainer to="/app/cart/">
-                <NavItem eventKey={3}>Cart</NavItem>
-              </LinkContainer>
               {this.getAdminLink()}
             </Nav>
             <Nav pullRight>
+              <LinkContainer to="/app/cart/">
+                <NavItem eventKey={2}>Cart</NavItem>
+              </LinkContainer>
+              <LinkContainer to="/app/profile/">
+                <NavItem eventKey={3}>Profile</NavItem>
+              </LinkContainer>
               <NavItem eventKey={4} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
             </Nav>
           </Navbar.Collapse>

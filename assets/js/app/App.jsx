@@ -3,11 +3,12 @@ import { render } from 'react-dom'
 import { Router, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
 import Home from './Home'
-import Requests from './Requests'
+import RequestListContainer from './requests/RequestListContainer'
 import AdminContainer from './admin/AdminContainer'
 import CartContainer from './cart/CartContainer'
 import Profile from './Profile'
 import {getJSON} from 'jquery'
+
 
 
 function getRouteIfAdmin(userData) {
@@ -19,9 +20,9 @@ function initialize(userData) {
   render((
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
-        <IndexRoute component={Home} user={userData}/>
-        <Route path="requests" component={Requests} user={userData} />
-        <Route path="profile" component={Profile} user={userData}/>
+        <IndexRoute component={Home} user={userData} />
+        <Route path="requests" component={RequestListContainer} user={userData} />
+        <Route path="profile" component={Profile} user={userData} />
         <Route path="cart" component={CartContainer} user={userData} />
         {getRouteIfAdmin(userData)}
       </Route>
