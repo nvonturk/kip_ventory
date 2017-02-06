@@ -6,6 +6,7 @@ import RequestList from './requestlist'
 import $ from "jquery"
 import Item from './item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
+import CreateTransactionsContainer from './createtransactionscontainer'
 
 class ItemDetailModal extends Component {
   constructor(props) {
@@ -58,8 +59,6 @@ class ItemDetailModal extends Component {
 });
   }
 
-
-
   render() {
 
     var requests=[];
@@ -73,6 +72,21 @@ class ItemDetailModal extends Component {
         return "O" == request.status;
       });
       requests = <RequestList simple requests={outstandingRequests} />
+    }
+
+    var footer="";
+    if(this.props.user.is_staff) {
+      footer = 
+        <Modal.Footer>
+          <CreateTransactionsContainer item_id={this.props.item.id} />
+        </Modal.Footer>
+    } else {
+      footer = 
+        <Modal.Footer>
+          <Button onClick={this.addToCart}>Add to Cart</Button>
+          <QuantityBox onUserInput={this.setQuantity}/>
+          <Button onClick={this.close}>Close</Button>
+        </Modal.Footer>
     }
 
     return (
@@ -95,11 +109,7 @@ class ItemDetailModal extends Component {
             <h3>Outstanding Requests</h3>
             {requests}
           </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.addToCart}>Add to Cart</Button>
-            <QuantityBox onUserInput={this.setQuantity}/>
-            <Button onClick={this.close}>Close</Button>
-          </Modal.Footer>
+          {footer}
         </Modal>
       </div>
     );

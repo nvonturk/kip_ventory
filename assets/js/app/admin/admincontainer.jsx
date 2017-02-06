@@ -1,6 +1,7 @@
 import React from 'react'
 import AdminRequestContainer from "./adminrequestscontainer"
 import DisbursementContainer from "./disbursementcontainer"
+import TransactionsContainer from '../transactionsContainer'
 
 const AdminContainer = React.createClass({
   render() {
@@ -8,6 +9,7 @@ const AdminContainer = React.createClass({
       <div>
         <DisbursementContainer/>
         <AdminRequestContainer/>
+        <TransactionsContainer/>
       </div>
     )
   }

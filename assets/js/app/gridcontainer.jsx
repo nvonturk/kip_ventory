@@ -14,7 +14,6 @@ class GridContainer extends Component {
       items:[],
       tagsSelected: [],
       excludeTagsSelected: [],
-      user: props.user,
       searchText: "",
       page: 1,
       pageCount: 0,
@@ -24,19 +23,12 @@ class GridContainer extends Component {
     this.getAllItems = this.getAllItems.bind(this);
     this.filterItems = this.filterItems.bind(this);
 
-
-    this.setCurrentUser = this.setCurrentUser.bind(this);
-    this.getCurrentUser = this.getCurrentUser.bind(this);
-
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
     this.handleExcludeTagSelection = this.handleExcludeTagSelection.bind(this);
     this.handlePageClick = this.handlePageClick.bind(this);
 
     this.getAllItems(); //maybe move to componentDidMount()
-
-    this.getCurrentUser();
-
   }
 
   getItems(params) {
@@ -71,13 +63,6 @@ class GridContainer extends Component {
     this.getItems(params);
   }
 
-  getCurrentUser() {
-    var thisobj = this;
-    $.getJSON("/api/currentuser.json", function(data) {
-      thisobj.setCurrentUser(data)
-    });
-  }
-
   handleSearch(text) {
     console.log("Search text: " + text);
     this.setState({searchText: text, page: 1}, () => {
@@ -99,16 +84,6 @@ class GridContainer extends Component {
     });
   }
 
-
-  setCurrentUser(user){
-    // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView
-    // ListModelMixin is configured to return an array, even if it only contains a single element
-    // I'm sure we can find a way to use the RetrieveModelMixin instead, which will return a single JSON object.
-    this.setState({
-      user: user[0]
-    })
-  }
-
   handlePageClick(data) {
     let selected = data.selected;
     let offset = Math.ceil(selected * ITEMS_PER_PAGE);
@@ -123,7 +98,7 @@ class GridContainer extends Component {
     return (
       <div>
         <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
-      	<InventoryGrid items={this.state.items} user={this.state.user}></InventoryGrid>
+      	<InventoryGrid items={this.state.items} user={this.props.user}></InventoryGrid>
         <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
       </div>
     );

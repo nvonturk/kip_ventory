@@ -64,3 +64,15 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Request
         fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason','date_closed','closed_comment','administrator','status']
+
+class TransactionGETSerializer(serializers.ModelSerializer):
+    item = ItemGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Transaction
+        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
+class TransactionPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Transaction
+        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']

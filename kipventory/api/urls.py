@@ -17,6 +17,8 @@ urlpatterns = [
     url(r'^cart/(?P<pk>[0-9]+)/?$', views.cart_detail_modify_delete),
 
     url(r'^tags/?$', views.TagListView.as_view()),
+    
+    url(r'^transactions/?$', views.transaction_get_create),
 
     url(r'^login/?$', views.post_user_login),
     url(r'^signup/?$', views.post_user_signup),
