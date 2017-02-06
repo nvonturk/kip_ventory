@@ -39,7 +39,7 @@ const KipNav = React.createClass({
               <LinkContainer to="/app/cart/">
                 <NavItem eventKey={2}>Cart</NavItem>
               </LinkContainer>
-              <LinkContainer to={"/app/profile/"+this.props.route.user.id.toString()}>
+              <LinkContainer to="/app/profile/">
                 <NavItem eventKey={3}>Profile</NavItem>
               </LinkContainer>
               <NavItem eventKey={4} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>

@@ -9,11 +9,18 @@ class RequestContainer extends Component {
     this.state = {};
 
     this.callDeleteFunc = this.callDeleteFunc.bind(this);
+    this.getCancelButton = this.getCancelButton.bind(this);
+    this.getContent = this.getContent.bind(this);
   }
 
   callDeleteFunc(event) {
     var req = this.props.request
     this.props.deleteFunc(req);
+  }
+
+  getCancelButton() {
+    var canDelete = (this.props.request.status == 'O')
+    return canDelete ? <Button bsStyle="danger" block onClick={this.callDeleteFunc}>Cancel</Button> : null
   }
 
   getContent() {
@@ -69,7 +76,7 @@ class RequestContainer extends Component {
             </Row>
             <Row>
               <Col xs={10} xsOffset={1} style={{padding: '10px 0px'}}>
-                <Button bsStyle="danger" block onClick={this.callDeleteFunc}>Delete</Button>
+                {this.getCancelButton()}
               </Col>
             </Row>
           </Col>

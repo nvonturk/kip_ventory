@@ -11,7 +11,7 @@ const AdminRequestsContainer = React.createClass({
 
   getUserRequests(){
     var thisObj = this
-    $.getJSON("/api/requests.json", function(data){
+    $.getJSON("/api/requests/all.json", function(data){
       thisObj.setState({allrequests: data})
     });
   },
