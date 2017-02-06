@@ -4,13 +4,15 @@ import { Router, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
 import Home from './Home'
 import Requests from './Requests'
-import Profile from './Profile'
+import DisbursementContainer from './admin/disbursementcontainer'
 import CartContainer from './cart/CartContainer'
+import Profile from './profile'
 import {getJSON} from 'jquery'
 
 
 function getRouteIfAdmin(userData) {
-  return userData.is_staff ? <Route path="admin" component={Profile} user={userData}/> : null
+  console.log(userData)
+  return userData.is_staff ? <Route path="admin" component={DisbursementContainer} admin={userData}/> : null
 }
 
 function initialize(userData) {
