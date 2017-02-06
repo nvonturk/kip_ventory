@@ -79,7 +79,7 @@ class AdminRequestsContainer extends Component {
 
   getMyRequests(){
     var thisobj = this;
-    $.getJSON("/api/requests.json", function(data){
+    $.getJSON("/api/requests/all.json", function(data){
       thisobj.setAllRequests(data);
       thisobj.setRequests(data);
     });
@@ -97,14 +97,112 @@ class AdminRequestsContainer extends Component {
     return new_reqs;
   }
 
-  submitRequest(e, request, decision){
+  submitRequest(e, request, decision, quantity, comment){
     e.preventDefault();
-    //build object
-    console.log("Hello World " + decision);
-    //make apache call
 
-    //rerender list on success, display error on failure
+    request.closed_comment = comment;
+    request.quantity = quantity;
+
+    $.getJSON("/api/currentuser/", function(data){
+      var admin = data;
+      request.administrator = admin.id;
+    });
+
+    if(decision == "approved"){
+      request.status = "A";
+    }
+    else{
+      request.status = "D";
+    }
+    if(request.item.quantity < request.quantity && request.status == "A"){
+      //THROW SOME ERROR OR INDICATION TO USER HERE, ASK BRODY, maybe do on backend as well
+      console.log("ERROR THIS MUST BE HANDLED GRACEFULLY, ATTEMPT TO DISBURSE TOO MUCH, NO MAS!!");
+    } else{
+      //make apache call to put
+
+      var thisobj = this;
+      $.ajax({
+      url:"/api/requests/" + request.id,
+      type: "PUT",
+      data: {
+        item: request.item.id,
+        requester: request.requester.id,
+        quantity: request.quantity,
+        open_reason: request.quantity,
+        date_open: request.date_open,
+        open_reason: request.open_reason,
+        date_closed: request.date_closed,
+        closed_comment: request.closed_comment,
+        administrator: request.administrator,
+        status: request.status,
+      },
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      sucess: function(result){
+        //Nothing seems to make this function call
+      },
+      complete: function(result){
+        console.log("we completed");
+        console.log(result)
+        thisobj.getMyRequests();
+        //TODO: Going to have to change this to make it fail gracefully
+        var resulting_request = JSON.parse(result.responseText);
+        if(resulting_request.status == "A"){
+          console.log("resulting_request");
+          console.log(resulting_request);
+          thisobj.modifyItem(request);
+        }
+      },
+      error:function (xhr, textStatus, thrownError){
+          alert("error doing something");
+          console.log(xhr)
+          console.log(textStatus)
+          console.log(thrownError)
+      }
+
+    });
   }
+}
+
+modifyItem(request){
+  var item = request.item;
+  var thisobj = this;
+  var new_quantity = item.quantity - request.quantity;
+  $.ajax({
+  url:"/api/items/" + item.id,
+  type: "PUT",
+  data: {
+    name: item.name,
+    // photo_src: item.photo_src,
+    location: item.location,
+    model: item.model,
+    quantity: new_quantity,
+    description: item.description,
+    tags: item.tags,
+  },
+  beforeSend: function(request) {
+    request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+  },
+  sucess: function(result){
+    console.log("we succeeded");
+    console.log(result);
+  },
+  complete: function(result){
+    console.log("we completed");
+    console.log(result);
+  },
+  error:function (xhr, textStatus, thrownError){
+      alert("error doing something");
+      console.log(xhr)
+      console.log(textStatus)
+      console.log(thrownError)
+  }
+
+});
+
+}
+
 
   render() {
     return (
@@ -116,40 +214,5 @@ class AdminRequestsContainer extends Component {
   }
 }
 
-// })
-
-//   getInitialState(){
-//     return ({allrequests: []})
-//   },
-//
-//   getUserRequests(){
-//     var thisObj = this
-//     $.getJSON("/api/requests.json", function(data){
-//       thisObj.setState({allrequests: data})
-//     });
-//   },
-//
-//   componentWillMount(){
-//     this.getUserRequests()
-//   },
-//
-//
-//
-//   render() {
-//     // Need to return in a window all of the requests
-//
-//     return (
-//       <Row>
-//             <Col xs={10} xsOffset={1}>
-//             {this.state.allrequests.map(function(request, i) {
-//               return (
-//                 <Row key = {i}>
-//                   <AdminRequestItem  request={request}/>
-//                 </Row>
-//               )})}
-//             </Col>
-//       </Row>)
-//   }
-// })
 
 export default AdminRequestsContainer

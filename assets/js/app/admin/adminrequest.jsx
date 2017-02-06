@@ -86,8 +86,8 @@ class AdminRequest extends Component {
             onChange={this.handleChange.bind(this,'closed_comment')}
           />
         </FormGroup>
-        <Button bsStyle="success" onClick={(e) => this.props.submit(e, this.props.request, "approved")}>Approve</Button>
-        <Button bsStyle="danger" onClick={(e) => this.props.submit(e, this.props.request, "denied")}>Deny</Button>
+        <Button bsStyle="success" onClick={(e) => this.props.submit(e, this.props.request, "approved",this.state.quantity, this.state.closed_comment)}>Approve</Button>
+        <Button bsStyle="danger" onClick={(e) => this.props.submit(e, this.props.request, "denied", this.state.quantity, this.state.closed_comment)}>Deny</Button>
       </div>
 
     );

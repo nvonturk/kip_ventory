@@ -20,6 +20,7 @@ class ItemView(generics.GenericAPIView,
                mixins.ListModelMixin,
                mixins.RetrieveModelMixin,
                mixins.CreateModelMixin,
+               mixins.UpdateModelMixin,
                mixins.DestroyModelMixin):
     permission_classes = (IsAuthenticated,)
 
@@ -63,7 +64,7 @@ class ItemView(generics.GenericAPIView,
             return self.retrieve(request, args, kwargs)
 
         # Pagination: rest framework does it for you, but request stuff below messes it up so i'm doing it manually
-        
+
         queryset = self.get_queryset()
         itemsPerPage = self.request.GET.get('itemsPerPage')
         if itemsPerPage is None:
@@ -78,12 +79,12 @@ class ItemView(generics.GenericAPIView,
         except EmptyPage:
             # If page is out of range (e.g. 9999), deliver last page of results.
             queryset = paginator.page(paginator.num_pages)
-        
-        
-        
+
+
+
         # Attach requests
         items = queryset
-        
+
         #items = self.get_queryset()
         toReturn = {
             "count" : paginator.count,
@@ -116,6 +117,12 @@ class ItemView(generics.GenericAPIView,
             content = {'error': "you're not authorized to modify items."}
             return Response(content, status=status.HTTP_403_FORBIDDEN)
         return self.create(request, args, kwargs)
+
+    def put(self, request, *args, **kwargs):
+        if not self.request.user.is_staff:
+            content = {'error': "you're not authorized to modify items."}
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+        return self.partial_update(request, args, kwargs)
 
     def delete(self, request, *args, **kwargs):
         if not self.request.user.is_staff:
@@ -265,6 +272,7 @@ def request_get_create(request, format=None):
 
     elif request.method == 'POST':
         serializer = serializers.RequestPOSTSerializer(data=request.data)
+        print(request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -293,7 +301,7 @@ def request_modify_delete(request, pk, format=None):
         # only admins can modify requests (in order to change status)
         if not request.user.is_staff:# or (request.status != 'O'):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        serializer = serializers.RequestPOSTSerializer(request_obj, data=request.data)
+        serializer = serializers.RequestPUTSerializer(request_obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
