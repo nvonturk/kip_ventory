@@ -12,7 +12,7 @@ class ItemDetailModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      quantity:0,
+      quantity:props.item.quantity,
     	showModal: false,
       requests: []
     };
@@ -20,6 +20,7 @@ class ItemDetailModal extends Component {
     this.open = this.open.bind(this);
     this.addToCart = this.addToCart.bind(this);
     this.setQuantity = this.setQuantity.bind(this);
+    this.updatePropQuantity = this.updatePropQuantity.bind(this);
   }
 
   close() {
@@ -30,11 +31,22 @@ class ItemDetailModal extends Component {
     this.setState({ showModal: true });
   }
 
+  updatePropQuantity(value){
+    var thisObj = this
+    console.log(value)
+    this.setState({quantity:(thisObj.state.quantity + parseInt(value))});
+  }
+
   setQuantity(value){
+    console.log(value)
     this.setState({quantity:value});
   }
 
   addToCart(){
+    if (!Number.isInteger(parseFloat(this.state.quantity)) || parseFloat(this.state.quantity)<=0){
+      alert("Quantity must be a positive integer")
+    }
+    else{
     this.setState({showModal: false});
     var thisobj = this
     $.ajax({
@@ -57,10 +69,10 @@ class ItemDetailModal extends Component {
         console.log(thrownError)
     }
 });
+}
   }
 
   render() {
-
     var requests=[];
 
     if(this.props.item.request_set.length == 0) {
@@ -78,7 +90,7 @@ class ItemDetailModal extends Component {
     if(this.props.user.is_staff) {
       footer =
         <Modal.Footer>
-          <CreateTransactionsContainer item_id={this.props.item.id} />
+          <CreateTransactionsContainer updatePropQuantity = {this.updatePropQuantity} item_id={this.props.item.id} />
         </Modal.Footer>
     } else {
       footer =
@@ -102,7 +114,7 @@ class ItemDetailModal extends Component {
             <p>Name: {this.props.item.name}</p>
             <p>Model No: {this.props.item.model}</p>
             <p>Description: {this.props.item.description}</p>
-            <p>Quantity Available: {this.props.item.quantity}</p>
+            <p>Quantity Available: {this.state.quantity}</p>
             <p>Location: {this.props.item.location}</p>
           </Modal.Body>
           <Modal.Body>

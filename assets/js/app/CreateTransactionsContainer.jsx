@@ -9,6 +9,8 @@ class CreateTransactionsContainer extends Component {
     super(props);
      this.state = {
       showModal: false,
+      category: "Acquisition",
+      quantity: 0,
     };
     this.close = this.close.bind(this);
     this.open = this.open.bind(this);
@@ -17,7 +19,6 @@ class CreateTransactionsContainer extends Component {
     this.handleTypeChange = this.handleTypeChange.bind(this);
     this.createTransaction = this.createTransaction.bind(this);
 
-    this.category = "Acquisition";
   }
 
   close() {
@@ -29,7 +30,7 @@ class CreateTransactionsContainer extends Component {
   }
 
   handleQuantityChange(e) {
-    this.quantity = e.target.value;
+    this.setState({quantity: e.target.value})
   }
 
   handleCommentChange(e) {
@@ -37,17 +38,22 @@ class CreateTransactionsContainer extends Component {
   }
 
   handleTypeChange(e) {
-    this.category = e.target.value;
+    this.setState({category: e.target.value})
   }
 
   createTransaction() {
-    console.log(this.quantity);
-    console.log(this.comment);
-    console.log(this.category);
+
+
+    if (!Number.isInteger(parseFloat(this.state.quantity)) || parseFloat(this.state.quantity)<=0){
+      alert("Must be a positive integer")
+    }
+    // Maybe check for a comment
+    else {
+
     var data={
-      quantity: this.quantity,
+      quantity: this.state.quantity,
       comment: this.comment,
-      category: this.category,
+      category: this.state.category,
       item: this.props.item_id
     }
 
@@ -61,11 +67,14 @@ class CreateTransactionsContainer extends Component {
       },
       success:function(response){
         console.log(response);
-      },
-      complete:function() {
+        thisObj.props.updatePropQuantity(thisObj.state.category == "Acquisition" ? thisObj.state.quantity : -(thisObj.state.quantity));
         thisObj.setState({
           showModal: false,
+          category: "Acquisition",
+          quantity: 0
         });
+      },
+      complete:function() {
         //thisObj.props.handleTransactionCreated(); need something like this to update item quantity/transactions immediately
       },
       error:function (xhr, textStatus, thrownError){
@@ -75,7 +84,7 @@ class CreateTransactionsContainer extends Component {
           console.log(thrownError)
       }
     });
-
+  }
   }
 
   render() {
