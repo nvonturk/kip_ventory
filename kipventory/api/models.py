@@ -56,3 +56,20 @@ class Request(models.Model):
 
     def __str__(self):
         return "{} {}".format(self.requester, self.item)
+
+class Transaction(models.Model):
+    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
+
+    ACQUISITION = 'Acquisition'
+    LOSS = 'Loss'
+    category_choices    = (
+        (ACQUISITION, ACQUISITION),
+        (LOSS, LOSS),
+    )
+    category            = models.CharField(max_length = 20, choices=category_choices)
+
+    quantity            = models.PositiveIntegerField()
+    comment             = models.CharField(max_length = 100, blank=True, null=True)
+    date                = models.DateTimeField()
+    administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
+

@@ -1,5 +1,5 @@
 import React from 'react'
-import GridContainer from './gridcontainer'
+import GridContainer from './GridContainer'
 
 const Home = React.createClass({
   render() {

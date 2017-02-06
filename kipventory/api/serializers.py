@@ -49,12 +49,30 @@ class CartItemPOSTSerializer(serializers.ModelSerializer):
 
 class RequestGETSerializer(serializers.ModelSerializer):
     requester = UserGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
     item      = ItemGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason', 'status']
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
 
 class RequestPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Request
         fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
+
+class RequestPUTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason','date_closed','closed_comment','administrator','status']
+
+class TransactionGETSerializer(serializers.ModelSerializer):
+    item = ItemGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Transaction
+        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
+class TransactionPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Transaction
+        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']

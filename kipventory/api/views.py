@@ -15,12 +15,16 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from . import models, serializers
 from rest_framework import pagination
+from datetime import datetime
+
+from django.utils import timezone
 
 # Create your views here.
 class ItemView(generics.GenericAPIView,
                mixins.ListModelMixin,
                mixins.RetrieveModelMixin,
                mixins.CreateModelMixin,
+               mixins.UpdateModelMixin,
                mixins.DestroyModelMixin):
     permission_classes = (IsAuthenticated,)
 
@@ -118,12 +122,66 @@ class ItemView(generics.GenericAPIView,
             return Response(content, status=status.HTTP_403_FORBIDDEN)
         return self.create(request, args, kwargs)
 
+    def put(self, request, *args, **kwargs):
+        if not self.request.user.is_staff:
+            content = {'error': "you're not authorized to modify items."}
+            return Response(content, status=status.HTTP_403_FORBIDDEN)
+        return self.partial_update(request, args, kwargs)
+
     def delete(self, request, *args, **kwargs):
         if not self.request.user.is_staff:
             content = {'error': "you're not authorized to modify items."}
             return Response(content, status=status.HTTP_403_FORBIDDEN)
         return self.destroy(request, args, kwargs)
 
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def disburse_to_user(request, format=None):
+    ## POST DATA
+    #   - item
+    #   - quantity
+    #   - user
+    #   - closed comment
+    ## AUTOFILL DATA
+    #   - open reason
+    #   - open date
+    #   - date closed
+    #   - administrator
+    if request.method == 'POST':
+        item = int(request.data['item'])
+        quantity = int(request.data['quantity'])
+        requester = request.data['requester']
+        closed_comment = request.data['closed_comment']
+
+        admin = request.user.pk
+        date_open = timezone.now()
+        date_closed = date_open
+        open_reason = "Administrative disbursement."
+
+        data = {
+            "requester": requester,
+            "item": item,
+            "quantity": quantity,
+            "date_open": date_open,
+            "open_reason": open_reason,
+            "date_closed": date_closed,
+            "closed_comment": closed_comment,
+            "administrator": admin,
+            "status": 'A'
+        }
+        serializer = serializers.RequestPUTSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            item = models.Item.objects.get(pk=item)
+            print(item)
+            item.quantity = (item.quantity - quantity)
+            item.save()
+            print(item)
+            return Response(serializer.data)
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'POST'])
@@ -181,6 +239,7 @@ def cart_detail_modify_delete(request, pk, format=None):
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def request_get_all_admin(request, format=None):
@@ -204,11 +263,11 @@ def request_get_create(request, format=None):
 
     elif request.method == 'POST':
         serializer = serializers.RequestPOSTSerializer(data=request.data)
+        print(request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -232,7 +291,7 @@ def request_modify_delete(request, pk, format=None):
         # only admins can modify requests (in order to change status)
         if not request.user.is_staff:# or (request.status != 'O'):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        serializer = serializers.RequestPOSTSerializer(request_obj, data=request.data)
+        serializer = serializers.RequestPUTSerializer(request_obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -245,7 +304,6 @@ def request_modify_delete(request, pk, format=None):
             return Response(status=status.HTTP_403_FORBIDDEN)
         request_obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 
 @api_view(['POST'])
@@ -311,3 +369,33 @@ class TagListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = models.Tag.objects.all()
         return queryset
+
+
+@api_view(['GET', 'POST'])
+@permission_classes((IsAuthenticated,))
+def transaction_get_create(request, format=None):
+    print(request.query_params)
+    if request.method == 'GET':
+        transactions = models.Transaction.objects.all()
+        serializer = serializers.TransactionGETSerializer(transactions, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        #todo do this in middleware
+        data = request.data.copy()
+        data['date'] = datetime.now()
+        data['administrator'] = request.user.pk
+        serializer = serializers.TransactionPOSTSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            item = models.Item.objects.get(pk=data['item'])
+            if data['category'] == 'Acquisition':#models.ACQUISITION:
+                item.quantity = item.quantity + int(data['quantity'])
+            elif data['category'] == 'Loss':#models.LOSS:
+                item.quantity = item.quantity - int(data['quantity'])
+            else:
+                #should never get here
+                pass
+            item.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

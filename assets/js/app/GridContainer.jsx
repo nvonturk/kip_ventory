@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
-import InventoryGrid from './inventorygrid'
-import InventoryGridHeader from './inventorygridheader'
-import Paginator from './paginator'
+import InventoryGrid from './InventoryGrid'
+import InventoryGridHeader from './InventoryGridHeader'
+import Paginator from './Paginator'
 import $ from "jquery"
 
 const ITEMS_PER_PAGE = 2;
@@ -14,7 +14,6 @@ class GridContainer extends Component {
       items:[],
       tagsSelected: [],
       excludeTagsSelected: [],
-      user: props.user,
       searchText: "",
       page: 1,
       pageCount: 0,
@@ -64,7 +63,6 @@ class GridContainer extends Component {
     this.getItems(params);
   }
 
-
   handleSearch(text) {
     console.log("Search text: " + text);
     this.setState({searchText: text, page: 1}, () => {
@@ -86,15 +84,6 @@ class GridContainer extends Component {
     });
   }
 
-  setCurrentUser(user){
-    // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView
-    // ListModelMixin is configured to return an array, even if it only contains a single element
-    // I'm sure we can find a way to use the RetrieveModelMixin instead, which will return a single JSON object.
-    this.setState({
-      user: user[0]
-    })
-  }
-
   handlePageClick(data) {
     let selected = data.selected;
     let offset = Math.ceil(selected * ITEMS_PER_PAGE);
@@ -109,7 +98,7 @@ class GridContainer extends Component {
     return (
       <div>
         <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
-      	<InventoryGrid items={this.state.items} user={this.state.user}></InventoryGrid>
+      	<InventoryGrid items={this.state.items} user={this.props.user}></InventoryGrid>
         <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
       </div>
     );

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { DropdownButton, MenuItem } from 'react-bootstrap'
 import $ from "jquery"
-import MultiSelect from './multiselect';
+import MultiSelect from './MultiSelect';
 
 //use: <TagMultiSelect/>
 class TagMultiSelect extends Component {

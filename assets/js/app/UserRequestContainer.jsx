@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import $ from "jquery"
-import RequestSelectFilter from './requestselectfilter'
-import RequestList from './requestlist'
+import RequestSelectFilter from './RequestSelectFilter'
+import RequestList from './RequestList'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import { Grid, Row, Col } from 'react-bootstrap'
 
