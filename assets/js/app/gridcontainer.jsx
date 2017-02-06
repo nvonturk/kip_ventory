@@ -48,6 +48,7 @@ class GridContainer extends Component {
     });
   }
 
+
   getAllItems() {
     var params = {
       page: 1,
@@ -97,6 +98,7 @@ class GridContainer extends Component {
       this.filterItems();
     });
   }
+
 
   setCurrentUser(user){
     // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView
