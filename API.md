@@ -46,9 +46,9 @@ tags        --> ManyToManyField --> Tag (each item has many tags)
 
 REST Endpoints
 ------------
-*/items/
-  *GET: get all items
-*/items/[id]/
+* /items/
+  * GET: get all items
+* /items/[id]/
   *GET: get the item with the specified id
 */requests
   *GET: get all requests made by the current user
