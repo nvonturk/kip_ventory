@@ -1,8 +1,8 @@
 import React from 'react'
 import {Row, Col} from 'react-bootstrap'
-import TagMultiSelect from './tagmultiselect'
-import ItemDetailModal from './itemdetailmodal'
-import SimpleRow from './simplerow'
+import TagMultiSelect from './TagMultiSelect'
+import ItemDetailModal from './ItemDetailModal'
+import SimpleRow from './SimpleRow'
 
 function InventoryGridRow(props) {
   var columnContents = [];

@@ -58,7 +58,7 @@ class AdminRequest extends Component {
       return (
         <div>
         <p><b>User Comments:</b> {props.request.open_reason} </p>
-        <p><b>Administrator:</b> {props.request.administrator.username} </p>
+        <p><b>Administrator:</b> {"test"} </p>
         <p><b>Admin Comments:</b> {props.request.closed_comment} </p>
         <p><b>Date Closed:</b> {props.request.date_closed.substring(0,9)} </p>
         </div>

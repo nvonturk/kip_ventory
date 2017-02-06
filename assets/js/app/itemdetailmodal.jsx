@@ -1,12 +1,12 @@
 import React, { Component } from 'react'
 import { Button, Modal}  from 'react-bootstrap'
-import QuantityBox from './quantitybox'
-import SimpleRequest from './simplerequest'
-import RequestList from './requestlist'
+import QuantityBox from './QuantityBox'
+import SimpleRequest from './SimpleSequest'
+import RequestList from './RequestList'
 import $ from "jquery"
-import Item from './item'
+import Item from './Item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
-import CreateTransactionsContainer from './createtransactionscontainer'
+import CreateTransactionsContainer from './CreateTransactionsContainer'
 
 class ItemDetailModal extends Component {
   constructor(props) {
@@ -76,12 +76,12 @@ class ItemDetailModal extends Component {
 
     var footer="";
     if(this.props.user.is_staff) {
-      footer = 
+      footer =
         <Modal.Footer>
           <CreateTransactionsContainer item_id={this.props.item.id} />
         </Modal.Footer>
     } else {
-      footer = 
+      footer =
         <Modal.Footer>
           <Button onClick={this.addToCart}>Add to Cart</Button>
           <QuantityBox onUserInput={this.setQuantity}/>

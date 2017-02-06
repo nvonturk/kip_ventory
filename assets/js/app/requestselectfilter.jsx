@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { SplitButton, MenuItem } from 'react-bootstrap'
-import SimpleDropdown from './simpledropdown'
+import SimpleDropdown from './SimpleDropdown'
 import Select from 'react-select';
 
 

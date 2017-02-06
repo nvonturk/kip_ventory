@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { DropdownButton, MenuItem } from 'react-bootstrap'
 import $ from "jquery"
-import SimpleDropdown from './simpledropdown'
+import SimpleDropdown from './SimpleDropdown'
 
 // use: <TagDropdown/>
 class TagDropdown extends Component {

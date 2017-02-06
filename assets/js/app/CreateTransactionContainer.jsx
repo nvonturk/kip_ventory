@@ -3,17 +3,6 @@ import $ from "jquery"
 import { FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Button} from 'react-bootstrap'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 
-/*
-function FieldGroup({ id, label, help, ...props }) {
-  return (
-    <FormGroup controlId={id}>
-      <ControlLabel>{label}</ControlLabel>
-      <FormControl {...props} />
-      {help && <HelpBlock>{help}</HelpBlock>}
-    </FormGroup>
-  );
-}
-*/
 
 class CreateTransactionsContainer extends Component {
   constructor(props) {
@@ -73,7 +62,7 @@ class CreateTransactionsContainer extends Component {
       success:function(response){
         console.log(response);
       },
-      complete:function() {     
+      complete:function() {
         thisObj.setState({
           showModal: false,
         });
@@ -86,11 +75,11 @@ class CreateTransactionsContainer extends Component {
           console.log(thrownError)
       }
     });
-   
+
   }
 
   render() {
-    /* 
+    /*
       item
       quantity
       category (acquisition, loss)
@@ -130,7 +119,7 @@ class CreateTransactionsContainer extends Component {
                 <FormControl type="text" placeholder="Enter amount acquired or lost." onChange={this.handleQuantityChange} />
                 <HelpBlock>Must be a number</HelpBlock>
               </FormGroup>
-             
+
               <FormGroup controlId="formControlsSelect">
                 <ControlLabel>Type</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" onChange={this.handleTypeChange}>
@@ -143,7 +132,7 @@ class CreateTransactionsContainer extends Component {
                 <ControlLabel>Comment</ControlLabel>
                 <FormControl type="text" placeholder="Enter an explanation." onChange={this.handleCommentChange} />
               </FormGroup>
-              
+
             </form>
           </Modal.Body>
           <Modal.Footer>

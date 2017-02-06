@@ -1,8 +1,8 @@
 import React from 'react'
-import SearchBar from './searchbar'
+import SearchBar from './SearchBar'
 import { Button, Grid, Row, Col } from 'react-bootstrap'
-import SimpleRow from './simplerow'
-import TagMultiSelect from './tagmultiselect'
+import SimpleRow from './SimpleRow'
+import TagMultiSelect from './TagMultiSelect'
 
 function InventoryGridHeader(props) {
 	var columnContents = [

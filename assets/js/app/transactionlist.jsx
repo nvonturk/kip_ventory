@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { ListGroup, ListGroupItem } from 'react-bootstrap'
-import Transaction from './transaction'
+import Transaction from './Transaction'
 
 
 class TransactionList extends Component {
@@ -14,7 +14,7 @@ class TransactionList extends Component {
     this.props.transactions.map(function(transaction, i){
       list.push(<ListGroupItem key={i}><Transaction transaction={transaction}/></ListGroupItem>);
     });
-    
+
 
     return(
       <ListGroup>

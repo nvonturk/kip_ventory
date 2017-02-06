@@ -4,9 +4,9 @@ import { Router, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
 import Home from './Home'
 import Requests from './Requests'
-import AdminContainer from './admin/admincontainer'
+import AdminContainer from './admin/AdminContainer'
 import CartContainer from './cart/CartContainer'
-import Profile from './profile'
+import Profile from './Profile'
 import {getJSON} from 'jquery'
 
 
