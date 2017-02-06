@@ -59,3 +59,8 @@ class RequestPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Request
         fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
+
+class RequestPUTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason','date_closed','closed_comment','administrator','status']

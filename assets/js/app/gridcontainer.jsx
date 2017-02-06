@@ -24,12 +24,19 @@ class GridContainer extends Component {
     this.getAllItems = this.getAllItems.bind(this);
     this.filterItems = this.filterItems.bind(this);
 
+
+    this.setCurrentUser = this.setCurrentUser.bind(this);
+    this.getCurrentUser = this.getCurrentUser.bind(this);
+
     this.handleSearch = this.handleSearch.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
     this.handleExcludeTagSelection = this.handleExcludeTagSelection.bind(this);
     this.handlePageClick = this.handlePageClick.bind(this);
 
     this.getAllItems(); //maybe move to componentDidMount()
+
+    this.getCurrentUser();
+
   }
 
   getItems(params) {
@@ -64,6 +71,12 @@ class GridContainer extends Component {
     this.getItems(params);
   }
 
+  getCurrentUser() {
+    var thisobj = this;
+    $.getJSON("/api/currentuser.json", function(data) {
+      thisobj.setCurrentUser(data)
+    });
+  }
 
   handleSearch(text) {
     console.log("Search text: " + text);
@@ -85,6 +98,7 @@ class GridContainer extends Component {
       this.filterItems();
     });
   }
+
 
   setCurrentUser(user){
     // We have to access user[0] because we're using the ListModelMixin in the CurrentUserView

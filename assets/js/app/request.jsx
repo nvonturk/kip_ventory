@@ -3,7 +3,7 @@ import SimpleRequest from './simplerequest'
 import { Button, Panel } from 'react-bootstrap'
 
 function Request(props){
-  var html = null;
+    var html = null;
     var constant_html = getReq(props);
     if(props.request.status == "O"){
       html = <Button bsStyle="primary" onClick={() => props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>
