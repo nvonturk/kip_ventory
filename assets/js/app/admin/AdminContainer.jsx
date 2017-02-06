@@ -7,7 +7,7 @@ import TransactionsContainer from '../TransactionsContainer'
 const AdminContainer = React.createClass({
   render() {
     return (
-      <Grid fluid>
+      <Grid>
         <Row>
           <Col xs={12}>
             <DisbursementContainer admin={this.props.admin}/>
