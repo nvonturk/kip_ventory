@@ -33,7 +33,6 @@ class AdminRequest extends Component {
     if(this.props.request.status == "O"){
       html.push(<Button bsStyle="primary" onClick={() => this.props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>);
       html.push(this.getForm(this.props));
-
     }
     else{
       html.push(this.getInfo(this.props));
@@ -41,7 +40,7 @@ class AdminRequest extends Component {
 
     return (<div>
       <Panel collapsible header={constant_html}>
-      {html}
+        {html}
       </Panel>
       </div>);
   }
@@ -49,7 +48,8 @@ class AdminRequest extends Component {
   getReq(props){
     return (
       <div>
-      <b>Item:</b> {props.request.item.name}  <SimpleRequest request={props.request}/>
+        <b>Item:</b> {props.request.item.name}
+        <SimpleRequest request={props.request}/>
       </div>
     );
   }
@@ -89,7 +89,6 @@ class AdminRequest extends Component {
         <Button bsStyle="success" onClick={(e) => this.props.submit(e, this.props.request, "approved",this.state.quantity, this.state.closed_comment)}>Approve</Button>
         <Button bsStyle="danger" onClick={(e) => this.props.submit(e, this.props.request, "denied", this.state.quantity, this.state.closed_comment)}>Deny</Button>
       </div>
-
     );
   }
 }

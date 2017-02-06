@@ -31,7 +31,9 @@ class AdminRequestList extends Component{
 
     return(
       <ListGroup>
-        {list}
+        {list.map(function(li, i) {
+          return li;
+        })}
       </ListGroup>
     )
   }

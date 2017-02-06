@@ -1,16 +1,23 @@
 import React from 'react'
-import AdminRequestContainer from "./adminrequestscontainer"
-import DisbursementContainer from "./disbursementcontainer"
-import TransactionsContainer from '../transactionsContainer'
+import {Grid, Row, Col} from 'react-bootstrap'
+import AdminRequestsContainer from "./AdminRequestsContainer"
+import DisbursementContainer from "./DisbursementContainer"
+import TransactionsContainer from '../TransactionsContainer'
 
 const AdminContainer = React.createClass({
   render() {
     return (
-      <div>
-        <DisbursementContainer/>
-        <AdminRequestContainer/>
-        <TransactionsContainer/>
-      </div>
+      <Grid>
+        <Row>
+          <DisbursementContainer admin={this.props.admin}/>
+        </Row>
+        <Row>
+          <AdminRequestsContainer admin={this.props.admin}/>
+        </Row>
+        <Row>
+          <TransactionsContainer admin={this.props.admin}/>
+        </Row>
+      </Grid>
     )
   }
 })

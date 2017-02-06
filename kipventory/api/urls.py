@@ -13,11 +13,13 @@ urlpatterns = [
     url(r'^requests/(?P<pk>[0-9]+)/?$', views.request_modify_delete),
     url(r'^requests/all/?$', views.request_get_all_admin),
 
+    url(r'^disburse/?$', views.disburse_to_user),
+
     url(r'^cart/?$', views.cart_get_create),
     url(r'^cart/(?P<pk>[0-9]+)/?$', views.cart_detail_modify_delete),
 
     url(r'^tags/?$', views.TagListView.as_view()),
-    
+
     url(r'^transactions/?$', views.transaction_get_create),
 
     url(r'^login/?$', views.post_user_login),
