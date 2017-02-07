@@ -193,3 +193,81 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
     * Permissions: must be an admin
 * `/users/current/`
   * GET: get the current user
+
+
+Technologies
+------------
+
+The following technologies are used for the kip-ventory web app:
+  * Django 
+    * web framework in Python used for the backend and code organization 
+    * Dependencies
+      * our python code contains a few dependencies listed in requirements.txt
+  * React.js
+    * frontend UI framework that makes it easier to create interactive UIs
+    * Dependencies
+      * our React code contains a few dependencies listed in package.json
+  * Postgres
+    * used for our database
+  * Webpack
+    * a module bundler used to bundle all of the code dependencies into static assets
+
+High Level Design
+------------
+
+There are two distinct kinds of users of the kip-ventory web app: admins and common users. The website is set up so that both admins and common users have almost the same experience, with the admin having a few special privileges. The website is mostly a single page app, with React router being used to mimic url routing for different parts of the home page. The only true pages that are at different url endpoints are the login page and the admin panel. 
+
+####Login Page (/)
+
+  * When a user first goes to the website, the page gives the option of logging in (if the user already has an account) or signing up for an account. Signing up creates a new User object with the specified fields, and logging in checks the credentials against an existing User in the database. Once signed in, the user is redirected to the main app at /app/.
+
+####Main app (/app/)
+
+  * On the main app page there are a few different "pages" that the user can navigate between
+
+* Inventory
+
+  * In this view, a list of all items in the ECE inventory are shown. This is done by making an AJAX call to the /api/items endpoint. The items are paginated, and the user can search by name/model no or filter by included/excluded tags.  Filtering and searching is also done by making an AJAX call to /api/items, while also appending query parameters to specify the selected filters. The tags to select from are shown in a drop down and are retrieved from /api/tags.
+
+  * When the user clicks an item, a modal window pops up with information about the item. In addition to item parameters, this also includes all of the user's outstanding requests for that item. The user can enter a quantity and add the item to his/her cart. When the user hits Add To Cart, a POST request is sent to /api/cart that creates a CartItem object with the item and quantity selected. Once the user adds all items of interest to his/her cart, the user can navigate to the Cart tab to initiate a request for those items.
+
+  * If the user is an admin, all outstanding requests for an item are shown in the modal window for that item, regardless of user. In addition, a Create Transactions button is shown. This button pops up another modal window, where the admin can initiate a transaction that logs the Acquisition or Loss of the selected item. When the admin his create transaction, a POST request is sent to /api/transaction, where a transaction object is created and shows up under the tranactions list in the Admin tab.
+
+* Cart
+
+  * In this view, the user can see all of the items he/she has added to his/her cart. The user can update any of the quantities, and initiate a request for those items. This brings up a request form, in which the user fills out a few fields and initiates a request. A POST request is sent to /api/request to store the request for each item in the database. The requests now show up in the Requests tab.
+
+* Requests 
+
+  * In this view, the user can see all of the requests they've made (GET /api/requests). They can filter the requests by status: Outstanding, Approved, or Denied. 
+
+* Profile
+ 
+  * This tab displays basic information about the current user.
+
+* Logout
+
+  * This button logs out the current user and redirects them to the login page.
+
+* Admin
+
+  * This view is only shown if the user is an admin, and contains a few admin-specific controls. 
+    * Disburse Items
+      * The admin can choose to disburse an item directly to a user without a user initiated request. Disbursing an item makes a POST to /api/disburse, which creates a Request with status Approved for the specified item and user.
+    * Respond to Requests
+      * The admin can see a list of all requests made for all items, and can filter by request status. Clicking an outstanding request allows the admin to approve our deny the request.
+    * View transactions history
+      * The admin can see a list of all transactions, and can filter by transaction type: Acquisition or loss. 
+
+####Admin panel (/admin/)
+
+  * This view is the Django admin panel, where the admin can go to create items and tags and manage many things. Eventually much of this functionality will be moved to the main app. 
+
+####Api (/api/)
+
+  * Our REST api endpoints live at /api. The endpoints are described above, and used in all of our views to make the website interactive and display data.
+
+Configuration
+------------
+
+The [readme](https://github.com/nbv3/kip_ventory/blob/docs/README.md) on the kip-ventory github page contains detailed instructions on how to setup and install your own version of the web app. 
