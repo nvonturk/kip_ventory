@@ -16,20 +16,16 @@ class CartItem extends Component {
   }
 
   handleChange(event) {
-    console.log(event.target.value)
     this.setState({ [event.target.name]: event.target.value });
   }
 
   changeQuantity(event) {
     if (this.state.quantity == this.props.cartItem['quantity']) {
-      console.log("No effect.")
     }
     else if (!Number.isInteger(parseFloat(this.state.quantity)) || parseFloat(this.state.quantity)<=0){
       alert("Must be a positive integer")
     }else {
-      console.log("Changing cart item quantity to: " + this.state.quantity)
       this.props.cartItem['quantity'] = this.state.quantity
-      console.log(this.props.cartItem)
 
       var thisobj = this
       $.ajax({
@@ -45,9 +41,6 @@ class CartItem extends Component {
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
-          console.log(xhr)
-          console.log(textStatus)
-          console.log(thrownError)
       }
   });
 
@@ -58,36 +51,12 @@ class CartItem extends Component {
     return (
       <div>
       <Row>
-        <Col xs={2} md={2}>{this.props.cartItem['item']['name']}</Col>
+        <Col xs={2} md={2}>
+          <Well>{this.props.cartItem['item']['name']}</Well>
+        </Col>
         <Col xs={6} md={6}>
           <Well>{this.props.cartItem['item']['description']}</Well>
         </Col>
-        <Col xs={2} md={2}>
-          <FormGroup controlId="formQuantity">
-            <ControlLabel>Quantity</ControlLabel>
-            <FormControl
-              type="number"
-              name="quantity"
-              value={this.state.quantity}
-              placeholder={this.state.quantity}
-              onChange={this.handleChange}
-            />
-          </FormGroup>
-        </Col>
-        <Col xs={2} md={2}>
-            <Row>
-              <Col xs={12}>
-              <Button bsStyle="primary" block onClick={this.changeQuantity} className="quantityButton">Update</Button>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col xs={12}>
-              <Button bsStyle="primary" block onClick={() => this.props.reRender(this.props.cartItem.id)} className="deleteButton">Delete</Button>
-              </Col>
-            </Row>
-        </Col>
-
       </Row>
       </div>
     )
@@ -100,17 +69,45 @@ class CartItem extends Component {
         <Panel collapsible header={this.getPanelHeader()}>
           <div>
             <Row>
-            <FormGroup controlId="formOpenComment">
-              <ControlLabel>Comment</ControlLabel>
-              <FormControl
-                type = "text"
-                name="comment"
-                value={this.state.comment}
-                placeholder={this.state.comment}
-                onChange={this.handleChange}
-              />
-            </FormGroup>
-              <Button bsStyle="primary" onClick={() => this.props.makeRequest(this.props.cartItem, this.state.comment)} className="requestButton">Make Request</Button>
+              <Row>
+                <Col xs={3} md={3}>
+                  <FormGroup controlId="formQuantity">
+                    <ControlLabel>Quantity (click Update to set value)</ControlLabel>
+                      <FormControl
+                        type="number"
+                        name="quantity"
+                        value={this.state.quantity}
+                        placeholder={this.state.quantity}
+                        onChange={this.handleChange}
+                      />
+                  </FormGroup>
+                </Col>
+                <Col xs={2} md={2}>
+                  <Button bsStyle="primary" block onClick={this.changeQuantity} className="quantityButton">Update</Button>
+                </Col>
+              </Row>
+              <Row>
+                <Col xs={6} md={6}>
+                  <FormGroup controlId="formOpenComment">
+                    <ControlLabel>Comment</ControlLabel>
+                      <FormControl
+                        type = "text"
+                        name="comment"
+                        value={this.state.comment}
+                        placeholder={this.state.comment}
+                        onChange={this.handleChange}
+                      />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col xs={2} md={2}>
+                  <Button bsStyle="primary" block onClick={() => this.props.reRender(this.props.cartItem.id)} className="deleteButton">Delete</Button>
+                </Col>
+                <Col xs={2} md={2}>
+                  <Button bsStyle="primary" onClick={() => this.props.makeRequest(this.props.cartItem, this.state.comment)} className="requestButton">Make Request</Button>
+                </Col>
+              </Row>
             </Row>
           </div>
         </Panel>
