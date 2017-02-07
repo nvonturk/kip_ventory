@@ -222,4 +222,14 @@ sudo ufw allow 'Nginx Full'
 sudo systemctl restart nginx
 ```
 
+###### Set environment variables for Django production server.
+```
+export SECRET_KEY='[your secret key]'
+export DJANGO_URL='[your URL, ie. colab-sbx-[XXX].oit.duke.edu]'
+export DJANGO_IP='[your IP]'
+export DB_NAME='[your database name]'
+export DB_USER='[your database user]'
+export DB_PASSWORD=['your database user password']
+```
+
 Profit.
