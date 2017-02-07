@@ -105,9 +105,11 @@ sudo systemctl enable gunicorn
 
 
 ###### Configure SSL
-Create a signed certificate with `letsencrypt`
+Create a signed certificate with `letsencrypt`. First, we have to stop the `nginx` process.
 ```
+sudo systemctl stop nginx
 sudo letsencrypt certonly -d colab-sbx-[XXX].oit.duke.edu
+sudo systemctl start nginx
 ```
 Create a new `nginx` config snippet - these are just reusable config blocks.
 ```
@@ -207,30 +209,17 @@ We just configured `nginx` to redirect any HTTP traffic on port 80 to the HTTPS 
 have an SSL certificate set up.
 
 Symlink the config file to the `sites-enabled` directory to allow `nginx` to serve it.
+You might have to remove the file from the sites-enabled directory if you've already tried this.
 ```
+sudo rm /etc/nginx/sites-enabled/kipventory
 sudo ln -s /etc/nginx/sites-available/kipventory /etc/nginx/sites-enabled
 ```
 
 Now allow `nginx` to accept HTTP requests on port 80 and HTTPS requests on port 443.
 ```
+sudo ufw enable
 sudo ufw allow 'Nginx Full'
 sudo systemctl restart nginx
 ```
 
 Profit.
-
-
-
-
-
-
-
-sudo rm /etc/nginx/sites-enabled/kipventory
-sudo subl /etc/nginx/sites-available/kipventory
-
-
-sudo ln -s /etc/nginx/sites-available/kipventory /etc/nginx/sites-enabled
-sudo systemctl restart nginx
-
-
-Enjoy!
