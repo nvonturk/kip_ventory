@@ -134,10 +134,9 @@ class AdminRequestsContainer extends Component {
         console.log(result)
         thisobj.getMyRequests();
         //TODO: Going to have to change this to make it fail gracefully
-        var resulting_request = JSON.parse(result.responseText);
-        if(resulting_request.status == "A"){
+        if(request.status == "A"){
           console.log("resulting_request");
-          console.log(resulting_request);
+          console.log(request);
           thisobj.modifyItem(request);
         }
       },
