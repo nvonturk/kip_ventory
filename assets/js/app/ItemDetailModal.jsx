@@ -46,6 +46,9 @@ class ItemDetailModal extends Component {
     if (!Number.isInteger(parseFloat(this.state.quantity)) || parseFloat(this.state.quantity)<=0){
       alert("Quantity must be a positive integer")
     }
+    else if(this.props.item.quantity < this.state.quantity){
+      alert("Quantity Exceeds Inventory Capacity")
+    }
     else{
       this.setState({showModal: false});
       var thisobj = this;

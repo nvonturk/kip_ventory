@@ -52,17 +52,12 @@ class AdminRequestsContainer extends Component {
     },
     success:function(response){},
     complete:function(){      var newrequests = thisobj.state.requests.filter(req => (req.id != request.id))
-          console.log("DELETED SUCCESSFULLY")
-          console.log(newrequests)
           thisobj.setState({
             requests: newrequests
           })
         },
     error:function (xhr, textStatus, thrownError){
         alert("error doing something");
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
     }
     });
 
@@ -130,22 +125,18 @@ class AdminRequestsContainer extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(result){
-        console.log("we completed");
-        console.log(result)
         thisobj.getMyRequests();
         //TODO: Going to have to change this to make it fail gracefully
         if(request.status == "A"){
           console.log("resulting_request");
           console.log(request);
+
           thisobj.modifyItem(request);
         }
       },
       complete: function(result){},
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
-          console.log(xhr)
-          console.log(textStatus)
-          console.log(thrownError)
       }
 
     });
@@ -172,18 +163,14 @@ modifyItem(request){
     request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
   },
   sucess: function(result){
-    console.log("we succeeded");
-    console.log(result);
+
   },
   complete: function(result){
-    console.log("we completed");
-    console.log(result);
+
   },
   error:function (xhr, textStatus, thrownError){
       alert("error doing something");
-      console.log(xhr)
-      console.log(textStatus)
-      console.log(thrownError)
+
   }
 });
 }

@@ -49,9 +49,7 @@ class CartContainer extends Component {
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
-          console.log(xhr)
-          console.log(textStatus)
-          console.log(thrownError)
+
       }
   });
       thisobj.reRender(cartItem.id)
@@ -69,17 +67,14 @@ class CartContainer extends Component {
     },
     success:function(response){},
     complete:function(){      var items = thisobj.state.items.filter(item => (item.id != itemID))
-          console.log("DELETED SUCCESSFULLY")
-          console.log(items)
+
           thisobj.setState({
             items: items
           })
         },
     error:function (xhr, textStatus, thrownError){
         alert("error doing something");
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
+
     }
     });
 
