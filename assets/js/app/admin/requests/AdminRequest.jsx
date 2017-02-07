@@ -12,15 +12,6 @@ class AdminRequest extends Component {
   }
 
   handleChange(name, e) {
-    /*
-    NOT CLEAR WHY THIS DIDN'T WORK
-    */
-  // handleChange(event) {
-    // console.log(event.target.value)
-    // console.log(event.target.name)
-    // this.setState({
-    //   [event.target.name]: event.target.value
-    // });
     var change = {};
     change[name] = e.target.value;
     this.setState(change);
