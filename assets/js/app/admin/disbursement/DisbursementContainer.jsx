@@ -129,7 +129,6 @@ class DisbursementContainer extends Component {
   }
 
   render() {
-    console.log(this.state.itemlist)
     return (
       <Grid fluid>
         <Row>
