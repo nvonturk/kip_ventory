@@ -35,7 +35,6 @@ class DisbursementContainer extends Component {
     $.getJSON("/api/users.json", function(data){
       thisObj.setState({users: data})
       thisObj.createUserlist(data)
-      console.log(data)
     });
   }
 
@@ -45,7 +44,6 @@ class DisbursementContainer extends Component {
       data = data.results
       thisObj.setState({items: data})
   		thisObj.createItemlist(data);
-      console.log(data)
   	});
   }
 
@@ -66,17 +64,14 @@ class DisbursementContainer extends Component {
   }
 
   handleChange(event) {
-    console.log(event.target.value)
     this.setState({ [event.target.name]: event.target.value });
   }
 
   changeUser(event){
-    console.log(event)
     this.setState({currentuser: event})
   }
 
   changeItem(event){
-    console.log(event)
     this.setState({currentitem: event})
   }
 
@@ -118,9 +113,7 @@ class DisbursementContainer extends Component {
       },
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
-          console.log(xhr)
-          console.log(textStatus)
-          console.log(thrownError)
+
       }
   });
 
