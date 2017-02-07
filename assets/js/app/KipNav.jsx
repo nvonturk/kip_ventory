@@ -12,7 +12,7 @@ const KipNav = React.createClass({
 
   getAdminLink() {
     return this.props.route.user.is_staff ? (
-      <LinkContainer to="/app/admin/">
+      <LinkContainer to="/app/admin">
         <NavItem eventKey={3}>Admin</NavItem>
       </LinkContainer>
     ) : null;

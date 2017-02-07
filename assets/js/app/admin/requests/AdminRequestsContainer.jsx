@@ -1,10 +1,9 @@
 import React, { Component } from 'react'
-import { Row, Col, Button } from 'react-bootstrap'
-import AdminRequestItem from './AdminRequestItem'
+import { Grid, Row, Col, Button } from 'react-bootstrap'
 import $ from "jquery"
-import RequestSelectFilter from '../RequestSelectFilter'
+import RequestSelectFilter from '../../RequestSelectFilter'
 import AdminRequestList from './AdminRequestList'
-import { getCookie } from '../../csrf/DjangoCSRFToken'
+import { getCookie } from '../../../csrf/DjangoCSRFToken'
 
 class AdminRequestsContainer extends Component {
   constructor(props) {
@@ -102,7 +101,7 @@ class AdminRequestsContainer extends Component {
 
     request.closed_comment = comment;
     request.quantity = quantity;
-    request.administrator = this.props.admin
+    request.administrator = this.props.route.admin
     request.date_closed = (new Date()).toISOString()
     request.status = (decision == "approved") ? "A" : "D"
 
@@ -187,18 +186,16 @@ modifyItem(request){
       console.log(textStatus)
       console.log(thrownError)
   }
-
 });
-
 }
 
 
   render() {
     return (
-      <div>
+      <Grid fluid>
         <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
         <AdminRequestList deleteRequest={this.deleteRequest} submit={this.submitRequest} requests={this.state.requests} />
-      </div>
+      </Grid>
     );
   }
 }
