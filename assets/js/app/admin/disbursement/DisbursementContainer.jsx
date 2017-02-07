@@ -1,8 +1,8 @@
 import React, {Component} from 'react'
-import { Row, Col, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap'
+import { Grid, Row, Col, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap'
 import $ from 'jquery'
-import SimpleDropdown from '../SimpleDropdown'
-import { getCookie } from '../../csrf/DjangoCSRFToken'
+import SimpleDropdown from '../../SimpleDropdown'
+import { getCookie } from '../../../csrf/DjangoCSRFToken'
 
 class DisbursementContainer extends Component {
   constructor(props) {
@@ -100,7 +100,7 @@ class DisbursementContainer extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       data: {
-        // Need to add rest of info
+        // Need to add rest of info in backend
         item: thisObj.state.items[this.state.currentitem].id,
         requester: thisObj.state.users[this.state.currentuser].id,
         quantity: thisObj.state.quantity,
@@ -131,7 +131,7 @@ class DisbursementContainer extends Component {
   render() {
     console.log(this.state.itemlist)
     return (
-      <div>
+      <Grid fluid>
         <Row>
           <SimpleDropdown title="Select User" items={this.state.userlist} callback={this.changeUser} />
           <SimpleDropdown title="Select Item" items={this.state.itemlist} callback={this.changeItem}/>
@@ -139,7 +139,7 @@ class DisbursementContainer extends Component {
         <Row>
           <Col xs={2} md={2}>
           <FormGroup controlId="quantityForm">
-            <ControlLabel>Selected Quantity</ControlLabel>
+            <ControlLabel>Quantity</ControlLabel>
             <FormControl
               type="number"
               name="quantity"
@@ -149,7 +149,7 @@ class DisbursementContainer extends Component {
             />
           </FormGroup>
           </Col>
-          <Col xs = {8} md = {8}>
+          <Col xs = {10} md = {10}>
           <FormGroup controlId="commentForm">
             <ControlLabel>Comment</ControlLabel>
             <FormControl
@@ -165,7 +165,7 @@ class DisbursementContainer extends Component {
         <Row>
           <Button onClick={this.disburse}>Disburse</Button>
         </Row>
-      </div>
+      </Grid>
 
     )
   }

@@ -3,17 +3,25 @@ import { render } from 'react-dom'
 import { Router, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
 import Home from './Home'
-import RequestListContainer from './requests/RequestListContainer'
+
 import AdminContainer from './admin/AdminContainer'
+import DisbursementContainer from './admin/disbursement/DisbursementContainer'
+import AdminRequestsContainer from './admin/requests/AdminRequestsContainer'
+import TransactionsContainer from './admin/transactions/TransactionsContainer'
+
 import CartContainer from './cart/CartContainer'
+import RequestListContainer from './requests/RequestListContainer'
 import Profile from './Profile'
 import {getJSON} from 'jquery'
 
 
-
 function getRouteIfAdmin(userData) {
-  console.log(userData)
-  return userData.is_staff ? <Route path="admin" component={AdminContainer} admin={userData}/> : null
+  return userData.is_staff ? (
+    <Route path="admin" component={AdminContainer} admin={userData}>
+      <Route path="disburse" component={DisbursementContainer} admin={userData} />
+      <Route path="requests" component={AdminRequestsContainer} admin={userData} />
+      <Route path="transactions" component={TransactionsContainer} admin={userData} />
+    </Route>) : null
 }
 
 function initialize(userData) {
@@ -21,7 +29,7 @@ function initialize(userData) {
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
         <IndexRoute component={Home} user={userData} />
-        <Route path="requests" component={RequestListContainer} user={userData} />
+        <Route path="requests" component={RequestListContainer} user={userData}/>
         <Route path="profile" component={Profile} user={userData} />
         <Route path="cart" component={CartContainer} user={userData} />
         {getRouteIfAdmin(userData)}

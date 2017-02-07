@@ -8,7 +8,7 @@ import { DropdownButton, MenuItem } from 'react-bootstrap'
 function SimpleDropdown(props) {
   var menuItems = [];
   for (var i = 0; i < props.items.length; i++) {
-    menuItems.push(<MenuItem eventKey={i} onSelect={props.callback}>{props.items[i].name}</MenuItem>);
+    menuItems.push(<MenuItem key={i} eventKey={i} onSelect={props.callback}>{props.items[i].name}</MenuItem>);
   }
 
   return (

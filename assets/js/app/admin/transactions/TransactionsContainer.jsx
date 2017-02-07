@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import $ from "jquery"
 import TransactionList from './TransactionList'
 import Select from 'react-select'
+import { Grid, Row } from 'react-bootstrap'
 
 class TransactionsContainer extends Component {
   constructor(props) {
@@ -56,10 +57,10 @@ class TransactionsContainer extends Component {
 
   render() {
     return (
-      <div>
+      <Grid fluid>
         <Select value={this.state.filter_option} placeholder={this.placeholder} options={this.options} onChange={this.handleFilterChange} clearable={false}/>
         <TransactionList transactions={this.state.transactions} />
-      </div>
+      </Grid>
     );
   }
 }

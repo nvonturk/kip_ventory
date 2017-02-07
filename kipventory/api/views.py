@@ -229,10 +229,11 @@ def cart_detail_modify_delete(request, pk, format=None):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        serializer = serializers.CartItemPOSTSerializer(cartitem, data=request.data)
+        serializer = serializers.CartItemPOSTSerializer(cartitem, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
@@ -272,7 +273,7 @@ def request_get_create(request, format=None):
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes((IsAuthenticated,))
-def request_modify_delete(request, pk, format=None):
+def request_detail_modify_delete(request, pk, format=None):
     try:
         request_obj = models.Request.objects.get(pk=pk)
     except models.Request.DoesNotExist:

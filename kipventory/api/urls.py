@@ -10,7 +10,7 @@ urlpatterns = [
     url(r'^items/(?P<pk>[0-9]+)/?$', views.ItemView.as_view()),
 
     url(r'^requests/?$', views.request_get_create),
-    url(r'^requests/(?P<pk>[0-9]+)/?$', views.request_modify_delete),
+    url(r'^requests/(?P<pk>[0-9]+)/?$', views.request_detail_modify_delete),
     url(r'^requests/all/?$', views.request_get_all_admin),
 
     url(r'^disburse/?$', views.disburse_to_user),
