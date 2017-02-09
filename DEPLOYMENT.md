@@ -8,7 +8,7 @@ First up, obtain a fresh install of Ubuntu 16.04 (Xenial). We tested on Duke OIT
 ###### Install Ubuntu package dependencies
 ```
 sudo apt-get update
-sudo apt-get install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx software-properties-common libgtk2.0 git nodejs-legacy npm python3-venv
+sudo apt-get install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx software-properties-common libgtk2.0 git nodejs-legacy npm python3-venv letsencrypt
 ```
 
 **OPTIONAL** Sublime Text will make your life easier - we'll have to copy/paste quite a bit.
@@ -31,7 +31,6 @@ cd kip_ventory
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
-pip install psycopg2 gunicorn
 ```
 
 
