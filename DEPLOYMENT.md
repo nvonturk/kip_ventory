@@ -24,6 +24,8 @@ sudo apt-get install sublime-text-installer
 ```
 git clone http://github.com/nbv3/kip_ventory
 cd kip_ventory
+git checkout -b production
+git pull origin production
 ```
 
 
