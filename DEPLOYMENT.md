@@ -4,6 +4,7 @@ Deployment Guide (Ubuntu 16.04)
 First up, obtain a fresh install of Ubuntu 16.04 (Xenial). We tested on Duke OIT VMs.
 `ssh -X` (to allow `x11` forwarding) and execute the following.
 
+## Configuring Django, nginx, and gunicorn
 
 ###### Install Ubuntu package dependencies
 ```
@@ -30,6 +31,7 @@ cd kip_ventory
 ```
 python3 -m venv env
 source env/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
@@ -101,7 +103,45 @@ sudo systemctl enable gunicorn
 ```
 
 
+###### Initial nginx Configuration
+Open a new nginx config file.
+```
+sudo subl /etc/nginx/sites-available/kipventory
+```
+Copy and paste the following code into the file (replace `[XXX]` with your specific url).
+```
+server {
+    listen 80;
+    listen [::]:80;
+    server_name colab-sbx-[XXX].oit.duke.edu;
 
+    location = /favicon.ico { access_log off; log_not_found off; }
+
+    location /build/ {
+        root /home/bitnami/kip_ventory/kipventory;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/bitnami/kip_ventory/kipventory/kipventory.sock;
+    }
+}
+```
+
+Make sure nginx is configured properly:
+```
+sudo rm /etc/nginx/sites-enabled/kipventory
+sudo ln -s /etc/nginx/sites-available/kipventory /etc/nginx/sites-enabled
+sudo nginx -t
+sudo ufw allow 'Nginx Full'
+sudo systemctl restart nginx
+```
+
+Now, you should be able to access your app (unsecured, HTTP only) at your URL. Verify that this works before moving on.
+
+
+
+## Adding HTTPS/SSL 
 
 ###### Configure SSL
 Create a signed certificate with `letsencrypt`. First, we have to stop the `nginx` process.
@@ -172,15 +212,16 @@ server {
     listen 80;
     listen [::]:80;
     server_name colab-sbx-[XXX].oit.duke.edu;
+
     return 301 https://$server_name$request_uri;
+
 }
 
 server {
 
-    # SSL configuration
-
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
+    
     include snippets/ssl-colab-sbx-[XXX].oit.duke.edu.conf;
     include snippets/ssl-params.conf;
 
@@ -208,7 +249,7 @@ We just configured `nginx` to redirect any HTTP traffic on port 80 to the HTTPS 
 have an SSL certificate set up.
 
 Symlink the config file to the `sites-enabled` directory to allow `nginx` to serve it.
-You might have to remove the file from the sites-enabled directory if you've already tried this.
+You might have to remove the file from the sites-enabled directory if you've already done this.
 ```
 sudo rm /etc/nginx/sites-enabled/kipventory
 sudo ln -s /etc/nginx/sites-available/kipventory /etc/nginx/sites-enabled
@@ -216,7 +257,6 @@ sudo ln -s /etc/nginx/sites-available/kipventory /etc/nginx/sites-enabled
 
 Now allow `nginx` to accept HTTP requests on port 80 and HTTPS requests on port 443.
 ```
-sudo ufw enable
 sudo ufw allow 'Nginx Full'
 sudo systemctl restart nginx
 ```
