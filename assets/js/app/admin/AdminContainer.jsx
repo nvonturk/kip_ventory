@@ -1,10 +1,8 @@
 import React from 'react'
-import {Link} from 'react-router'
-import {LinkContainer} from 'react-router-bootstrap'
-import {Navbar, Grid, Row, Col, Panel, Nav, NavItem} from 'react-bootstrap'
-import AdminRequestsContainer from "./requests/AdminRequestsContainer"
-import DisbursementContainer from "./disbursement/DisbursementContainer"
-import TransactionsContainer from './transactions/TransactionsContainer'
+import { IndexLink } from 'react-router'
+import { LinkContainer } from 'react-router-bootstrap'
+import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap'
+
 
 const AdminContainer = React.createClass({
   getInitialState() {
@@ -24,28 +22,14 @@ const AdminContainer = React.createClass({
     })
   },
 
-  getAdminWelcomeMessage() {
-    return (
-      <Grid fluid>
-        <Row>
-          <p>Use the links on the left to disburse items, respond to requests, and view transaction history.</p>
-        </Row>
-      </Grid>
-    )
-  },
-
-  getAdminPanelContent() {
-    return this.props.children ? this.props.children : this.getAdminWelcomeMessage()
-  },
-
   render() {
     return (
       <Grid>
         <Row>
           <Col md={2}>
-            <Link to="/app/admin" onClick={() => this.handleSelect(0)}>
+            <IndexLink to="/app/admin" onClick={() => this.handleSelect(0)}>
               <h4>Administration</h4>
-            </Link>
+            </IndexLink>
           </Col>
           <Col md={9} mdOffset={1}>
             <h4>{this.state.currentHeader}</h4>
@@ -68,7 +52,7 @@ const AdminContainer = React.createClass({
             </Row>
           </Col>
           <Col md={9} mdOffset={1}>
-            {this.getAdminPanelContent()}
+            { this.props.children }
           </Col>
         </Row>
       </Grid>
