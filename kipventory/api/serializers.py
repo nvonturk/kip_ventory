@@ -1,24 +1,51 @@
 from rest_framework import serializers, pagination
+from rest_framework.exceptions import ValidationError
 from . import models, fields
 from django.contrib.auth.models import User
-import collections, json
-
-
+import six
 
 class CustomFieldSerializer(serializers.ModelSerializer):
-    id         = serializers.ReadOnlyField()
-    item       = serializers.HiddenField(default=None)
-    field_type = serializers.ChoiceField(choices=models.field_types)
+    name = serializers.CharField(required=True)
+    private = serializers.BooleanField(default=False)
+    field_type = serializers.ChoiceField(choices=models.FIELD_TYPES)
 
     class Meta:
-        model  = models.CustomField
-        fields = ['id', 'item', 'name', 'value', 'private', 'field_type']
+        model = models.CustomField
+        fields = ('name', 'private', 'field_type',)
+
+class CustomValueSerializer(serializers.ModelSerializer):
+    field = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    value = serializers.CharField(max_length=None, min_length=None, required=True, source='*', allow_blank=True)
+
+    class Meta:
+        model = models.CustomValue
+        fields = ('field', 'value',)
+
+    def to_representation(self, cv):
+        return {'name': cv.field.name, 'value': cv.get_value()}
+
+    def to_internal_value(self, data):
+        print(data)
+        validated_data = {}
+        errors = {}
+        # get value type specified in CustomField
+        name = data.get('name')
+        ft = models.CustomField.objects.get(name=name).field_type
+        # convert value to correct type
+        try:
+            value = data.get('value')
+            validated_data['value'] = models.FIELD_TYPE_DICT[ft](value)
+        except:
+            errors.update({'value': 'Expected \'{}\' type, got \'{}\'.'.format(models.FIELD_TYPE_DICT[ft].__name__, type(value).__name__)})
+
+        if errors:
+            raise ValidationError(errors)
+
+        return validated_data
 
     def update(self, instance, validated_data):
-        instance.name       = validated_data.get('name', instance.name)
-        instance.value      = validated_data.get('value', instance.value)
-        instance.private    = validated_data.get('private', instance.private)
-        instance.field_type = validated_data.get('field_type', instance.field_type)
+        ft = instance.field.field_type
+        setattr(instance, ft, validated_data.get('value', getattr(instance, ft)))
         instance.save()
         return instance
 
@@ -38,35 +65,52 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def get_custom_fields_by_permission(self, item):
         user = self.context['request'].user
-        custom_fields = item.custom_fields.all()
         if user.is_staff:
-            serializer = CustomFieldSerializer(custom_fields, many=True)
-            return serializer.data
+            return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all()]
         else:
-            custom_fields = custom_fields.filter(private=False)
-            serializer = CustomFieldSerializer(custom_fields, many=True)
-            return serializer.data
+            return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all().filter(field__private=False)]
 
-    def update(self, instance, validated_data):
-        # update all Item fields if new data is present
-        instance.name = validated_data.get('name', instance.name)
-        instance.model_no = validated_data.get('model_no', instance.model_no)
-        instance.quantity = validated_data.get('quantity', instance.quantity)
-        instance.description = validated_data.get('description', instance.description)
-        instance.save()
-        return instance
 
 
 class CartItemSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(CartItemSerializer, self).__init__(*args, **kwargs)
+        self.fields['item'].context = self.context
+
     id        = serializers.ReadOnlyField()
-    item      = fields.Item_Field(required=True)
+    item      = ItemSerializer(read_only=True, many=False) #fields.Item_Field(read_only=True)
     quantity  = serializers.IntegerField(required=True)
 
     class Meta:
         model = models.CartItem
         fields = ['id', 'item', 'quantity']
 
+    def to_internal_value(self, data):
+        quantity = data.get('quantity', None)
+        owner = data.get('owner', None)
+        item = data.get('item', None)
+
+        errors = {}
+        if not isinstance(quantity, six.integer_types):
+            errors.update({'quantity': 'Quantity must be an integer.'})
+        if not isinstance(owner, User):
+            errors.update({'owner': "Owner must be an instance of 'KipventoryUser' model."})
+        if not isinstance(item, models.Item):
+            errors.update({'item': "item must be an instance of 'Item' model."})
+        if errors:
+            raise ValidationError(errors)
+
+        return {
+            'item': data.get('item'),
+            'owner': data.get('owner'),
+            'quantity': quantity
+        }
+
     def update(self, instance, validated_data):
         instance.quantity = validated_data.get('quantity', instance.quantity)
         instance.save()
         return instance
+
+    def create(self, validated_data):
+        print(validated_data)
+        return super(CartItemSerializer, self).create(validated_data)

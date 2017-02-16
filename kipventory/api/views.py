@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import NotFound
 
 from django.db.models import Q
 from django.http.request import QueryDict
@@ -31,16 +32,16 @@ class ItemListCreate(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.ItemSerializer
 
-    def get(self, request, format=None):
+    def get(self, request):
         # CHECK PERMISSION
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
     # manager restricted
-    def post(self, request, format=None):
+    def post(self, request):
         if not (request.user.is_staff or request.user.is_superuser):
-            d = {"error": "You do not have permission to create items."}
+            d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         existing_item = models.Item.objects.filter(name=request.data['name']).first()
@@ -58,11 +59,11 @@ class ItemListCreate(generics.GenericAPIView):
 class ItemDetailModifyDelete(generics.GenericAPIView):
     permissions = (permissions.AllowAny,)
 
-    def get_instance(self, pk):
+    def get_instance(self, item_name):
         try:
-            return models.Item.objects.get(pk=pk)
+            return models.Item.objects.get(name=item_name)
         except models.Item.DoesNotExist:
-            raise Http404
+            raise NotFound('Item {} not found.'.format(item_name))
 
     def get_serializer_class(self):
         return serializers.ItemSerializer
@@ -70,14 +71,18 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
     def get_queryset(self):
         return models.Item.objects.all()
 
-    def get(self, request, pk, format=None):
-        item = self.get_instance(pk)
+    def get(self, request, item_name):
+        item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item)
         return Response(serializer.data)
 
     # manager restricted
-    def put(self, request, pk, format=None):
-        item = self.get_instance(pk)
+    def put(self, request, item_name):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -85,10 +90,50 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # manager restricted
-    def delete(self, request, pk, format=None):
-        item = self.get_instance(pk)
+    def delete(self, request, item_name):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        item = self.get_instance(item_name=item_name)
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+class ItemAddToCart(generics.GenericAPIView):
+    permissions = (permissions.AllowAny,)
+
+    def get_item(self, item_name):
+        try:
+            return models.Item.objects.get(name=item_name)
+        except models.Item.DoesNotExist:
+            raise NotFound("Item '{}' not found.".format(item_name))
+
+    def get_serializer_class(self):
+        return serializers.CartItemSerializer
+
+    def get_queryset(self):
+        return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
+
+    # add an item to your cart
+    # need to check if item already exists, and update if it does
+    def post(self, request, item_name):
+        request.data.update({'owner': request.user})
+        request.data.update({'item': self.get_item(item_name)})
+
+        cartitems = self.get_queryset().filter(item__name=item_name)
+        if cartitems.count() > 0:
+            serializer = self.get_serializer(instance=cartitems.first(), data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -99,59 +144,131 @@ class CustomFieldListCreate(generics.GenericAPIView):
         return serializers.CustomFieldSerializer
 
     def get_queryset(self):
-        return models.CustomField.objects.all()
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return models.CustomField.objects.all()
+        return models.CustomField.objects.filter(private=False)
 
-    def get(self, request, ipk, format=None):
-        queryset = self.get_queryset().filter(item=ipk)
+    def get(self, request):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
-    # manager restricted
-    def post(self, request, ipk, format=None):
-        item = self.get_queryset().get(pk=ipk)
+    def post(self, request):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        existing_field = self.get_queryset().filter(name=request.data['name']).count() > 0
+        if existing_field:
+            return Response({"error": "A field with this name already exists."})
+
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(item=item)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CustomFieldDetailModifyDelete(generics.GenericAPIView):
-    def get_instance(self, pk):
-        try:
-            return models.CustomField.objects.get(pk=pk)
-        except models.CustomField.DoesNotExist:
-            raise Http404
-
-    def get_serializer_class(self):
-        return serializers.CustomFieldSerializer
-
-    def get_queryset(self):
-        return models.CustomField.objects.all()
-
-    def get(self, request, ipk, fpk, format=None):
-        custom_field = self.get_instance(pk=fpk)
-        serializer = self.get_serializer(instance=custom_field)
-        return Response(serializer.data)
-
-    # manager restricted
-    def put(self, request, ipk, fpk, format=None):
-        custom_field = self.get_instance(pk=fpk)
-        serializer = self.get_serializer(instance=custom_field, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # manger restricted
-    def delete(self, request, ipk, fpk, format=None):
-        custom_field = self.get_instance(pk=fpk)
+
+class CustomFieldDetailDelete(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get_instance(self, field_name):
+        try:
+            return models.CustomField.objects.get(name=field_name)
+        except:
+            raise NotFound("Field '{}' not found.".format(field_name))
+
+    def get_serializer_class(self):
+        return serializers.CustomFieldSerializer
+
+    def get_queryset(self):
+        if (self.request.user.is_staff or self.request.user.is_superuser):
+            return models.CustomField.objects.all()
+        return models.CustomField.objects.filter(private=False)
+
+    def get(self, request, field_name):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        custom_field = self.get_instance(field_name=field_name)
+        serializer = self.get_serializer(instance=custom_field)
+        return Response(serializer.data)
+
+    def delete(self, request, field_name):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        custom_field = self.get_instance(field_name=field_name)
         custom_field.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
-class CartItemListCreate(generics.GenericAPIView):
+class CustomValueList(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get_serializer_class(self):
+        return serializers.CustomValueSerializer
+
+    def get_queryset(self):
+        item_values = models.Item.objects.get(name=self.kwargs['item_name']).values.all()
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return item_values
+        return item_values.filter(field__private=False)
+
+    def get(self, request, item_name):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(instance=queryset, many=True)
+        return Response(serializer.data)
+
+
+class CustomValueDetailModify(generics.GenericAPIView):
+    def get_instance(self, item_name, field_name):
+        try:
+            item_values = models.Item.objects.get(name=item_name).values.all()
+            if not (self.request.user.is_staff or self.request.user.is_superuser):
+                item_values = item_values.filter(field__private=False)
+            return item_values.get(field__name=field_name)
+        except models.CustomValue.DoesNotExist:
+            raise NotFound("Field '{}' not found on item '{}'.".format(field_name, item_name))
+
+    def get_serializer_class(self):
+        return serializers.CustomValueSerializer
+
+    def get_queryset(self):
+        return models.CustomValue.objects.all()
+
+    def get(self, request, item_name, field_name):
+        custom_value = self.get_instance(item_name=item_name, field_name=field_name)
+        serializer = self.get_serializer(instance=custom_value)
+        return Response(serializer.data)
+
+    # manager restricted
+    def put(self, request, item_name, field_name):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        custom_value = self.get_instance(item_name=item_name, field_name=field_name)
+        # manually force the serializer data to have correct field name
+        request.data.update({'name': field_name})
+        print(request.data)
+        serializer = self.get_serializer(instance=custom_value, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class CartItemList(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.CartItemSerializer
 
@@ -160,51 +277,51 @@ class CartItemListCreate(generics.GenericAPIView):
         return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
 
     # view all items in your cart
-    def get(self, request, format=None):
+    def get(self, request):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
-    # add an item to your cart
-    # need to check if item already exists, and update if it does
-    def post(self, request, format=None):
-        cartitems = self.get_queryset().filter(item__pk=request.data['item'])
-        if cartitems.count() > 0:
-            serializer = self.get_serializer(instance=cartitems.first(), data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(owner=request.user)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # # add an item to your cart
+    # # need to check if item already exists, and update if it does
+    # def post(self, request):
+    #     cartitems = self.get_queryset().filter(item__pk=request.data['item'])
+    #     if cartitems.count() > 0:
+    #         serializer = self.get_serializer(instance=cartitems.first(), data=request.data)
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return Response(serializer.data)
+    #
+    #     serializer = self.get_serializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save(owner=request.user)
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CartItemDetailModifyDelete(generics.GenericAPIView):
-    def get_instance(self, pk):
+    def get_instance(self, item_name):
         try:
-            return models.CartItem.objects.get(pk=pk)
+            return self.get_queryset().get(item__name=item_name)
         except models.CartItem.DoesNotExist:
-            raise Http404
+            raise NotFound('Cart item {} not found.'.format(pk))
 
     def get_serializer_class(self):
         return serializers.CartItemSerializer
 
     # restrict this queryset - each user can only see his/her own cart items
     def get_queryset(self):
-        return models.CartItem.objects.filter(owner=self.request.user.pk)
+        return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
 
     # view all items in your cart
-    def get(self, request, pk, format=None):
-        cartitem = self.get_instance(pk=pk)
+    def get(self, request, item_name):
+        cartitem = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=cartitem)
         return Response(serializer.data)
 
     # modify quantity of an item in your cart
-    def put(self, request, pk, format=None):
-        cartitem = self.get_instance(pk=pk)
+    def put(self, request, item_name):
+        cartitem = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=cartitem, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -212,8 +329,8 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # remove an item from your cart
-    def delete(self, request, pk, format=None):
-        cartitem = self.get_instance(pk=pk)
+    def delete(self, request, item_name):
+        cartitem = self.get_instance(item_name=item_name)
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -236,7 +353,7 @@ def post_user_login(request):
 
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
-def post_user_signup(request, format=None):
+def post_user_signup(request):
     username = request.data['username']
     password = request.data['password']
     first_name = request.data['first_name']
@@ -256,3 +373,16 @@ def post_user_signup(request, format=None):
                             last_name=last_name)
     messages.add_message(request._request, messages.SUCCESS, "user-created")
     return redirect('/')
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def get_current_user(request):
+    user = request.user
+    return Response({
+        "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "is_staff": user.is_staff,
+        "email": user.email,
+        "is_superuser": user.is_superuser
+    })
