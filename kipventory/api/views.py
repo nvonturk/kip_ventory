@@ -20,13 +20,55 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.views import password_reset, password_reset_confirm
 
-
 import requests
 
+
+class CustomPagination(pagination.PageNumberPagination):
+    page_query_param = 'page'
+    page_size_query_param = 'itemsPerPage'
+    
+    def get_paginated_response(self, data):
+        '''
+        return Response({
+            'num_pages': self.page.paginator.num_pages,
+            'count': self.page.paginator.count,
+            'results': data
+        })
+        '''
+        return get_my_paginated_response(self.page.paginator.count, self.page.paginator.num_pages, data)
+
+def get_my_paginated_response(count, num_pages, data):
+    return Response({
+        "count" : count,
+        "num_pages" : num_pages,
+        "results" : data
+    })
+
+def paginate(queryset, itemsPerPage, page, serializer):
+    paginator = Paginator(queryset, itemsPerPage)
+    try:
+        queryset = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        queryset = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        queryset = paginator.page(paginator.num_pages)
+
+    data = serializer(instance=queryset, many=True).data
+    '''
+    toReturn = {
+        "count" : paginator.count,
+        "num_pages" : paginator.num_pages,
+        "results" : data
+    }
+    '''
+    return get_my_paginated_response(paginator.count, paginator.num_pages, data)
 
 class ItemListCreate(generics.GenericAPIView):
     # authentication_classes = (authentication.TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Item.objects.all()
@@ -37,8 +79,11 @@ class ItemListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         # CHECK PERMISSION
         queryset = self.get_queryset()
-        serializer = self.get_serializer(instance=queryset, many=True)
-        return Response(serializer.data)
+        
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
     # manager restricted
     def post(self, request, format=None):
@@ -129,7 +174,6 @@ class ItemAddToCart(generics.GenericAPIView):
     def post(self, request, item_name, format=None):
         request.data.update({'owner': request.user})
         request.data.update({'item': self.get_item(item_name)})
-
         cartitems = self.get_queryset().filter(item__name=item_name)
         if cartitems.count() > 0:
             serializer = self.get_serializer(instance=cartitems.first(), data=request.data)
