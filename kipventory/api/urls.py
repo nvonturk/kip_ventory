@@ -9,16 +9,18 @@ urlpatterns = [
 
     # ITEM ENDPOINTS
     url(r'^items/?$',                                                   views.ItemListCreate.as_view()),
-    url(r'^items/(?P<item_name>[\w]*)/?$',                              views.ItemDetailModifyDelete.as_view()),
-    url(r'^items/(?P<item_name>[\w]*)/addtocart/?$',                    views.ItemAddToCart.as_view()),
-    url(r'^items/(?P<item_name>[\w]*)/fields/?$',                       views.CustomValueList.as_view()),
-    url(r'^items/(?P<item_name>[\w]*)/fields/(?P<field_name>[\w]*)/?$', views.CustomValueDetailModify.as_view()),
+    url(r'^items/(?P<item_name>[\w]+)/?$',                              views.ItemDetailModifyDelete.as_view()),
+    url(r'^items/(?P<item_name>[\w]+)/addtocart/?$',                    views.ItemAddToCart.as_view()),
+    url(r'^items/(?P<item_name>[\w]+)/fields/?$',                       views.CustomValueList.as_view()),
+    url(r'^items/(?P<item_name>[\w]+)/fields/(?P<field_name>[\w]*)/?$', views.CustomValueDetailModify.as_view()),
+    url(r'^items/(?P<item_name>[\w]+)/requests/$',                       views.item_requests_get),
+
 
     url(r'^fields/?$',                       views.CustomFieldListCreate.as_view()),
-    url(r'^fields/(?P<field_name>[\w]*)/?$', views.CustomFieldDetailDelete.as_view()),
+    url(r'^fields/(?P<field_name>[\w]+)/?$', views.CustomFieldDetailDelete.as_view()),
 
     url(r'^cart/?$',                       views.CartItemList.as_view()),
-    url(r'^cart/?(?P<item_name>[\w]*)/?$', views.CartItemDetailModifyDelete.as_view()),
+    url(r'^cart/?(?P<item_name>[\w]+)/?$', views.CartItemDetailModifyDelete.as_view()),
 
     # url(r'^requests/?$', views.RequestListCreate.as_view()),
     # url(r'^requests/(?P<pk>[0-9]*)/?$', views.RequestDetailModifyDelete.as_view()),
@@ -32,9 +34,9 @@ urlpatterns = [
     url(r'^netidtoken/?$', views.get_netid_token),
 
     url(r'^newuserrequests/?$', views.get_new_user_requests),
-    url(r'^newuserrequests/(?P<username>[\w]*)/?$', views.get_new_user_request),
-    url(r'^newuserrequests/(?P<username>[\w]*)/approve/?$', views.approve_new_user_request),
-    url(r'^newuserrequests/(?P<username>[\w]*)/deny/?$', views.deny_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w]+)/?$', views.get_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w]+)/approve/?$', views.approve_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w]+)/deny/?$', views.deny_new_user_request),
 
     url('^', include('django.contrib.auth.urls')),
 ]

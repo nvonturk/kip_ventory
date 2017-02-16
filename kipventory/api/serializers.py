@@ -51,7 +51,6 @@ class CustomValueSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-
 class ItemSerializer(serializers.ModelSerializer):
     # id            = serializers.ReadOnlyField()
     name          = serializers.CharField(max_length=None, min_length=None, required=True)
@@ -123,3 +122,18 @@ class CartItemSerializer(serializers.ModelSerializer):
         instance.quantity = validated_data.get('quantity', instance.quantity)
         instance.save()
         return instance
+
+class RequestGETSerializer(serializers.ModelSerializer):
+    requester = UserGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
+    item      = ItemGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
+
+class RequestGETNoItemSerializer(serializers.ModelSerializer):
+    requester = UserGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
