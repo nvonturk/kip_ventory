@@ -30,12 +30,8 @@ urlpatterns = [
     # Main view for our Single Page App (React, client side)
     url(r'^app/?', views.app, name='app'),
 
-url(r'^media/(?P<path>.*)$', static.serve, {
-    'document_root': settings.MEDIA_ROOT,
-}),
-url(r'^static/(?P<path>.*)$', static.serve, {
-    'document_root': settings.STATIC_ROOT,
-}),
+    url(r'^media/(?P<path>.*)$', static.serve, {'document_root': settings.MEDIA_ROOT,}),
+    url(r'^static/(?P<path>.*)$', static.serve, {'document_root': settings.STATIC_ROOT,}),
 
     # Landing page (no auth necessary)
     url(r'$', views.landing, name='landing'),

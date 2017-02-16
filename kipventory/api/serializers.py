@@ -1,78 +1,72 @@
 from rest_framework import serializers, pagination
-from . import models
+from . import models, fields
 from django.contrib.auth.models import User
+import collections, json
 
-class TagSerializer(serializers.ModelSerializer):
+
+
+class CustomFieldSerializer(serializers.ModelSerializer):
+    id         = serializers.ReadOnlyField()
+    item       = serializers.HiddenField(default=None)
+    field_type = serializers.ChoiceField(choices=models.field_types)
+
     class Meta:
-        model = models.Tag
-        fields = ["id", 'name']
+        model  = models.CustomField
+        fields = ['id', 'item', 'name', 'value', 'private', 'field_type']
 
-class UserGETSerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        instance.name       = validated_data.get('name', instance.name)
+        instance.value      = validated_data.get('value', instance.value)
+        instance.private    = validated_data.get('private', instance.private)
+        instance.field_type = validated_data.get('field_type', instance.field_type)
+        instance.save()
+        return instance
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    id            = serializers.ReadOnlyField()
+    name          = serializers.CharField(max_length=None, min_length=None, required=True)
+    quantity      = serializers.IntegerField(min_value=0, max_value=None, required=True)
+    model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
+    description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
+    tags          = serializers.StringRelatedField(many=True, required=False)
+    custom_fields = serializers.SerializerMethodField(method_name="get_custom_fields_by_permission")
+
     class Meta:
-        model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
+        model  = models.Item
+        fields = ['id', 'name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields']
 
-class UserPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
+    def get_custom_fields_by_permission(self, item):
+        user = self.context['request'].user
+        custom_fields = item.custom_fields.all()
+        if user.is_staff:
+            serializer = CustomFieldSerializer(custom_fields, many=True)
+            return serializer.data
+        else:
+            custom_fields = custom_fields.filter(private=False)
+            serializer = CustomFieldSerializer(custom_fields, many=True)
+            return serializer.data
 
-class ItemRequestGETSerializer(serializers.ModelSerializer):
-    requester = UserGETSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'quantity', 'date_open', 'open_reason', 'status']
+    def update(self, instance, validated_data):
+        # update all Item fields if new data is present
+        instance.name = validated_data.get('name', instance.name)
+        instance.model_no = validated_data.get('model_no', instance.model_no)
+        instance.quantity = validated_data.get('quantity', instance.quantity)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+        return instance
 
-class ItemGETSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(read_only=True, many=True)
-    request_set = ItemRequestGETSerializer(read_only=True, many=True)
-    class Meta:
-        model = models.Item
-        fields = ['id', 'name', 'photo_src', 'location', 'model', 'quantity', 'description', 'tags', 'request_set']
 
-class ItemPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Item
-        fields = ['id', 'name', 'photo_src', 'location', 'model', 'quantity', 'description', 'tags']
+class CartItemSerializer(serializers.ModelSerializer):
+    id        = serializers.ReadOnlyField()
+    item      = fields.Item_Field(required=True)
+    quantity  = serializers.IntegerField(required=True)
 
-class CartItemGETSerializer(serializers.ModelSerializer):
-    item = ItemGETSerializer(read_only=True, many=False)
-    owner = UserGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.CartItem
-        fields = ['id', 'item', 'owner', 'quantity']
+        fields = ['id', 'item', 'quantity']
 
-class CartItemPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CartItem
-        fields = ['id', 'item', 'owner', 'quantity']
-
-class RequestGETSerializer(serializers.ModelSerializer):
-    requester = UserGETSerializer(read_only=True, many=False)
-    administrator = UserGETSerializer(read_only=True, many=False)
-    item      = ItemGETSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
-
-class RequestPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
-
-class RequestPUTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason','date_closed','closed_comment','administrator','status']
-
-class TransactionGETSerializer(serializers.ModelSerializer):
-    item = ItemGETSerializer(read_only=True, many=False)
-    administrator = UserGETSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Transaction
-        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
-
-class TransactionPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Transaction
-        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+    def update(self, instance, validated_data):
+        instance.quantity = validated_data.get('quantity', instance.quantity)
+        instance.save()
+        return instance
