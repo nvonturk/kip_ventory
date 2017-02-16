@@ -65,9 +65,7 @@ class ItemListCreate(generics.GenericAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
+       
 class ItemDetailModifyDelete(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
@@ -324,10 +322,14 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET'])
-@permission_classes((IsAuthenticated,))
+@permission_classes((permissions.IsAuthenticated,))
 def item_requests_get(request, item_name, format=None):
     if request.method == 'GET':
-        requests = models.Request.objects.filter(item__name=item_name)
+        requests = None
+        if request.user.is_staff:
+            requests = models.Request.objects.filter(item__name=item_name)
+        else:
+            requests = models.Request.objects.filter(item__name=item_name, requester=request.user.pk)
         serializer = serializers.RequestGETNoItemSerializer(requests, many=True)
         return Response(serializer.data)
 
