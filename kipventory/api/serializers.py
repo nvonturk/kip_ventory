@@ -82,8 +82,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         super(CartItemSerializer, self).__init__(*args, **kwargs)
         self.fields['item'].context = self.context
 
-    id        = serializers.ReadOnlyField()
-    item      = ItemSerializer(read_only=True, many=False) #fields.Item_Field(read_only=True)
+    item      = ItemSerializer(read_only=True, many=False)
     quantity  = serializers.IntegerField(required=True)
 
     class Meta:
