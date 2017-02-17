@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q
 
 from . import models, serializers
 from rest_framework import pagination
@@ -358,6 +359,7 @@ class CartItemList(generics.GenericAPIView):
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
+
 class CartItemDetailModifyDelete(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -498,7 +500,7 @@ def post_user_signup(request, format=None):
     return redirect('/')
 
 @api_view(['GET'])
-@permission_classes((IsAuthenticated,))
+@permission_classes((permissions.IsAuthenticated,))
 def get_new_user_requests(request):
     if not (request.user.is_staff or request.user.is_superuser):
         d = {"error": "Permission denied."}
@@ -575,7 +577,7 @@ def deny_new_user_request(request, username):
 
 
 @api_view(['GET'])
-@permission_classes((IsAuthenticated,))
+@permission_classes((permissions.IsAuthenticated,))
 def get_all_users(request, format=None):
     if not request.user.is_staff:
         return Response(status=status.HTTP_403_FORBIDDEN)
@@ -585,20 +587,25 @@ def get_all_users(request, format=None):
     return Response(serializer.data)
 
 @api_view(['GET'])
-@permission_classes((IsAuthenticated,))
+@permission_classes((permissions.IsAuthenticated,))
 def request_get_all_admin(request, format=None):
     if request.method == 'GET':
         if not request.user.is_staff:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         #todo maybe return paginated version or not based on if query params are present
-        queryset = models.Request.objects.all()
+        queryset = None 
+        status = request.GET.get('status')
+        if status is None or status=="All":
+            queryset = models.Request.objects.all()
+        else:
+            queryset = models.Request.objects.filter(status=status)
         serializer = serializers.RequestGETSerializer
         defaultItemsPerPage = 3
         return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
 
 @api_view(['GET', 'POST'])
-@permission_classes((IsAuthenticated,))
+@permission_classes((permissions.IsAuthenticated,))
 def request_get_create(request, format=None):
     print(request.query_params)
     if request.method == 'GET':
@@ -609,7 +616,7 @@ def request_get_create(request, format=None):
         return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
 
 class TagListView(generics.ListAPIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.TagSerializer
 
     def get_queryset(self):
@@ -618,7 +625,7 @@ class TagListView(generics.ListAPIView):
         return queryset
 
 @api_view(['GET', 'POST'])
-@permission_classes((IsAuthenticated,))
+@permission_classes((permissions.IsAuthenticated,))
 def transaction_get_create(request, format=None):
     if request.method == 'GET':
         queryset = None 
