@@ -23,14 +23,12 @@ class CustomValueSerializer(serializers.ModelSerializer):
 
     def to_representation(self, cv):
         user = self.context['request'].user
-        print(user)
         d = {'name': cv.field.name, 'value': cv.get_value()}
         if (user.is_staff or user.is_superuser):
             d.update({'private': cv.field.private})
         return d
 
     def to_internal_value(self, data):
-        print(data)
         validated_data = {}
         errors = {}
         # get value type specified in CustomField

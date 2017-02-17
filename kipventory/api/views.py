@@ -223,10 +223,10 @@ class CustomValueList(generics.GenericAPIView):
         return serializers.CustomValueSerializer
 
     def get_queryset(self):
-        item_values = models.Item.objects.get(name=self.kwargs['item_name']).values.all()
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            return item_values
-        return item_values.filter(field__private=False)
+        queryset = models.CustomValue.objects.filter(item__name=self.kwargs['item_name'])
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(field__private=False)
+        return queryset
 
     def get(self, request, item_name):
         queryset = self.get_queryset()
@@ -237,10 +237,7 @@ class CustomValueList(generics.GenericAPIView):
 class CustomValueDetailModify(generics.GenericAPIView):
     def get_instance(self, item_name, field_name):
         try:
-            item_values = models.Item.objects.get(name=item_name).values.all()
-            if not (self.request.user.is_staff or self.request.user.is_superuser):
-                item_values = item_values.filter(field__private=False)
-            return item_values.get(field__name=field_name)
+            return self.get_queryset().get(field__name=field_name)
         except models.CustomValue.DoesNotExist:
             raise NotFound("Field '{}' not found on item '{}'.".format(field_name, item_name))
 
@@ -248,7 +245,10 @@ class CustomValueDetailModify(generics.GenericAPIView):
         return serializers.CustomValueSerializer
 
     def get_queryset(self):
-        return models.CustomValue.objects.all()
+        queryset = models.CustomValue.objects.filter(item__name=self.kwargs['item_name'])
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(field__private=False)
+        return queryset
 
     def get(self, request, item_name, field_name):
         custom_value = self.get_instance(item_name=item_name, field_name=field_name)
@@ -264,7 +264,6 @@ class CustomValueDetailModify(generics.GenericAPIView):
         custom_value = self.get_instance(item_name=item_name, field_name=field_name)
         # manually force the serializer data to have correct field name
         request.data.update({'name': field_name})
-        print(request.data)
         serializer = self.get_serializer(instance=custom_value, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
