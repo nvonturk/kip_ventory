@@ -150,9 +150,7 @@ class CustomFieldListCreate(generics.GenericAPIView):
         return serializers.CustomFieldSerializer
 
     def get_queryset(self):
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            return models.CustomField.objects.all()
-        return models.CustomField.objects.filter(private=False)
+        return models.CustomField.objects.all()
 
     def get(self, request):
         if not (request.user.is_staff or request.user.is_superuser):
@@ -192,9 +190,7 @@ class CustomFieldDetailDelete(generics.GenericAPIView):
         return serializers.CustomFieldSerializer
 
     def get_queryset(self):
-        if (self.request.user.is_staff or self.request.user.is_superuser):
-            return models.CustomField.objects.all()
-        return models.CustomField.objects.filter(private=False)
+        return models.CustomField.objects.all()
 
     def get(self, request, field_name):
         if not (request.user.is_staff or request.user.is_superuser):
