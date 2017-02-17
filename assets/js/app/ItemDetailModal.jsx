@@ -117,6 +117,12 @@ class ItemDetailModal extends Component {
         </Modal.Body>
     }
 
+    var tags = "";
+    for(var i = 0; i<this.props.item.tags.length; i++) {
+      var tag = this.props.item.tags[i].name;
+      tags += " " + tag;
+    }
+
     return (
       <div>
 
@@ -132,6 +138,7 @@ class ItemDetailModal extends Component {
             <p>Description: {this.props.item.description}</p>
             <p>Quantity Available: {this.props.item.quantity}</p>
             <p>Location: {this.props.item.location}</p>
+            <p>Tags: {tags}</p>
           </Modal.Body>
           <Modal.Body>
             <h4>Outstanding Requests</h4>
