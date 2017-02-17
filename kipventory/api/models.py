@@ -16,6 +16,7 @@ FIELD_TYPE_DICT = {
     'f': float
 }
 
+
 # Create your models here.
 class Tag(models.Model):
     name = models.CharField(max_length=100)
@@ -40,12 +41,10 @@ class Item(models.Model):
         value_names = set(x.field.name for x in self.values.all())
 
         for cf in CustomField.objects.all():
-            if cf.name not in value_names:
+            if cf.name not in value_names: # don't create duplicates!
                 cv = CustomValue(field=cf, item=self)
                 cv.save()
-#
-# class CustomFieldCollection(models.Model):
-#     item = models.OneToOneField(Item, related_name="field_collection")
+
 
 class CartItem(models.Model):
     owner    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
@@ -68,8 +67,11 @@ class CustomField(models.Model):
         super(CustomField, self).save(*args, **kwargs)
         # create a null value for each item that currently exists
         for item in Item.objects.all():
-            cv = CustomValue(field=self, item=item)
-            cv.save()
+            satisfied_fields = set( val.field.name for val in item.values.all() )
+            if self.name not in satisfied_fields:
+                cv = CustomValue(field=self, item=item)
+                cv.save()
+
 
 class CustomValue(models.Model):
     field = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="values", to_field="name")
@@ -80,4 +82,4 @@ class CustomValue(models.Model):
     f = models.FloatField(default=0.0, blank=True)
 
     def get_value(self):
-        return getattr(self, self.field.field_type)
+            return getattr(self, self.field.field_type)

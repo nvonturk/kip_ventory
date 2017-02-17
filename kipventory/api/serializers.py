@@ -1,6 +1,6 @@
 from rest_framework import serializers, pagination
 from rest_framework.exceptions import ValidationError
-from . import models, fields
+from . import models
 from django.contrib.auth.models import User
 import six
 
@@ -22,7 +22,12 @@ class CustomValueSerializer(serializers.ModelSerializer):
         fields = ('field', 'value',)
 
     def to_representation(self, cv):
-        return {'name': cv.field.name, 'value': cv.get_value()}
+        user = self.context['request'].user
+        print(user)
+        d = {'name': cv.field.name, 'value': cv.get_value()}
+        if (user.is_staff or user.is_superuser):
+            d.update({'private': cv.field.private})
+        return d
 
     def to_internal_value(self, data):
         print(data)
@@ -51,7 +56,7 @@ class CustomValueSerializer(serializers.ModelSerializer):
 
 
 class ItemSerializer(serializers.ModelSerializer):
-    id            = serializers.ReadOnlyField()
+    # id            = serializers.ReadOnlyField()
     name          = serializers.CharField(max_length=None, min_length=None, required=True)
     quantity      = serializers.IntegerField(min_value=0, max_value=None, required=True)
     model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
@@ -61,12 +66,12 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = models.Item
-        fields = ['id', 'name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields']
+        fields = ['name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields']
 
     def get_custom_fields_by_permission(self, item):
         user = self.context['request'].user
         if user.is_staff:
-            return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all()]
+            return [{"name": cv.field.name, "value": cv.get_value(), "private": cv.field.private} for cv in item.values.all()]
         else:
             return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all().filter(field__private=False)]
 
@@ -83,7 +88,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CartItem
-        fields = ['id', 'item', 'quantity']
+        fields = ['item', 'quantity']
 
     def to_internal_value(self, data):
         quantity = data.get('quantity', None)
@@ -91,7 +96,9 @@ class CartItemSerializer(serializers.ModelSerializer):
         item = data.get('item', None)
 
         errors = {}
-        if not isinstance(quantity, six.integer_types):
+        try:
+            quantity = int(quantity)
+        except:
             errors.update({'quantity': 'Quantity must be an integer.'})
         if not isinstance(owner, User):
             errors.update({'owner': "Owner must be an instance of 'KipventoryUser' model."})
@@ -110,7 +117,3 @@ class CartItemSerializer(serializers.ModelSerializer):
         instance.quantity = validated_data.get('quantity', instance.quantity)
         instance.save()
         return instance
-
-    def create(self, validated_data):
-        print(validated_data)
-        return super(CartItemSerializer, self).create(validated_data)

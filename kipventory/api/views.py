@@ -1,14 +1,10 @@
-from django.shortcuts import render
-from rest_framework import generics, mixins
+from rest_framework import generics
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotFound
 
-from django.db.models import Q
-from django.http.request import QueryDict
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render, get_object_or_404
@@ -24,7 +20,7 @@ from django.utils import timezone
 
 class ItemListCreate(generics.GenericAPIView):
     # authentication_classes = (authentication.TokenAuthentication,)
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         return models.Item.objects.all()
@@ -44,9 +40,19 @@ class ItemListCreate(generics.GenericAPIView):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        existing_item = models.Item.objects.filter(name=request.data['name']).first()
+        # check if we're trying to make a duplicate item
+        existing_item = models.Item.objects.filter(name=request.data['name']).count() > 0
         if existing_item:
             return Response({"error": "An item with this name already exists."})
+
+        # check that the starting quantity is non-negative
+        quantity = None
+        try:
+            quantity = int(request.data.get('quantity', None))
+        except:
+            return Response({'quantity': 'Ensure this value is an integer.'})
+        if quantity < 0:
+            return Response({'quantity': 'Ensure this value is greater than or equal to 0.'})
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -57,7 +63,7 @@ class ItemListCreate(generics.GenericAPIView):
 
 
 class ItemDetailModifyDelete(generics.GenericAPIView):
-    permissions = (permissions.AllowAny,)
+    permissions = (permissions.IsAuthenticated,)
 
     def get_instance(self, item_name):
         try:
@@ -102,7 +108,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
 
 
 class ItemAddToCart(generics.GenericAPIView):
-    permissions = (permissions.AllowAny,)
+    permissions = (permissions.IsAuthenticated,)
 
     def get_item(self, item_name):
         try:
@@ -269,6 +275,8 @@ class CustomValueDetailModify(generics.GenericAPIView):
 
 
 class CartItemList(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get_serializer_class(self):
         return serializers.CartItemSerializer
 
@@ -282,24 +290,11 @@ class CartItemList(generics.GenericAPIView):
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
-    # # add an item to your cart
-    # # need to check if item already exists, and update if it does
-    # def post(self, request):
-    #     cartitems = self.get_queryset().filter(item__pk=request.data['item'])
-    #     if cartitems.count() > 0:
-    #         serializer = self.get_serializer(instance=cartitems.first(), data=request.data)
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return Response(serializer.data)
-    #
-    #     serializer = self.get_serializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save(owner=request.user)
-    #         return Response(serializer.data)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CartItemDetailModifyDelete(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get_instance(self, item_name):
         try:
             return self.get_queryset().get(item__name=item_name)
