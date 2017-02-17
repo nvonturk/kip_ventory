@@ -1,5 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+
+FIELD_TYPES = (
+    ('s', 'Short'),
+    ('l', 'Long'),
+    ('i', 'Integer'),
+    ('f', 'Float'),
+)
+
+FIELD_TYPE_DICT = {
+    's': str,
+    'l': str,
+    'i': int,
+    'f': float
+}
 
 
 # Create your models here.
@@ -12,64 +27,59 @@ class Tag(models.Model):
 
 class Item(models.Model):
     name        = models.CharField(max_length=100, unique=True)
-    photo_src   = models.ImageField(upload_to='items')
-    location    = models.CharField(max_length=100)
-    model       = models.CharField(max_length=100)
-    quantity    = models.IntegerField(default=0)
-    description = models.TextField(max_length=500)
+    quantity    = models.PositiveIntegerField(default=0)
+    model_no    = models.CharField(max_length=100, blank=True)
+    description = models.TextField(max_length=500, blank=True)
     tags        = models.ManyToManyField(Tag, blank=True)
 
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        super(Item, self).save(*args, **kwargs)
+        # create a null CustomValue associated with this Item for each CustomField
+        value_names = set(x.field.name for x in self.values.all())
+
+        for cf in CustomField.objects.all():
+            if cf.name not in value_names: # don't create duplicates!
+                cv = CustomValue(field=cf, item=self)
+                cv.save()
+
 
 class CartItem(models.Model):
+    owner    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
     item     = models.ForeignKey(Item, on_delete=models.CASCADE)
-    owner    = models.ForeignKey(User, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
+    quantity = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return "Item: {}, Owner: {}, Quantity: {}".format(self.item, self.owner, self.quantity)
+        return "{} {}(s) in {}'s cart.".format(self.item.name, self.owner, self.quantity)
 
 
-class Request(models.Model):
-    requester       = models.ForeignKey(User, on_delete=models.CASCADE)
-    item            = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity        = models.IntegerField()
-    date_open       = models.DateTimeField(blank=True)
-    open_reason     = models.TextField(max_length=500, blank=True)
-    date_closed     = models.DateTimeField(blank=True, null=True)
-    closed_comment  = models.TextField(max_length=500, blank=True, null=True)
-    administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
-
-    OUTSTANDING = 'O'
-    APPROVED = 'A'
-    DENIED = 'D'
-    ### Status Choices ###
-    status_choices      = (
-        (OUTSTANDING, 'Outstanding'),
-        (APPROVED, 'Approved'),
-        (DENIED, 'Denied'),
-    )
-    status          = models.CharField(max_length = 10, choices=status_choices, default=OUTSTANDING)
-
+class CustomField(models.Model):
+    name        = models.CharField(max_length=100, unique=True)
+    private     = models.BooleanField(default=False)
+    field_type  = models.CharField(max_length=1, choices=FIELD_TYPES, default='s')
 
     def __str__(self):
-        return "{} {}".format(self.requester, self.item)
+        return self.name + ": " + self.field_type
 
-class Transaction(models.Model):
-    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
+    def save(self, *args, **kwargs):
+        super(CustomField, self).save(*args, **kwargs)
+        # create a null value for each item that currently exists
+        for item in Item.objects.all():
+            satisfied_fields = set( val.field.name for val in item.values.all() )
+            if self.name not in satisfied_fields:
+                cv = CustomValue(field=self, item=item)
+                cv.save()
 
-    ACQUISITION = 'Acquisition'
-    LOSS = 'Loss'
-    category_choices    = (
-        (ACQUISITION, ACQUISITION),
-        (LOSS, LOSS),
-    )
-    category            = models.CharField(max_length = 20, choices=category_choices)
 
-    quantity            = models.PositiveIntegerField()
-    comment             = models.CharField(max_length = 100, blank=True, null=True)
-    date                = models.DateTimeField()
-    administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
+class CustomValue(models.Model):
+    field = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="values", to_field="name")
+    item  = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="values")
+    s = models.CharField(default='', max_length=100, blank=True)
+    l = models.TextField(default='', max_length=500, blank=True)
+    i = models.IntegerField(default=0, blank=True)
+    f = models.FloatField(default=0.0, blank=True)
 
+    def get_value(self):
+            return getattr(self, self.field.field_type)
