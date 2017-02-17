@@ -21,11 +21,11 @@ class AdminRequestList extends Component{
 
     if(this.props.simple) {
       this.props.requests.map(function(request, i){
-        list.push(<ListGroupItem key={i}><SimpleRequest deleteRequest={thisObj.props.deleteRequest} request={request}/></ListGroupItem>);
+        list.push(<ListGroupItem key={request.id}><SimpleRequest deleteRequest={thisObj.props.deleteRequest} request={request}/></ListGroupItem>);
       });
     } else {
       this.props.requests.map(function(request, i){
-        list.push(<ListGroupItem key={i}><AdminRequest deleteRequest={thisObj.props.deleteRequest} submit={thisObj.props.submit} request={request}/></ListGroupItem>);
+        list.push(<ListGroupItem key={request.id}><AdminRequest deleteRequest={thisObj.props.deleteRequest} submit={thisObj.props.submit} request={request}/></ListGroupItem>);
       });
     }
 
