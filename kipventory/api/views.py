@@ -44,6 +44,16 @@ def get_my_paginated_response(count, num_pages, data):
         "results" : data
     })
 
+def paginateRequest(request, queryset, defaultItemsPerPage, serializer):
+    itemsPerPage = request.GET.get('itemsPerPage')
+    if itemsPerPage is None:
+        itemsPerPage = defaultItemsPerPage
+    page = request.GET.get('page')
+    if page is None:
+        page = 1
+
+    return paginate(queryset, itemsPerPage, page, serializer)
+
 def paginate(queryset, itemsPerPage, page, serializer):
     paginator = Paginator(queryset, itemsPerPage)
     try:
@@ -79,7 +89,32 @@ class ItemListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         # CHECK PERMISSION
         queryset = self.get_queryset()
-        
+
+        # Search and Tag Filtering
+        search = self.request.query_params.get("search")
+        tags = self.request.query_params.get("tags")
+        excludeTags = self.request.query_params.get("excludeTags")
+        q_objs = Q()
+
+        # Search filter
+        if search is not None and search!='':
+            q_objs &= (Q(name__icontains=search) | Q(model__icontains=search))
+
+        queryset = models.Item.objects.filter(q_objs).distinct()
+
+        # Tags filter
+        if tags is not None and tags != '':
+            tagsArray = tags.split(",")
+            for tag in tagsArray:
+                queryset = queryset.filter(tags__name=tag)
+
+        # Exclude tags filter
+        if excludeTags is not None and excludeTags != '':
+            excludeTagsArray = excludeTags.split(",")
+            for tag in excludeTagsArray:
+                queryset = queryset.exclude(tags__name=tag)
+
+        # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -254,8 +289,6 @@ class CustomFieldDetailDelete(generics.GenericAPIView):
         custom_field.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-
 class CustomValueList(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
@@ -272,7 +305,6 @@ class CustomValueList(generics.GenericAPIView):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
-
 
 class CustomValueDetailModify(generics.GenericAPIView):
     def get_instance(self, item_name, field_name):
@@ -325,8 +357,6 @@ class CartItemList(generics.GenericAPIView):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
-
-
 
 class CartItemDetailModifyDelete(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -468,6 +498,7 @@ def post_user_signup(request, format=None):
     return redirect('/')
 
 @api_view(['GET'])
+@permission_classes((IsAuthenticated,))
 def get_new_user_requests(request):
     if not (request.user.is_staff or request.user.is_superuser):
         d = {"error": "Permission denied."}
@@ -541,3 +572,61 @@ def deny_new_user_request(request, username):
     models.NewUserRequest.objects.get(username=username).delete()
   
     return Response({"success":"true"})
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_all_users(request, format=None):
+    if not request.user.is_staff:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    # todo add pagination?
+    users = User.objects.all()
+    serializer = serializers.UserGETSerializer(users, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def request_get_all_admin(request, format=None):
+    if request.method == 'GET':
+        if not request.user.is_staff:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        #todo maybe return paginated version or not based on if query params are present
+        queryset = models.Request.objects.all()
+        serializer = serializers.RequestGETSerializer
+        defaultItemsPerPage = 3
+        return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
+
+@api_view(['GET', 'POST'])
+@permission_classes((IsAuthenticated,))
+def request_get_create(request, format=None):
+    print(request.query_params)
+    if request.method == 'GET':
+        # get your own requests
+        queryset = models.Request.objects.filter(requester__pk=request.user.pk)
+        serializer = serializers.RequestGETSerializer
+        defaultItemsPerPage = 3
+        return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
+
+class TagListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.TagSerializer
+
+    def get_queryset(self):
+        #todo add pagination?
+        queryset = models.Tag.objects.all()
+        return queryset
+
+@api_view(['GET', 'POST'])
+@permission_classes((IsAuthenticated,))
+def transaction_get_create(request, format=None):
+    if request.method == 'GET':
+        queryset = None 
+        category = request.GET.get('category')
+        if category is None or category=="All":
+            queryset = models.Transaction.objects.all()
+        else:
+            queryset = models.Transaction.objects.filter(category=category)
+        serializer = serializers.TransactionGETSerializer
+        defaultItemsPerPage = 3
+        return paginateRequest(request, queryset, defaultItemsPerPage, serializer)

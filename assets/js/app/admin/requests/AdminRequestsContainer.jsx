@@ -74,8 +74,8 @@ class AdminRequestsContainer extends Component {
   getMyRequests(){
     var thisobj = this;
     $.getJSON("/api/requests/all.json", function(data){
-      thisobj.setAllRequests(data);
-      thisobj.setRequests(data);
+      thisobj.setAllRequests(data.results);
+      thisobj.setRequests(data.results);
     });
   }
 
