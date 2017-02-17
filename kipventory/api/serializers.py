@@ -2,7 +2,6 @@ from rest_framework import serializers, pagination
 from rest_framework.exceptions import ValidationError
 from . import models
 from django.contrib.auth.models import User
-import six
 
 class CustomFieldSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True)
