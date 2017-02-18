@@ -22,7 +22,6 @@ class Item(models.Model):
     def __str__(self):
         return self.name
 
-
 class CartItem(models.Model):
     item     = models.ForeignKey(Item, on_delete=models.CASCADE)
     owner    = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -73,3 +72,27 @@ class Transaction(models.Model):
     date                = models.DateTimeField()
     administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
 
+class Log(models.Model):
+    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity            = models.PositiveIntegerField()
+    initiating_user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiating_user')
+    affected_user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='affected_user', blank=True, null=True)
+    date_created        = models.DateTimeField(blank=True, auto_now_add=True)
+
+    # The following categories detail what type of inventory change occurred
+    TRANSACTION         = "Transaction"
+    DISBURSEMENT        = "Disbursement"
+    REQUEST             = "Request"
+    category_choices    = (
+        (TRANSACTION, TRANSACTION),
+        (DISBURSEMENT, DISBURSEMENT),
+        (REQUEST, REQUEST),
+    )
+    category            = models.CharField(max_length = 20, choices=category_choices)
+
+    def save(self, *args, **kwargs):
+        if self.id is None:
+            super(Log, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)

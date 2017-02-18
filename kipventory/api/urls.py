@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'^login/?$', views.post_user_login),
     url(r'^signup/?$', views.post_user_signup),
     url(r'^logout/?$', auth_views.logout),
+    url(r'^logs/?$', views.LogListView.as_view()),
 
     url(r'^users/?$', views.get_all_users),
     url(r'^users/current/?$', views.get_current_user),

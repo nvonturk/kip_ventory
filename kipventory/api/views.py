@@ -172,14 +172,14 @@ def disburse_to_user(request, format=None):
             "administrator": admin,
             "status": 'A'
         }
+        print(data['requester'])
         serializer = serializers.RequestPUTSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             item = models.Item.objects.get(pk=item)
-            print(item)
             item.quantity = (item.quantity - quantity)
             item.save()
-            print(item)
+            createLog(data, admin, 'Disbursement')
             return Response(serializer.data)
         print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -297,6 +297,11 @@ def request_detail_modify_delete(request, pk, format=None):
         serializer = serializers.RequestPUTSerializer(request_obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            item = models.Item.objects.get(pk=request.data['item'])
+            item.quantity = item.quantity - int(request.data['quantity'])
+            item.save()
+            createLog(request.data, request.data['administrator'], 'Request')
+            print(request.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -374,10 +379,18 @@ class TagListView(generics.ListAPIView):
         return queryset
 
 
+class LogListView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.LogTransactionSerializer
+
+    def get_queryset(self):
+        queryset = models.Log.objects.all()
+        return queryset
+
+
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
 def transaction_get_create(request, format=None):
-    print(request.query_params)
     if request.method == 'GET':
         transactions = models.Transaction.objects.all()
         serializer = serializers.TransactionGETSerializer(transactions, many=True)
@@ -400,5 +413,22 @@ def transaction_get_create(request, format=None):
                 #should never get here
                 pass
             item.save()
+            createLog(data, request.user.pk, 'Transaction')
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def createLog(data, initiating_user_pk, category):
+    logdata = {}
+    logdata['item']                 = data['item']
+    logdata['quantity']             = data['quantity']
+    logdata['initiating_user']      = initiating_user_pk
+    logdata['category']             = category
+    if category == 'Transaction':
+        serializer = serializers.LogTransactionSerializer(data=logdata)
+        if serializer.is_valid():
+            serializer.save()
+    elif category == 'Disbursement' or category == 'Request':
+        logdata['affected_user']    = data['requester']
+        serializer = serializers.LogRequestSerializer(data=logdata)
+        if serializer.is_valid():
+            serializer.save()

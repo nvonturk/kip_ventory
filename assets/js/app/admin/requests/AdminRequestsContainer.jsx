@@ -131,7 +131,8 @@ class AdminRequestsContainer extends Component {
           console.log("resulting_request");
           console.log(request);
 
-          thisobj.modifyItem(request);
+          // Going to modify this item quantity on the backend
+          //thisobj.modifyItem(request);
         }
       },
       complete: function(result){},
@@ -142,7 +143,7 @@ class AdminRequestsContainer extends Component {
     });
   }
 }
-
+// TODO: This method may be unnecessary, handled in endpoint
 modifyItem(request){
   var item = request.item;
   var thisobj = this;
