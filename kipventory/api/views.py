@@ -188,6 +188,7 @@ def disburse_to_user(request, format=None):
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
 def cart_get_create(request, format=None):
+
     if request.method == 'GET':
         cartitems = models.CartItem.objects.filter(owner__pk=request.user.pk)
         serializer = serializers.CartItemGETSerializer(cartitems, many=True)

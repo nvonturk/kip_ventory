@@ -19,6 +19,10 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.views import static
 from . import views
+from rest_framework_swagger.views import get_swagger_view
+
+
+schema_view = get_swagger_view(title='Pastebin API')
 
 urlpatterns = [
     # admin site for quick dev testing
@@ -26,6 +30,9 @@ urlpatterns = [
 
     # URLs for our REST API endpoints
     url(r'^api/', include('api.urls')),
+
+    # Swagger Docs for API testing
+    url(r'^swagger/', schema_view),
 
     # Main view for our Single Page App (React, client side)
     url(r'^app/?', views.app, name='app'),
