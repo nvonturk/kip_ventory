@@ -20,6 +20,12 @@ from django.conf import settings
 from django.views import static
 from . import views
 
+from rest_framework_swagger.views import get_swagger_view
+
+
+schema_view = get_swagger_view(title='Kipventory API')
+
+
 urlpatterns = [
     # admin site for quick dev testing
     url(r'^admin/?', admin.site.urls),
@@ -33,6 +39,11 @@ urlpatterns = [
     url(r'^media/(?P<path>.*)$', static.serve, {'document_root': settings.MEDIA_ROOT,}),
     url(r'^static/(?P<path>.*)$', static.serve, {'document_root': settings.STATIC_ROOT,}),
 
+    #Swagger docs
+    url(r'^swagger/', schema_view),
+
     # Landing page (no auth necessary)
     url(r'$', views.landing, name='landing'),
+
+
 ]
