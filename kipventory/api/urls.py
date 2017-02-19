@@ -28,6 +28,8 @@ urlpatterns = [
 
     url(r'^users/?$', views.get_all_users),
     url(r'^users/current/?$', views.get_current_user),
+
+    url(r'^netidtoken/?$', views.get_netid_token),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

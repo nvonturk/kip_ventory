@@ -19,6 +19,8 @@ from datetime import datetime
 
 from django.utils import timezone
 
+import requests
+
 # Create your views here.
 class ItemView(generics.GenericAPIView,
                mixins.ListModelMixin,
@@ -403,3 +405,43 @@ def transaction_get_create(request, format=None):
             item.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes((AllowAny,))
+def get_netid_token(request, format=None):
+
+    code = request.query_params.get('code')
+
+    p = {'grant_type' : 'authorization_code', 'code' : code, 'redirect_uri' : 'http://127.0.0.1:8000/api/netidtoken/', 'client_id' : 'kipventory', 'client_secret' : '#4ay9FQFuAPQbv8urcj+R%kd@YtAY4@=ggUXWbuvxjMX2g3kWo'}
+
+    token_request = requests.post('https://oauth.oit.duke.edu/oauth/token.php', data = p)
+    token_json = token_request.json()
+    print(token_json)
+
+    headers = {'Accept' : 'application/json', 'x-api-key' : 'kipventory', 'Authorization' : 'Bearer '+token_json['access_token']}
+
+    identity = requests.get('https://api.colab.duke.edu/identity/v1/', headers= headers)
+    identity_json = identity.json()
+    print(identity_json)
+    netid = identity_json['netid']
+    email = identity_json['eduPersonPrincipalName']
+    user_count = User.objects.filter(username=netid).count()
+    if user_count == 1:
+        user = User.objects.get(username=netid)
+        login(request, user)
+        return redirect('/app/')
+    elif user_count == 0:
+        user = User.objects.create_user(username=netid,email=email, password=None)
+        user.save()
+        login(request, user)
+        return redirect('/app/')
+    else:
+        print("Multiple NetId Users this is big time wrong need to throw an error")
+        return redirect('/app/')
+    # https://api.colab.duke.edu/identity/v1/
+
+    # Accept: "application/json",
+    # x-api-key: "your client id",
+    # Authorization: "Bearer " + access_token,
+
+    # return redirect('/')
