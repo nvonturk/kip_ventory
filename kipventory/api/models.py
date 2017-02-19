@@ -40,11 +40,10 @@ class KipventoryUser(models.Model):
             username = kwargs.pop('username')
             email = kwargs.pop('email')
 
-            # kwargs['auth_user'] = user
         if is_creation:
             auth_user = User.objects.create_user(username=username, email=email, password=None)
             self.auth_user = auth_user
-            
+
         super(KipventoryUser, self).save(*args, **kwargs)
 
 
