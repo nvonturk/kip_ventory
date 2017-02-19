@@ -30,14 +30,14 @@ class ItemListCreate(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.ItemSerializer
 
-    def get(self, request):
+    def get(self, request, format=None):
         # CHECK PERMISSION
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
     # manager restricted
-    def post(self, request):
+    def post(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -79,13 +79,13 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
     def get_queryset(self):
         return models.Item.objects.all()
 
-    def get(self, request, item_name):
+    def get(self, request, item_name, format=None):
         item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item)
         return Response(serializer.data)
 
     # manager restricted
-    def put(self, request, item_name):
+    def put(self, request, item_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -98,7 +98,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # manager restricted
-    def delete(self, request, item_name):
+    def delete(self, request, item_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -126,7 +126,7 @@ class ItemAddToCart(generics.GenericAPIView):
 
     # add an item to your cart
     # need to check if item already exists, and update if it does
-    def post(self, request, item_name):
+    def post(self, request, item_name, format=None):
         request.data.update({'owner': request.user})
         request.data.update({'item': self.get_item(item_name)})
 
@@ -154,7 +154,7 @@ class CustomFieldListCreate(generics.GenericAPIView):
     def get_queryset(self):
         return models.CustomField.objects.all()
 
-    def get(self, request):
+    def get(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -163,7 +163,7 @@ class CustomFieldListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
+    def post(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -194,7 +194,7 @@ class CustomFieldDetailDelete(generics.GenericAPIView):
     def get_queryset(self):
         return models.CustomField.objects.all()
 
-    def get(self, request, field_name):
+    def get(self, request, field_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -203,7 +203,7 @@ class CustomFieldDetailDelete(generics.GenericAPIView):
         serializer = self.get_serializer(instance=custom_field)
         return Response(serializer.data)
 
-    def delete(self, request, field_name):
+    def delete(self, request, field_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -226,7 +226,7 @@ class CustomValueList(generics.GenericAPIView):
             queryset = queryset.filter(field__private=False)
         return queryset
 
-    def get(self, request, item_name):
+    def get(self, request, item_name, format=None):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
@@ -248,13 +248,13 @@ class CustomValueDetailModify(generics.GenericAPIView):
             queryset = queryset.filter(field__private=False)
         return queryset
 
-    def get(self, request, item_name, field_name):
+    def get(self, request, item_name, field_name, format=None):
         custom_value = self.get_instance(item_name=item_name, field_name=field_name)
         serializer = self.get_serializer(instance=custom_value)
         return Response(serializer.data)
 
     # manager restricted
-    def put(self, request, item_name, field_name):
+    def put(self, request, item_name, field_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -282,7 +282,7 @@ class CartItemList(generics.GenericAPIView):
         return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
 
     # view all items in your cart
-    def get(self, request):
+    def get(self, request, format=None):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
@@ -306,13 +306,13 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
 
     # view all items in your cart
-    def get(self, request, item_name):
+    def get(self, request, item_name, format=None):
         cartitem = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=cartitem)
         return Response(serializer.data)
 
     # modify quantity of an item in your cart
-    def put(self, request, item_name):
+    def put(self, request, item_name, format=None):
         cartitem = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=cartitem, data=request.data, partial=True)
         if serializer.is_valid():
@@ -321,7 +321,7 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # remove an item from your cart
-    def delete(self, request, item_name):
+    def delete(self, request, item_name, format=None):
         cartitem = self.get_instance(item_name=item_name)
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -330,10 +330,17 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
 
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
-def post_user_login(request):
+def post_user_login(request, format=None):
     username = request.POST['username']
     password = request.POST['password']
+
     user = authenticate(username=username, password=password)
+
+    if hasattr(user, 'kipventory_user'):
+        if user.kipventory_user.is_duke_user:
+            messages.add_message(request._request, messages.ERROR, 'login-via-duke-authentication')
+            return redirect('/')
+
     if user is not None:
         login(request, user)
         return redirect('/app/')
@@ -345,7 +352,7 @@ def post_user_login(request):
 
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
-def post_user_signup(request):
+def post_user_signup(request, format=None):
     username = request.data['username']
     password = request.data['password']
     first_name = request.data['first_name']
@@ -405,9 +412,9 @@ def get_netid_token(request, format=None):
         login(request, user)
         return redirect('/app/')
     elif user_count == 0:
-        user = User.objects.create_user(username=netid,email=email, password=None)
-        user.save()
-        login(request, user)
+        user = models.KipventoryUser(is_duke_user=True)
+        user.save(username=netid, email=email)
+        login(request, user.auth_user)
         return redirect('/app/')
     else:
         print("Multiple NetId Users this is big time wrong need to throw an error")

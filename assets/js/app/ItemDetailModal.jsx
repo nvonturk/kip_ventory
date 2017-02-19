@@ -78,7 +78,7 @@ class ItemDetailModal extends Component {
   render() {
     var requests=[];
 
-    if(this.props.item.request_set.length == 0) {
+    if(true) {
       requests = "No outstanding requests."
     }
 
