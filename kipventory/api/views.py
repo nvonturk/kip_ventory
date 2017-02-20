@@ -5,6 +5,7 @@ from rest_framework import authentication, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotFound
 
+
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render, get_object_or_404
@@ -770,3 +771,29 @@ def transaction_get_create(request, format=None):
         serializer = serializers.TransactionGETSerializer
         defaultItemsPerPage = 3
         return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
+
+class TokenPoint(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+
+        if Token.objects.filter(user=request.user).count() > 0:
+            #User has a token, return created token
+            return Response({"token": Token.objects.get(user=request.user).key})
+        else:
+            token = Token.objects.create(user=thisuser)
+            return Response({"token": token})
+
+    #     if user is not None:
+    #         if password is not None:
+    #             #local user
+    #             if Token.objects.filter(user=thisuser).count() > 0:
+    #                 #User has a token, return created token
+    #                 return Response({"token": Token.objects.get(user=thisuser).key})
+    #             else:
+    #                 token = Token.objects.create(user=thisuser)
+    #                 return Response({"token": token})
+    #         else:
+    #             #duke user
+    #     else:
+    #         #respond with failure
