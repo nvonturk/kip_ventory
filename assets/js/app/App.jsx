@@ -8,6 +8,7 @@ import AdminContainer from './admin/AdminContainer'
 import DisbursementContainer from './admin/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './admin/requests/AdminRequestsContainer'
 import TransactionsContainer from './admin/transactions/TransactionsContainer'
+import LogsContainer from './admin/logs/LogsContainer'
 
 import CartContainer from './cart/CartContainer'
 import RequestListContainer from './requests/RequestListContainer'
@@ -21,6 +22,7 @@ function getRouteIfAdmin(userData) {
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
+      <Route path="logs" component={LogsContainer} admin={userData} />
     </Route>) : null
 }
 

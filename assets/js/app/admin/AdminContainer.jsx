@@ -11,7 +11,7 @@ const AdminContainer = React.createClass({
     var greeting = "Welcome, " + this.props.route.admin.first_name
     return {
       activeKey: 0,
-      headers: [greeting, 'Disbursement', 'Requests', 'Transactions'],
+      headers: [greeting, 'Disbursement', 'Requests', 'Transactions', 'Logs'],
       currentHeader: greeting
     }
   },
@@ -63,6 +63,9 @@ const AdminContainer = React.createClass({
                 </LinkContainer>
                 <LinkContainer to="/app/admin/transactions">
                   <NavItem eventKey={3}>{this.state.headers[3]}</NavItem>
+                </LinkContainer>
+                <LinkContainer to="/app/admin/logs">
+                  <NavItem eventKey={4}>{this.state.headers[4]}</NavItem>
                 </LinkContainer>
               </Nav>
             </Row>

@@ -88,4 +88,4 @@ class LogGETSerializer(serializers.ModelSerializer):
     affected_user = UserGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Log
-        fields = ['id', "item", "quantity", "initiating_user", 'affected_user', "category"]
+        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'affected_user', "category"]
