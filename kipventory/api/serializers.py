@@ -71,12 +71,6 @@ class ItemSerializer(serializers.ModelSerializer):
         else:
             return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all().filter(field__private=False)]
 
-class ItemSimpleSerializer(serializers.ModelSerializer):
-    name          = serializers.CharField(max_length=None, min_length=None, required=True)
-
-    class Meta:
-        model = models.Item
-        fields= ['name']
 
 class NewUserRequestSerializer(serializers.ModelSerializer):
     # id            = serializers.ReadOnlyField()
@@ -148,7 +142,7 @@ class UserPOSTSerializer(serializers.ModelSerializer):
 
 
 class TransactionGETSerializer(serializers.ModelSerializer):
-    item = ItemSimpleSerializer(read_only=True, many=False)
+    item          = serializers.SlugRelatedField(read_only=True, slug_field="name")
     administrator = UserGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Transaction
