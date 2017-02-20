@@ -36,7 +36,7 @@ class GridContainer extends Component {
     var thisobj = this;
     $.getJSON(url, params, function(data) {
       thisobj.setState({
-        items: data,
+        items: data.results,
         pageCount: Math.ceil(data.num_pages),
       });
     });

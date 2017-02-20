@@ -99,7 +99,7 @@ class ItemListCreate(generics.GenericAPIView):
 
         # Search filter
         if search is not None and search!='':
-            q_objs &= (Q(name__icontains=search) | Q(model__icontains=search))
+            q_objs &= (Q(name__icontains=search) | Q(model_no__icontains=search))
 
         queryset = models.Item.objects.filter(q_objs).distinct()
 

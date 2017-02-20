@@ -119,7 +119,7 @@ class ItemDetailModal extends Component {
 
     var tags = "";
     for(var i = 0; i<this.props.item.tags.length; i++) {
-      var tag = this.props.item.tags[i].name;
+      var tag = this.props.item.tags[i];
       tags += " " + tag;
     }
 

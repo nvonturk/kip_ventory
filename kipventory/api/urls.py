@@ -22,14 +22,20 @@ urlpatterns = [
     url(r'^cart/?$',                       views.CartItemList.as_view()),
     url(r'^cart/?(?P<item_name>[\w]+)/?$', views.CartItemDetailModifyDelete.as_view()),
 
-    # url(r'^requests/?$', views.RequestListCreate.as_view()),
+    #url(r'^requests/?$', views.RequestListCreate.as_view()),
     # url(r'^requests/(?P<pk>[0-9]*)/?$', views.RequestDetailModifyDelete.as_view()),
+    url(r'^requests/?$', views.request_get_create),
+    url(r'^requests/all/?$', views.request_get_all_admin),
+
+     url(r'^tags/?$', views.TagListView.as_view()),
+
+    url(r'^transactions/?$', views.transaction_get_create),
 
     url(r'^login/?$', views.post_user_login),
     url(r'^signup/?$', views.post_user_signup),
     url(r'^logout/?$', auth_views.logout),
 
-    # url(r'^users/?$', views.get_all_users),
+    url(r'^users/?$', views.get_all_users),
     url(r'^users/current/?$', views.get_current_user),
     url(r'^netidtoken/?$', views.get_netid_token),
 
