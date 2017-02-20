@@ -6,11 +6,12 @@ import Home from './Home'
 
 // ADMIN PAGES
 import AdminContainer from './admin/AdminContainer'
-import AdminWelcome from './admin/welcome/AdminWelcome'
-import DisbursementContainer from './admin/disbursement/DisbursementContainer'
-import AdminRequestsContainer from './admin/requests/AdminRequestsContainer'
-import TransactionsContainer from './admin/transactions/TransactionsContainer'
-import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
+import ManagerContainer from './manage/ManagerContainer'
+import ManagerWelcome from './manage/welcome/ManagerWelcome'
+import DisbursementContainer from './manage/disbursement/DisbursementContainer'
+import AdminRequestsContainer from './manage/requests/ManagerRequestsContainer'
+import TransactionsContainer from './manage/transactions/TransactionsContainer'
+import NewUserRequestsContainer from './manage/newuserrequests/NewUserRequestsContainer'
 
 // MAIN APP PAGES
 import CartContainer from './cart/CartContainer'
@@ -19,14 +20,20 @@ import Profile from './Profile'
 import {getJSON} from 'jquery'
 
 
-function getRouteIfAdmin(userData) {
+function getManagerPanel(userData) {
   return userData.is_staff ? (
-    <Route path="admin" component={AdminContainer} admin={userData}>
-      <IndexRoute component={AdminWelcome} admin={userData} />
+    <Route path="manage" component={ManagerContainer} admin={userData}>
+      <IndexRoute component={ManagerWelcome} admin={userData} />
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
+    </Route>) : null
+}
+
+function getAdminPanel(userData) {
+  return userData.is_superuser ? (
+    <Route path="admin" component={AdminContainer} admin={userData}>
     </Route>) : null
 }
 
@@ -37,7 +44,9 @@ function initialize(userData) {
         <IndexRoute component={Home} user={userData} />
         <Route path="requests" component={RequestListContainer} user={userData}/>
         <Route path="cart" component={CartContainer} user={userData} />
-        {getRouteIfAdmin(userData)}
+        <Route path="profile" component={Profile} user={userData} />
+        {getManagerPanel(userData)}
+        {getAdminPanel(userData)}
       </Route>
     </Router>),
     document.getElementById('root'));

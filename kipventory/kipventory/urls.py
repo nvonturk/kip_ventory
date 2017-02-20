@@ -26,7 +26,7 @@ schema_view = get_swagger_view(title='Pastebin API')
 
 urlpatterns = [
     # admin site for quick dev testing
-    url(r'^admin/?', admin.site.urls),
+    url(r'^admin/', admin.site.urls),
 
     # URLs for our REST API endpoints
     url(r'^api/', include('api.urls')),

@@ -10,10 +10,18 @@ const KipNav = React.createClass({
     window.location.assign(url);
   },
 
-  getAdminLink() {
+  getManagerLink() {
     return this.props.route.user.is_staff ? (
-      <LinkContainer to="/app/admin">
-        <NavItem eventKey={3}>Admin</NavItem>
+      <LinkContainer to="/app/manage/">
+        <NavItem eventKey={5}>Manage</NavItem>
+      </LinkContainer>
+    ) : null;
+  },
+
+  getAdminLink() {
+    return this.props.route.user.is_superuser ? (
+      <LinkContainer to="/app/admin/">
+        <NavItem eventKey={6}>Admin</NavItem>
       </LinkContainer>
     ) : null;
   },
@@ -33,6 +41,7 @@ const KipNav = React.createClass({
               <LinkContainer to="/app/requests/">
                 <NavItem eventKey={1}>Requests</NavItem>
               </LinkContainer>
+              {this.getManagerLink()}
               {this.getAdminLink()}
             </Nav>
             <Nav pullRight>
