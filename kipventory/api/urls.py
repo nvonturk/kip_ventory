@@ -31,7 +31,7 @@ urlpatterns = [
     url(r'^users/current/?$', views.get_current_user),
     url(r'^netidtoken/?$', views.get_netid_token),
 
-    url(r'^newuserrequests/?$', views.get_new_user_requests), 
+    url(r'^newuserrequests/?$', views.get_new_user_requests),
     url(r'^newuserrequests/(?P<username>[\w]*)/?$', views.get_new_user_request),
     url(r'^newuserrequests/(?P<username>[\w]*)/approve/?$', views.approve_new_user_request),
     url(r'^newuserrequests/(?P<username>[\w]*)/deny/?$', views.deny_new_user_request),

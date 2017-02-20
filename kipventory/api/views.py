@@ -420,6 +420,7 @@ def post_user_signup(request, format=None):
     messages.add_message(request._request, messages.SUCCESS, "user-created")
     return redirect('/')
 
+@api_view(['GET'])
 def get_new_user_requests(request):
     if not (request.user.is_staff or request.user.is_superuser):
         d = {"error": "Permission denied."}
