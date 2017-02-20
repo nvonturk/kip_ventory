@@ -2,6 +2,7 @@ from rest_framework import serializers, pagination
 from rest_framework.exceptions import ValidationError
 from . import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class CustomFieldSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True)
@@ -52,7 +53,6 @@ class CustomValueSerializer(serializers.ModelSerializer):
         return instance
 
 class ItemSerializer(serializers.ModelSerializer):
-    # id            = serializers.ReadOnlyField()
     name          = serializers.CharField(max_length=None, min_length=None, required=True)
     quantity      = serializers.IntegerField(min_value=0, max_value=None, required=True)
     model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
@@ -89,7 +89,7 @@ class NewUserRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.NewUserRequest
         fields = ['username', 'first_name', 'last_name', 'email', 'comment']
-        
+
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(CartItemSerializer, self).__init__(*args, **kwargs)
@@ -113,15 +113,15 @@ class CartItemSerializer(serializers.ModelSerializer):
         except:
             errors.update({'quantity': 'Quantity must be an integer.'})
         if not isinstance(owner, User):
-            errors.update({'owner': "Owner must be an instance of 'KipventoryUser' model."})
+            errors.update({'owner': "Owner must be an instance of 'User' model."})
         if not isinstance(item, models.Item):
-            errors.update({'item': "item must be an instance of 'Item' model."})
+            errors.update({'item': "Item must be an instance of 'Item' model."})
         if errors:
             raise ValidationError(errors)
 
         return {
-            'item': data.get('item'),
-            'owner': data.get('owner'),
+            'item': item,
+            'owner': owner,
             'quantity': quantity
         }
 
@@ -129,6 +129,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         instance.quantity = validated_data.get('quantity', instance.quantity)
         instance.save()
         return instance
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -145,30 +146,6 @@ class UserPOSTSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
 
-class RequestGETSerializer(serializers.ModelSerializer):
-    requester = UserGETSerializer(read_only=True, many=False)
-    administrator = UserGETSerializer(read_only=True, many=False)
-    item      = ItemSimpleSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
-
-class RequestGETNoItemSerializer(serializers.ModelSerializer):
-    requester = UserGETSerializer(read_only=True, many=False)
-    administrator = UserGETSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
-
-class RequestPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
-
-class RequestPUTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Request
-        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason','date_closed','closed_comment','administrator','status']
 
 class TransactionGETSerializer(serializers.ModelSerializer):
     item = ItemSimpleSerializer(read_only=True, many=False)
@@ -181,3 +158,76 @@ class TransactionPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transaction
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
+
+
+class RequestItemSerializer(serializers.ModelSerializer):
+    item     = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    quantity = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = models.RequestItem
+        fields = ['item', 'quantity']
+
+
+class RequestSerializer(serializers.ModelSerializer):
+    request_id     = serializers.ReadOnlyField(source='id')
+    requester      = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    request_items  = RequestItemSerializer(read_only=True, many=True)
+    date_open      = serializers.HiddenField(default=timezone.now)
+
+    open_comment   = serializers.CharField(max_length=500, default='', allow_blank=True)
+
+    date_closed    = serializers.ReadOnlyField()
+    closed_comment = serializers.ReadOnlyField()
+    administrator  = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    status         = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
+
+    class Meta:
+        model = models.Request
+        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
+
+    def to_internal_value(self, data):
+        validated_data = {}
+        errors = {}
+
+        requester = data.get('requester', None)
+        date_open = timezone.now()
+        open_comment = data.get('open_comment', None)
+
+        return {
+            'requester': requester,
+            'date_open': date_open,
+            'open_comment': open_comment
+        }
+
+class RequestPUTSerializer(serializers.ModelSerializer):
+    request_id    = serializers.ReadOnlyField(source='id')
+    requester     = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    request_items = RequestItemSerializer(read_only=True, many=True)
+    date_open     = serializers.DateTimeField(read_only=True)
+    open_comment  = serializers.CharField(read_only=True)
+
+    date_closed   = serializers.HiddenField(default=timezone.now)
+    closed_comment = serializers.CharField(max_length=500, allow_blank=True, default="")
+    status        = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
+
+    class Meta:
+        model = models.Request
+        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment','status']
+
+    def to_internal_value(self, data):
+        validated_data = {}
+        errors = {}
+
+        date_closed = timezone.now()
+        closed_comment = data.get('closed_comment', None)
+        administrator = data.get('administrator', None)
+        status = data.get('status', None)
+
+        return {
+            "date_closed": date_closed,
+            "closed_comment": closed_comment,
+            "administrator": administrator,
+            "status": status
+        }

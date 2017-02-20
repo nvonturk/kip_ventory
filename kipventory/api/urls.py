@@ -8,13 +8,14 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
 
     # ITEM ENDPOINTS
-    url(r'^items/?$',                                                   views.ItemListCreate.as_view()),
-    url(r'^items/(?P<item_name>[\w]+)/?$',                              views.ItemDetailModifyDelete.as_view()),
-    url(r'^items/(?P<item_name>[\w]+)/addtocart/?$',                    views.ItemAddToCart.as_view()),
-    url(r'^items/(?P<item_name>[\w]+)/fields/?$',                       views.CustomValueList.as_view()),
-    url(r'^items/(?P<item_name>[\w]+)/fields/(?P<field_name>[\w]*)/?$', views.CustomValueDetailModify.as_view()),
-    url(r'^items/(?P<item_name>[\w]+)/requests/$',                       views.item_requests_get),
+    url(r'^items/?$',                                                     views.ItemListCreate.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/?$',                              views.ItemDetailModifyDelete.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/addtocart/?$',                    views.AddItemToCart.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/fields/?$',                       views.CustomValueList.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/fields/(?P<field_name>[\w]*)/?$', views.CustomValueDetailModify.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/requests/$',                      views.item_requests_get),
 
+    url(r'^tags/?$', views.TagListView.as_view()),
 
     url(r'^fields/?$',                       views.CustomFieldListCreate.as_view()),
     url(r'^fields/(?P<field_name>[\w]+)/?$', views.CustomFieldDetailDelete.as_view()),
@@ -22,27 +23,24 @@ urlpatterns = [
     url(r'^cart/?$',                       views.CartItemList.as_view()),
     url(r'^cart/?(?P<item_name>[\w]+)/?$', views.CartItemDetailModifyDelete.as_view()),
 
-    #url(r'^requests/?$', views.RequestListCreate.as_view()),
-    # url(r'^requests/(?P<pk>[0-9]*)/?$', views.RequestDetailModifyDelete.as_view()),
-    url(r'^requests/?$', views.request_get_create),
-    url(r'^requests/all/?$', views.request_get_all_admin),
-
-     url(r'^tags/?$', views.TagListView.as_view()),
-
     url(r'^transactions/?$', views.transaction_get_create),
 
-    url(r'^login/?$', views.post_user_login),
+    url(r'^requests/?$',                        views.RequestListCreate.as_view()),
+    url(r'^requests/all/?$',                    views.RequestListAll.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]*)/?$', views.RequestDetailModifyDelete.as_view()),
+
+    url(r'^login/?$',  views.post_user_login),
     url(r'^signup/?$', views.post_user_signup),
     url(r'^logout/?$', auth_views.logout),
 
-    url(r'^users/?$', views.get_all_users),
-    url(r'^users/current/?$', views.get_current_user),
-    url(r'^netidtoken/?$', views.get_netid_token),
+    url(r'^users/?$',         views.get_all_users),
+    url(r'^users/current/?$', views.CurrentUser.as_view()),
+    url(r'^netidtoken/?$',    views.NetIDToken.as_view()),
 
-    url(r'^newuserrequests/?$', views.get_new_user_requests),
-    url(r'^newuserrequests/(?P<username>[\w]+)/?$', views.get_new_user_request),
+    url(r'^newuserrequests/?$',                             views.get_new_user_requests),
+    url(r'^newuserrequests/(?P<username>[\w]+)/?$',         views.get_new_user_request),
     url(r'^newuserrequests/(?P<username>[\w]+)/approve/?$', views.approve_new_user_request),
-    url(r'^newuserrequests/(?P<username>[\w]+)/deny/?$', views.deny_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w]+)/deny/?$',    views.deny_new_user_request),
 
     url('^', include('django.contrib.auth.urls')),
 ]
