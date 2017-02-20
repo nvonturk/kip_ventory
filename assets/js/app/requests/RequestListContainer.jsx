@@ -40,9 +40,9 @@ class RequestListContainer extends Component {
 
   getMyRequests(){
     var _this = this;
-    getJSON("/api/requests.json", function(data){
+    getJSON("/api/requests/", function(data){
       _this.setState({
-        requests: data
+        requests: data.results
       })
     });
   }

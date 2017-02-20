@@ -34,7 +34,7 @@ class DisbursementContainer extends Component {
 
   getUsers(){
     var thisObj = this
-    $.getJSON("/api/users.json", function(data){
+    $.getJSON("/api/users/", function(data){
       thisObj.setState({users: data})
       thisObj.createUserlist(data)
     });
@@ -42,7 +42,7 @@ class DisbursementContainer extends Component {
 
   getItems() {
   	var thisObj = this;
-  	$.getJSON("/api/items.json", function(data) {
+  	$.getJSON("/api/items/", function(data) {
       data = data.results
       thisObj.setState({items: data})
   		thisObj.createItemlist(data);

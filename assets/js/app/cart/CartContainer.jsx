@@ -82,7 +82,7 @@ class CartContainer extends Component {
 
   getCartItems() {
     var thisobj = this
-    $.getJSON("/api/cart/.json", function(data) {
+    $.getJSON("/api/cart/", function(data) {
       thisobj.setState({items: data,})
     });
   }

@@ -125,3 +125,44 @@ class CustomValue(models.Model):
 
     def get_value(self):
             return getattr(self, self.field.field_type)
+
+class Request(models.Model):
+    requester       = models.ForeignKey(User, on_delete=models.CASCADE)
+    item            = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity        = models.IntegerField()
+    date_open       = models.DateTimeField(blank=True)
+    open_reason     = models.TextField(max_length=500, blank=True)
+    date_closed     = models.DateTimeField(blank=True, null=True)
+    closed_comment  = models.TextField(max_length=500, blank=True, null=True)
+    administrator   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
+
+    OUTSTANDING = 'O'
+    APPROVED = 'A'
+    DENIED = 'D'
+    ### Status Choices ###
+    status_choices      = (
+        (OUTSTANDING, 'Outstanding'),
+        (APPROVED, 'Approved'),
+        (DENIED, 'Denied'),
+    )
+    status          = models.CharField(max_length = 10, choices=status_choices, default=OUTSTANDING)
+
+
+    def __str__(self):
+        return "{} {}".format(self.requester, self.item)
+
+class Transaction(models.Model):
+    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
+
+    ACQUISITION = 'Acquisition'
+    LOSS = 'Loss'
+    category_choices    = (
+        (ACQUISITION, ACQUISITION),
+        (LOSS, LOSS),
+    )
+    category            = models.CharField(max_length = 20, choices=category_choices)
+
+    quantity            = models.PositiveIntegerField()
+    comment             = models.CharField(max_length = 100, blank=True, null=True)
+    date                = models.DateTimeField()
+    administrator       = models.ForeignKey(User, on_delete=models.CASCADE)

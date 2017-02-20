@@ -51,7 +51,6 @@ class CustomValueSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-
 class ItemSerializer(serializers.ModelSerializer):
     # id            = serializers.ReadOnlyField()
     name          = serializers.CharField(max_length=None, min_length=None, required=True)
@@ -71,6 +70,13 @@ class ItemSerializer(serializers.ModelSerializer):
             return [{"name": cv.field.name, "value": cv.get_value(), "private": cv.field.private} for cv in item.values.all()]
         else:
             return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all().filter(field__private=False)]
+
+class ItemSimpleSerializer(serializers.ModelSerializer):
+    name          = serializers.CharField(max_length=None, min_length=None, required=True)
+
+    class Meta:
+        model = models.Item
+        fields= ['name']
 
 class NewUserRequestSerializer(serializers.ModelSerializer):
     # id            = serializers.ReadOnlyField()
@@ -123,3 +129,55 @@ class CartItemSerializer(serializers.ModelSerializer):
         instance.quantity = validated_data.get('quantity', instance.quantity)
         instance.save()
         return instance
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Tag
+        fields = ["id", 'name']
+
+class UserGETSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
+
+class UserPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
+
+class RequestGETSerializer(serializers.ModelSerializer):
+    requester = UserGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
+    item      = ItemSimpleSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
+
+class RequestGETNoItemSerializer(serializers.ModelSerializer):
+    requester = UserGETSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'quantity', 'date_open', 'date_closed', 'open_reason', 'closed_comment', 'administrator', 'status']
+
+class RequestPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason']
+
+class RequestPUTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Request
+        fields = ['id', 'requester', 'item', 'quantity', 'date_open', 'open_reason','date_closed','closed_comment','administrator','status']
+
+class TransactionGETSerializer(serializers.ModelSerializer):
+    item = ItemSimpleSerializer(read_only=True, many=False)
+    administrator = UserGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Transaction
+        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
+class TransactionPOSTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Transaction
+        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
