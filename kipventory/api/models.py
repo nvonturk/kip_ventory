@@ -49,6 +49,12 @@ class KipventoryUser(models.Model):
 
 
 
+class NewUserRequest(models.Model):
+    username = models.CharField(max_length=150, unique=True)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    email = models.CharField(max_length=150, unique=True)
+    comment = models.CharField(max_length=300, blank=True)
 
 class Item(models.Model):
     name        = models.CharField(max_length=100, unique=True)

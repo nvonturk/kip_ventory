@@ -10,6 +10,7 @@ import AdminWelcome from './admin/welcome/AdminWelcome'
 import DisbursementContainer from './admin/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './admin/requests/AdminRequestsContainer'
 import TransactionsContainer from './admin/transactions/TransactionsContainer'
+import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
 
 // MAIN APP PAGES
 import CartContainer from './cart/CartContainer'
@@ -25,6 +26,7 @@ function getRouteIfAdmin(userData) {
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
+      <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
     </Route>) : null
 }
 
@@ -42,7 +44,7 @@ function initialize(userData) {
 }
 
 
-getJSON("/api/users/current/.json", function(data) {
+getJSON("/api/users/current/", function(data) {
    var user = data
    initialize(user)
 })
