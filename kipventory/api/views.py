@@ -16,6 +16,12 @@ from rest_framework import pagination
 from datetime import datetime
 
 from django.utils import timezone
+from django.utils.crypto import get_random_string
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.views import password_reset, password_reset_confirm
+
+
+import requests
 
 
 class ItemListCreate(generics.GenericAPIView):
@@ -28,14 +34,14 @@ class ItemListCreate(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.ItemSerializer
 
-    def get(self, request):
+    def get(self, request, format=None):
         # CHECK PERMISSION
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
     # manager restricted
-    def post(self, request):
+    def post(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -77,13 +83,13 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
     def get_queryset(self):
         return models.Item.objects.all()
 
-    def get(self, request, item_name):
+    def get(self, request, item_name, format=None):
         item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item)
         return Response(serializer.data)
 
     # manager restricted
-    def put(self, request, item_name):
+    def put(self, request, item_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -96,7 +102,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # manager restricted
-    def delete(self, request, item_name):
+    def delete(self, request, item_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -124,7 +130,7 @@ class ItemAddToCart(generics.GenericAPIView):
 
     # add an item to your cart
     # need to check if item already exists, and update if it does
-    def post(self, request, item_name):
+    def post(self, request, item_name, format=None):
         request.data.update({'owner': request.user})
         request.data.update({'item': self.get_item(item_name)})
 
@@ -152,7 +158,7 @@ class CustomFieldListCreate(generics.GenericAPIView):
     def get_queryset(self):
         return models.CustomField.objects.all()
 
-    def get(self, request):
+    def get(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -161,7 +167,7 @@ class CustomFieldListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
+    def post(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -192,7 +198,7 @@ class CustomFieldDetailDelete(generics.GenericAPIView):
     def get_queryset(self):
         return models.CustomField.objects.all()
 
-    def get(self, request, field_name):
+    def get(self, request, field_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -201,7 +207,7 @@ class CustomFieldDetailDelete(generics.GenericAPIView):
         serializer = self.get_serializer(instance=custom_field)
         return Response(serializer.data)
 
-    def delete(self, request, field_name):
+    def delete(self, request, field_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -224,7 +230,7 @@ class CustomValueList(generics.GenericAPIView):
             queryset = queryset.filter(field__private=False)
         return queryset
 
-    def get(self, request, item_name):
+    def get(self, request, item_name, format=None):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
@@ -246,13 +252,13 @@ class CustomValueDetailModify(generics.GenericAPIView):
             queryset = queryset.filter(field__private=False)
         return queryset
 
-    def get(self, request, item_name, field_name):
+    def get(self, request, item_name, field_name, format=None):
         custom_value = self.get_instance(item_name=item_name, field_name=field_name)
         serializer = self.get_serializer(instance=custom_value)
         return Response(serializer.data)
 
     # manager restricted
-    def put(self, request, item_name, field_name):
+    def put(self, request, item_name, field_name, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -280,7 +286,7 @@ class CartItemList(generics.GenericAPIView):
         return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
 
     # view all items in your cart
-    def get(self, request):
+    def get(self, request, format=None):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
@@ -304,13 +310,13 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return models.CartItem.objects.filter(owner__pk=self.request.user.pk)
 
     # view all items in your cart
-    def get(self, request, item_name):
+    def get(self, request, item_name, format=None):
         cartitem = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=cartitem)
         return Response(serializer.data)
 
     # modify quantity of an item in your cart
-    def put(self, request, item_name):
+    def put(self, request, item_name, format=None):
         cartitem = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=cartitem, data=request.data, partial=True)
         if serializer.is_valid():
@@ -319,50 +325,10 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # remove an item from your cart
-    def delete(self, request, item_name):
+    def delete(self, request, item_name, format=None):
         cartitem = self.get_instance(item_name=item_name)
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-
-@api_view(['POST'])
-@permission_classes((permissions.AllowAny,))
-def post_user_login(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        login(request, user)
-        return redirect('/app/')
-    else:
-        # Return an 'invalid login' error message.
-        messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
-        return redirect('/')
-
-
-@api_view(['POST'])
-@permission_classes((permissions.AllowAny,))
-def post_user_signup(request):
-    username = request.data['username']
-    password = request.data['password']
-    first_name = request.data['first_name']
-    last_name = request.data['last_name']
-    email = request.data['email']
-
-    exists = (User.objects.filter(username=username).count() > 0)
-    if exists:
-        messages.add_message(request._request, messages.ERROR, "username-taken")
-        return redirect('/')
-
-    user = User.objects.create_user(
-                            username=username,
-                            email=email,
-                            password=password,
-                            first_name=first_name,
-                            last_name=last_name)
-    messages.add_message(request._request, messages.SUCCESS, "user-created")
-    return redirect('/')
 
 @api_view(['GET'])
 @permission_classes((permissions.IsAuthenticated,))
@@ -376,3 +342,155 @@ def get_current_user(request):
         "email": user.email,
         "is_superuser": user.is_superuser
     })
+
+@api_view(['GET'])
+@permission_classes((permissions.AllowAny,))
+def get_netid_token(request, format=None):
+
+    code = request.query_params.get('code')
+
+    p = {'grant_type' : 'authorization_code', 'code' : code, 'redirect_uri' : 'http://127.0.0.1:8000/api/netidtoken/', 'client_id' : 'kipventory', 'client_secret' : '#4ay9FQFuAPQbv8urcj+R%kd@YtAY4@=ggUXWbuvxjMX2g3kWo'}
+
+    token_request = requests.post('https://oauth.oit.duke.edu/oauth/token.php', data = p)
+    token_json = token_request.json()
+    print(token_json)
+
+    headers = {'Accept' : 'application/json', 'x-api-key' : 'kipventory', 'Authorization' : 'Bearer '+token_json['access_token']}
+
+    identity = requests.get('https://api.colab.duke.edu/identity/v1/', headers= headers)
+    identity_json = identity.json()
+    print(identity_json)
+    netid = identity_json['netid']
+    email = identity_json['eduPersonPrincipalName']
+    user_count = User.objects.filter(username=netid).count()
+    if user_count == 1:
+        user = User.objects.get(username=netid)
+        login(request, user)
+        return redirect('/app/')
+    elif user_count == 0:
+        user = models.KipventoryUser(is_duke_user=True)
+        user.save(username=netid, email=email)
+        login(request, user.auth_user)
+        return redirect('/app/')
+    else:
+        print("Multiple NetId Users this is big time wrong need to throw an error")
+        return redirect('/app/')
+
+@api_view(['POST'])
+@permission_classes((permissions.AllowAny,))
+def post_user_login(request, format=None):
+    username = request.POST['username']
+    password = request.POST['password']
+
+    user = authenticate(username=username, password=password)
+
+    if hasattr(user, 'kipventory_user'):
+        if user.kipventory_user.is_duke_user:
+            messages.add_message(request._request, messages.ERROR, 'login-via-duke-authentication')
+            return redirect('/')
+
+    if user is not None:
+        login(request, user)
+        return redirect('/app/')
+    else:
+        # Return an 'invalid login' error message.
+        messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
+        return redirect('/')
+
+@api_view(['POST'])
+@permission_classes((permissions.AllowAny,))
+def post_user_signup(request, format=None):
+    username = request.data['username']
+    first_name = request.data['first_name']
+    last_name = request.data['last_name']
+    email = request.data['email']
+
+    # Make sure username is unique
+    # Todo: make email unique?
+    exists = (User.objects.filter(username=username).count() > 0)
+    if exists:
+        messages.add_message(request._request, messages.ERROR, "username-taken")
+        return redirect('/')
+
+    models.NewUserRequest.objects.create(
+                            username=username,
+                            email=email,
+                            first_name=first_name,
+                            last_name=last_name)
+    messages.add_message(request._request, messages.SUCCESS, "user-created")
+    return redirect('/')
+
+@api_view(['GET'])
+def get_new_user_requests(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+    queryset = models.NewUserRequest.objects.all()
+    serializer = serializers.NewUserRequestSerializer(queryset, many=True)
+    return Response(serializer.data)
+
+# manager restricted
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def get_new_user_request(request, username):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+    queryset = models.NewUserRequest.objects.get(username=username)
+    serializer = serializers.NewUserRequestSerializer(queryset)
+    return Response(serializer.data)
+
+# manager restricted 
+@api_view(['POST'])
+@permission_classes((permissions.IsAuthenticated,))
+def approve_new_user_request(request, username):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+    # Retrieve user request
+    user_request = models.NewUserRequest.objects.get(username=username)
+    email = user_request.email
+    first_name = user_request.first_name
+    last_name = user_request.last_name
+    
+    # Make sure username and email are unique
+    username_taken = User.objects.filter(username=username).count() > 0
+    email_taken = User.objects.filter(email=email).count() > 0
+    if username_taken:
+        return Response({"error":"Username already taken."})
+    if email_taken:
+        return Response({"error":"Email already taken."})
+    
+    # Create new user with random password
+    password = get_random_string()
+    user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name)
+
+    # Send email to confirm account and reset password (note: it sends email to all users with this email. so we should make email unique)
+    reset_form = PasswordResetForm({'email': email})
+    if reset_form.is_valid():
+        reset_form.save(request=request)
+    else:
+        return Response({"error":"Unable to send email to new user."})
+
+    # Delete the user request
+    #todo: log this
+    models.NewUserRequest.objects.get(username=username).delete()
+  
+    return Response({"success":"true"})
+
+# manager restricted 
+@api_view(['POST'])
+@permission_classes((permissions.IsAuthenticated,))
+def deny_new_user_request(request, username):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+    
+    # Todo: send denial email
+    # Todo: log it
+    models.NewUserRequest.objects.get(username=username).delete()
+  
+    return Response({"success":"true"})

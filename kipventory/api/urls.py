@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from . import views
@@ -27,8 +27,16 @@ urlpatterns = [
     url(r'^signup/?$', views.post_user_signup),
     url(r'^logout/?$', auth_views.logout),
 
-    url(r'^currentuser/?$', views.get_current_user)
+    # url(r'^users/?$', views.get_all_users),
+    url(r'^users/current/?$', views.get_current_user),
+    url(r'^netidtoken/?$', views.get_netid_token),
 
+    url(r'^newuserrequests/?$', views.get_new_user_requests),
+    url(r'^newuserrequests/(?P<username>[\w]*)/?$', views.get_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w]*)/approve/?$', views.approve_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w]*)/deny/?$', views.deny_new_user_request),
+
+    url('^', include('django.contrib.auth.urls')),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

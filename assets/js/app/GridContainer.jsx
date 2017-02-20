@@ -32,11 +32,11 @@ class GridContainer extends Component {
   }
 
   getItems(params) {
-    var url = "/api/items.json";
+    var url = "/api/items/";
     var thisobj = this;
     $.getJSON(url, params, function(data) {
       thisobj.setState({
-        items: data.results,
+        items: data,
         pageCount: Math.ceil(data.num_pages),
       });
     });

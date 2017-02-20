@@ -26,10 +26,35 @@ class Tag(models.Model):
 
 
 class KipventoryUser(models.Model):
-    auth_user = models.OneToOneField(User, on_delete=models.CASCADE)
-    netid = models.CharField(default='', max_length=100, blank=True)
+    auth_user = models.OneToOneField(User, related_name='kipventory_user', on_delete=models.CASCADE)
+    # netid = models.CharField(default='', max_length=100, blank=True)
+    is_duke_user = models.BooleanField(default=False, blank=True)
+
+    def save(self, *args, **kwargs):
+        print(kwargs)
+        is_creation = False
+        if not self.pk:
+            is_creation = True
+
+        if 'username' in kwargs.keys():
+            username = kwargs.pop('username')
+            email = kwargs.pop('email')
+
+        if is_creation:
+            auth_user = User.objects.create_user(username=username, email=email, password=None)
+            self.auth_user = auth_user
+
+        super(KipventoryUser, self).save(*args, **kwargs)
 
 
+
+
+class NewUserRequest(models.Model):
+    username = models.CharField(max_length=150, unique=True)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    email = models.CharField(max_length=150, unique=True)
+    comment = models.CharField(max_length=300, blank=True)
 
 class Item(models.Model):
     name        = models.CharField(max_length=100, unique=True)
