@@ -16,6 +16,10 @@ from rest_framework import pagination
 from datetime import datetime
 
 from django.utils import timezone
+from django.utils.crypto import get_random_string
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.views import password_reset, password_reset_confirm
+
 
 import requests
 
@@ -326,56 +330,9 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-
-@api_view(['POST'])
-@permission_classes((permissions.AllowAny,))
-def post_user_login(request, format=None):
-    username = request.POST['username']
-    password = request.POST['password']
-
-    user = authenticate(username=username, password=password)
-
-    if hasattr(user, 'kipventory_user'):
-        if user.kipventory_user.is_duke_user:
-            messages.add_message(request._request, messages.ERROR, 'login-via-duke-authentication')
-            return redirect('/')
-
-    if user is not None:
-        login(request, user)
-        return redirect('/app/')
-    else:
-        # Return an 'invalid login' error message.
-        messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
-        return redirect('/')
-
-
-@api_view(['POST'])
-@permission_classes((permissions.AllowAny,))
-def post_user_signup(request, format=None):
-    username = request.data['username']
-    password = request.data['password']
-    first_name = request.data['first_name']
-    last_name = request.data['last_name']
-    email = request.data['email']
-
-    exists = (User.objects.filter(username=username).count() > 0)
-    if exists:
-        messages.add_message(request._request, messages.ERROR, "username-taken")
-        return redirect('/')
-
-    user = User.objects.create_user(
-                            username=username,
-                            email=email,
-                            password=password,
-                            first_name=first_name,
-                            last_name=last_name)
-    messages.add_message(request._request, messages.SUCCESS, "user-created")
-    return redirect('/')
-
 @api_view(['GET'])
 @permission_classes((permissions.IsAuthenticated,))
-def get_current_user(request, format=None):
+def get_current_user(request):
     user = request.user
     return Response({
         "username": user.username,
@@ -385,7 +342,6 @@ def get_current_user(request, format=None):
         "email": user.email,
         "is_superuser": user.is_superuser
     })
-
 
 @api_view(['GET'])
 @permission_classes((permissions.AllowAny,))
@@ -419,3 +375,121 @@ def get_netid_token(request, format=None):
     else:
         print("Multiple NetId Users this is big time wrong need to throw an error")
         return redirect('/app/')
+
+@api_view(['POST'])
+@permission_classes((permissions.AllowAny,))
+def post_user_login(request, format=None):
+    username = request.POST['username']
+    password = request.POST['password']
+
+    user = authenticate(username=username, password=password)
+
+    if hasattr(user, 'kipventory_user'):
+        if user.kipventory_user.is_duke_user:
+            messages.add_message(request._request, messages.ERROR, 'login-via-duke-authentication')
+            return redirect('/')
+
+    if user is not None:
+        login(request, user)
+        return redirect('/app/')
+    else:
+        # Return an 'invalid login' error message.
+        messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
+        return redirect('/')
+
+@api_view(['POST'])
+@permission_classes((permissions.AllowAny,))
+def post_user_signup(request, format=None):
+    username = request.data['username']
+    first_name = request.data['first_name']
+    last_name = request.data['last_name']
+    email = request.data['email']
+
+    # Make sure username is unique
+    # Todo: make email unique?
+    exists = (User.objects.filter(username=username).count() > 0)
+    if exists:
+        messages.add_message(request._request, messages.ERROR, "username-taken")
+        return redirect('/')
+
+    models.NewUserRequest.objects.create(
+                            username=username,
+                            email=email,
+                            first_name=first_name,
+                            last_name=last_name)
+    messages.add_message(request._request, messages.SUCCESS, "user-created")
+    return redirect('/')
+
+def get_new_user_requests(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+    queryset = models.NewUserRequest.objects.all()
+    serializer = serializers.NewUserRequestSerializer(queryset, many=True)
+    return Response(serializer.data)
+
+# manager restricted
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def get_new_user_request(request, username):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+    queryset = models.NewUserRequest.objects.get(username=username)
+    serializer = serializers.NewUserRequestSerializer(queryset)
+    return Response(serializer.data)
+
+# manager restricted 
+@api_view(['POST'])
+@permission_classes((permissions.IsAuthenticated,))
+def approve_new_user_request(request, username):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+    # Retrieve user request
+    user_request = models.NewUserRequest.objects.get(username=username)
+    email = user_request.email
+    first_name = user_request.first_name
+    last_name = user_request.last_name
+    
+    # Make sure username and email are unique
+    username_taken = User.objects.filter(username=username).count() > 0
+    email_taken = User.objects.filter(email=email).count() > 0
+    if username_taken:
+        return Response({"error":"Username already taken."})
+    if email_taken:
+        return Response({"error":"Email already taken."})
+    
+    # Create new user with random password
+    password = get_random_string()
+    user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name)
+
+    # Send email to confirm account and reset password (note: it sends email to all users with this email. so we should make email unique)
+    reset_form = PasswordResetForm({'email': email})
+    if reset_form.is_valid():
+        reset_form.save(request=request)
+    else:
+        return Response({"error":"Unable to send email to new user."})
+
+    # Delete the user request
+    #todo: log this
+    models.NewUserRequest.objects.get(username=username).delete()
+  
+    return Response({"success":"true"})
+
+# manager restricted 
+@api_view(['POST'])
+@permission_classes((permissions.IsAuthenticated,))
+def deny_new_user_request(request, username):
+    if not (request.user.is_staff or request.user.is_superuser):
+        d = {"error": "Permission denied."}
+        return Response(d, status=status.HTTP_403_FORBIDDEN)
+    
+    # Todo: send denial email
+    # Todo: log it
+    models.NewUserRequest.objects.get(username=username).delete()
+  
+    return Response({"success":"true"})

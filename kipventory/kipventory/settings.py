@@ -135,3 +135,18 @@ STATICFILES_DIRS = (
 )
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'build')
+
+# Email
+EMAIL_HOST = "smtp.gmail.com"
+
+EMAIL_HOST_USER = "kipventory@gmail.com"
+
+EMAIL_HOST_PASSWORD = "ece458kipventory"
+
+EMAIL_PORT = 465 #587 for TLS
+
+EMAIL_USE_SSL = True
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+SERVER_EMAIL = EMAIL_HOST_USER

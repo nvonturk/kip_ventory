@@ -32,7 +32,7 @@ class GridContainer extends Component {
   }
 
   getItems(params) {
-    var url = "/api/items.json";
+    var url = "/api/items/";
     var thisobj = this;
     $.getJSON(url, params, function(data) {
       thisobj.setState({

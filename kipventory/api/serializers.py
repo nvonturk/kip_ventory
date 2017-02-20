@@ -72,8 +72,18 @@ class ItemSerializer(serializers.ModelSerializer):
         else:
             return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all().filter(field__private=False)]
 
+class NewUserRequestSerializer(serializers.ModelSerializer):
+    # id            = serializers.ReadOnlyField()
+    username        = serializers.CharField(max_length=150, min_length=1, required=True)
+    first_name      = serializers.CharField(max_length=30, min_length=None, required=True)
+    last_name       = serializers.CharField(max_length=30, min_length=None, required=True)
+    email           = serializers.CharField(max_length=None, min_length=None, required=True)
+    comment         = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
 
-
+    class Meta:
+        model = models.NewUserRequest
+        fields = ['username', 'first_name', 'last_name', 'email', 'comment']
+        
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(CartItemSerializer, self).__init__(*args, **kwargs)
