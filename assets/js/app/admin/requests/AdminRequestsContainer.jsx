@@ -39,7 +39,7 @@ class AdminRequestsContainer extends Component {
       itemsPerPage: REQUESTS_PER_PAGE
     }
     var thisobj = this;
-    $.getJSON("/api/requests/all.json", params, function(data){
+    $.getJSON("/api/requests/all/", params, function(data){
       thisobj.setState({
         requests: data.results,
         pageCount: data.num_pages

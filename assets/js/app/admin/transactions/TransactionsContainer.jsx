@@ -42,7 +42,7 @@ class TransactionsContainer extends Component {
     };
 
     var thisObj = this;
-    $.getJSON("/api/transactions.json", params, function(data){
+    $.getJSON("/api/transactions/", params, function(data){
       thisObj.setState({
         transactions: data.results,
         pageCount: Math.ceil(data.num_pages),
