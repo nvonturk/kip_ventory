@@ -378,15 +378,16 @@ class TagListView(generics.ListAPIView):
         queryset = models.Tag.objects.all()
         return queryset
 
-
-class LogListView(generics.ListAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = serializers.LogTransactionSerializer
-
-    def get_queryset(self):
-        queryset = models.Log.objects.all()
-        return queryset
-
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_logs(request, format=None):
+    if not request.user.is_staff:
+        # Not allowed to see logs if not manager/admin
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    else:
+        logs = models.Log.objects.all()
+        serializer = serializers.LogGETSerializer(logs, many=True)
+        return Response(serializer.data)
 
 @api_view(['GET', 'POST'])
 @permission_classes((IsAuthenticated,))
@@ -419,16 +420,17 @@ def transaction_get_create(request, format=None):
 
 def createLog(data, initiating_user_pk, category):
     logdata = {}
+    print(data)
     logdata['item']                 = data['item']
     logdata['quantity']             = data['quantity']
     logdata['initiating_user']      = initiating_user_pk
     logdata['category']             = category
     if category == 'Transaction':
-        serializer = serializers.LogTransactionSerializer(data=logdata)
+        serializer = serializers.LogSerializer(data=logdata)
         if serializer.is_valid():
             serializer.save()
     elif category == 'Disbursement' or category == 'Request':
         logdata['affected_user']    = data['requester']
-        serializer = serializers.LogRequestSerializer(data=logdata)
+        serializer = serializers.LogSerializer(data=logdata)
         if serializer.is_valid():
             serializer.save()

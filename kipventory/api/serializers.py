@@ -77,12 +77,15 @@ class TransactionPOSTSerializer(serializers.ModelSerializer):
         model = models.Transaction
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
 
-class LogTransactionSerializer(serializers.ModelSerializer):
+class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Log
-        fields = ['id', "item", "quantity", "initiating_user", "category"]
+        fields = ['id', "item", "quantity", "initiating_user", 'affected_user', "category"]
 
-class LogRequestSerializer(serializers.ModelSerializer):
+class LogGETSerializer(serializers.ModelSerializer):
+    item = ItemGETSerializer(read_only=True, many=False)
+    initiating_user = UserGETSerializer(read_only=True, many=False)
+    affected_user = UserGETSerializer(read_only=True, many=False)
     class Meta:
         model = models.Log
         fields = ['id', "item", "quantity", "initiating_user", 'affected_user', "category"]
