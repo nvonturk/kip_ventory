@@ -7,6 +7,7 @@ import $ from "jquery"
 import Item from './Item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
+import _ from 'underscore'
 
 class ItemDetailModal extends Component {
   constructor(props) {
@@ -76,17 +77,35 @@ class ItemDetailModal extends Component {
   }
 
   render() {
-    var requests=[];
 
-    if(true) {
-      requests = "No outstanding requests."
+
+    console.log("Item detail modal render");
+    // Get outstanding requests and re-render if they are different than local state
+    // TODO: have discussion to make sure this is okay
+    // Another thing I noticed: all item detail modals get renderd on page load, just with showModal = false. Could be performance issue later on
+    var url = "/api/items/" + this.props.item.name + "/requests/"
+    var thisObj = this;
+    $.getJSON(url, function(data) {
+      var outstandingRequests = data.filter(function(request) {
+        return request.status == "O";
+      });
+
+      var shouldUpdateRequests = !_.isEqual(outstandingRequests, thisObj.state.requests);
+      if(shouldUpdateRequests) {
+        thisObj.setState({
+          requests: outstandingRequests
+        });
+      }
+    });
+
+    var requestListView=[];
+
+    if(this.state.requests.length == 0) {
+      requestListView = "No outstanding requests."
     }
 
     else {
-      var outstandingRequests = this.props.item.request_set.filter(function(request){
-        return "O" == request.status;
-      });
-      requests = <RequestList simple requests={outstandingRequests} />
+      requestListView = <RequestList simple requests={this.state.requests} />
     }
 
     var createTransactionButton = "";
@@ -96,6 +115,12 @@ class ItemDetailModal extends Component {
           <h4>Transactions</h4>
           <CreateTransactionsContainer itemIndex={this.props.itemIndex} updatePropQuantity = {this.props.handleChangeQuantity} item={this.props.item}/>
         </Modal.Body>
+    }
+
+    var tags = "";
+    for(var i = 0; i<this.props.item.tags.length; i++) {
+      var tag = this.props.item.tags[i];
+      tags += " " + tag;
     }
 
     return (
@@ -113,10 +138,11 @@ class ItemDetailModal extends Component {
             <p>Description: {this.props.item.description}</p>
             <p>Quantity Available: {this.props.item.quantity}</p>
             <p>Location: {this.props.item.location}</p>
+            <p>Tags: {tags}</p>
           </Modal.Body>
           <Modal.Body>
             <h4>Outstanding Requests</h4>
-            {requests}
+            {requestListView}
           </Modal.Body>
           {createTransactionButton}
           <Modal.Footer>

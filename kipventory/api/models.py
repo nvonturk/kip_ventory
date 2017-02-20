@@ -16,6 +16,16 @@ FIELD_TYPE_DICT = {
     'f': float
 }
 
+OUTSTANDING = 'O'
+APPROVED = 'A'
+DENIED = 'D'
+### Status Choices ###
+STATUS_CHOICES = (
+    (OUTSTANDING, 'Outstanding'),
+    (APPROVED, 'Approved'),
+    (DENIED, 'Denied'),
+)
+
 # Create your models here.
 class Tag(models.Model):
     name = models.CharField(max_length=100)
@@ -24,30 +34,31 @@ class Tag(models.Model):
         return self.name
 
 
-
-class KipventoryUser(models.Model):
-    auth_user = models.OneToOneField(User, related_name='kipventory_user', on_delete=models.CASCADE)
-    # netid = models.CharField(default='', max_length=100, blank=True)
-    is_duke_user = models.BooleanField(default=False, blank=True)
-
-    def save(self, *args, **kwargs):
-        print(kwargs)
-        is_creation = False
-        if not self.pk:
-            is_creation = True
-
-        if 'username' in kwargs.keys():
-            username = kwargs.pop('username')
-            email = kwargs.pop('email')
-
-        if is_creation:
-            auth_user = User.objects.create_user(username=username, email=email, password=None)
-            self.auth_user = auth_user
-
-        super(KipventoryUser, self).save(*args, **kwargs)
-
-
-
+# class KipventoryUser(models.Model):
+#     auth_user = models.OneToOneField(User, related_name='kipventory_user', on_delete=models.CASCADE)
+#     # netid = models.CharField(default='', max_length=100, blank=True)
+#     is_duke_user = models.BooleanField(default=False, blank=True)
+#
+#     def save(self, *args, **kwargs):
+#
+#         is_creation = False
+#         if not self.pk:
+#             is_creation = True
+#
+#         if 'username' in kwargs.keys():
+#             username = kwargs.pop('username')
+#             email = kwargs.pop('email')
+#             first_name = kwargs.pop('first_name')
+#             last_name = kwargs.pop('last_name')
+#
+#         if is_creation:
+#             auth_user = User.objects.create_user(username=username, email=email, password=None, first_name=first_name, last_name=last_name)
+#             self.auth_user = auth_user
+#
+#         super(KipventoryUser, self).save(*args, **kwargs)
+#
+#     def __str__(self):
+#         return self.auth_user.username
 
 class NewUserRequest(models.Model):
     username = models.CharField(max_length=150, unique=True)
@@ -73,7 +84,6 @@ class Item(models.Model):
             is_creation = True
         print(self.pk)
         super(Item, self).save(*args, **kwargs)
-
         # If this call to `save` is creating a new Item, then we must also create
         # a CustomValue for each CustomField that currently exists.
         # Note that this block won't run if we're simply updating this Item via
@@ -103,9 +113,7 @@ class CustomField(models.Model):
         is_creation = False
         if not self.pk:
             is_creation = True
-
         super(CustomField, self).save(*args, **kwargs)
-
         if is_creation:
             # create a null value for each item that currently exists
             for item in Item.objects.all():
@@ -125,3 +133,33 @@ class CustomValue(models.Model):
 
     def get_value(self):
             return getattr(self, self.field.field_type)
+
+class Request(models.Model):
+    requester      = models.ForeignKey(User, on_delete=models.CASCADE, related_name="requests")
+    date_open      = models.DateTimeField(blank=True, null=True)
+    open_comment   = models.TextField(default='', max_length=500, blank=True)
+    date_closed    = models.DateTimeField(blank=True, null=True)
+    closed_comment = models.TextField(max_length=500, blank=True)
+    status          = models.CharField(max_length = 10, choices=STATUS_CHOICES, default=OUTSTANDING)
+    administrator  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
+
+
+class RequestItem(models.Model):
+    request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='request_items', blank=True, null=True)
+    item      = models.ForeignKey(Item, on_delete=models.DO_NOTHING)
+    quantity  = models.PositiveIntegerField(default=0)
+
+
+class Transaction(models.Model):
+    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
+    ACQUISITION = 'Acquisition'
+    LOSS = 'Loss'
+    category_choices    = (
+        (ACQUISITION, ACQUISITION),
+        (LOSS, LOSS),
+    )
+    category            = models.CharField(max_length = 20, choices=category_choices)
+    quantity            = models.PositiveIntegerField()
+    comment             = models.CharField(max_length = 100, blank=True, null=True)
+    date                = models.DateTimeField()
+    administrator       = models.ForeignKey(User, on_delete=models.CASCADE)

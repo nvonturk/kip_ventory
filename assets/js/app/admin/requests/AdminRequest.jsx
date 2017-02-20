@@ -19,14 +19,19 @@ class AdminRequest extends Component {
 
 
   render(){
-    var html = [];
     var constant_html = this.getReq(this.props);
+
+    var html;
     if(this.props.request.status == "O"){
-      html.push(<Button bsStyle="primary" onClick={() => this.props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>);
-      html.push(this.getForm(this.props));
+      html = (
+        <div>
+          <Button bsStyle="primary" onClick={() => this.props.deleteRequest(props.request)} className="deleteRequestButton">Delete Request</Button>
+          {this.getForm(this.props)}
+        </div>
+      );
     }
     else{
-      html.push(this.getInfo(this.props));
+      html = this.getInfo(this.props);
     }
 
     return (
@@ -68,15 +73,15 @@ class AdminRequest extends Component {
             value={this.state.quantity}
             placeholder={this.state.quantity}
             onChange={this.handleChange.bind(this, 'quantity')}
-          />
+          ></FormControl>
           <ControlLabel>Closed Comment</ControlLabel>
           <FormControl
             type="text"
             name="closed_comment"
-            value={this.state.closed_comment}
+            value={this.state.closed_comment ? this.state.closed_comment : ""}
             placeholder={this.state.closed_comment}
-            onChange={this.handleChange.bind(this,'closed_comment')}
-          />
+            onChange={this.handleChange.bind(this, 'closed_comment')}
+          ></FormControl>
         </FormGroup>
         <Button bsStyle="success" onClick={(e) => this.props.submit(e, this.props.request, "approved",this.state.quantity, this.state.closed_comment)}>Approve</Button>
         <Button bsStyle="danger" onClick={(e) => this.props.submit(e, this.props.request, "denied", this.state.quantity, this.state.closed_comment)}>Deny</Button>
