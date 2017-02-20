@@ -116,7 +116,7 @@ class AdminRequestsContainer extends Component {
         name: item.name,
         // photo_src: item.photo_src,
         location: item.location,
-        model: item.model,
+        model_no: item.model_no,
         quantity: new_quantity,
         description: item.description,
         tags: item.tags,
