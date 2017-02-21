@@ -3,18 +3,13 @@ import { IndexLink } from 'react-router'
 import { LinkContainer } from 'react-router-bootstrap'
 import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap'
 
-function AdminContainer(props){
-  return (
-    <a href="/admin/">Admin Panel</a>
-  )
-}
-/*
-const AdminContainer = React.createClass({
+
+const ManagerContainer = React.createClass({
   getInitialState() {
     var greeting = "Welcome, " + this.props.route.admin.first_name
     return {
       activeKey: 0,
-      headers: [greeting, 'Disbursement', 'Requests', 'Transactions', 'New User Requests','Generate API Token'],
+      headers: [greeting, 'Disbursement', 'Requests', 'Transactions', 'New User Requests'],
       currentHeader: greeting
     }
   },
@@ -32,8 +27,8 @@ const AdminContainer = React.createClass({
       <Grid>
         <Row>
           <Col md={2}>
-            <IndexLink to="/app/admin" onClick={() => this.handleSelect(0)}>
-              <h4>Administration</h4>
+            <IndexLink to="/app/manage" onClick={() => this.handleSelect(0)}>
+              <h4>Management</h4>
             </IndexLink>
           </Col>
           <Col md={9} mdOffset={1}>
@@ -44,20 +39,17 @@ const AdminContainer = React.createClass({
           <Col md={2}>
             <Row>
               <Nav bsStyle="pills" stacked activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-                <LinkContainer to="/app/admin/disburse">
+                <LinkContainer to="/app/manage/disburse">
                   <NavItem eventKey={1}>{this.state.headers[1]}</NavItem>
                 </LinkContainer>
-                <LinkContainer to="/app/admin/requests">
+                <LinkContainer to="/app/manage/requests">
                   <NavItem eventKey={2}>{this.state.headers[2]}</NavItem>
                 </LinkContainer>
-                <LinkContainer to="/app/admin/transactions">
+                <LinkContainer to="/app/manage/transactions">
                   <NavItem eventKey={3}>{this.state.headers[3]}</NavItem>
                 </LinkContainer>
-                <LinkContainer to="/app/admin/newuserrequests">
+                <LinkContainer to="/app/manage/newuserrequests">
                   <NavItem eventKey={4}>{this.state.headers[4]}</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/app/admin/generateapitoken">
-                  <NavItem eventKey={5}>{this.state.headers[5]}</NavItem>
                 </LinkContainer>
               </Nav>
             </Row>
@@ -70,6 +62,5 @@ const AdminContainer = React.createClass({
     )
   }
 })
-*/
 
-export default AdminContainer;
+export default ManagerContainer;

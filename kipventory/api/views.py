@@ -419,9 +419,9 @@ def item_requests_get(request, item_name, format=None):
     if request.method == 'GET':
         requests = None
         if request.user.is_staff:
-            requests = models.Request.objects.filter(item__name=item_name)
+            requests = models.Request.objects.filter(request_items__item__name=item_name)
         else:
-            requests = models.Request.objects.filter(item__name=item_name, requester=request.user.pk)
+            requests = models.Request.objects.filter(request_items__item__name=item_name, requester=request.user.pk)
         serializer = serializers.RequestSerializer(requests, many=True)
         return Response(serializer.data)
 
