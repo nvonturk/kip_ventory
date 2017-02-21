@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework import authentication, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotFound
+from rest_framework.authtoken.models import Token
+
+
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
@@ -77,7 +80,6 @@ def paginate(queryset, itemsPerPage, page, serializer):
     return get_my_paginated_response(paginator.count, paginator.num_pages, data)
 
 class ItemListCreate(generics.GenericAPIView):
-    # authentication_classes = (authentication.TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
 
@@ -447,6 +449,7 @@ class RequestListAll(generics.GenericAPIView):
         return response
 
 class RequestListCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
 
@@ -770,3 +773,17 @@ def transaction_get_create(request, format=None):
         serializer = serializers.TransactionGETSerializer
         defaultItemsPerPage = 3
         return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
+
+class TokenPoint(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+
+        if Token.objects.filter(user=request.user).count() > 0:
+            #User has a token, return created token
+            print(Token.objects.get(user=request.user).key)
+            return Response({"token": Token.objects.get(user=request.user).key})
+        else:
+            token = Token.objects.create(user=request.user)
+            print(token.key)
+            return Response({"token": token.key})

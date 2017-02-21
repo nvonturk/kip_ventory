@@ -6,6 +6,13 @@ import Home from './Home'
 
 // ADMIN PAGES
 import AdminContainer from './admin/AdminContainer'
+import AdminWelcome from './admin/welcome/AdminWelcome'
+import DisbursementContainer from './admin/disbursement/DisbursementContainer'
+import AdminRequestsContainer from './admin/requests/AdminRequestsContainer'
+import TransactionsContainer from './admin/transactions/TransactionsContainer'
+import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
+import GenerateAPITokenContainer from './admin/apitoken/GenerateAPITokenContainer'
+
 import ManagerContainer from './manage/ManagerContainer'
 import ManagerWelcome from './manage/welcome/ManagerWelcome'
 import DisbursementContainer from './manage/disbursement/DisbursementContainer'
@@ -28,6 +35,7 @@ function getManagerPanel(userData) {
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
+      <Route path="generateapitoken" component={GenerateAPITokenContainer} admin={userData} />
     </Route>) : null
 }
 
