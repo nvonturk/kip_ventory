@@ -11,6 +11,8 @@ import DisbursementContainer from './admin/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './admin/requests/AdminRequestsContainer'
 import TransactionsContainer from './admin/transactions/TransactionsContainer'
 import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
+import GenerateAPITokenContainer from './admin/apitoken/GenerateAPITokenContainer'
+
 
 // MAIN APP PAGES
 import CartContainer from './cart/CartContainer'
@@ -27,6 +29,7 @@ function getRouteIfAdmin(userData) {
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
+      <Route path="generateapitoken" component={GenerateAPITokenContainer} admin={userData} />
     </Route>) : null
 }
 

@@ -448,6 +448,7 @@ class RequestListAll(generics.GenericAPIView):
         return response
 
 class RequestListCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
 
