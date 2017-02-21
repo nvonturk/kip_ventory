@@ -10,7 +10,8 @@ class CreateTransactionsContainer extends Component {
      this.state = {
       showModal: false,
       category: "Acquisition",
-      quantity: 0,
+      quantity: "",
+      comment: ""
     };
     this.close = this.close.bind(this);
     this.open = this.open.bind(this);
@@ -34,7 +35,7 @@ class CreateTransactionsContainer extends Component {
   }
 
   handleCommentChange(e) {
-    this.comment = e.target.value;
+    this.setState({comment: e.target.value})
   }
 
   handleTypeChange(e) {
@@ -42,20 +43,16 @@ class CreateTransactionsContainer extends Component {
   }
 
   createTransaction() {
-    console.log(parseInt(this.props.item.quantity) - parseInt(this.state.quantity) < 0)
     if (!Number.isInteger(parseInt(this.state.quantity)) || parseInt(this.state.quantity)<=0){
-      alert("Must be a positive integer")
+      alert("Quantity Must be a positive integer")
+      return;
     }
-    else if(parseInt(this.props.item.quantity) - parseInt(this.state.quantity) < 0 && this.state.category == "Loss"){
-      alert("Attempting to remove more items from the inventory than currently exists")
-    }
-    else {
 
-    var data={
+    var data = {
       quantity: this.state.quantity,
-      comment: this.comment,
+      comment: this.state.comment,
       category: this.state.category,
-      item: this.props.item.id
+      item: this.props.item.name
     }
 
     var thisObj = this;
@@ -67,52 +64,24 @@ class CreateTransactionsContainer extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        console.log(response);
-        thisObj.props.updatePropQuantity(thisObj.props.itemIndex, thisObj.state.category == "Acquisition" ? thisObj.state.quantity : -(thisObj.state.quantity));
         thisObj.setState({
           showModal: false,
           category: "Acquisition",
-          quantity: 0
+          quantity: "", 
+          comment: ""
         });
       },
       complete:function() {
-        //thisObj.props.handleTransactionCreated(); need something like this to update item quantity/transactions immediately
+        //todo success vs complete
+        thisObj.props.handleTransactionCreated(); 
       },
       error:function (xhr, textStatus, thrownError){
-          alert("error creating transaction");
-          console.log(xhr)
-          console.log(textStatus)
-          console.log(thrownError)
+          alert(xhr.responseText);
       }
     });
   }
-  }
 
   render() {
-    /*
-      item
-      quantity
-      category (acquisition, loss)
-      comment
-      date - automatic
-      administrator - automatic
-
-       <FieldGroup
-                id="formControlsText"
-                type="text"
-                label="Quantity"
-                placeholder="Enter amount acquired or lost."
-                help="Must be a number"
-                onChange={this.handleQuantityChange}
-              />
-              <FieldGroup
-                id="formControlsText"
-                type="text"
-                label="Comment"
-                placeholder="Enter an explanation."
-                onChange={this.handleCommentChange}
-              />
-      */
 
     return (
       <div>
@@ -126,13 +95,13 @@ class CreateTransactionsContainer extends Component {
             <form>
               <FormGroup controlId="formControlsText">
                 <ControlLabel>Quantity</ControlLabel>
-                <FormControl type="text" placeholder="Enter amount acquired or lost." onChange={this.handleQuantityChange} />
-                <HelpBlock>Must be a number</HelpBlock>
+                <FormControl type="text" placeholder="Enter amount acquired or lost." value={this.state.quantity} onChange={this.handleQuantityChange} />
+                <HelpBlock>Must be a positive integer</HelpBlock>
               </FormGroup>
 
               <FormGroup controlId="formControlsSelect">
                 <ControlLabel>Type</ControlLabel>
-                <FormControl componentClass="select" placeholder="select" onChange={this.handleTypeChange}>
+                <FormControl componentClass="select" placeholder="select" value={this.state.category} onChange={this.handleTypeChange}>
                   <option value="Acquisition">Acquisition</option>
                   <option value="Loss">Loss</option>
                 </FormControl>
@@ -140,7 +109,7 @@ class CreateTransactionsContainer extends Component {
 
                <FormGroup controlId="formControlsText">
                 <ControlLabel>Comment</ControlLabel>
-                <FormControl type="text" placeholder="Enter an explanation." onChange={this.handleCommentChange} />
+                <FormControl type="text" placeholder="Enter an explanation." value={this.state.comment} onChange={this.handleCommentChange} />
               </FormGroup>
 
             </form>
