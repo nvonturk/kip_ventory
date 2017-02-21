@@ -32,6 +32,7 @@ class LogsContainer extends Component {
     this.createItemlist = this.createItemlist.bind(this)
     this.getItems = this.getItems.bind(this)
     this.changeDate = this.changeDate.bind(this)
+    this.clearSearch = this.clearSearch.bind(this)
 
     this.getAllLogs()
     this.getUsers()
@@ -105,6 +106,15 @@ class LogsContainer extends Component {
     currentenddate: picker.endDate.toString()}, () => {this.filter();})
   }
 
+  clearSearch(event){
+    this.setState({
+      currentenddate: null,
+      currentstartdate: null,
+      currentuser: null,
+      currentitem: null,
+    }, () => {this.getAllLogs()})
+  }
+
   filter(){
     var params = {
       user: this.state.currentuser,
@@ -132,7 +142,7 @@ class LogsContainer extends Component {
             </Well>
           </Col>
           <Col md = {2} xs = {2}>
-            <Button onClick={this.getAllLogs}>Clear</Button>
+            <Button onClick={this.clearSearch}>Clear</Button>
           </Col>
         </Row>
         <Row>
