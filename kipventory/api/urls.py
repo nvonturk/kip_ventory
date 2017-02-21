@@ -32,6 +32,7 @@ urlpatterns = [
     url(r'^login/?$',  views.post_user_login),
     url(r'^signup/?$', views.post_user_signup),
     url(r'^logout/?$', auth_views.logout),
+    url(r'^apitoken/?$', views.TokenPoint.as_view()),
 
     url(r'^users/?$',         views.get_all_users),
     url(r'^users/current/?$', views.CurrentUser.as_view()),
@@ -41,6 +42,7 @@ urlpatterns = [
     url(r'^newuserrequests/(?P<username>[\w]+)/?$',         views.get_new_user_request),
     url(r'^newuserrequests/(?P<username>[\w]+)/approve/?$', views.approve_new_user_request),
     url(r'^newuserrequests/(?P<username>[\w]+)/deny/?$',    views.deny_new_user_request),
+
 
     url('^', include('django.contrib.auth.urls')),
 ]

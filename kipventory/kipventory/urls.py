@@ -46,9 +46,6 @@ urlpatterns = [
     url(r'^media/(?P<path>.*)$', static.serve, {'document_root': settings.MEDIA_ROOT,}),
     url(r'^static/(?P<path>.*)$', static.serve, {'document_root': settings.STATIC_ROOT,}),
 
-    #Swagger docs
-    url(r'^swagger/', schema_view),
-
     # Landing page (no auth necessary)
     url(r'$', views.landing, name='landing'),
 
