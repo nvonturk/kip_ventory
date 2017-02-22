@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Table, Image, Button, Panel, Label } from 'react-bootstrap'
-import ItemTableRow from './item/ItemTableRow'
+import InventoryItem from './InventoryItem'
 import Paginator from '../Paginator'
 import { getJSON } from 'jquery'
 import { browserHistory } from 'react-router';
@@ -112,28 +112,26 @@ class InventoryContainer extends Component {
             <a href="/app/">
               <h4>Inventory</h4>
             </a>
-            <hr />
           </Col>
         </Row>
         <Row>
           <Col md={12}>
-
-              <Table hover>
-                <thead>
-                  <tr>
-                    <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
-                    <th style={{width:"8%"}} className="text-center">Available</th>
-                    <th style={{width:"10%"}} className="text-center">Status</th>
-                    <th style={{width:"7%"}} className="text-center">Quantity</th>
-                    <th style={{width:"8%"}} className="text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {this.state.items.map( (item, i) => {
-                    return (<ItemTableRow key={i} item={item} />)
-                  })}
-                </tbody>
-              </Table>
+            <Table hover>
+              <thead>
+                <tr>
+                  <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
+                  <th style={{width:"8%"}} className="text-center">Available</th>
+                  <th style={{width:"10%"}} className="text-center">Status</th>
+                  <th style={{width:"7%"}} className="text-center">Quantity</th>
+                  <th style={{width:"8%"}} className="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {this.state.items.map( (item, i) => {
+                  return (<InventoryItem key={i} item={item} />)
+                })}
+              </tbody>
+            </Table>
           </Col>
         </Row>
         <Row>

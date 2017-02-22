@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Button, Modal, Table}  from 'react-bootstrap'
+import { Grid, Button, Modal, Table}  from 'react-bootstrap'
 import QuantityBox from './QuantityBox'
 import SimpleRequest from './SimpleRequest'
 import RequestList from './RequestList'
@@ -14,7 +14,7 @@ class ItemDetailModal extends Component {
     super(props);
     this.item_name = this.props.params.item_name;
     this.user = this.props.route.user;
-  
+
     this.state = {
       requests: [],
       cart_quantity:"",
@@ -31,7 +31,6 @@ class ItemDetailModal extends Component {
 
   getItem() {
     var url = '/api/items/' + this.item_name + '/';
-    console.log("get item" + url);
 
     var thisobj = this;
     $.getJSON(url, function(data){
@@ -141,11 +140,11 @@ class ItemDetailModal extends Component {
     )
   }
 
-  // todo refactor this 
+  // todo refactor this
   render() {
 
     // todo better logic for this
-    if (!this.state.item || !this.state.requests) return null;    
+    if (!this.state.item || !this.state.requests) return null;
 
     var requestListView=[];
 
@@ -167,7 +166,7 @@ class ItemDetailModal extends Component {
     }
 
     return (
-      <div>
+      <Grid>
         <h4>Item Details</h4>
         <Table striped bordered condensed hover>
           {this.getTableHeader()}
@@ -189,8 +188,8 @@ class ItemDetailModal extends Component {
         <h4> Cart </h4>
         <Button onClick={this.addToCart}>Add to Cart</Button>
         <QuantityBox onUserInput={this.setCartQuantity}/>
-      </div>
-    );   
+      </Grid>
+    );
   }
 }
 export default ItemDetailModal

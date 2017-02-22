@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import ShoppingCart from './ShoppingCart'
+import { Grid, Row, Col } from 'react-bootstrap'
+import CartItem from './CartItem'
 import $ from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 
@@ -89,7 +90,20 @@ class CartContainer extends Component {
 
   render() {
     var items = this.state.items
-    return <ShoppingCart reRender={this.reRender} makeRequest={this.makeRequest} cartItems={items} />
+    return (
+      <Grid>
+        <Row>
+          <Col xs={12}>
+          {this.state.items.map(function(cartItem, i) {
+            return (
+              <Row key={cartItem.id}>
+                <CartItem reRender={this.reRender} makeRequest={this.makeRequest} cartItem={cartItem} />
+              </Row>
+            )}.bind(this))}
+          </Col>
+        </Row>
+      </Grid>
+    )
   }
 
 }

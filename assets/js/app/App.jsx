@@ -8,6 +8,7 @@ import KipNav from './KipNav'
 import AdminContainer from './admin/AdminContainer'
 import ManagerContainer from './manage/ManagerContainer'
 import ManagerWelcome from './manage/welcome/ManagerWelcome'
+import ItemCreationForm from './manage/item_creation/ItemCreationForm'
 import DisbursementContainer from './manage/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './manage/requests/ManagerRequestsContainer'
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
@@ -26,6 +27,7 @@ function getManagerPanel(userData) {
   return userData.is_staff ? (
     <Route path="manage" component={ManagerContainer} admin={userData}>
       <IndexRoute component={ManagerWelcome} admin={userData} />
+      <Route path="create-item" component={ItemCreationForm} admin={userData} />
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />

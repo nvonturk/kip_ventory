@@ -372,7 +372,7 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         try:
             return self.get_queryset().get(item__name=item_name)
         except models.CartItem.DoesNotExist:
-            raise NotFound('Cart item {} not found.'.format(pk))
+            raise NotFound('Cart item {} not found.'.format(item_name))
 
     def get_serializer_class(self):
         return serializers.CartItemSerializer

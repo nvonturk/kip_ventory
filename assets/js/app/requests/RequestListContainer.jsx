@@ -20,17 +20,16 @@ class RequestListContainer extends Component {
     var thisobj = this
     console.log(request)
     ajax({
-      url:"/api/requests/" + request.id.toString(),
+      url:"/api/requests/" + request.request_id.toString(),
       type: "DELETE",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        var newrequests = thisobj.state.requests.filter(req => (req.id != request.id))
+        var newrequests = thisobj.state.requests.filter(req => (req.request_id != request.request_id))
         thisobj.setState({
           requests: newrequests
         })
-        console.log(newrequests)
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){}
@@ -41,6 +40,7 @@ class RequestListContainer extends Component {
   getMyRequests(){
     var _this = this;
     getJSON("/api/requests/", function(data){
+      console.log(data)
       _this.setState({
         requests: data.results
       })

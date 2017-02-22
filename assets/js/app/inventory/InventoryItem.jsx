@@ -2,20 +2,14 @@ import React from 'react'
 import { Grid, Row, Col, Label, Button, Image, Panel, FormGroup, FormControl} from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import { ajax } from 'jquery'
-import { getCookie } from '../../../csrf/DjangoCSRFToken'
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 
-const ItemTableRow = React.createClass({
+const InventoryItem = React.createClass({
   getInitialState() {
     return {
       quantity: 1,
-      in_cart: false
-    }
-  },
-
-  componentWillMount() {
-    this.setState({
       in_cart: this.props.item.in_cart
-    })
+    }
   },
 
   onChange(event) {
@@ -57,7 +51,7 @@ const ItemTableRow = React.createClass({
   getItemStatus(item) {
     return this.state.in_cart ? (
       <div style={{display: "flex", flexDirection: "row", justifyContent: 'space-around'}}>
-        <Label className="clickable" onClick={() => browserHistory.push("/app/cart/")} bsStyle="info">In Cart</Label>
+        <Label className="clickable" onClick={() => browserHistory.push("/app/cart/")} bsStyle="warning">In Cart</Label>
       </div>
     ) : null
   },
@@ -90,7 +84,7 @@ const ItemTableRow = React.createClass({
                   </Col>
                   <Col sm={4}>
                     {this.props.item.custom_fields.map( (field, i) => {
-                      return field.field_type === "s" ? this.getCustomFieldView(field, i) : null
+                      return field.field_type !== "m" ? this.getCustomFieldView(field, i) : null
                     })}
                   </Col>
                 </Row>
@@ -116,4 +110,4 @@ const ItemTableRow = React.createClass({
 
 })
 
-export default ItemTableRow
+export default InventoryItem

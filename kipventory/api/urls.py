@@ -18,10 +18,10 @@ urlpatterns = [
     url(r'^tags/?$', views.TagListView.as_view()),
 
     url(r'^fields/?$',                       views.CustomFieldListCreate.as_view()),
-    url(r'^fields/(?P<field_name>[\w]+)/?$', views.CustomFieldDetailDelete.as_view()),
+    url(r'^fields/(?P<field_name>[\w\s]+)/?$', views.CustomFieldDetailDelete.as_view()),
 
     url(r'^cart/?$',                       views.CartItemList.as_view()),
-    url(r'^cart/?(?P<item_name>[\w]+)/?$', views.CartItemDetailModifyDelete.as_view()),
+    url(r'^cart/?(?P<item_name>[\w\s]+)/?$', views.CartItemDetailModifyDelete.as_view()),
 
     url(r'^transactions/?$', views.transaction_get_create),
 
@@ -38,9 +38,9 @@ urlpatterns = [
     url(r'^netidtoken/?$',    views.NetIDToken.as_view()),
 
     url(r'^newuserrequests/?$',                             views.get_new_user_requests),
-    url(r'^newuserrequests/(?P<username>[\w]+)/?$',         views.get_new_user_request),
-    url(r'^newuserrequests/(?P<username>[\w]+)/approve/?$', views.approve_new_user_request),
-    url(r'^newuserrequests/(?P<username>[\w]+)/deny/?$',    views.deny_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w\s]+)/?$',         views.get_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w\s]+)/approve/?$', views.approve_new_user_request),
+    url(r'^newuserrequests/(?P<username>[\w\s]+)/deny/?$',    views.deny_new_user_request),
 
     url('^', include('django.contrib.auth.urls')),
 ]
