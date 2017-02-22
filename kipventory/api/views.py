@@ -210,17 +210,18 @@ class AddItemToCart(generics.GenericAPIView):
     def post(self, request, item_name, format=None):
         item = self.get_item(item_name)
 
-        request.data.update({'owner': request.user})
-        request.data.update({'item': item})
+        data = request.data.copy()
+        data.update({'owner': request.user})
+        data.update({'item': item})
 
         cartitems = self.get_queryset().filter(item__name=item_name)
         if cartitems.count() > 0:
-            serializer = self.get_serializer(instance=cartitems.first(), data=request.data)
+            serializer = self.get_serializer(instance=cartitems.first(), data=data)
         else:
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.get_serializer(data=data)
 
         if serializer.is_valid():
-            cart_quantity      = int(request.data['quantity'])
+            cart_quantity      = int(data['quantity'])
             if (cart_quantity <= 0):
                 return Response({"quantity": "Quantity must be a positive integer."})
             serializer.save()

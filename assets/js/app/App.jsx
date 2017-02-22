@@ -42,10 +42,10 @@ function initialize(userData) {
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
         <IndexRoute component={InventoryContainer} user={userData} />
+        <Route path="items/:item_name" component={ItemDetail} user={userData} />
         <Route path="requests" component={RequestListContainer} user={userData}/>
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
-        <Route path="items/:item_name" component={ItemDetail} user={userData} />
         {getManagerPanel(userData)}
         {getAdminPanel(userData)}
       </Route>

@@ -1,9 +1,11 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Table, Image, Button, Panel, Label } from 'react-bootstrap'
-import ItemView from './item/ItemView'
+import ItemTableRow from './item/ItemTableRow'
+import Paginator from '../Paginator'
 import { getJSON } from 'jquery'
+import { browserHistory } from 'react-router';
 
-const ITEMS_PER_PAGE = 100;
+const ITEMS_PER_PAGE = 5;
 
 class InventoryContainer extends Component {
   constructor(props) {
@@ -102,51 +104,7 @@ class InventoryContainer extends Component {
     });
   }
 
-  alertClicked(name) {
-    alert("You clicked " + name + ".")
-  }
-
-  getItemStatus(item) {
-    return (
-      <div style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-        <Label bsStyle="warning">Pending</Label>
-        <Label bsStyle="success">In Cart</Label>
-      </div>
-    )
-  }
-
-  getItemRow(item, i) {
-    return (
-      <tr key={i}>
-        <td data-th="Item Information">
-          <Row>
-            <div className="clickable" onClick={() => alert("hey")}>
-              <Col sm={2} xsHidden>
-                <Image src="http://placehold.it/100x100" rounded responsive/>
-              </Col>
-              <Col sm={8}>
-                <h5>{item.name}</h5>
-                <p>{item.description}</p>
-              </Col>
-            </div>
-          </Row>
-        </td>
-        <td data-th="Status" className="text-center">
-          {this.getItemStatus(item)}
-        </td>
-        <td data-th="Available" className="text-center">{item.quantity}</td>
-        <td data-th="Quantity">
-          <input type="number" className="form-control text-center" defaultValue="1" />
-        </td>
-        <td className="text-center" data-th="Action">
-          <Button bsStyle="info">Add to Cart</Button>
-        </td>
-      </tr>
-    )
-  }
-
   render() {
-    console.log(this.state.items)
     return (
       <Grid>
         <Row>
@@ -159,22 +117,28 @@ class InventoryContainer extends Component {
         </Row>
         <Row>
           <Col md={12}>
-            <Table hover>
-              <thead>
-                <tr>
-                  <th style={{width:"60%"}} className="text-left">Item Information</th>
-                  <th style={{width:"10%"}} className="text-center">Status</th>
-                  <th style={{width:"10%"}} className="text-center">Available</th>
-                  <th style={{width:"10%"}} className="text-center">Quantity</th>
-                  <th style={{width:"10%"}} className="text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {this.state.items.map( (item, i) => {
-                  return this.getItemRow(item, i)
-                })}
-              </tbody>
-            </Table>
+
+              <Table hover>
+                <thead>
+                  <tr>
+                    <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
+                    <th style={{width:"8%"}} className="text-center">Available</th>
+                    <th style={{width:"10%"}} className="text-center">Status</th>
+                    <th style={{width:"7%"}} className="text-center">Quantity</th>
+                    <th style={{width:"8%"}} className="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.items.map( (item, i) => {
+                    return (<ItemTableRow key={i} item={item} />)
+                  })}
+                </tbody>
+              </Table>
+          </Col>
+        </Row>
+        <Row>
+          <Col sm={4} smOffset={4}>
+            <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
           </Col>
         </Row>
       </Grid>

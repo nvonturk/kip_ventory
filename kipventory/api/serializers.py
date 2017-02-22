@@ -59,18 +59,23 @@ class ItemSerializer(serializers.ModelSerializer):
     description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
     tags          = serializers.StringRelatedField(many=True, required=False)
     custom_fields = serializers.SerializerMethodField(method_name="get_custom_fields_by_permission")
+    in_cart       = serializers.SerializerMethodField(method_name="is_item_in_cart")
 
     class Meta:
         model  = models.Item
-        fields = ['name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields']
+        fields = ['name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields', 'in_cart']
 
     def get_custom_fields_by_permission(self, item):
         user = self.context['request'].user
         if user.is_staff:
-            return [{"name": cv.field.name, "value": cv.get_value(), "private": cv.field.private} for cv in item.values.all()]
+            return [{"name": cv.field.name, "value": cv.get_value(), "field_type": cv.field.field_type, "private": cv.field.private} for cv in item.values.all()]
         else:
-            return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all().filter(field__private=False)]
+            return [{"name": cv.field.name, "value": cv.get_value(), "field_type": cv.field.field_type} for cv in item.values.all().filter(field__private=False)]
 
+    def is_item_in_cart(self, item):
+        user = self.context['request'].user
+        is_in_cart = (models.CartItem.objects.filter(owner__pk=user.pk, item__name=item.name).count() > 0)
+        return is_in_cart
 
 class NewUserRequestSerializer(serializers.ModelSerializer):
     # id            = serializers.ReadOnlyField()
