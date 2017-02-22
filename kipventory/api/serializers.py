@@ -149,11 +149,10 @@ class TransactionGETSerializer(serializers.ModelSerializer):
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
 
 class TransactionPOSTSerializer(serializers.ModelSerializer):
+    item          = serializers.SlugRelatedField(queryset=models.Item.objects.all(), slug_field="name")
     class Meta:
         model = models.Transaction
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
-
-
 
 class RequestItemSerializer(serializers.ModelSerializer):
     item     = serializers.SlugRelatedField(read_only=True, slug_field="name")

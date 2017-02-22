@@ -760,6 +760,9 @@ class TagListView(generics.ListAPIView):
         queryset = models.Tag.objects.all()
         return queryset
 
+def custom_bad_request_response(message):
+    return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET', 'POST'])
 @permission_classes((permissions.IsAuthenticated,))
 def transaction_get_create(request, format=None):
@@ -773,6 +776,33 @@ def transaction_get_create(request, format=None):
         serializer = serializers.TransactionGETSerializer
         defaultItemsPerPage = 3
         return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
+
+    elif request.method == 'POST':
+        #todo django recommends doing this in middleware
+        data = request.data.copy()
+        data['date'] = datetime.now()
+        data['administrator'] = request.user.pk
+        serializer = serializers.TransactionPOSTSerializer(data=data)
+        if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
+            transaction_quantity = int(data['quantity'])
+            if transaction_quantity < 0:
+                return custom_bad_request_response("Quantity be a positive integer")
+
+            item = models.Item.objects.get(name=data['item'])
+            if data['category'] == 'Acquisition':#models.ACQUISITION:
+                new_quantity = item.quantity + transaction_quantity
+            elif data['category'] == 'Loss':#models.LOSS:
+                new_quantity = item.quantity - transaction_quantity
+                if new_quantity < 0:
+                    return custom_bad_request_response("Cannot remove more items from the inventory than currently exists")
+            else:
+                #should never get here
+                pass
+            item.quantity = new_quantity
+            item.save()
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TokenPoint(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
