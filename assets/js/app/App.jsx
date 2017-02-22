@@ -12,8 +12,7 @@ import DisbursementContainer from './manage/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './manage/requests/ManagerRequestsContainer'
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import NewUserRequestsContainer from './manage/newuserrequests/NewUserRequestsContainer'
-
-// import GenerateAPITokenContainer from './admin/apitoken/GenerateAPITokenContainer'
+import GenerateAPITokenContainer from './apitoken/GenerateAPITokenContainer'
 
 
 // MAIN APP PAGES
@@ -32,7 +31,6 @@ function getManagerPanel(userData) {
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
-      <Route path="generateapitoken" component={GenerateAPITokenContainer} admin={userData} />
     </Route>) : null
 }
 
