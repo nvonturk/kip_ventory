@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     # third party
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_swagger',
     # local
     'api',
 ]
@@ -105,8 +106,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
     ),
-    #'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    #'PAGE_SIZE': 1,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    #'DEFAULT_PAGINATION_CLASS': 'kipventory.api.views.CustomPagination',
+    'PAGE_SIZE': 100,
 }
 
 
@@ -134,3 +136,18 @@ STATICFILES_DIRS = (
 )
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'build')
+
+# Email
+EMAIL_HOST = "smtp.gmail.com"
+
+EMAIL_HOST_USER = "kipventory@gmail.com"
+
+EMAIL_HOST_PASSWORD = "ece458kipventory"
+
+EMAIL_PORT = 465 #587 for TLS
+
+EMAIL_USE_SSL = True
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+SERVER_EMAIL = EMAIL_HOST_USER

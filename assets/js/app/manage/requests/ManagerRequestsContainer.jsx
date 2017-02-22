@@ -2,13 +2,13 @@ import React, { Component } from 'react'
 import { Grid, Row, Col, Button } from 'react-bootstrap'
 import $ from "jquery"
 import RequestSelectFilter from '../../RequestSelectFilter'
-import AdminRequestList from './AdminRequestList'
+import ManagerRequestList from './ManagerRequestList'
 import Paginator from '../../Paginator'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 
 const REQUESTS_PER_PAGE = 2;
 
-class AdminRequestsContainer extends Component {
+class ManagerRequestsContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -35,7 +35,7 @@ class AdminRequestsContainer extends Component {
   getMyRequests(){
     var params = {
       status: this.state.value,
-      page: this.state.page,
+      page: this.state.page, 
       itemsPerPage: REQUESTS_PER_PAGE
     }
     var thisobj = this;
@@ -53,7 +53,7 @@ class AdminRequestsContainer extends Component {
       page: 1
     }, this.getMyRequests);
   }
-
+ 
   submitRequest(e, request, decision, quantity, comment){
     e.preventDefault();
 
@@ -146,7 +146,7 @@ class AdminRequestsContainer extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response){},
-      complete: function() {
+      complete: function() {      
         var newrequests = thisobj.state.requests.filter(req => (req.id != request.id));
         thisobj.setState({
           requests: newrequests
@@ -172,7 +172,7 @@ class AdminRequestsContainer extends Component {
     return (
       <Grid fluid>
         <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
-        <AdminRequestList deleteRequest={this.deleteRequest} submit={this.submitRequest} requests={this.state.requests} />
+        <ManagerRequestList deleteRequest={this.deleteRequest} submit={this.submitRequest} requests={this.state.requests} />
         <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
       </Grid>
     );
@@ -180,4 +180,4 @@ class AdminRequestsContainer extends Component {
 }
 
 
-export default AdminRequestsContainer
+export default ManagerRequestsContainer

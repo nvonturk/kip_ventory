@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import { Grid, Row, Col, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap'
 import $ from 'jquery'
+import SimpleDropdown from '../../SimpleDropdown'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import Select from 'react-select'
 import 'react-select/dist/react-select.css'

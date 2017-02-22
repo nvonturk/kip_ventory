@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import SimpleRequest from '../../SimpleRequest'
 import { Button, Panel, FormGroup, FormControl, ControlLabel } from 'react-bootstrap'
 
-class AdminRequest extends Component {
+class ManagerRequest extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -91,4 +91,4 @@ class AdminRequest extends Component {
 }
 
 
-export default AdminRequest
+export default ManagerRequest

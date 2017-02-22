@@ -12,7 +12,6 @@ const SignupForm = React.createClass({
       last_name: '',
       username: '',
       email: '',
-      password: '',
     };
   },
 
@@ -23,6 +22,20 @@ const SignupForm = React.createClass({
       [name]: value
     })
   },
+
+  /*
+  $('#signup-form').submit(function(event){
+    event.preventDefault();
+    $.ajax({
+      url: $('#signup-form').attr('action'),
+      type: post,
+      data : $('#signup-form').serialize(),
+      success: function(){
+        console.log('form submitted.');
+      }
+    });
+  });,
+*/
 
   render() {
     return (
@@ -44,10 +57,6 @@ const SignupForm = React.createClass({
           <FormGroup controlId="email">
             <ControlLabel>Email</ControlLabel>
             <FormControl type="email" value={this.state.email} name="email" placeholder="Email" onChange={this.handleChange} />
-          </FormGroup>
-          <FormGroup controlId="password">
-            <ControlLabel>Password</ControlLabel>
-            <FormControl type="password" value={this.state.password} name="password" placeholder="Password" onChange={this.handleChange} />
           </FormGroup>
           <FormGroup>
             <Button type="submit" block onClick={e=>console.log(this.state)}>Sign up</Button>
