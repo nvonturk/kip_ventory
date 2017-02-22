@@ -2,7 +2,7 @@ import React from 'react'
 import { render } from 'react-dom'
 import { Router, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
-import Home from './Home'
+// import Home from './Home'
 
 // ADMIN PAGES
 import AdminContainer from './admin/AdminContainer'
@@ -14,6 +14,7 @@ import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import NewUserRequestsContainer from './manage/newuserrequests/NewUserRequestsContainer'
 
 // MAIN APP PAGES
+import InventoryContainer from './inventory/InventoryContainer'
 import CartContainer from './cart/CartContainer'
 import RequestListContainer from './requests/RequestListContainer'
 import Profile from './Profile'
@@ -32,16 +33,14 @@ function getManagerPanel(userData) {
 }
 
 function getAdminPanel(userData) {
-  return userData.is_superuser ? (
-    <Route path="admin" component={AdminContainer} admin={userData}>
-    </Route>) : null
+  return userData.is_superuser ? <Route path="admin" component={AdminContainer} admin={userData}/> : null
 }
 
 function initialize(userData) {
   render((
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
-        <IndexRoute component={Home} user={userData} />
+        <IndexRoute component={InventoryContainer} user={userData} />
         <Route path="requests" component={RequestListContainer} user={userData}/>
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
