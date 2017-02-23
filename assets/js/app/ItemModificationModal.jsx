@@ -208,7 +208,13 @@ class ItemModificationModal extends Component{
 
           <Modal.Footer>
             <Button onClick={this.props.close}>Close</Button>
-            <Button onClick={this.props.deleteItem} bsStyle="danger">Delete Item</Button>
+            {
+              this.props.is_admin
+                ? <Button onClick={this.props.deleteItem} bsStyle="danger">
+                  Delete Item
+                  </Button>
+                : null
+            }
             <Button onClick={this.props.saveChanges} bsStyle="primary">Save Changes</Button>
           </Modal.Footer>
           </Modal>

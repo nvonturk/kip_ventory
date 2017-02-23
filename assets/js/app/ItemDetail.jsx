@@ -231,7 +231,7 @@ class ItemDetailModal extends Component {
               />
             : null
         }
-        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges}/>
+        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges} is_admin={this.user.is_superuser}/>
       </Grid>
     );
   }
