@@ -35,7 +35,7 @@ class AdminRequestsContainer extends Component {
   getMyRequests(){
     var params = {
       status: this.state.value,
-      page: this.state.page, 
+      page: this.state.page,
       itemsPerPage: REQUESTS_PER_PAGE
     }
     var thisobj = this;
@@ -53,7 +53,7 @@ class AdminRequestsContainer extends Component {
       page: 1
     }, this.getMyRequests);
   }
- 
+
   submitRequest(e, request, decision, quantity, comment){
     e.preventDefault();
 
@@ -146,7 +146,7 @@ class AdminRequestsContainer extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response){},
-      complete: function() {      
+      complete: function() {
         var newrequests = thisobj.state.requests.filter(req => (req.id != request.id));
         thisobj.setState({
           requests: newrequests

@@ -18,9 +18,8 @@
   background-color: #485563;
 }
 
-.clickable
-{
-    cursor: pointer;
+.clickable {
+  cursor: pointer;
 }
 
 body, html {
@@ -131,7 +130,11 @@ body, html {
 
 .inventory-grid {
 	margin-top: 40px;
-	margin-bottom: 20px;
+	margin-bottom: 30px;
+}
+
+.logs-searchbar-row {
+  height: 30px;
 }
 
 .paginator-container {
@@ -141,4 +144,8 @@ body, html {
 /* Override Paginator style */
 .pagination>.active>a, .pagination>.active>span, .pagination>.active>a:hover, .pagination>.active>span:hover, .pagination>.active>a:focus, .pagination>.active>span:focus {
 	z-index: 0;
+}
+
+.table>tbody>tr>td, .table>tfoot>tr>td{
+    vertical-align: middle;
 }

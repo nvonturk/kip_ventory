@@ -18,7 +18,6 @@ from django.db.models import Q
 from . import models, serializers
 from rest_framework import pagination
 from datetime import datetime
-
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.forms import PasswordResetForm
@@ -39,45 +38,14 @@ class CustomPagination(pagination.PageNumberPagination):
             'results': data
         })
         '''
-        return get_my_paginated_response(self.page.paginator.count, self.page.paginator.num_pages, data)
+        return Response({
+             "count": self.page.paginator.count,
+             "num_pages": self.page.paginator.num_pages,
+             "results": data
+            })
 
-def get_my_paginated_response(count, num_pages, data):
-    return Response({
-        "count" : count,
-        "num_pages" : num_pages,
-        "results" : data
-    })
 
-def paginateRequest(request, queryset, defaultItemsPerPage, serializer):
-    itemsPerPage = request.GET.get('itemsPerPage')
-    if itemsPerPage is None:
-        itemsPerPage = defaultItemsPerPage
-    page = request.GET.get('page')
-    if page is None:
-        page = 1
 
-    return paginate(queryset, itemsPerPage, page, serializer)
-
-def paginate(queryset, itemsPerPage, page, serializer):
-    paginator = Paginator(queryset, itemsPerPage)
-    try:
-        queryset = paginator.page(page)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        queryset = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        queryset = paginator.page(paginator.num_pages)
-
-    data = serializer(instance=queryset, many=True).data
-    '''
-    toReturn = {
-        "count" : paginator.count,
-        "num_pages" : paginator.num_pages,
-        "results" : data
-    }
-    '''
-    return get_my_paginated_response(paginator.count, paginator.num_pages, data)
 
 class ItemListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -146,8 +114,13 @@ class ItemListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            # Insert Create Log
+            # Need {serializer.data, initiating_user_pk, 'Item Creation'}
+            print("About to Create a Log")
+            itemCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ItemDetailModifyDelete(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
@@ -176,9 +149,20 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         item = self.get_instance(item_name=item_name)
+
+        # check if we're trying to modify quantity
+        quantity = int(request.data.get('quantity', None))
+        if not (quantity is None):
+            if (quantity != item.quantity):
+                if not (request.user.is_superuser):
+                    return Response({"error": "Admin permissions required."})
+
         serializer = self.get_serializer(instance=item, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            # Insert Create Log
+            # Need {serializer.data, initiating_user_pk, 'Item Changed'}
+            itemModificationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -190,7 +174,11 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
 
         item = self.get_instance(item_name=item_name)
         item.delete()
+        # Insert Create Log
+        # Need {serializer.data, initiating_user_pk, 'Item Changed'}
+        itemDeletionLog(item_name, request.user.pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class AddItemToCart(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
@@ -212,22 +200,24 @@ class AddItemToCart(generics.GenericAPIView):
     def post(self, request, item_name, format=None):
         item = self.get_item(item_name)
 
-        request.data.update({'owner': request.user})
-        request.data.update({'item': item})
+        data = request.data.copy()
+        data.update({'owner': request.user})
+        data.update({'item': item})
 
         cartitems = self.get_queryset().filter(item__name=item_name)
         if cartitems.count() > 0:
-            serializer = self.get_serializer(instance=cartitems.first(), data=request.data)
+            serializer = self.get_serializer(instance=cartitems.first(), data=data)
         else:
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.get_serializer(data=data)
 
         if serializer.is_valid():
-            cart_quantity      = int(request.data['quantity'])
+            cart_quantity      = int(data['quantity'])
             if (cart_quantity <= 0):
                 return Response({"quantity": "Quantity must be a positive integer."})
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CustomFieldListCreate(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
@@ -373,7 +363,7 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         try:
             return self.get_queryset().get(item__name=item_name)
         except models.CartItem.DoesNotExist:
-            raise NotFound('Cart item {} not found.'.format(pk))
+            raise NotFound('Cart item {} not found.'.format(item_name))
 
     def get_serializer_class(self):
         return serializers.CartItemSerializer
@@ -413,17 +403,25 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-@api_view(['GET'])
-@permission_classes((permissions.IsAuthenticated,))
-def item_requests_get(request, item_name, format=None):
-    if request.method == 'GET':
-        requests = None
-        if request.user.is_staff:
+
+class GetOutstandingRequestsByItem(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return models.Request.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.RequestSerializer
+
+    def get(self, request, item_name, format=None):
+        requests = self.get_queryset()
+        if request.user.is_staff or request.user.is_superuser:
             requests = models.Request.objects.filter(request_items__item__name=item_name)
         else:
             requests = models.Request.objects.filter(request_items__item__name=item_name, requester=request.user.pk)
         serializer = serializers.RequestSerializer(requests, many=True)
         return Response(serializer.data)
+
 
 class RequestListAll(generics.GenericAPIView):
     pagination_class = CustomPagination
@@ -484,6 +482,9 @@ class RequestListCreate(generics.GenericAPIView):
             item = ci.item
             quantity = ci.quantity
             req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
+            # Insert Create Log
+            # Need {serializer.data, initiating_user_pk, 'Request Created'}
+            # requestItemCreation(req_item, request.user.pk)
             req_item.save()
             ci.delete()
 
@@ -532,6 +533,10 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
 
         if serializer.is_valid():
             # check integrity of approval operation
+            if request.data['status'] == 'D':
+                # Insert Create Log
+                # Need {serializer.data, initiating_user_pk, 'Request Approved'}
+                print("HERE")
             if request.data['status'] == 'A':
                 valid_request = True
                 new_quantities = {}
@@ -550,9 +555,16 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         requested_quantity = ri.quantity
                         item.quantity = (available_quantity - requested_quantity)
                         item.save()
+                        # Insert Create Log
+                        # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
+            # item = models.Item.objects.get(pk=request.data['item'])
+            # item.quantity = item.quantity - int(request.data['quantity'])
+            # item.save()
+            # createLog(request.data, request.data['administrator'], 'Request')
+            print(request.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -567,6 +579,8 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             d = {"error": "Cannot delete an approved/denied request."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         instance.delete()
+        # Insert Create Log
+        # Need {serializer.data, initiating_user_pk, 'Request Deleted'}
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['POST'])
@@ -590,30 +604,27 @@ def post_user_login(request, format=None):
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
         return redirect('/')
 
-@api_view(['POST'])
-@permission_classes((permissions.AllowAny,))
-def post_user_signup(request, format=None):
-    username = request.data['username']
-    first_name = request.data['first_name']
-    last_name = request.data['last_name']
-    email = request.data['email']
 
-    # Make sure username is unique
-    # Todo: make email unique?
-    exists = (User.objects.filter(username=username).count() > 0)
-    if exists:
-        messages.add_message(request._request, messages.ERROR, "username-taken")
-        return redirect('/')
+class UserListCreate(generics.GenericAPIView):
+    def get_queryset(self):
+        return User.objects.all()
 
-    models.NewUserRequest.objects.create(
-                            username=username,
-                            email=email,
-                            first_name=first_name,
-                            last_name=last_name)
-    messages.add_message(request._request, messages.SUCCESS, "user-created")
-    return redirect('/')
+    def get_serializer_class(self):
+        return serializers.UserSerializer
 
-class CurrentUser(generics.GenericAPIView):
+    def get(self, request, format=None):
+        users = self.get_queryset()
+        serializer = self.get_serializer(instance=users, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GetCurrentUser(generics.GenericAPIView):
     queryset = None
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = None
@@ -629,7 +640,7 @@ class CurrentUser(generics.GenericAPIView):
             "is_superuser": user.is_superuser
         })
 
-class NetIDToken(generics.GenericAPIView):
+class GetNetIDToken(generics.GenericAPIView):
     queryset = None
     permission_classes = (permissions.AllowAny,)
     serializer_class = None
@@ -665,124 +676,106 @@ class NetIDToken(generics.GenericAPIView):
             print("Multiple NetId Users this is big time wrong need to throw an error")
             return redirect('/app/')
 
-@api_view(['GET'])
-@permission_classes((permissions.IsAuthenticated,))
-def get_new_user_requests(request):
-    if not (request.user.is_staff or request.user.is_superuser):
-        d = {"error": "Permission denied."}
-        return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-    queryset = models.NewUserRequest.objects.all()
-    serializer = serializers.NewUserRequestSerializer(queryset, many=True)
-    return Response(serializer.data)
-
-# manager restricted
-@api_view(['GET'])
-@permission_classes((permissions.IsAuthenticated,))
-def get_new_user_request(request, username):
-    if not (request.user.is_staff or request.user.is_superuser):
-        d = {"error": "Permission denied."}
-        return Response(d, status=status.HTTP_403_FORBIDDEN)
-
-    queryset = models.NewUserRequest.objects.get(username=username)
-    serializer = serializers.NewUserRequestSerializer(queryset)
-    return Response(serializer.data)
-
-# manager restricted
-@api_view(['POST'])
-@permission_classes((permissions.IsAuthenticated,))
-def approve_new_user_request(request, username):
-    if not (request.user.is_staff or request.user.is_superuser):
-        d = {"error": "Permission denied."}
-        return Response(d, status=status.HTTP_403_FORBIDDEN)
-
-    # Retrieve user request
-    user_request = models.NewUserRequest.objects.get(username=username)
-    email = user_request.email
-    first_name = user_request.first_name
-    last_name = user_request.last_name
-
-    # Make sure username and email are unique
-    username_taken = User.objects.filter(username=username).count() > 0
-    email_taken = User.objects.filter(email=email).count() > 0
-    if username_taken:
-        return Response({"error":"Username already taken."})
-    if email_taken:
-        return Response({"error":"Email already taken."})
-
-    # Create new user with random password
-    password = get_random_string()
-    user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name)
-
-    # Send email to confirm account and reset password (note: it sends email to all users with this email. so we should make email unique)
-    reset_form = PasswordResetForm({'email': email})
-    if reset_form.is_valid():
-        reset_form.save(request=request)
-    else:
-        return Response({"error":"Unable to send email to new user."})
-
-    # Delete the user request
-    #todo: log this
-    models.NewUserRequest.objects.get(username=username).delete()
-
-    return Response({"success":"true"})
-
-# manager restricted
-@api_view(['POST'])
-@permission_classes((permissions.IsAuthenticated,))
-def deny_new_user_request(request, username):
-    if not (request.user.is_staff or request.user.is_superuser):
-        d = {"error": "Permission denied."}
-        return Response(d, status=status.HTTP_403_FORBIDDEN)
-
-    # Todo: send denial email
-    # Todo: log it
-    models.NewUserRequest.objects.get(username=username).delete()
-
-    return Response({"success":"true"})
-
-@api_view(['GET'])
-@permission_classes((permissions.IsAuthenticated,))
-def get_all_users(request, format=None):
-    if not request.user.is_staff:
-        return Response(status=status.HTTP_403_FORBIDDEN)
-    # todo add pagination? use react-select asynchronous search
-    users = User.objects.all()
-    serializer = serializers.UserGETSerializer(users, many=True)
-    return Response(serializer.data)
-
-class TagListView(generics.ListAPIView):
+class TagListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.TagSerializer
 
     def get_queryset(self):
-        #todo add pagination? use react-select asynchronous search
-        queryset = models.Tag.objects.all()
-        return queryset
+        return models.Tag.objects.all()
 
-def custom_bad_request_response(message):
-    return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, format=None):
+        tags = self.get_queryset()
+        serializer = self.get_serializer(instance=tags, many=True)
+        return Response(serializer.data)
 
-@api_view(['GET', 'POST'])
-@permission_classes((permissions.IsAuthenticated,))
-def transaction_get_create(request, format=None):
-    if request.method == 'GET':
-        queryset = None
+    def post(self, request, format=None):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogList(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return models.Log.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.LogSerializer
+
+    def get(self, request, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            # Not allowed to see logs if not manager/admin
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        user = request.query_params.get("user")
+        item = request.query_params.get("item")
+        endDate = request.query_params.get("endDate")
+        startDate = request.query_params.get("startDate")
+        # print("StartDate:" + startDate)
+        # print("EndDate:", endDate)
+        # Create Datetimes from strings
+        logs = self.get_queryset()
+        q_objs = Q()
+        if user is not None and user != '':
+            q_objs &= (Q(affected_user__username=user) | Q(initiating_user__username=user))
+        logs = logs.filter(q_objs).distinct()
+        if item is not None and item != '':
+            logs = logs.filter(item__name=item)
+        if startDate is not None and startDate != '' and endDate is not None and endDate != '':
+            startDate, endDate = startDate.split(" "), endDate.split(" ")
+            stimeZone, etimeZone = startDate[5], endDate[5]
+            stimeZone, etimeZone = stimeZone.split('-'), etimeZone.split('-')
+            startDate, endDate = startDate[:5], endDate[:5]
+            startDate, endDate = " ".join(startDate), " ".join(endDate)
+            startDate, endDate = startDate + " " + stimeZone[0], endDate + " " + etimeZone[0]
+
+            print(startDate, endDate)
+
+            startDate = datetime.strptime(startDate, "%a %b %d %Y %H:%M:%S %Z").date()
+            endDate = datetime.strptime(endDate, "%a %b %d %Y %H:%M:%S %Z").date()
+            startDate = datetime.combine(startDate, datetime.min.time())
+            endDate = datetime.combine(endDate, datetime.max.time())
+            startDate = timezone.make_aware(startDate, timezone.get_current_timezone())
+            endDate = timezone.make_aware(endDate, timezone.get_current_timezone())
+
+            print(startDate, endDate)
+
+            logs = logs.filter(date_created__range=[startDate, endDate])
+        serializer = self.get_serializer(instance=logs, many=True)
+        return Response(serializer.data)
+
+
+
+class TransactionListCreate(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return models.Transaction.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.TransactionGETSerializer
+        return serializers.TransactionPOSTSerializer
+
+    def get(self, request, format=None):
+        queryset = self.get_queryset()
         category = request.GET.get('category')
-        if category is None or category=="All":
-            queryset = models.Transaction.objects.all()
-        else:
+        if not (category is None or category=="All"):
             queryset = models.Transaction.objects.filter(category=category)
-        serializer = serializers.TransactionGETSerializer
-        defaultItemsPerPage = 3
-        return paginateRequest(request, queryset, defaultItemsPerPage, serializer)
 
-    elif request.method == 'POST':
+        serializer = self.get_serializer(instance=queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
         #todo django recommends doing this in middleware
         data = request.data.copy()
         data['date'] = datetime.now()
         data['administrator'] = request.user.pk
-        serializer = serializers.TransactionPOSTSerializer(data=data)
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
@@ -800,6 +793,7 @@ def transaction_get_create(request, format=None):
                 pass
             item.quantity = new_quantity
             item.save()
+            # createLog(data, request.user.pk, 'Transaction')
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -817,3 +811,57 @@ class TokenPoint(generics.GenericAPIView):
             token = Token.objects.create(user=request.user)
             print(token.key)
             return Response({"token": token.key})
+
+# TODO: Manually create log items (not through serializer)
+def itemCreationLog(data, initiating_user_pk):
+    print("Item Creation")
+    item = None
+    initiating_user = None
+    quantity = None
+    affected_user = None
+    try:
+        item = models.Item.objects.get(name=data['name'])
+    except models.Item.DoesNotExist:
+        raise NotFound('Item {} not found.'.format(data['name']))
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    quantity = data['quantity']
+    message = 'Item {} created'.format(data['name'])
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Creation', message=message)
+    log.save()
+
+def itemModificationLog(data, initiating_user_pk):
+    print("Item Modification")
+    item = None
+    initiating_user = None
+    quantity = None
+    affected_user = None
+    print(data)
+    try:
+        item = models.Item.objects.get(name=data['name'])
+    except models.Item.DoesNotExist:
+        raise NotFound('Item {} not found.'.format(data['name']))
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    quantity = data['quantity']
+    message = 'Item {} modified by administrator'.format(data['name'])
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Modification', message=message)
+    log.save()
+
+def itemDeletionLog(item_name, initiating_user_pk):
+    print("Item Deletion")
+    item = None
+    initiating_user = None
+    quantity = None
+    affected_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Item {} deleted by administrator'.format(item_name)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Deletion', message=message)
+    log.save()

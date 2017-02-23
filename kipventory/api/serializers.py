@@ -23,7 +23,7 @@ class CustomValueSerializer(serializers.ModelSerializer):
 
     def to_representation(self, cv):
         user = self.context['request'].user
-        d = {'name': cv.field.name, 'value': cv.get_value()}
+        d = {'name': cv.field.name, 'value': cv.get_value(), 'field_type': cv.field.field_type}
         if (user.is_staff or user.is_superuser):
             d.update({'private': cv.field.private})
         return d
@@ -57,32 +57,69 @@ class ItemSerializer(serializers.ModelSerializer):
     quantity      = serializers.IntegerField(min_value=0, max_value=None, required=True)
     model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
     description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
-    tags          = serializers.StringRelatedField(many=True, required=False)
+    tags          = serializers.SlugRelatedField(slug_field="name", many=True, queryset=models.Tag.objects.all(), required=False)
     custom_fields = serializers.SerializerMethodField(method_name="get_custom_fields_by_permission")
+    in_cart       = serializers.SerializerMethodField(method_name="is_item_in_cart")
 
     class Meta:
         model  = models.Item
-        fields = ['name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields']
+        fields = ['name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields', 'in_cart']
 
     def get_custom_fields_by_permission(self, item):
         user = self.context['request'].user
         if user.is_staff:
-            return [{"name": cv.field.name, "value": cv.get_value(), "private": cv.field.private} for cv in item.values.all()]
+            return [{"name": cv.field.name, "value": cv.get_value(), "field_type": cv.field.field_type, "private": cv.field.private} for cv in item.values.all()]
         else:
-            return [{"name": cv.field.name, "value": cv.get_value()} for cv in item.values.all().filter(field__private=False)]
+            return [{"name": cv.field.name, "value": cv.get_value(), "field_type": cv.field.field_type} for cv in item.values.all().filter(field__private=False)]
 
+    def is_item_in_cart(self, item):
+        user = self.context['request'].user
+        is_in_cart = (models.CartItem.objects.filter(owner__pk=user.pk, item__name=item.name).count() > 0)
+        return is_in_cart
 
-class NewUserRequestSerializer(serializers.ModelSerializer):
-    # id            = serializers.ReadOnlyField()
-    username        = serializers.CharField(max_length=150, min_length=1, required=True)
-    first_name      = serializers.CharField(max_length=30, min_length=None, required=True)
-    last_name       = serializers.CharField(max_length=30, min_length=None, required=True)
-    email           = serializers.CharField(max_length=None, min_length=None, required=True)
-    comment         = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
+    def to_internal_value(self, data):
+        errors = {}
+        # check standard field names as defined in the serializer
+        item_data = super(ItemSerializer, self).to_internal_value(data)
+        # check for valid CustomField names in this data.
+        field_data = {}
 
-    class Meta:
-        model = models.NewUserRequest
-        fields = ['username', 'first_name', 'last_name', 'email', 'comment']
+        fields = models.CustomField.objects.all()
+        for field_name, value in data.items():
+            cf_exists = (fields.filter(name=field_name).count() > 0)
+            if cf_exists:
+                cf = fields.get(name=field_name)
+                try:
+                    val = models.FIELD_TYPE_DICT[cf.field_type](value)
+                    field_data.update({cf: val})
+                except:
+                    errors.update({field_name: 'Expected \'{}\' type, got \'{}\'.'.format(models.FIELD_TYPE_DICT[ft].__name__, type(value).__name__)})
+
+        if errors:
+            raise ValidationError(errors)
+
+        validated_data = {"field_data": field_data, "item_data": item_data}
+        return validated_data
+
+    def create(self, validated_data):
+        item_data  = validated_data['item_data']
+        field_data = validated_data['field_data']
+
+        # create the item from the intrinsic data fields
+        item = super(ItemSerializer, self).create(item_data)
+        # there will be a complete set of blank CustomValues associated with this Item
+        # as a result of the Item.save() method.
+        item_values = item.values.all()
+        # If we have
+        for field, value in field_data.items():
+            try:
+                cv = item_values.get(field__pk=field.pk)
+                setattr(cv, field.field_type, value)
+                cv.save()
+            except:
+                print("baseee")
+
+        return item
 
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
@@ -130,29 +167,19 @@ class TagSerializer(serializers.ModelSerializer):
         model = models.Tag
         fields = ["id", 'name']
 
-class UserGETSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
 
-class UserPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
-
-
-class TransactionGETSerializer(serializers.ModelSerializer):
-    item          = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    administrator = UserGETSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Transaction
-        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
-
-class TransactionPOSTSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.ModelSerializer):
     item          = serializers.SlugRelatedField(queryset=models.Item.objects.all(), slug_field="name")
+    administrator = serializers.SlugRelatedField(queryset=User.objects.filter(is_staff=True), slug_field="username")
+
     class Meta:
         model = models.Transaction
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
 
 class RequestItemSerializer(serializers.ModelSerializer):
     item     = serializers.SlugRelatedField(read_only=True, slug_field="name")
@@ -224,3 +251,12 @@ class RequestPUTSerializer(serializers.ModelSerializer):
             "administrator": administrator,
             "status": status
         }
+
+class LogSerializer(serializers.ModelSerializer):
+    item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)
+    initiating_user = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    affected_user   = serializers.SlugRelatedField(slug_field="username", read_only=True)
+
+    class Meta:
+        model = models.Log
+        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category"]
