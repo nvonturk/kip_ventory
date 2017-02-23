@@ -22,13 +22,6 @@ const CustomFieldContainer = React.createClass({
 
       fieldToDelete: null,
       showDeleteModal: false,
-
-      fieldToModify: null,
-      showModifyModal: false,
-
-      modified_name: "",
-      modified_field_type: "",
-      modified_private: false,
     }
   },
 
@@ -86,56 +79,56 @@ const CustomFieldContainer = React.createClass({
       }
     });
   },
-
-  showModifyModal(e, field) {
-    e.preventDefault()
-    this.setState({
-      showModifyModal: true,
-      fieldToModify: field.name,
-      modified_name: field.name,
-      modified_field_type: field.field_type,
-      modified_private: field.private
-    })
-  },
-
-  closeModifyModal() {
-    this.setState({
-      showModifyModal: false,
-      fieldToModify: null,
-      modified_name: "",
-      modified_field_type: '',
-      modified_private: ""
-    })
-  },
-
-  modifyField(e) {
-    e.preventDefault()
-    var field = this.state.fieldToModify;
-    const _this = this;
-    ajax({
-      url:"/api/fields/" + field + "/",
-      type: "PUT",
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      data: {
-        name: _this.state.modified_name,
-        field_type: _this.state.modified_field_type,
-        private: _this.state.modified_private
-      },
-      success:  function(response){
-        _this.getExistingFields();
-        _this.closeModifyModal();
-      },
-      complete: function(){},
-      error:    function (xhr, textStatus, thrownError){
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
-        alert("error doing something");
-      }
-    });
-  },
+  //
+  // showModifyModal(e, field) {
+  //   e.preventDefault()
+  //   this.setState({
+  //     showModifyModal: true,
+  //     fieldToModify: field.name,
+  //     modified_name: field.name,
+  //     modified_field_type: field.field_type,
+  //     modified_private: field.private
+  //   })
+  // },
+  //
+  // closeModifyModal() {
+  //   this.setState({
+  //     showModifyModal: false,
+  //     fieldToModify: null,
+  //     modified_name: "",
+  //     modified_field_type: '',
+  //     modified_private: ""
+  //   })
+  // },
+  //
+  // modifyField(e) {
+  //   e.preventDefault()
+  //   var field = this.state.fieldToModify;
+  //   const _this = this;
+  //   ajax({
+  //     url:"/api/fields/" + field + "/",
+  //     type: "PUT",
+  //     beforeSend: function(request) {
+  //       request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+  //     },
+  //     data: {
+  //       name: _this.state.modified_name,
+  //       field_type: _this.state.modified_field_type,
+  //       private: _this.state.modified_private
+  //     },
+  //     success:  function(response){
+  //       _this.getExistingFields();
+  //       _this.closeModifyModal();
+  //     },
+  //     complete: function(){},
+  //     error:    function (xhr, textStatus, thrownError){
+  //       console.log(xhr)
+  //       console.log(textStatus)
+  //       console.log(thrownError)
+  //       alert("error doing something");
+  //     }
+  //   });
+  // },
 
 
   showDeleteModal(e, field) {
@@ -209,11 +202,10 @@ const CustomFieldContainer = React.createClass({
                   <Table hover condensed >
                     <thead>
                       <tr>
-                        <th style={{width:"25%"}} className="text-left">Field Name</th>
-                        <th style={{width:"15%"}} className="text-left">Field Type</th>
-                        <th style={{width:"30%"}} className="text-center">Private?</th>
-                        <th style={{width:"15%"}}></th>
-                        <th style={{width:"15%"}}></th>
+                        <th style={{width:"40%"}} className="text-left">Field Name</th>
+                        <th style={{width:"25%"}} className="text-left">Field Type</th>
+                        <th style={{width:"25%"}} className="text-center">Private?</th>
+                        <th style={{width:"10%"}}></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -223,7 +215,6 @@ const CustomFieldContainer = React.createClass({
                             <td data-th="Field Name" className="text-left">{field.name}</td>
                             <td data-th="Field Type" className="text-left">{FIELD_TYPES[field.field_type]}</td>
                             <td data-th="Private?" className="text-center">{field.private ? "Yes" : "No"}</td>
-                            <td className="text-center"><Button bsSize="small" bsStyle="info" onClick={e => this.showModifyModal(e, field)}>Modify</Button></td>
                             <td className="text-center"><Button bsSize="small" bsStyle="danger" onClick={e => this.showDeleteModal(e, field)}>Delete</Button></td>
                           </tr>
                         )
@@ -236,48 +227,6 @@ const CustomFieldContainer = React.createClass({
             </Col>
           </Row>
 
-          <Modal show={this.state.showModifyModal} onHide={this.closeModifyModal}>
-          <Modal.Header closeButton>
-            <Modal.Title>Modify Field</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form horizontal action="" onSubmit={this.modifyField}>
-              <FormGroup bsSize="small">
-                <Col componentClass={ControlLabel} sm={2}>
-                  Field Name
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" value={this.state.modified_name} name="modified_name" onChange={this.onChange} />
-                </Col>
-              </FormGroup>
-              <FormGroup bsSize="small">
-                <Col componentClass={ControlLabel} sm={2}>
-                  Field Type
-                </Col>
-                <Col sm={6}>
-                  <FormControl componentClass="select" name="modified_field_type" value={this.state.modified_field_type} onChange={this.onChange}>
-                    <option value="s">Short Text</option>
-                    <option value="m">Long Text</option>
-                    <option value="i">Integer</option>
-                    <option value="f">Float</option>
-                  </FormControl>
-                </Col>
-              </FormGroup>
-              <FormGroup bsSize="small">
-                <Col componentClass={ControlLabel} sm={2}>
-                  Private?
-                </Col>
-                <Col sm={1}>
-                  <Checkbox style={{paddingTop: "6px"}} checked={this.state.modified_private} onChange={e => this.setState({modified_private: e.target.checked})} />
-                </Col>
-              </FormGroup>
-            </Form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button bsSize="small" onClick={this.closeModifyModal}>Close</Button>
-            <Button bsStyle="info" bsSize="small" onClick={this.modifyField}>Update</Button>
-          </Modal.Footer>
-        </Modal>
 
           <Modal show={this.state.showDeleteModal} onHide={this.closeDeleteModal}>
           <Modal.Header closeButton>

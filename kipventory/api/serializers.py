@@ -57,7 +57,7 @@ class ItemSerializer(serializers.ModelSerializer):
     quantity      = serializers.IntegerField(min_value=0, max_value=None, required=True)
     model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
     description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
-    tags          = serializers.SlugRelatedField(slug_field="name", many=True, queryset=models.Tag.objects.all(), required=False)
+    tags          = serializers.SlugRelatedField(slug_field="name", read_only=False, many=True, queryset=models.Tag.objects.all(), required=False)
     custom_fields = serializers.SerializerMethodField(method_name="get_custom_fields_by_permission")
     in_cart       = serializers.SerializerMethodField(method_name="is_item_in_cart")
 
@@ -80,10 +80,11 @@ class ItemSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         errors = {}
         # check standard field names as defined in the serializer
+        print(data)
         item_data = super(ItemSerializer, self).to_internal_value(data)
+        print(item_data)
         # check for valid CustomField names in this data.
         field_data = {}
-
         fields = models.CustomField.objects.all()
         for field_name, value in data.items():
             cf_exists = (fields.filter(name=field_name).count() > 0)
@@ -94,19 +95,18 @@ class ItemSerializer(serializers.ModelSerializer):
                     field_data.update({cf: val})
                 except:
                     errors.update({field_name: 'Expected \'{}\' type, got \'{}\'.'.format(models.FIELD_TYPE_DICT[ft].__name__, type(value).__name__)})
-
         if errors:
             raise ValidationError(errors)
-
         validated_data = {"field_data": field_data, "item_data": item_data}
         return validated_data
 
     def create(self, validated_data):
         item_data  = validated_data['item_data']
         field_data = validated_data['field_data']
-
         # create the item from the intrinsic data fields
+        print(item_data)
         item = super(ItemSerializer, self).create(item_data)
+        print(item_data)
         # there will be a complete set of blank CustomValues associated with this Item
         # as a result of the Item.save() method.
         item_values = item.values.all()
@@ -118,8 +118,15 @@ class ItemSerializer(serializers.ModelSerializer):
                 cv.save()
             except:
                 print("baseee")
-
         return item
+
+    def update(self, instance, validated_data):
+        item_data = validated_data['item_data']
+        field_data = validated_data['field_data']
+        print(item_data)
+        instance = super(ItemSerializer, self).update(instance, item_data)
+        instance.save()
+        return instance
 
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):

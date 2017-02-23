@@ -1,6 +1,6 @@
 import React from 'react'
 import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button } from 'react-bootstrap'
-import { getJSON, ajax } from 'jquery'
+import { getJSON, ajax, serialize } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import TagMultiSelect from '../../TagMultiSelect'
 
@@ -35,7 +35,8 @@ const ItemCreationForm = React.createClass({
   },
 
   handleTagSelection(tagsSelected) {
-    this.setState({tags: tagsSelected});
+    console.log(tagsSelected.split(","))
+    this.setState({tags: tagsSelected.split(",")});
   },
 
   getShortTextField(field_name, presentation_name, is_private) {
@@ -77,11 +78,24 @@ const ItemCreationForm = React.createClass({
     )
   },
 
+  getFloatField(field_name, presentation_name) {
+    return (
+      <FormGroup bsSize="small">
+        <Col componentClass={ControlLabel} sm={2}>
+          {presentation_name}
+        </Col>
+        <Col sm={3}>
+          <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={this.onChange} />
+        </Col>
+      </FormGroup>
+    )
+  },
+
   getCustomFieldForm() {
     var forms = []
     if (CUSTOM_FIELDS.length > 0) {
       forms.push(
-        <div>
+        <div key={0}>
           <br />
             <h4>Define Custom Fields</h4>
           <hr />
@@ -117,13 +131,15 @@ const ItemCreationForm = React.createClass({
 
   createItem() {
     var _this = this;
+    console.log(_this.state)
     ajax({
       url:"/api/items/",
       type: "POST",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      data: this.state,
+      data: _this.state,
+      traditional: true,
       success:function(response){
         console.log(response)
       },
