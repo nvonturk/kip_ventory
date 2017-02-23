@@ -5,6 +5,7 @@ import { FormGroup, Button, Modal, FormControl, ControlLabel }  from 'react-boot
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import TagMultiSelect from './TagMultiSelect'
 
+var CUSTOM_FIELDS = []
 
 class ItemModificationModal extends Component{
   constructor(props) {
@@ -20,23 +21,123 @@ class ItemModificationModal extends Component{
 
     this.handleChange = this.handleChange.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
+    this.getCustomFieldForm = this.getCustomFieldForm.bind(this);
+    this.getShortTextField = this.getShortTextField.bind(this);
+    this.getLongTextField = this.getLongTextField.bind(this);
+    this.getIntegerField = this.getIntegerField.bind(this);
+    this.getFloatField = this.getFloatField.bind(this);
 
   }
 
-  // componentWillMount() {
-  //   var url = "/api/items/"+this.state.name+"/fields/"
-  //   var _this = this
-  //   console.log("fuck me");
-  //   // getJSON(url, null, function(data) {
-  //   //   console.log(data);
-  //   //   // CUSTOM_FIELDS = data.map( (field, i) => {return field} )
-  //   //   // data.map( (field, i) => {
-  //   //   //   _this.setState({
-  //   //   //     [field.name]: field.value
-  //   //   //   })
-  //   //   // })
-  //   // })
-  // }
+  componentWillMount() {
+    var url = "/api/items/"+this.state.name+"/fields/"
+    var _this = this
+    getJSON(url, null, function(data) {
+      CUSTOM_FIELDS = data.map( (field, i) => {return field} )
+      console.log(CUSTOM_FIELDS);
+      data.map( (field, i) => {
+
+        _this.setState({
+          [field.name]: field.value
+        });
+
+
+      })
+      // this.setState({custom})
+    })
+  }
+
+  getShortTextField(field_name, presentation_name, is_private) {
+    return (
+      <FormGroup key={field_name} bsSize="small">
+        <ControlLabel>
+          {presentation_name}
+        </ControlLabel>
+
+        <FormControl type="text" value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+      </FormGroup>
+    )
+  }
+
+  getLongTextField(field_name, presentation_name, is_private) {
+    return (
+      <FormGroup key={field_name} bsSize="small">
+        <ControlLabel>
+          {presentation_name}
+        </ControlLabel>
+
+        <FormControl type="text" style={{resize: "vertical", height:"100px"}} componentClass={"textarea"} value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+
+      </FormGroup>
+    )
+  }
+
+  getIntegerField(field_name, presentation_name, is_private, min, step) {
+    return (
+      <FormGroup key={field_name} bsSize="small">
+        <ControlLabel>
+          {presentation_name}
+        </ControlLabel>
+
+        <FormControl type="number" min={min} step={step} value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+
+      </FormGroup>
+    )
+  }
+
+  getFloatField(field_name, presentation_name, is_private){
+    return (
+      <FormGroup key={field_name} bsSize="small">
+        <ControlLabel>
+          {presentation_name}
+        </ControlLabel>
+
+        <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+
+      </FormGroup>
+    )
+  }
+
+  getCustomFieldForm() {
+    var forms = []
+    if (CUSTOM_FIELDS.length > 0) {
+      forms.push(
+        <div>
+          <br />
+            <h4>Custom Fields</h4>
+          <hr />
+        </div>
+      )
+      forms.push(CUSTOM_FIELDS.map( (field, i) => {
+
+        var field_name = field.name
+        var is_private = field.private
+        var field_type = field.field_type
+
+        switch(field_type) {
+          case "s":
+            return this.getShortTextField(field_name, field_name, is_private)
+            break;
+          case "m":
+            return this.getLongTextField(field_name, field_name, is_private)
+            break;
+          case "i":
+            return this.getIntegerField(field_name, field_name, is_private)
+            break;
+          case "f":
+            return this.getFloatField(field_name, field_name, is_private)
+            break
+          default:
+            console.log("null");
+            return null
+            break
+        }
+      }))
+      console.log(forms);
+      return forms
+    }
+    return null
+  }
 
   handleChange(name, e) {
     var change = {};
@@ -49,6 +150,8 @@ class ItemModificationModal extends Component{
   }
 
   render(){
+
+    var customform = this.getCustomFieldForm();
 
     return(
       <div>
@@ -98,6 +201,7 @@ class ItemModificationModal extends Component{
               <ControlLabel>Tags</ControlLabel>
               <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
 
+              {customform}
 
             </FormGroup>
           </Modal.Body>

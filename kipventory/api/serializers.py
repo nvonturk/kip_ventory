@@ -23,7 +23,7 @@ class CustomValueSerializer(serializers.ModelSerializer):
 
     def to_representation(self, cv):
         user = self.context['request'].user
-        d = {'name': cv.field.name, 'value': cv.get_value()}
+        d = {'name': cv.field.name, 'value': cv.get_value(), 'field_type': cv.field.field_type}
         if (user.is_staff or user.is_superuser):
             d.update({'private': cv.field.private})
         return d
