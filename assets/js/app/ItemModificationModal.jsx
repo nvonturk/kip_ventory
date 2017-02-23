@@ -33,7 +33,6 @@ class ItemModificationModal extends Component{
     var _this = this
     getJSON(url, null, function(data) {
       CUSTOM_FIELDS = data.map( (field, i) => {return field} )
-      console.log(CUSTOM_FIELDS);
       data.map( (field, i) => {
 
         _this.setState({
@@ -128,12 +127,10 @@ class ItemModificationModal extends Component{
             return this.getFloatField(field_name, field_name, is_private)
             break
           default:
-            console.log("null");
             return null
             break
         }
       }))
-      console.log(forms);
       return forms
     }
     return null

@@ -135,7 +135,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
         for tag in instance.tags.all():
             instance.tags.remove(tag)
-
+        #Something needs to be put here to add tags
         instance.save()
 
         item_values = instance.values.all()
