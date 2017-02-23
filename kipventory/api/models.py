@@ -49,6 +49,9 @@ class Item(models.Model):
     description = models.TextField(default='', max_length=500, blank=True)
     tags        = models.ManyToManyField(Tag, blank=True)
 
+    def __str__(self):
+        return "{}".format(self.name)
+
     def save(self, *args, **kwargs):
         # If this instance is in the database already, then it will have a
         # Primary Key value.
@@ -135,7 +138,7 @@ class Transaction(models.Model):
     category            = models.CharField(max_length = 20, choices=category_choices)
     quantity            = models.PositiveIntegerField()
     comment             = models.CharField(max_length = 100, blank=True, null=True)
-    date                = models.DateTimeField()
+    date                = models.DateTimeField(blank=True, auto_now_add=True)
     administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
 
 class Log(models.Model):
@@ -146,13 +149,23 @@ class Log(models.Model):
     date_created        = models.DateTimeField(blank=True, auto_now_add=True)
     message             = models.CharField(max_length = 100, blank=True, null=True)
     # The following categories detail what type of inventory change occurred
-    ITEM_CREATION       = "Item Creation"
-    ITEM_MODIFICATION   = "Item Modification"
-    ITEM_DELETION       = "Item Deletion"
+    ITEM_CREATION           = "Item Creation"
+    ITEM_MODIFICATION       = "Item Modification"
+    ITEM_DELETION           = "Item Deletion"
+    REQUEST_ITEM_CREATION   = "Request Item Creation"
+    REQUEST_ITEM_APPROVAL   = "Request Item Approval"
+    REQUEST_ITEM_DENIAL     = "Request Item Denial"
+    USER_CREATION           = "User Creation"
+    TRANSACTION_CREATION    = "Transaction Creation"
     category_choices    = (
         (ITEM_MODIFICATION, ITEM_MODIFICATION),
         (ITEM_CREATION, ITEM_CREATION),
         (ITEM_DELETION, ITEM_DELETION),
+        (REQUEST_ITEM_CREATION, REQUEST_ITEM_CREATION),
+        (REQUEST_ITEM_APPROVAL, REQUEST_ITEM_APPROVAL),
+        (REQUEST_ITEM_DENIAL, REQUEST_ITEM_DENIAL),
+        (USER_CREATION, USER_CREATION),
+        (TRANSACTION_CREATION, TRANSACTION_CREATION),
     )
     category            = models.CharField(max_length = 20, choices=category_choices)
 
