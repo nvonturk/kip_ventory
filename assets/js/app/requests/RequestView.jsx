@@ -3,7 +3,7 @@ import { getJSON } from "jquery"
 import { Grid, Row, Col, Panel, Image, Button } from 'react-bootstrap'
 import { Link } from 'react-router'
 
-class RequestContainer extends Component {
+class RequestView extends Component {
   constructor(props) {
     super(props);
     this.state = {};
@@ -35,12 +35,12 @@ class RequestContainer extends Component {
         <Row className="show-grid">
 
           <Col md={2}>
-            <Image src={request.item.photo_src} alt={request.item.name} style={{width:'100px', height:'100px'}}/>
+            <Image src={request.request_items[0].photo_src} alt={request.request_items[0].name} style={{width:'100px', height:'100px'}}/>
           </Col>
 
           <Col md={3}>
               <Col md={12}>
-                <h6>{request.item.name}</h6>
+                <h6>{request.request_items[0].name}</h6>
               </Col>
 
               <Col md={12}>
@@ -99,4 +99,4 @@ class RequestContainer extends Component {
 }
 
 
-export default RequestContainer
+export default RequestView

@@ -18,10 +18,10 @@ urlpatterns = [
     url(r'^tags/?$', views.TagListCreate.as_view()),
 
     url(r'^fields/?$',                       views.CustomFieldListCreate.as_view()),
-    url(r'^fields/(?P<field_name>[\w]+)/?$', views.CustomFieldDetailDelete.as_view()),
+    url(r'^fields/(?P<field_name>[\w\s]+)/?$', views.CustomFieldDetailDelete.as_view()),
 
     url(r'^cart/?$',                       views.CartItemList.as_view()),
-    url(r'^cart/?(?P<item_name>[\w]+)/?$', views.CartItemDetailModifyDelete.as_view()),
+    url(r'^cart/?(?P<item_name>[\w\s]+)/?$', views.CartItemDetailModifyDelete.as_view()),
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 
@@ -33,6 +33,7 @@ urlpatterns = [
     url(r'^logout/?$', auth_views.logout),
 
     url(r'^logs/?$', views.LogList.as_view()),
+
 
     url(r'^users/?$',         views.UserListCreate.as_view()),
     url(r'^users/current/?$', views.GetCurrentUser.as_view()),
