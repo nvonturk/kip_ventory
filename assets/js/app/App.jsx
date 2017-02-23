@@ -12,7 +12,7 @@ import DisbursementContainer from './manage/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './manage/requests/ManagerRequestsContainer'
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import NewUserRequestsContainer from './manage/newuserrequests/NewUserRequestsContainer'
-import LogsContainer from './admin/logs/LogsContainer'
+import LogsContainer from './manage/logs/LogsContainer'
 
 // MAIN APP PAGES
 import CartContainer from './cart/CartContainer'

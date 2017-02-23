@@ -34,31 +34,6 @@ class Tag(models.Model):
         return self.name
 
 
-# class KipventoryUser(models.Model):
-#     auth_user = models.OneToOneField(User, related_name='kipventory_user', on_delete=models.CASCADE)
-#     # netid = models.CharField(default='', max_length=100, blank=True)
-#     is_duke_user = models.BooleanField(default=False, blank=True)
-#
-#     def save(self, *args, **kwargs):
-#
-#         is_creation = False
-#         if not self.pk:
-#             is_creation = True
-#
-#         if 'username' in kwargs.keys():
-#             username = kwargs.pop('username')
-#             email = kwargs.pop('email')
-#             first_name = kwargs.pop('first_name')
-#             last_name = kwargs.pop('last_name')
-#
-#         if is_creation:
-#             auth_user = User.objects.create_user(username=username, email=email, password=None, first_name=first_name, last_name=last_name)
-#             self.auth_user = auth_user
-#
-#         super(KipventoryUser, self).save(*args, **kwargs)
-#
-#     def __str__(self):
-#         return self.auth_user.username
 
 class NewUserRequest(models.Model):
     username = models.CharField(max_length=150, unique=True)
@@ -164,26 +139,22 @@ class Transaction(models.Model):
     administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
 
 class Log(models.Model):
-    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity            = models.PositiveIntegerField()
+    item                = models.ForeignKey(Item, on_delete=models.CASCADE, blank=True, null=True)
+    quantity            = models.PositiveIntegerField(blank=True, null=True)
     initiating_user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiating_user')
     affected_user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='affected_user', blank=True, null=True)
     date_created        = models.DateTimeField(blank=True, auto_now_add=True)
-
+    message             = models.CharField(max_length = 100, blank=True, null=True)
     # The following categories detail what type of inventory change occurred
-    TRANSACTION         = "Transaction"
-    DISBURSEMENT        = "Disbursement"
-    REQUEST             = "Request"
+    ITEM_CREATION       = "Item Creation"
+    ITEM_MODIFICATION   = "Item Modification"
+    ITEM_DELETION       = "Item Deletion"
     category_choices    = (
-        (TRANSACTION, TRANSACTION),
-        (DISBURSEMENT, DISBURSEMENT),
-        (REQUEST, REQUEST),
+        (ITEM_MODIFICATION, ITEM_MODIFICATION),
+        (ITEM_CREATION, ITEM_CREATION),
+        (ITEM_DELETION, ITEM_DELETION),
     )
     category            = models.CharField(max_length = 20, choices=category_choices)
-
-    def save(self, *args, **kwargs):
-        if self.id is None:
-            super(Log, self).save(*args, **kwargs)
 
     def __str__(self):
         return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)
