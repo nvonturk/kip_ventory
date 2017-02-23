@@ -2,10 +2,14 @@ import React from 'react'
 import { IndexLink } from 'react-router'
 import { LinkContainer } from 'react-router-bootstrap'
 import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap'
+import UserPrivilegesContainer from './users/UserPrivilegesContainer'
 
 function AdminContainer(props){
   return (
-    <a href="/admin/">Admin Panel</a>
+    <div>
+      <a href="/admin/">Admin Panel</a>
+      <UserPrivilegesContainer />
+    </div>
   )
 }
 /*
