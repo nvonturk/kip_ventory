@@ -140,6 +140,11 @@ class UserPOSTSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
 
+class UserPUTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
+
 
 class TransactionGETSerializer(serializers.ModelSerializer):
     item          = serializers.SlugRelatedField(read_only=True, slug_field="name")

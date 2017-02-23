@@ -748,6 +748,21 @@ def get_all_users(request, format=None):
     serializer = serializers.UserGETSerializer(users, many=True)
     return Response(serializer.data)
 
+@api_view(['PUT'])
+@permission_classes((permissions.IsAuthenticated,))
+def edit_user(request, username, format=None):
+    if request.method == 'PUT':
+        if not request.user.is_superuser:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        updatedUser = request.data
+        user = models.User.objects.get(username=updatedUser['username'])
+        serializer = serializers.UserPUTSerializer(instance=user, data=updatedUser, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+      
+        return custom_bad_request_response("could not edit user")
+
 class TagListView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.TagSerializer

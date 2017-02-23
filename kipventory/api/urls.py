@@ -13,7 +13,7 @@ urlpatterns = [
     url(r'^items/(?P<item_name>[\w\s]+)/addtocart/?$',                    views.AddItemToCart.as_view()),
     url(r'^items/(?P<item_name>[\w\s]+)/fields/?$',                       views.CustomValueList.as_view()),
     url(r'^items/(?P<item_name>[\w\s]+)/fields/(?P<field_name>[\w]*)/?$', views.CustomValueDetailModify.as_view()),
-    url(r'^items/(?P<item_name>[\w\s]+)/requests/$',                      views.item_requests_get),
+    url(r'^items/(?P<item_name>[\w\s]+)/requests/?$',                      views.item_requests_get),
 
     url(r'^tags/?$', views.TagListView.as_view()),
 
@@ -34,6 +34,7 @@ urlpatterns = [
     url(r'^logout/?$', auth_views.logout),
 
     url(r'^users/?$',         views.get_all_users),
+    url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.edit_user),
     url(r'^users/current/?$', views.CurrentUser.as_view()),
     url(r'^netidtoken/?$',    views.NetIDToken.as_view()),
 
