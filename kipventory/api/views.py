@@ -182,6 +182,14 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         item = self.get_instance(item_name=item_name)
+
+        # check if we're trying to modify quantity
+        quantity = int(request.data.get('quantity', None))
+        if not (quantity is None):
+            if (quantity != item.quantity):
+                if not (request.user.is_superuser):
+                    return Response({"error": "Admin permissions required."})
+
         serializer = self.get_serializer(instance=item, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
