@@ -10,6 +10,8 @@ import { getCookie } from '../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
 import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
+import { browserHistory } from 'react-router';
+
 
 class ItemDetailModal extends Component {
   constructor(props) {
@@ -174,6 +176,7 @@ class ItemDetailModal extends Component {
       success:function(response){
         console.log(response);
         thisObj.setState({deleted: true});
+        browserHistory.push("/app/");
         //Now reload page
       },
       complete:function(){
@@ -205,7 +208,10 @@ class ItemDetailModal extends Component {
       data: itemState,
       traditional: true,
       success:function(response){
-        console.log(response);
+        var newUrl = "/app/items/" + response.name + "/";
+        browserHistory.push(newUrl);
+        thisObj.setState({showModifyModal: false});
+        // thisObj.props.params.item_name = response.name;
       },
       complete:function(){
 
@@ -255,51 +261,43 @@ class ItemDetailModal extends Component {
       }
     });
 
-    if(this.state.deleted){
 
-      return(
-        <div>
-          <h4> This item is no longer in the system. </h4>
-        </div>
-      );
 
-    } else{
+    return (
+      <Grid>
+        <h4>Item Details</h4>
+        <Table striped bordered condensed hover>
+          {this.getTableHeader()}
+          <tbody>
+            {this.getTableRow(this.state.item, 0)}
+          </tbody>
+        </Table>
+        <h4>Outstanding Requests</h4>
+        {/*
+        <Table striped bordered condensed hover>
+          {getRequestTableHeader()}
+          <tbody>
+            {this.getRequestTableRow(request, i))}
+          </tbody>
+        </Table>
+        */}
+        {requestListView}
+        {createTransactionView}
+        <h4> Cart </h4>
+        <Button onClick={this.addToCart}>Add to Cart</Button>
+        <QuantityBox onUserInput={this.setCartQuantity}/>
+        {
+          this.state.showModifyButton
+            ? <ModifyButton
+              click={this.handleModifyClick}
+              />
+            : null
+        }
+        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges} is_admin={this.user.is_superuser}/>
+      </Grid>
+    );
 
-      return (
-        <Grid>
-          <h4>Item Details</h4>
-          <Table striped bordered condensed hover>
-            {this.getTableHeader()}
-            <tbody>
-              {this.getTableRow(this.state.item, 0)}
-            </tbody>
-          </Table>
-          <h4>Outstanding Requests</h4>
-          {/*
-          <Table striped bordered condensed hover>
-            {getRequestTableHeader()}
-            <tbody>
-              {this.getRequestTableRow(request, i))}
-            </tbody>
-          </Table>
-          */}
-          {requestListView}
-          {createTransactionView}
-          <h4> Cart </h4>
-          <Button onClick={this.addToCart}>Add to Cart</Button>
-          <QuantityBox onUserInput={this.setCartQuantity}/>
-          {
-            this.state.showModifyButton
-              ? <ModifyButton
-                click={this.handleModifyClick}
-                />
-              : null
-          }
-          <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges} is_admin={this.user.is_superuser}/>
-        </Grid>
-      );
 
-    }
   }
 }
 export default ItemDetailModal
