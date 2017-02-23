@@ -226,14 +226,21 @@ class RequestPUTSerializer(serializers.ModelSerializer):
         }
 
 class LogSerializer(serializers.ModelSerializer):
+    item = serializers.SlugRelatedField(slug_field="name", queryset=models.Item.objects.all())
+
     class Meta:
         model = models.Log
         fields = ['id', "item", "quantity", "initiating_user", 'affected_user', "category"]
 
 class LogGETSerializer(serializers.ModelSerializer):
-    item = ItemGETSerializer(read_only=True, many=False)
+    def __init__(self, *args, **kwargs):
+        super(LogGETSerializer, self).__init__(*args, **kwargs)
+        self.fields['item'].context = self.context
+
+    item = ItemSerializer(read_only=True, many=False)
     initiating_user = UserGETSerializer(read_only=True, many=False)
     affected_user = UserGETSerializer(read_only=True, many=False)
+
     class Meta:
         model = models.Log
         fields = ['id', "item", "quantity", "date_created", "initiating_user", 'affected_user', "category"]

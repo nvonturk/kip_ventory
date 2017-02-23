@@ -32,7 +32,7 @@ urlpatterns = [
     url(r'^login/?$',  views.post_user_login),
     url(r'^signup/?$', views.post_user_signup),
     url(r'^logout/?$', auth_views.logout),
-    url(r'^logs/?$', views.get_logs),
+    url(r'^logs/?$', views.LogList.as_view()),
 
     url(r'^users/?$',         views.get_all_users),
     url(r'^users/current/?$', views.CurrentUser.as_view()),

@@ -764,13 +764,21 @@ class TagListView(generics.ListAPIView):
     def custom_bad_request_response(message):
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def get_logs(request, format=None):
-    if not request.user.is_staff:
-        # Not allowed to see logs if not manager/admin
-        return Response(status=status.HTTP_403_FORBIDDEN)
-    else:
+
+class LogList(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return models.Log.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.LogGETSerializer
+
+    def get(self, request, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            # Not allowed to see logs if not manager/admin
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         user = request.query_params.get("user")
         item = request.query_params.get("item")
         endDate = request.query_params.get("endDate")
@@ -778,7 +786,7 @@ def get_logs(request, format=None):
         # print("StartDate:" + startDate)
         # print("EndDate:", endDate)
         # Create Datetimes from strings
-        logs = models.Log.objects.all()
+        logs = self.get_queryset()
         q_objs = Q()
         if user is not None and user != '':
             q_objs &= (Q(affected_user__username=user) | Q(initiating_user__username=user))
@@ -805,8 +813,9 @@ def get_logs(request, format=None):
             print(startDate, endDate)
 
             logs = logs.filter(date_created__range=[startDate, endDate])
-        serializer = serializers.LogGETSerializer(logs, many=True)
+        serializer = self.get_serializer(instance=logs, many=True)
         return Response(serializer.data)
+
 
 @api_view(['GET', 'POST'])
 @permission_classes((permissions.IsAuthenticated,))
@@ -826,7 +835,7 @@ def transaction_get_create(request, format=None):
         data = request.data.copy()
         data['date'] = datetime.now()
         data['administrator'] = request.user.pk
-        serializer = serializers.TransactionPOSTSerializer(data=data)
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
@@ -849,8 +858,10 @@ def transaction_get_create(request, format=None):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 def createLog(data, initiating_user_pk, category):
     logdata = {}
+    print("CREATING LOG")
     print(data)
     logdata['item']                 = data['item']
     logdata['quantity']             = data['quantity']
@@ -860,8 +871,12 @@ def createLog(data, initiating_user_pk, category):
         serializer = serializers.LogSerializer(data=logdata)
         if serializer.is_valid():
             serializer.save()
+        else:
+            print(serializer.errors)
     elif category == 'Disbursement' or category == 'Request':
         logdata['affected_user']    = data['requester']
         serializer = serializers.LogSerializer(data=logdata)
         if serializer.is_valid():
             serializer.save()
+        else:
+            print(serializer.errors)
