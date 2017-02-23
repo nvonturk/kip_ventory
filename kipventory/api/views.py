@@ -40,44 +40,7 @@ class CustomPagination(pagination.PageNumberPagination):
              "num_pages": self.page.paginator.num_pages,
              "results": data
             })
-#
-# def get_my_paginated_response(count, num_pages, data):
-#     return Response({
-#         "count" : count,
-#         "num_pages" : num_pages,
-#         "results" : data
-#     })
 
-# def paginateRequest(request, queryset, defaultItemsPerPage, serializer):
-#     itemsPerPage = request.GET.get('itemsPerPage')
-#     if itemsPerPage is None:
-#         itemsPerPage = defaultItemsPerPage
-#     page = request.GET.get('page')
-#     if page is None:
-#         page = 1
-#
-#     return paginate(queryset, itemsPerPage, page, serializer)
-#
-# def paginate(queryset, itemsPerPage, page, serializer):
-#     paginator = Paginator(queryset, itemsPerPage)
-#     try:
-#         queryset = paginator.page(page)
-#     except PageNotAnInteger:
-#         # If page is not an integer, deliver first page.
-#         queryset = paginator.page(1)
-#     except EmptyPage:
-#         # If page is out of range (e.g. 9999), deliver last page of results.
-#         queryset = paginator.page(paginator.num_pages)
-#
-#     data = serializer(instance=queryset, many=True).data
-#     '''
-#     toReturn = {
-#         "count" : paginator.count,
-#         "num_pages" : paginator.num_pages,
-#         "results" : data
-#     }
-#     '''
-#     return get_my_paginated_response(paginator.count, paginator.num_pages, data)
 
 class ItemListCreate(generics.GenericAPIView):
     # authentication_classes = (authentication.TokenAuthentication,)
