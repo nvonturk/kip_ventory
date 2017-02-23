@@ -31,7 +31,7 @@ class ItemDetailModal extends Component {
     this.handleModifyClick = this.handleModifyClick.bind(this);
     this.closeModal = this.closeModal.bind(this);
     this.deleteItem = this.deleteItem.bind(this);
-    this.getDeletedView = this.getDeletedView.bind(this);
+    this.saveChanges = this.saveChanges.bind(this);
 
     this.getItem();
     //this.getRequests();
@@ -162,7 +162,6 @@ class ItemDetailModal extends Component {
 
   deleteItem(event){
     event.preventDefault();
-    console.log("we deleting!");
     var thisObj = this;
     var deleteUrl = "/api/items/" + this.item_name + "/";
 
@@ -190,16 +189,34 @@ class ItemDetailModal extends Component {
 
   }
 
-  getDeletedView(){
-    return(
-      <div>
-        <h4> This item is no longer in the system. </h4>
-      </div>
-    );
-  }
 
-  saveChanges(event){
-    event.preventDefault();
+  saveChanges(e, itemState){
+    e.preventDefault();
+
+    var thisObj = this;
+    var updateUrl = "/api/items/" + this.item_name + "/";
+
+    ajax({
+      url: updateUrl,
+      type: "PUT",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      data: itemState,
+      traditional: true,
+      success:function(response){
+        console.log(response);
+      },
+      complete:function(){
+
+      },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr)
+        console.log(textStatus)
+        console.log(thrownError)
+        alert("error doing something");
+      }
+    });
   }
 
 
@@ -239,7 +256,7 @@ class ItemDetailModal extends Component {
     });
 
     if(this.state.deleted){
-      
+
       return(
         <div>
           <h4> This item is no longer in the system. </h4>

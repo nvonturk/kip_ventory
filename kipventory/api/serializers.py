@@ -129,8 +129,16 @@ class ItemSerializer(serializers.ModelSerializer):
         setattr(instance, "quantity", item_data.get('quantity', getattr(instance, "quantity")))
         setattr(instance, "model_no", item_data.get('model_no', getattr(instance, "model_no")))
         setattr(instance, "description", item_data.get('description', getattr(instance, "description")))
-        setattr(instance, "tags", item_data.get('tags', getattr(instance, "tags")))
+        # setattr(instance, "tags", item_data.get('tags', getattr(instance, "tags")))
+
+        print(item_data)
+
+        for tag in instance.tags.all():
+            instance.tags.remove(tag)
+
         instance.save()
+
+        item_values = instance.values.all()
 
         for field, value in field_data.items():
             try:

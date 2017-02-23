@@ -217,7 +217,7 @@ class ItemModificationModal extends Component{
                   </Button>
                 : null
             }
-            <Button onClick={() => this.props.saveChanges(this.state)} bsStyle="primary">Save Changes</Button>
+            <Button onClick={(e) => this.props.saveChanges(e, this.state)} bsStyle="primary">Save Changes</Button>
           </Modal.Footer>
           </Modal>
       </div>
