@@ -121,6 +121,28 @@ class ItemSerializer(serializers.ModelSerializer):
 
         return item
 
+    def update(self, instance, validated_data):
+        item_data  = validated_data['item_data']
+        field_data = validated_data['field_data']
+
+        setattr(instance, "name", item_data.get('name', getattr(instance, "name")))
+        setattr(instance, "quantity", item_data.get('quantity', getattr(instance, "quantity")))
+        setattr(instance, "model_no", item_data.get('model_no', getattr(instance, "model_no")))
+        setattr(instance, "description", item_data.get('description', getattr(instance, "description")))
+        setattr(instance, "tags", item_data.get('tags', getattr(instance, "tags")))
+        instance.save()
+
+        for field, value in field_data.items():
+            try:
+                cv = item_values.get(field__pk=field.pk)
+                setattr(cv, field.field_type, value)
+                cv.save()
+            except:
+                print("baseee")
+
+        return instance
+
+
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(CartItemSerializer, self).__init__(*args, **kwargs)
