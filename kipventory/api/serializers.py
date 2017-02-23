@@ -133,12 +133,17 @@ class TagSerializer(serializers.ModelSerializer):
 class UserGETSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
 class UserPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
+
+class UserPUTSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
 
 class TransactionGETSerializer(serializers.ModelSerializer):
