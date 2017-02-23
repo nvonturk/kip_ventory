@@ -54,7 +54,7 @@ class ItemModificationModal extends Component{
           {presentation_name}
         </ControlLabel>
 
-        <FormControl type="text" value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+        <FormControl type="text" value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
       </FormGroup>
     )
   }
@@ -66,7 +66,7 @@ class ItemModificationModal extends Component{
           {presentation_name}
         </ControlLabel>
 
-        <FormControl type="text" style={{resize: "vertical", height:"100px"}} componentClass={"textarea"} value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+        <FormControl type="text" style={{resize: "vertical", height:"100px"}} componentClass={"textarea"} value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
 
       </FormGroup>
     )
@@ -79,7 +79,7 @@ class ItemModificationModal extends Component{
           {presentation_name}
         </ControlLabel>
 
-        <FormControl type="number" min={min} step={step} value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+        <FormControl type="number" min={min} step={step} value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
 
       </FormGroup>
     )
@@ -92,7 +92,7 @@ class ItemModificationModal extends Component{
           {presentation_name}
         </ControlLabel>
 
-        <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={this.handleChange} />
+        <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
 
       </FormGroup>
     )
