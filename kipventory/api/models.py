@@ -144,27 +144,15 @@ class Log(models.Model):
     initiating_user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiating_user')
     affected_user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='affected_user', blank=True, null=True)
     date_created        = models.DateTimeField(blank=True, auto_now_add=True)
-
+    message             = models.CharField(max_length = 100, blank=True, null=True)
     # The following categories detail what type of inventory change occurred
-    TRANSACTION         = "Transaction"
-    DISBURSEMENT        = "Disbursement"
-    REQUEST_APPROVED    = "Request Approved"
-    REQUEST_CREATED     = "Request Created"
-    USER_CREATED        = "User"
     ITEM_CREATION       = "Item Creation"
+    ITEM_MODIFICATION   = "Item Modification"
     category_choices    = (
-        (TRANSACTION, TRANSACTION),
-        (DISBURSEMENT, DISBURSEMENT),
-        (REQUEST_APPROVED, REQUEST_APPROVED),
-        (REQUEST_CREATED, REQUEST_CREATED),
-        (USER_CREATED, USER_CREATED),
+        (ITEM_MODIFICATION, ITEM_MODIFICATION),
         (ITEM_CREATION, ITEM_CREATION),
     )
     category            = models.CharField(max_length = 20, choices=category_choices)
-
-    def save(self, *args, **kwargs):
-        if self.id is None:
-            super(Log, self).save(*args, **kwargs)
 
     def __str__(self):
         return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)

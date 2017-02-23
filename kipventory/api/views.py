@@ -40,7 +40,44 @@ class CustomPagination(pagination.PageNumberPagination):
              "num_pages": self.page.paginator.num_pages,
              "results": data
             })
+#
+# def get_my_paginated_response(count, num_pages, data):
+#     return Response({
+#         "count" : count,
+#         "num_pages" : num_pages,
+#         "results" : data
+#     })
 
+# def paginateRequest(request, queryset, defaultItemsPerPage, serializer):
+#     itemsPerPage = request.GET.get('itemsPerPage')
+#     if itemsPerPage is None:
+#         itemsPerPage = defaultItemsPerPage
+#     page = request.GET.get('page')
+#     if page is None:
+#         page = 1
+#
+#     return paginate(queryset, itemsPerPage, page, serializer)
+#
+# def paginate(queryset, itemsPerPage, page, serializer):
+#     paginator = Paginator(queryset, itemsPerPage)
+#     try:
+#         queryset = paginator.page(page)
+#     except PageNotAnInteger:
+#         # If page is not an integer, deliver first page.
+#         queryset = paginator.page(1)
+#     except EmptyPage:
+#         # If page is out of range (e.g. 9999), deliver last page of results.
+#         queryset = paginator.page(paginator.num_pages)
+#
+#     data = serializer(instance=queryset, many=True).data
+#     '''
+#     toReturn = {
+#         "count" : paginator.count,
+#         "num_pages" : paginator.num_pages,
+#         "results" : data
+#     }
+#     '''
+#     return get_my_paginated_response(paginator.count, paginator.num_pages, data)
 
 class ItemListCreate(generics.GenericAPIView):
     # authentication_classes = (authentication.TokenAuthentication,)
@@ -394,7 +431,7 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
-        return models.Request.objects.filter(status='O')
+        return models.Request.objects.all()
 
     def get_serializer_class(self):
         return serializers.RequestSerializer
@@ -402,9 +439,9 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
     def get(self, request, item_name, format=None):
         requests = self.get_queryset()
         if request.user.is_staff or request.user.is_superuser:
-            requests = self.get_queryset().filter(request_items__item__name=item_name)
+            requests = models.Request.objects.filter(request_items__item__name=item_name)
         else:
-            requests = self.get_queryset().filter(request_items__item__name=item_name, requester=request.user.pk)
+            requests = models.Request.objects.filter(request_items__item__name=item_name, requester=request.user.pk)
         serializer = serializers.RequestSerializer(requests, many=True)
         return Response(serializer.data)
 
@@ -741,13 +778,11 @@ class TransactionListCreate(generics.GenericAPIView):
         return models.Transaction.objects.all()
 
     def get_serializer_class(self):
-        return serializers.TransactionSerializer
+        if self.request.method == 'GET':
+            return serializers.TransactionGETSerializer
+        return serializers.TransactionPOSTSerializer
 
     def get(self, request, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            # Not allowed to view transactions if not manager/admin
-            return Response(status=status.HTTP_403_FORBIDDEN)
-
         queryset = self.get_queryset()
         category = request.GET.get('category')
         if not (category is None or category=="All"):
@@ -757,19 +792,15 @@ class TransactionListCreate(generics.GenericAPIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            # Not allowed to create transactions if not manager/admin
-            return Response(status=status.HTTP_403_FORBIDDEN)
-
+        #todo django recommends doing this in middleware
         data = request.data.copy()
-        data.update({'date': datetime.now()})
-        data.update({'administrator': request.user})
-
+        data['date'] = datetime.now()
+        data['administrator'] = request.user.pk
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
-                return Response({"quantity": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
+                return custom_bad_request_response("Quantity be a positive integer")
 
             item = models.Item.objects.get(name=data['item'])
             if data['category'] == 'Acquisition':#models.ACQUISITION:
@@ -777,7 +808,7 @@ class TransactionListCreate(generics.GenericAPIView):
             elif data['category'] == 'Loss':#models.LOSS:
                 new_quantity = item.quantity - transaction_quantity
                 if new_quantity < 0:
-                    return Response({"quantity": "Cannot remove more items from the inventory than currently exists"}, status=status.HTTP_400_BAD_REQUEST)
+                    return custom_bad_request_response("Cannot remove more items from the inventory than currently exists")
             else:
                 #should never get here
                 pass
@@ -805,8 +836,26 @@ def itemCreationLog(data, initiating_user_pk):
     except User.DoesNotExist:
         raise NotFound('User not found.')
     quantity = data['quantity']
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Creation')
+    message = 'Item {} created'.format(data['name'])
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Creation', message=message)
     log.save()
 
 def itemModificationLog(data, initiating_user_pk):
     print("Item Modification")
+    item = None
+    initiating_user = None
+    quantity = None
+    affected_user = None
+    print(data)
+    try:
+        item = models.Item.objects.get(name=data['name'])
+    except models.Item.DoesNotExist:
+        raise NotFound('Item {} not found.'.format(data['name']))
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    quantity = data['quantity']
+    message = 'Item {} modified by administrator'.format(data['name'])
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Modification', message=message)
+    log.save()
