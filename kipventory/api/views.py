@@ -757,9 +757,7 @@ class TransactionListCreate(generics.GenericAPIView):
         return models.Transaction.objects.all()
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return serializers.TransactionGETSerializer
-        return serializers.TransactionPOSTSerializer
+        return serializers.TransactionSerializer
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
@@ -774,12 +772,12 @@ class TransactionListCreate(generics.GenericAPIView):
         #todo django recommends doing this in middleware
         data = request.data.copy()
         data['date'] = datetime.now()
-        data['administrator'] = request.user.pk
+        data['administrator'] = request.user
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
-                return custom_bad_request_response("Quantity be a positive integer")
+                return Response({"quantity": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
 
             item = models.Item.objects.get(name=data['item'])
             if data['category'] == 'Acquisition':#models.ACQUISITION:
@@ -787,7 +785,7 @@ class TransactionListCreate(generics.GenericAPIView):
             elif data['category'] == 'Loss':#models.LOSS:
                 new_quantity = item.quantity - transaction_quantity
                 if new_quantity < 0:
-                    return custom_bad_request_response("Cannot remove more items from the inventory than currently exists")
+                    return Response({"quantity": "Cannot remove more items from the inventory than currently exists"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 #should never get here
                 pass
