@@ -50,7 +50,6 @@ class CartContainer extends Component {
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
-
       }
   });
       thisobj.reRender(cartItem.id)

@@ -12,7 +12,6 @@ const ManagerContainer = React.createClass({
   },
 
   handleSelect(key) {
-    var header = this.state.headers[key]
     this.setState({
       activeKey: key,
     })

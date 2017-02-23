@@ -77,6 +77,50 @@ class ItemSerializer(serializers.ModelSerializer):
         is_in_cart = (models.CartItem.objects.filter(owner__pk=user.pk, item__name=item.name).count() > 0)
         return is_in_cart
 
+    def to_internal_value(self, data):
+        errors = {}
+        # check standard field names as defined in the serializer
+        item_data = super(ItemSerializer, self).to_internal_value(data)
+        # check for valid CustomField names in this data.
+        field_data = {}
+
+        fields = models.CustomField.objects.all()
+        for field_name, value in data.items():
+            cf_exists = (fields.filter(name=field_name).count() > 0)
+            if cf_exists:
+                cf = fields.get(name=field_name)
+                try:
+                    val = models.FIELD_TYPE_DICT[cf.field_type](value)
+                    field_data.update({cf: val})
+                except:
+                    errors.update({field_name: 'Expected \'{}\' type, got \'{}\'.'.format(models.FIELD_TYPE_DICT[ft].__name__, type(value).__name__)})
+
+        if errors:
+            raise ValidationError(errors)
+
+        validated_data = {"field_data": field_data, "item_data": item_data}
+        return validated_data
+
+    def create(self, validated_data):
+        item_data  = validated_data['item_data']
+        field_data = validated_data['field_data']
+
+        # create the item from the intrinsic data fields
+        item = super(ItemSerializer, self).create(item_data)
+        # there will be a complete set of blank CustomValues associated with this Item
+        # as a result of the Item.save() method.
+        item_values = item.values.all()
+        # If we have
+        for field, value in field_data.items():
+            try:
+                cv = item_values.get(field__pk=field.pk)
+                setattr(cv, field.field_type, value)
+                cv.save()
+            except:
+                print("baseee")
+
+        return item
+
 class NewUserRequestSerializer(serializers.ModelSerializer):
     # id            = serializers.ReadOnlyField()
     username        = serializers.CharField(max_length=150, min_length=1, required=True)
