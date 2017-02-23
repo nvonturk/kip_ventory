@@ -173,6 +173,7 @@ class ItemModificationModal extends Component{
 
               <ControlLabel>Quantity</ControlLabel>
               <FormControl
+                disabled={!this.props.is_admin}
                 type="number"
                 name="quantity"
                 value={this.state.quantity}
