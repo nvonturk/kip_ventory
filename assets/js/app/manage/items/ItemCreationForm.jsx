@@ -28,7 +28,7 @@ const ItemCreationForm = React.createClass({
       CUSTOM_FIELDS = data.map( (field, i) => {return field} )
       data.map( (field, i) => {
         _this.setState({
-          [field.name]: field.value
+          [field.name]: ""
         })
       })
     })
