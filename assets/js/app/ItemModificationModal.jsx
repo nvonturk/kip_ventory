@@ -16,7 +16,6 @@ class ItemModificationModal extends Component{
       model_no: this.props.item.model_no,
       description: this.props.item.description,
       tags: this.props.item.tags,
-      // customform: [],
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -46,6 +45,7 @@ class ItemModificationModal extends Component{
       // this.setState({custom})
     })
   }
+
 
   getShortTextField(field_name, presentation_name, is_private) {
     return (
@@ -211,12 +211,13 @@ class ItemModificationModal extends Component{
             <Button onClick={this.props.close}>Close</Button>
             {
               this.props.is_admin
+
                 ? <Button onClick={this.props.deleteItem} bsStyle="danger">
                   Delete Item
                   </Button>
                 : null
             }
-            <Button onClick={this.props.saveChanges} bsStyle="primary">Save Changes</Button>
+            <Button onClick={() => this.props.saveChanges(this.state)} bsStyle="primary">Save Changes</Button>
           </Modal.Footer>
           </Modal>
       </div>

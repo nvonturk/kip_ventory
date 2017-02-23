@@ -4,6 +4,7 @@ import QuantityBox from './QuantityBox'
 import SimpleRequest from './SimpleRequest'
 import RequestList from './RequestList'
 import $ from "jquery"
+import { getJSON, ajax } from 'jquery'
 import Item from './Item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
@@ -21,6 +22,7 @@ class ItemDetailModal extends Component {
       cart_quantity:"",
       showModifyButton: this.user.is_staff,
       showModifyModal: false,
+      deleted: false,
       //item: {}
     }
     this.addToCart = this.addToCart.bind(this);
@@ -28,6 +30,8 @@ class ItemDetailModal extends Component {
     this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
     this.handleModifyClick = this.handleModifyClick.bind(this);
     this.closeModal = this.closeModal.bind(this);
+    this.deleteItem = this.deleteItem.bind(this);
+    this.getDeletedView = this.getDeletedView.bind(this);
 
     this.getItem();
     //this.getRequests();
@@ -159,6 +163,39 @@ class ItemDetailModal extends Component {
   deleteItem(event){
     event.preventDefault();
     console.log("we deleting!");
+    var thisObj = this;
+    var deleteUrl = "/api/items/" + this.item_name + "/";
+
+    ajax({
+      url: deleteUrl,
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        console.log(response);
+        thisObj.setState({deleted: true});
+        //Now reload page
+      },
+      complete:function(){
+
+      },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr)
+        console.log(textStatus)
+        console.log(thrownError)
+        alert("error doing something");
+      }
+    });
+
+  }
+
+  getDeletedView(){
+    return(
+      <div>
+        <h4> This item is no longer in the system. </h4>
+      </div>
+    );
   }
 
   saveChanges(event){
@@ -201,39 +238,51 @@ class ItemDetailModal extends Component {
       }
     });
 
-    return (
-      <Grid>
-        <h4>Item Details</h4>
-        <Table striped bordered condensed hover>
-          {this.getTableHeader()}
-          <tbody>
-            {this.getTableRow(this.state.item, 0)}
-          </tbody>
-        </Table>
-        <h4>Outstanding Requests</h4>
-        {/*
-        <Table striped bordered condensed hover>
-          {getRequestTableHeader()}
-          <tbody>
-            {this.getRequestTableRow(request, i))}
-          </tbody>
-        </Table>
-        */}
-        {requestListView}
-        {createTransactionView}
-        <h4> Cart </h4>
-        <Button onClick={this.addToCart}>Add to Cart</Button>
-        <QuantityBox onUserInput={this.setCartQuantity}/>
-        {
-          this.state.showModifyButton
-            ? <ModifyButton
-              click={this.handleModifyClick}
-              />
-            : null
-        }
-        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges} is_admin={this.user.is_superuser}/>
-      </Grid>
-    );
+    if(this.state.deleted){
+      
+      return(
+        <div>
+          <h4> This item is no longer in the system. </h4>
+        </div>
+      );
+
+    } else{
+
+      return (
+        <Grid>
+          <h4>Item Details</h4>
+          <Table striped bordered condensed hover>
+            {this.getTableHeader()}
+            <tbody>
+              {this.getTableRow(this.state.item, 0)}
+            </tbody>
+          </Table>
+          <h4>Outstanding Requests</h4>
+          {/*
+          <Table striped bordered condensed hover>
+            {getRequestTableHeader()}
+            <tbody>
+              {this.getRequestTableRow(request, i))}
+            </tbody>
+          </Table>
+          */}
+          {requestListView}
+          {createTransactionView}
+          <h4> Cart </h4>
+          <Button onClick={this.addToCart}>Add to Cart</Button>
+          <QuantityBox onUserInput={this.setCartQuantity}/>
+          {
+            this.state.showModifyButton
+              ? <ModifyButton
+                click={this.handleModifyClick}
+                />
+              : null
+          }
+          <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges} is_admin={this.user.is_superuser}/>
+        </Grid>
+      );
+
+    }
   }
 }
 export default ItemDetailModal
