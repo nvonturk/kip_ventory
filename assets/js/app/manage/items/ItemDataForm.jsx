@@ -77,6 +77,20 @@ const ItemDataForm = React.createClass({
     )
   },
 
+  getFloatField(field_name, presentation_name, is_private) {
+    return (
+      <FormGroup bsSize="small">
+        <Col componentClass={ControlLabel} sm={2}>
+          {presentation_name}
+        </Col>
+        <Col sm={3}>
+          <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={this.onChange} />
+        </Col>
+      </FormGroup>
+    )
+  },
+
+
   getCustomFieldForm() {
     var forms = []
     if (CUSTOM_FIELDS.length > 0) {
@@ -162,7 +176,13 @@ const ItemDataForm = React.createClass({
               { this.getIntegerField("quantity", "Quantity", false) }
               { this.getLongTextField("description", "Description", false) }
 
-              <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
+              <Col componentClass={ControlLabel} sm={2}>
+                Tags
+              </Col>
+              <Col sm={9}>
+                <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
+              </Col>
+              <br/>
 
 
               { this.getCustomFieldForm() }
