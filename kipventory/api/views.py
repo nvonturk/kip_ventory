@@ -253,7 +253,7 @@ class CustomFieldListCreate(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomFieldDetailModifyDelete(generics.GenericAPIView):
+class CustomFieldDetailDelete(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
     def get_instance(self, field_name):
@@ -275,17 +275,6 @@ class CustomFieldDetailModifyDelete(generics.GenericAPIView):
         custom_field = self.get_instance(field_name=field_name)
         serializer = self.get_serializer(instance=custom_field)
         return Response(serializer.data)
-
-    def put(self, request, field_name, format=None):
-        if not (request.user.is_superuser):
-            d = {"error": "Manager permissions required."}
-            return Response(d, status=status.HTTP_403_FORBIDDEN)
-        custom_field = self.get_instance(field_name=field_name)
-        serializer = self.get_serializer(instance=custom_field, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, field_name, format=None):
         if not (request.user.is_superuser):
@@ -863,7 +852,7 @@ def itemModificationLog(data, initiating_user_pk):
     except User.DoesNotExist:
         raise NotFound('User not found.')
     quantity = data['quantity']
-    message = 'Item {} modified by {}}'.format(data['name'], initiating_user)
+    message = 'Item {} modified by {}'.format(data['name'], initiating_user)
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Modification', message=message, affected_user=affected_user)
     log.save()
 
@@ -877,7 +866,7 @@ def itemDeletionLog(item_name, initiating_user_pk):
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
-    message = 'Item {} deleted by {}}'.format(item_name, initiating_user)
+    message = 'Item {} deleted by {}'.format(item_name, initiating_user)
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Deletion', message=message, affected_user=affected_user)
     log.save()
 

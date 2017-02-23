@@ -18,7 +18,7 @@ urlpatterns = [
     url(r'^tags/?$', views.TagListCreate.as_view()),
 
     url(r'^fields/?$',                       views.CustomFieldListCreate.as_view()),
-    url(r'^fields/(?P<field_name>[\w\s]+)/?$', views.CustomFieldDetailModifyDelete.as_view()),
+    url(r'^fields/(?P<field_name>[\w\s]+)/?$', views.CustomFieldDetailDelete.as_view()),
 
     url(r'^cart/?$',                       views.CartItemList.as_view()),
     url(r'^cart/?(?P<item_name>[\w\s]+)/?$', views.CartItemDetailModifyDelete.as_view()),

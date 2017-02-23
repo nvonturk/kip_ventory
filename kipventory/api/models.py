@@ -60,7 +60,6 @@ class Item(models.Model):
         is_creation = False
         if not self.pk:
             is_creation = True
-        print(self.pk)
         super(Item, self).save(*args, **kwargs)
         # If this call to `save` is creating a new Item, then we must also create
         # a CustomValue for each CustomField that currently exists.
