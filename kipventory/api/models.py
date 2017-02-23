@@ -173,11 +173,15 @@ class Log(models.Model):
     # The following categories detail what type of inventory change occurred
     TRANSACTION         = "Transaction"
     DISBURSEMENT        = "Disbursement"
-    REQUEST             = "Request"
+    REQUEST_APPROVED    = "Request Approved"
+    REQUEST_CREATED     = "Request Created"
+    USER_CREATED                = "User"
     category_choices    = (
         (TRANSACTION, TRANSACTION),
         (DISBURSEMENT, DISBURSEMENT),
-        (REQUEST, REQUEST),
+        (REQUEST_APPROVED, REQUEST_APPROVED),
+        (REQUEST_CREATED, REQUEST_CREATED),
+        (USER_CREATED, USER_CREATED),
     )
     category            = models.CharField(max_length = 20, choices=category_choices)
 

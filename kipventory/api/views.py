@@ -142,7 +142,10 @@ class ItemListCreate(generics.GenericAPIView):
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            print(serializer)
             serializer.save()
+            # Insert Create Log
+            # Need {serializer.data, initiating_user_pk, 'Item Creation'}
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -176,6 +179,8 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         serializer = self.get_serializer(instance=item, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            # Insert Create Log
+            # Need {serializer.data, initiating_user_pk, 'Item Changed'}
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -187,6 +192,8 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
 
         item = self.get_instance(item_name=item_name)
         item.delete()
+        # Insert Create Log
+        # Need {serializer.data, initiating_user_pk, 'Item Changed'}
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class AddItemToCart(generics.GenericAPIView):
@@ -480,6 +487,8 @@ class RequestListCreate(generics.GenericAPIView):
             item = ci.item
             quantity = ci.quantity
             req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
+            # Insert Create Log
+            # Need {serializer.data, initiating_user_pk, 'Request Created'}
             req_item.save()
             ci.delete()
 
@@ -528,6 +537,10 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
 
         if serializer.is_valid():
             # check integrity of approval operation
+            if request.data['status'] == 'D':
+                # Insert Create Log
+                # Need {serializer.data, initiating_user_pk, 'Request Approved'}
+                print("HERE")
             if request.data['status'] == 'A':
                 valid_request = True
                 new_quantities = {}
@@ -546,14 +559,15 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         requested_quantity = ri.quantity
                         item.quantity = (available_quantity - requested_quantity)
                         item.save()
+                        # Insert Create Log
+                        # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
-            item = models.Item.objects.get(pk=request.data['item'])
-            item.quantity = item.quantity - int(request.data['quantity'])
-            item.save()
-            createLog(request.data, request.data['administrator'], 'Request')
-            print(request.data)
+            # item = models.Item.objects.get(pk=request.data['item'])
+            # item.quantity = item.quantity - int(request.data['quantity'])
+            # item.save()
+            createLog(request.data, request.data['administrator'], 'Request Approved')
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -568,6 +582,8 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             d = {"error": "Cannot delete an approved/denied request."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         instance.delete()
+        # Insert Create Log
+        # Need {serializer.data, initiating_user_pk, 'Request Deleted'}
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['POST'])
@@ -873,7 +889,7 @@ def createLog(data, initiating_user_pk, category):
             serializer.save()
         else:
             print(serializer.errors)
-    elif category == 'Disbursement' or category == 'Request':
+    elif category == 'Disbursement' or category == 'Request Approved':
         logdata['affected_user']    = data['requester']
         serializer = serializers.LogSerializer(data=logdata)
         if serializer.is_valid():
