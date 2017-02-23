@@ -17,14 +17,20 @@ const ManagerContainer = React.createClass({
     })
   },
 
+  getCustomFieldsLink(is_superuser) {
+    return is_superuser ? (
+      <LinkContainer to="/app/manage/custom-fields">
+        <NavItem eventKey={2}>Custom Fields</NavItem>
+      </LinkContainer>
+    ) : null
+  },
+
   render() {
     return (
       <Grid>
         <Row>
           <Col md={2}>
-            <IndexLink to="/app/manage" onClick={() => this.handleSelect(0)}>
-              <h4>Management</h4>
-            </IndexLink>
+            <br />
           </Col>
         </Row>
         <Row>
@@ -34,17 +40,20 @@ const ManagerContainer = React.createClass({
                 <LinkContainer to="/app/manage/create-item">
                   <NavItem eventKey={1}>Create Items</NavItem>
                 </LinkContainer>
+
+                { this.getCustomFieldsLink(this.props.route.admin.is_superuser) }
+
                 <LinkContainer to="/app/manage/disburse">
-                  <NavItem eventKey={2}>Disbursement</NavItem>
+                  <NavItem eventKey={3}>Disbursement</NavItem>
                 </LinkContainer>
                 <LinkContainer to="/app/manage/requests">
-                  <NavItem eventKey={3}>Requests</NavItem>
+                  <NavItem eventKey={4}>Requests</NavItem>
                 </LinkContainer>
                 <LinkContainer to="/app/manage/transactions">
-                  <NavItem eventKey={4}>Transactions</NavItem>
+                  <NavItem eventKey={5}>Transactions</NavItem>
                 </LinkContainer>
                 <LinkContainer to="/app/manage/logs">
-                  <NavItem eventKey={5}>Logs</NavItem>
+                  <NavItem eventKey={6}>Logs</NavItem>
                 </LinkContainer>
               </Nav>
             </Row>
