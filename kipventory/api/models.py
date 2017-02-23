@@ -146,13 +146,21 @@ class Log(models.Model):
     date_created        = models.DateTimeField(blank=True, auto_now_add=True)
     message             = models.CharField(max_length = 100, blank=True, null=True)
     # The following categories detail what type of inventory change occurred
-    ITEM_CREATION       = "Item Creation"
-    ITEM_MODIFICATION   = "Item Modification"
-    ITEM_DELETION       = "Item Deletion"
+    ITEM_CREATION           = "Item Creation"
+    ITEM_MODIFICATION       = "Item Modification"
+    ITEM_DELETION           = "Item Deletion"
+    REQUEST_ITEM_CREATION   = "Request Item Creation"
+    REQUEST_ITEM_APPROVAL   = "Request Item Approval"
+    REQUEST_ITEM_DENIAL     = "Request Item Denial"
+    USER_CREATION           = "User Creation"
     category_choices    = (
         (ITEM_MODIFICATION, ITEM_MODIFICATION),
         (ITEM_CREATION, ITEM_CREATION),
         (ITEM_DELETION, ITEM_DELETION),
+        (REQUEST_ITEM_CREATION, REQUEST_ITEM_CREATION),
+        (REQUEST_ITEM_APPROVAL, REQUEST_ITEM_APPROVAL),
+        (REQUEST_ITEM_DENIAL, REQUEST_ITEM_DENIAL),
+        (USER_CREATION, USER_CREATION),
     )
     category            = models.CharField(max_length = 20, choices=category_choices)
 

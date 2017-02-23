@@ -478,8 +478,8 @@ class RequestListCreate(generics.GenericAPIView):
             req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
             # Insert Create Log
             # Need {serializer.data, initiating_user_pk, 'Request Created'}
-            # requestItemCreation(req_item, request.user.pk)
             req_item.save()
+            requestItemCreation(req_item, request.user.pk)
             ci.delete()
 
         serializer = self.get_serializer(instance=request_instance)
@@ -530,7 +530,8 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             if request.data['status'] == 'D':
                 # Insert Create Log
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                print("HERE")
+                for ri in instance.request_items.all():
+                    requestItemDenial(ri, request.user.pk)
             if request.data['status'] == 'A':
                 valid_request = True
                 new_quantities = {}
@@ -551,6 +552,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         item.save()
                         # Insert Create Log
                         # Need {serializer.data, initiating_user_pk, 'Request Approved'}
+                        requestItemApproval(ri, request.user.pk)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
@@ -573,8 +575,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             d = {"error": "Cannot delete an approved/denied request."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         instance.delete()
-        # Insert Create Log
-        # Need {serializer.data, initiating_user_pk, 'Request Deleted'}
+        # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['POST'])
@@ -615,6 +616,7 @@ class UserListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            # userCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -809,8 +811,8 @@ def itemCreationLog(data, initiating_user_pk):
     except User.DoesNotExist:
         raise NotFound('User not found.')
     quantity = data['quantity']
-    message = 'Item {} created'.format(data['name'])
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Creation', message=message)
+    message = 'Item {} created by {}'.format(data['name'], initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Creation', message=message, affected_user=affected_user)
     log.save()
 
 def itemModificationLog(data, initiating_user_pk):
@@ -829,8 +831,8 @@ def itemModificationLog(data, initiating_user_pk):
     except User.DoesNotExist:
         raise NotFound('User not found.')
     quantity = data['quantity']
-    message = 'Item {} modified by administrator'.format(data['name'])
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Modification', message=message)
+    message = 'Item {} modified by {}}'.format(data['name'], initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Modification', message=message, affected_user=affected_user)
     log.save()
 
 def itemDeletionLog(item_name, initiating_user_pk):
@@ -843,6 +845,62 @@ def itemDeletionLog(item_name, initiating_user_pk):
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
-    message = 'Item {} deleted by administrator'.format(item_name)
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Deletion', message=message)
+    message = 'Item {} deleted by {}}'.format(item_name, initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Deletion', message=message, affected_user=affected_user)
     log.save()
+
+def requestItemCreation(request_item, initiating_user_pk):
+    print("Request Item Creation")
+    print(request_item)
+    item = request_item.item
+    initiating_user = None
+    quantity = request_item.quantity
+    affected_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Request Item for item {} created by {}'.format(request_item.item.name, initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
+    log.save()
+
+def requestItemDenial(request_item, initiating_user_pk):
+    print("Request Item Denial")
+    item = request_item.item
+    initiating_user = None
+    quantity = request_item.quantity
+    affected_user = request_item.request.requester
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Request Item for item {} denied by {}'.format(request_item.item.name, initiating_user.username)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Request Item Denial', message=message, affected_user=affected_user)
+    log.save()
+
+def requestItemApproval(request_item, initiating_user_pk):
+    print("Request Item Approval")
+    item = request_item.item
+    initiating_user = None
+    quantity = request_item.quantity
+    print(request_item.request.requester)
+    affected_user = request_item.request.requester
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Request Item for item {} approved by {}'.format(request_item.item.name, initiating_user.username)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Request Item Approval', message=message, affected_user=affected_user)
+    log.save()
+
+def userCreationLog(data, initiating_user_pk):
+    print("User Creation")
+    print(data)
+    # item = None
+    # initiating_user = None
+    # quantity = None
+    # affected_user = None
+    # try:
+    #     initiating_user = User.objects.get(pk=initiating_user_pk)
+    # except User.DoesNotExist:
+    #     raise NotFound('User not found.')
