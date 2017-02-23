@@ -7,6 +7,7 @@ import $ from "jquery"
 import Item from './Item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
+import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
 
 class ItemDetailModal extends Component {
@@ -18,15 +19,20 @@ class ItemDetailModal extends Component {
     this.state = {
       requests: [],
       cart_quantity:"",
+      showModifyButton: this.user.is_staff,
+      showModifyModal: false,
       //item: {}
     }
     this.addToCart = this.addToCart.bind(this);
     this.setCartQuantity = this.setCartQuantity.bind(this);
     this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
+    this.handleModifyClick = this.handleModifyClick.bind(this);
+    this.closeModal = this.closeModal.bind(this);
 
     this.getItem();
     //this.getRequests();
     //this.getTransactions();
+
   }
 
   getItem() {
@@ -63,6 +69,15 @@ class ItemDetailModal extends Component {
   // todo display a log of transactions in this detail view
   getTransactions() {
 
+  }
+
+  handleModifyClick(event){
+    event.preventDefault();
+    this.setState({showModifyModal: true})
+  }
+
+  closeModal(){
+    this.setState({showModifyModal: false});
   }
 
   setCartQuantity(value) {
@@ -165,6 +180,16 @@ class ItemDetailModal extends Component {
         </div>
     }
 
+    var ModifyButton = React.createClass({
+      render: function() {
+        return (
+          <div>
+          <Button onClick={this.props.click} >Modify Item</Button>
+          </div>
+        );
+      }
+    });
+
     return (
       <Grid>
         <h4>Item Details</h4>
@@ -188,6 +213,14 @@ class ItemDetailModal extends Component {
         <h4> Cart </h4>
         <Button onClick={this.addToCart}>Add to Cart</Button>
         <QuantityBox onUserInput={this.setCartQuantity}/>
+        {
+          this.state.showModifyButton
+            ? <ModifyButton
+              click={this.handleModifyClick}
+              />
+            : null
+        }
+        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item}/>
       </Grid>
     );
   }
