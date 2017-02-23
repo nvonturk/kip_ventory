@@ -56,16 +56,11 @@ const InventoryItem = React.createClass({
     ) : null
   },
 
-  ucFirst(str) {
-    str = str.charAt(0).toUpperCase() + str.slice(1)
-    str = str.replace("_", " ")
-    return str
-  },
 
   getCustomFieldView(field, i) {
     return (
       <div key={i}>
-        <p><span>{this.ucFirst(field.name)}: </span><span>{this.ucFirst(field.value)}</span></p>
+        <p><span>{field.name}: </span><span>{field.value}</span></p>
       </div>
     )
   },

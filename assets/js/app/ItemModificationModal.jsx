@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import $ from "jquery"
+import { getJSON, ajax } from 'jquery'
 import { FormGroup, Button, Modal, FormControl, ControlLabel }  from 'react-bootstrap'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import TagMultiSelect from './TagMultiSelect'
@@ -14,12 +15,28 @@ class ItemModificationModal extends Component{
       model_no: this.props.item.model_no,
       description: this.props.item.description,
       tags: this.props.item.tags,
+      // customform: [],
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleTagSelection = this.handleTagSelection.bind(this);
 
   }
+
+  // componentWillMount() {
+  //   var url = "/api/items/"+this.state.name+"/fields/"
+  //   var _this = this
+  //   console.log("fuck me");
+  //   // getJSON(url, null, function(data) {
+  //   //   console.log(data);
+  //   //   // CUSTOM_FIELDS = data.map( (field, i) => {return field} )
+  //   //   // data.map( (field, i) => {
+  //   //   //   _this.setState({
+  //   //   //     [field.name]: field.value
+  //   //   //   })
+  //   //   // })
+  //   // })
+  // }
 
   handleChange(name, e) {
     var change = {};
@@ -28,7 +45,6 @@ class ItemModificationModal extends Component{
   }
 
   handleTagSelection(tagsSelected) {
-    console.log("tags: " + tagsSelected);
     this.setState({tags: tagsSelected});
   }
 
@@ -78,8 +94,12 @@ class ItemModificationModal extends Component{
                 placeholder={this.state.description}
                 onChange={this.handleChange.bind(this, 'description')}
               ></FormControl>
+
+              <ControlLabel>Tags</ControlLabel>
+              <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
+
+
             </FormGroup>
-            <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
           </Modal.Body>
 
           <Modal.Footer>
