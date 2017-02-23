@@ -208,7 +208,8 @@ class ItemModificationModal extends Component{
 
           <Modal.Footer>
             <Button onClick={this.props.close}>Close</Button>
-            <Button bsStyle="primary">Save Changes</Button>
+            <Button onClick={this.props.deleteItem} bsStyle="danger">Delete Item</Button>
+            <Button onClick={this.props.saveChanges} bsStyle="primary">Save Changes</Button>
           </Modal.Footer>
           </Modal>
       </div>

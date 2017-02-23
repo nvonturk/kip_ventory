@@ -155,6 +155,17 @@ class ItemDetailModal extends Component {
     )
   }
 
+
+  deleteItem(event){
+    event.preventDefault();
+    console.log("we deleting!");
+  }
+
+  saveChanges(event){
+    event.preventDefault();
+  }
+
+
   // todo refactor this
   render() {
 
@@ -220,7 +231,7 @@ class ItemDetailModal extends Component {
               />
             : null
         }
-        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item}/>
+        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges}/>
       </Grid>
     );
   }
