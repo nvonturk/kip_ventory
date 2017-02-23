@@ -28,6 +28,7 @@ function getManagerPanel(userData) {
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
+      <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
     </Route>) : null
 }

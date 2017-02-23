@@ -15,7 +15,6 @@ from django.db.models import Q
 from . import models, serializers
 from rest_framework import pagination
 from datetime import datetime
-
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.forms import PasswordResetForm
@@ -550,6 +549,11 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
+            item = models.Item.objects.get(pk=request.data['item'])
+            item.quantity = item.quantity - int(request.data['quantity'])
+            item.save()
+            createLog(request.data, request.data['administrator'], 'Request')
+            print(request.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -757,8 +761,52 @@ class TagListView(generics.ListAPIView):
         queryset = models.Tag.objects.all()
         return queryset
 
-def custom_bad_request_response(message):
-    return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    def custom_bad_request_response(message):
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_logs(request, format=None):
+    if not request.user.is_staff:
+        # Not allowed to see logs if not manager/admin
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    else:
+        user = request.query_params.get("user")
+        item = request.query_params.get("item")
+        endDate = request.query_params.get("endDate")
+        startDate = request.query_params.get("startDate")
+        # print("StartDate:" + startDate)
+        # print("EndDate:", endDate)
+        # Create Datetimes from strings
+        logs = models.Log.objects.all()
+        q_objs = Q()
+        if user is not None and user != '':
+            q_objs &= (Q(affected_user__username=user) | Q(initiating_user__username=user))
+        logs = logs.filter(q_objs).distinct()
+        if item is not None and item != '':
+            logs = logs.filter(item__name=item)
+        if startDate is not None and startDate != '' and endDate is not None and endDate != '':
+            startDate, endDate = startDate.split(" "), endDate.split(" ")
+            stimeZone, etimeZone = startDate[5], endDate[5]
+            stimeZone, etimeZone = stimeZone.split('-'), etimeZone.split('-')
+            startDate, endDate = startDate[:5], endDate[:5]
+            startDate, endDate = " ".join(startDate), " ".join(endDate)
+            startDate, endDate = startDate + " " + stimeZone[0], endDate + " " + etimeZone[0]
+
+            print(startDate, endDate)
+
+            startDate = datetime.strptime(startDate, "%a %b %d %Y %H:%M:%S %Z").date()
+            endDate = datetime.strptime(endDate, "%a %b %d %Y %H:%M:%S %Z").date()
+            startDate = datetime.combine(startDate, datetime.min.time())
+            endDate = datetime.combine(endDate, datetime.max.time())
+            startDate = timezone.make_aware(startDate, timezone.get_current_timezone())
+            endDate = timezone.make_aware(endDate, timezone.get_current_timezone())
+
+            print(startDate, endDate)
+
+            logs = logs.filter(date_created__range=[startDate, endDate])
+        serializer = serializers.LogGETSerializer(logs, many=True)
+        return Response(serializer.data)
 
 @api_view(['GET', 'POST'])
 @permission_classes((permissions.IsAuthenticated,))
@@ -796,6 +844,24 @@ def transaction_get_create(request, format=None):
                 pass
             item.quantity = new_quantity
             item.save()
+            createLog(data, request.user.pk, 'Transaction')
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def createLog(data, initiating_user_pk, category):
+    logdata = {}
+    print(data)
+    logdata['item']                 = data['item']
+    logdata['quantity']             = data['quantity']
+    logdata['initiating_user']      = initiating_user_pk
+    logdata['category']             = category
+    if category == 'Transaction':
+        serializer = serializers.LogSerializer(data=logdata)
+        if serializer.is_valid():
+            serializer.save()
+    elif category == 'Disbursement' or category == 'Request':
+        logdata['affected_user']    = data['requester']
+        serializer = serializers.LogSerializer(data=logdata)
+        if serializer.is_valid():
+            serializer.save()

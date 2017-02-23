@@ -224,3 +224,16 @@ class RequestPUTSerializer(serializers.ModelSerializer):
             "administrator": administrator,
             "status": status
         }
+
+class LogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Log
+        fields = ['id', "item", "quantity", "initiating_user", 'affected_user', "category"]
+
+class LogGETSerializer(serializers.ModelSerializer):
+    item = ItemGETSerializer(read_only=True, many=False)
+    initiating_user = UserGETSerializer(read_only=True, many=False)
+    affected_user = UserGETSerializer(read_only=True, many=False)
+    class Meta:
+        model = models.Log
+        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'affected_user', "category"]

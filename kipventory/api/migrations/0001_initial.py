@@ -65,6 +65,18 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Log',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('quantity', models.PositiveIntegerField()),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('category', models.CharField(choices=[('Transaction', 'Transaction'), ('Disbursement', 'Disbursement'), ('Request', 'Request')], max_length=20)),
+                ('affected_user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='affected_user', to=settings.AUTH_USER_MODEL)),
+                ('initiating_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='initiating_user', to=settings.AUTH_USER_MODEL)),
+                ('item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Item')),
+            ],
+        ),
+        migrations.CreateModel(
             name='Request',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
