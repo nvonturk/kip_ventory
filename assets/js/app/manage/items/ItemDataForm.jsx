@@ -2,6 +2,8 @@ import React from 'react'
 import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button } from 'react-bootstrap'
 import { getJSON, ajax } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
+import TagMultiSelect from '../../TagMultiSelect'
+
 
 var CUSTOM_FIELDS = []
 
@@ -12,8 +14,11 @@ const ItemDataForm = React.createClass({
       quantity: 0,
       model_no: "",
       description: "",
+      tags: [],
       showCreatedSuccess: false
     }
+
+
   },
 
   componentWillMount() {
@@ -27,6 +32,10 @@ const ItemDataForm = React.createClass({
         })
       })
     })
+  },
+
+  handleTagSelection(tagsSelected) {
+    this.setState({tags: tagsSelected});
   },
 
   getShortTextField(field_name, presentation_name, is_private) {
@@ -152,6 +161,9 @@ const ItemDataForm = React.createClass({
               { this.getShortTextField("model_no", "Model No.", false) }
               { this.getIntegerField("quantity", "Quantity", false) }
               { this.getLongTextField("description", "Description", false) }
+
+              <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
+
 
               { this.getCustomFieldForm() }
 
