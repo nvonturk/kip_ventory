@@ -209,6 +209,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         item.delete()
         # Insert Create Log
         # Need {serializer.data, initiating_user_pk, 'Item Changed'}
+        itemDeletionLog(item_name, request.user.pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -514,6 +515,7 @@ class RequestListCreate(generics.GenericAPIView):
             req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
             # Insert Create Log
             # Need {serializer.data, initiating_user_pk, 'Request Created'}
+            # requestItemCreation(req_item, request.user.pk)
             req_item.save()
             ci.delete()
 
@@ -866,4 +868,18 @@ def itemModificationLog(data, initiating_user_pk):
     quantity = data['quantity']
     message = 'Item {} modified by administrator'.format(data['name'])
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Modification', message=message)
+    log.save()
+
+def itemDeletionLog(item_name, initiating_user_pk):
+    print("Item Deletion")
+    item = None
+    initiating_user = None
+    quantity = None
+    affected_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Item {} deleted by administrator'.format(item_name)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Deletion', message=message)
     log.save()

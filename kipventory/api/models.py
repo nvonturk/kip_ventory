@@ -139,8 +139,8 @@ class Transaction(models.Model):
     administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
 
 class Log(models.Model):
-    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity            = models.PositiveIntegerField()
+    item                = models.ForeignKey(Item, on_delete=models.CASCADE, blank=True, null=True)
+    quantity            = models.PositiveIntegerField(blank=True, null=True)
     initiating_user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiating_user')
     affected_user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='affected_user', blank=True, null=True)
     date_created        = models.DateTimeField(blank=True, auto_now_add=True)
@@ -148,9 +148,11 @@ class Log(models.Model):
     # The following categories detail what type of inventory change occurred
     ITEM_CREATION       = "Item Creation"
     ITEM_MODIFICATION   = "Item Modification"
+    ITEM_DELETION       = "Item Deletion"
     category_choices    = (
         (ITEM_MODIFICATION, ITEM_MODIFICATION),
         (ITEM_CREATION, ITEM_CREATION),
+        (ITEM_DELETION, ITEM_DELETION),
     )
     category            = models.CharField(max_length = 20, choices=category_choices)
 
