@@ -13,6 +13,7 @@ import DisbursementContainer from './manage/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './manage/requests/ManagerRequestsContainer'
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import NewUserRequestsContainer from './manage/newuserrequests/NewUserRequestsContainer'
+import LogsContainer from './manage/logs/LogsContainer'
 
 // MAIN APP PAGES
 import InventoryContainer from './inventory/InventoryContainer'
@@ -31,6 +32,7 @@ function getManagerPanel(userData) {
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
+      <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
     </Route>) : null
 }

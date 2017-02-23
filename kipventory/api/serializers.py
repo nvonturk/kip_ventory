@@ -57,7 +57,7 @@ class ItemSerializer(serializers.ModelSerializer):
     quantity      = serializers.IntegerField(min_value=0, max_value=None, required=True)
     model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
     description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
-    tags          = serializers.StringRelatedField(many=True, required=False)
+    tags          = serializers.SlugRelatedField(slug_field="name", many=True, queryset=models.Tag.objects.all(), required=False)
     custom_fields = serializers.SerializerMethodField(method_name="get_custom_fields_by_permission")
     in_cart       = serializers.SerializerMethodField(method_name="is_item_in_cart")
 
@@ -121,18 +121,6 @@ class ItemSerializer(serializers.ModelSerializer):
 
         return item
 
-class NewUserRequestSerializer(serializers.ModelSerializer):
-    # id            = serializers.ReadOnlyField()
-    username        = serializers.CharField(max_length=150, min_length=1, required=True)
-    first_name      = serializers.CharField(max_length=30, min_length=None, required=True)
-    last_name       = serializers.CharField(max_length=30, min_length=None, required=True)
-    email           = serializers.CharField(max_length=None, min_length=None, required=True)
-    comment         = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
-
-    class Meta:
-        model = models.NewUserRequest
-        fields = ['username', 'first_name', 'last_name', 'email', 'comment']
-
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(CartItemSerializer, self).__init__(*args, **kwargs)
@@ -179,29 +167,19 @@ class TagSerializer(serializers.ModelSerializer):
         model = models.Tag
         fields = ["id", 'name']
 
-class UserGETSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
 
-class UserPOSTSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
-
-
-class TransactionGETSerializer(serializers.ModelSerializer):
-    item          = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    administrator = UserGETSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Transaction
-        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
-
-class TransactionPOSTSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.ModelSerializer):
     item          = serializers.SlugRelatedField(queryset=models.Item.objects.all(), slug_field="name")
+    administrator = serializers.SlugRelatedField(queryset=User.objects.filter(is_staff=True), slug_field="username")
+
     class Meta:
         model = models.Transaction
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
 
 class RequestItemSerializer(serializers.ModelSerializer):
     item     = serializers.SlugRelatedField(read_only=True, slug_field="name")
@@ -273,3 +251,12 @@ class RequestPUTSerializer(serializers.ModelSerializer):
             "administrator": administrator,
             "status": status
         }
+
+class LogSerializer(serializers.ModelSerializer):
+    item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)
+    initiating_user = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    affected_user   = serializers.SlugRelatedField(slug_field="username", read_only=True)
+
+    class Meta:
+        model = models.Log
+        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category"]
