@@ -123,19 +123,14 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
 
-
-class TransactionGETSerializer(serializers.ModelSerializer):
-    item          = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    administrator = UserSerializer(read_only=True, many=False)
-    class Meta:
-        model = models.Transaction
-        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
-
-class TransactionPOSTSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.ModelSerializer):
     item          = serializers.SlugRelatedField(queryset=models.Item.objects.all(), slug_field="name")
+    administrator = serializers.SlugRelatedField(queryset=User.objects.filter(is_staff=True), slug_field="username")
+
     class Meta:
         model = models.Transaction
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
 
 class RequestItemSerializer(serializers.ModelSerializer):
     item     = serializers.SlugRelatedField(read_only=True, slug_field="name")

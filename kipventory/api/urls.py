@@ -13,7 +13,7 @@ urlpatterns = [
     url(r'^items/(?P<item_name>[\w\s]+)/addtocart/?$',                    views.AddItemToCart.as_view()),
     url(r'^items/(?P<item_name>[\w\s]+)/fields/?$',                       views.CustomValueList.as_view()),
     url(r'^items/(?P<item_name>[\w\s]+)/fields/(?P<field_name>[\w]*)/?$', views.CustomValueDetailModify.as_view()),
-    url(r'^items/(?P<item_name>[\w\s]+)/requests/?$',                     views.GetRequestsByItem.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/requests/?$',                     views.GetOutstandingRequestsByItem.as_view()),
 
     url(r'^tags/?$', views.TagListCreate.as_view()),
 

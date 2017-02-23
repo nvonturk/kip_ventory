@@ -40,44 +40,7 @@ class CustomPagination(pagination.PageNumberPagination):
              "num_pages": self.page.paginator.num_pages,
              "results": data
             })
-#
-# def get_my_paginated_response(count, num_pages, data):
-#     return Response({
-#         "count" : count,
-#         "num_pages" : num_pages,
-#         "results" : data
-#     })
 
-# def paginateRequest(request, queryset, defaultItemsPerPage, serializer):
-#     itemsPerPage = request.GET.get('itemsPerPage')
-#     if itemsPerPage is None:
-#         itemsPerPage = defaultItemsPerPage
-#     page = request.GET.get('page')
-#     if page is None:
-#         page = 1
-#
-#     return paginate(queryset, itemsPerPage, page, serializer)
-#
-# def paginate(queryset, itemsPerPage, page, serializer):
-#     paginator = Paginator(queryset, itemsPerPage)
-#     try:
-#         queryset = paginator.page(page)
-#     except PageNotAnInteger:
-#         # If page is not an integer, deliver first page.
-#         queryset = paginator.page(1)
-#     except EmptyPage:
-#         # If page is out of range (e.g. 9999), deliver last page of results.
-#         queryset = paginator.page(paginator.num_pages)
-#
-#     data = serializer(instance=queryset, many=True).data
-#     '''
-#     toReturn = {
-#         "count" : paginator.count,
-#         "num_pages" : paginator.num_pages,
-#         "results" : data
-#     }
-#     '''
-#     return get_my_paginated_response(paginator.count, paginator.num_pages, data)
 
 class ItemListCreate(generics.GenericAPIView):
     # authentication_classes = (authentication.TokenAuthentication,)
@@ -427,11 +390,11 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class GetRequestsByItem(generics.GenericAPIView):
+class GetOutstandingRequestsByItem(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
-        return models.Request.objects.all()
+        return models.Request.objects.filter(status='O')
 
     def get_serializer_class(self):
         return serializers.RequestSerializer
@@ -439,9 +402,9 @@ class GetRequestsByItem(generics.GenericAPIView):
     def get(self, request, item_name, format=None):
         requests = self.get_queryset()
         if request.user.is_staff or request.user.is_superuser:
-            requests = models.Request.objects.filter(request_items__item__name=item_name)
+            requests = self.get_queryset().filter(request_items__item__name=item_name)
         else:
-            requests = models.Request.objects.filter(request_items__item__name=item_name, requester=request.user.pk)
+            requests = self.get_queryset().filter(request_items__item__name=item_name, requester=request.user.pk)
         serializer = serializers.RequestSerializer(requests, many=True)
         return Response(serializer.data)
 
@@ -778,11 +741,13 @@ class TransactionListCreate(generics.GenericAPIView):
         return models.Transaction.objects.all()
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return serializers.TransactionGETSerializer
-        return serializers.TransactionPOSTSerializer
+        return serializers.TransactionSerializer
 
     def get(self, request, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            # Not allowed to view transactions if not manager/admin
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         queryset = self.get_queryset()
         category = request.GET.get('category')
         if not (category is None or category=="All"):
@@ -792,15 +757,19 @@ class TransactionListCreate(generics.GenericAPIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        #todo django recommends doing this in middleware
+        if not (request.user.is_staff or request.user.is_superuser):
+            # Not allowed to create transactions if not manager/admin
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         data = request.data.copy()
-        data['date'] = datetime.now()
-        data['administrator'] = request.user.pk
+        data.update({'date': datetime.now()})
+        data.update({'administrator': request.user})
+
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
-                return custom_bad_request_response("Quantity be a positive integer")
+                return Response({"quantity": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
 
             item = models.Item.objects.get(name=data['item'])
             if data['category'] == 'Acquisition':#models.ACQUISITION:
@@ -808,7 +777,7 @@ class TransactionListCreate(generics.GenericAPIView):
             elif data['category'] == 'Loss':#models.LOSS:
                 new_quantity = item.quantity - transaction_quantity
                 if new_quantity < 0:
-                    return custom_bad_request_response("Cannot remove more items from the inventory than currently exists")
+                    return Response({"quantity": "Cannot remove more items from the inventory than currently exists"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 #should never get here
                 pass
