@@ -253,7 +253,7 @@ class CustomFieldListCreate(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomFieldDetailDelete(generics.GenericAPIView):
+class CustomFieldDetailModifyDelete(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
     def get_instance(self, field_name):
@@ -272,19 +272,30 @@ class CustomFieldDetailDelete(generics.GenericAPIView):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
-
         custom_field = self.get_instance(field_name=field_name)
         serializer = self.get_serializer(instance=custom_field)
         return Response(serializer.data)
 
-    def delete(self, request, field_name, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
+    def put(self, request, field_name, format=None):
+        if not (request.user.is_superuser):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
+        custom_field = self.get_instance(field_name=field_name)
+        serializer = self.get_serializer(instance=custom_field, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, field_name, format=None):
+        if not (request.user.is_superuser):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
         custom_field = self.get_instance(field_name=field_name)
         custom_field.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
 class CustomValueList(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)

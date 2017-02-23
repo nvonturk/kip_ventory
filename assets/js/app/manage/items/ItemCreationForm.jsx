@@ -7,7 +7,7 @@ import TagMultiSelect from '../../TagMultiSelect'
 
 var CUSTOM_FIELDS = []
 
-const ItemDataForm = React.createClass({
+const ItemCreationForm = React.createClass({
   getInitialState() {
     return {
       name: "",
@@ -83,7 +83,7 @@ const ItemDataForm = React.createClass({
       forms.push(
         <div>
           <br />
-            <h4>Custom Fields</h4>
+            <h4>Define Custom Fields</h4>
           <hr />
         </div>
       )
@@ -154,7 +154,7 @@ const ItemDataForm = React.createClass({
           <Form horizontal>
 
             <Panel>
-              <h4>Item Creation</h4>
+              <h4>Create an Item</h4>
               <hr />
 
               { this.getShortTextField("name", "Name", false) }
@@ -184,4 +184,4 @@ const ItemDataForm = React.createClass({
   }
 })
 
-export default ItemDataForm
+export default ItemCreationForm
