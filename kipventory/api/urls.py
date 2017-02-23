@@ -31,9 +31,9 @@ urlpatterns = [
 
     url(r'^login/?$',  views.post_user_login),
     url(r'^logout/?$', auth_views.logout),
+    url(r'^apitoken/?$', views.TokenPoint.as_view()),
 
     url(r'^logs/?$', views.LogList.as_view()),
-
 
     url(r'^users/?$',         views.UserListCreate.as_view()),
     url(r'^users/current/?$', views.GetCurrentUser.as_view()),

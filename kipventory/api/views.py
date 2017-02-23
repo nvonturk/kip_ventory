@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework import authentication, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotFound
+from rest_framework.authtoken.models import Token
+
+
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
@@ -45,7 +48,6 @@ class CustomPagination(pagination.PageNumberPagination):
 
 
 class ItemListCreate(generics.GenericAPIView):
-    # authentication_classes = (authentication.TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
 
@@ -445,6 +447,7 @@ class RequestListAll(generics.GenericAPIView):
         return response
 
 class RequestListCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
 
@@ -754,9 +757,7 @@ class TransactionListCreate(generics.GenericAPIView):
         return models.Transaction.objects.all()
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return serializers.TransactionGETSerializer
-        return serializers.TransactionPOSTSerializer
+        return serializers.TransactionSerializer
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
@@ -771,12 +772,12 @@ class TransactionListCreate(generics.GenericAPIView):
         #todo django recommends doing this in middleware
         data = request.data.copy()
         data['date'] = datetime.now()
-        data['administrator'] = request.user.pk
+        data['administrator'] = request.user
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
-                return custom_bad_request_response("Quantity be a positive integer")
+                return Response({"quantity": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
 
             item = models.Item.objects.get(name=data['item'])
             if data['category'] == 'Acquisition':#models.ACQUISITION:
@@ -784,7 +785,7 @@ class TransactionListCreate(generics.GenericAPIView):
             elif data['category'] == 'Loss':#models.LOSS:
                 new_quantity = item.quantity - transaction_quantity
                 if new_quantity < 0:
-                    return custom_bad_request_response("Cannot remove more items from the inventory than currently exists")
+                    return Response({"quantity": "Cannot remove more items from the inventory than currently exists"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 #should never get here
                 pass
@@ -795,6 +796,19 @@ class TransactionListCreate(generics.GenericAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class TokenPoint(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+
+        if Token.objects.filter(user=request.user).count() > 0:
+            #User has a token, return created token
+            print(Token.objects.get(user=request.user).key)
+            return Response({"token": Token.objects.get(user=request.user).key})
+        else:
+            token = Token.objects.create(user=request.user)
+            print(token.key)
+            return Response({"token": token.key})
 
 # TODO: Manually create log items (not through serializer)
 def itemCreationLog(data, initiating_user_pk):

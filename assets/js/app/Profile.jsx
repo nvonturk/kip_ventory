@@ -1,5 +1,6 @@
 import React from 'react'
 import $ from 'jquery'
+import GenerateAPITokenContainer from './apitoken/GenerateAPITokenContainer'
 
 class Profile extends React.Component {
 
@@ -23,6 +24,7 @@ class Profile extends React.Component {
     return (
     	<div>
     		{element}
+        <GenerateAPITokenContainer/>
     	</div>
     )
   }

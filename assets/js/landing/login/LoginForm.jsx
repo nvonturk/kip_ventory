@@ -32,8 +32,6 @@ const LoginForm = React.createClass({
     var netid_url = "https://oauth.oit.duke.edu/oauth/authorize.php?response_type=code"+"&"+identity+"&"+redirect+"&"+scope+"&"+urlstate;
 
 
-    console.log(netid_url);
-
     return (
       <div>
         <form method="post" action="/api/login/">
