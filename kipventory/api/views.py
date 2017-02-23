@@ -693,14 +693,18 @@ class GetNetIDToken(generics.GenericAPIView):
 class TagListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.TagSerializer
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Tag.objects.all()
 
     def get(self, request, format=None):
         tags = self.get_queryset()
-        serializer = self.get_serializer(instance=tags, many=True)
-        return Response(serializer.data)
+
+        paginated_tags = self.paginate_queryset(tags)
+        serializer = self.get_serializer(instance=paginated_tags, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
     def post(self, request, format=None):
         serializer = self.get_serializer(data=request.data)
