@@ -5,10 +5,10 @@ import KipNav from './KipNav'
 // import Home from './Home'
 
 // ADMIN PAGES
-import AdminContainer from './admin/AdminContainer'
 import ManagerContainer from './manage/ManagerContainer'
 import ManagerWelcome from './manage/welcome/ManagerWelcome'
-import ItemDataForm from './manage/items/ItemDataForm'
+import ItemCreationForm from './manage/items/ItemCreationForm'
+import CustomFieldContainer from './manage/customfields/CustomFieldContainer'
 import DisbursementContainer from './manage/disbursement/DisbursementContainer'
 import AdminRequestsContainer from './manage/requests/ManagerRequestsContainer'
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
@@ -25,10 +25,13 @@ import {getJSON} from 'jquery'
 import ItemDetail from './ItemDetail'
 
 function getManagerPanel(userData) {
+  const custom_field_route = userData.is_superuser ? (<Route path="custom-fields" component={CustomFieldContainer} admin={userData} />) : null;
+
   return userData.is_staff ? (
     <Route path="manage" component={ManagerContainer} admin={userData}>
       <IndexRoute component={ManagerWelcome} admin={userData} />
-      <Route path="create-item" component={ItemDataForm} admin={userData} />
+      <Route path="create-item" component={ItemCreationForm} admin={userData} />
+      {custom_field_route}}
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={AdminRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
@@ -37,9 +40,6 @@ function getManagerPanel(userData) {
     </Route>) : null
 }
 
-function getAdminPanel(userData) {
-  return userData.is_superuser ? <Route path="admin" component={AdminContainer} admin={userData}/> : null
-}
 
 function initialize(userData) {
   render((
@@ -51,7 +51,6 @@ function initialize(userData) {
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
         {getManagerPanel(userData)}
-        {getAdminPanel(userData)}
       </Route>
     </Router>),
     document.getElementById('root'));
