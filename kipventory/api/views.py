@@ -616,7 +616,7 @@ class UserListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            # userCreationLog(serializer.data, request.user.pk)
+            userCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -753,9 +753,7 @@ class TransactionListCreate(generics.GenericAPIView):
         return models.Transaction.objects.all()
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return serializers.TransactionGETSerializer
-        return serializers.TransactionPOSTSerializer
+        return serializers.TransactionSerializer
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
@@ -768,9 +766,8 @@ class TransactionListCreate(generics.GenericAPIView):
 
     def post(self, request, format=None):
         #todo django recommends doing this in middleware
-        data = request.data.copy()
-        data['date'] = datetime.now()
-        data['administrator'] = request.user.pk
+        data = request.data
+        data['administrator'] = request.user
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
@@ -789,7 +786,7 @@ class TransactionListCreate(generics.GenericAPIView):
                 pass
             item.quantity = new_quantity
             item.save()
-            # createLog(data, request.user.pk, 'Transaction')
+            transactionCreationLog(item, request.user.pk, request.data['category'], transaction_quantity)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -896,11 +893,32 @@ def requestItemApproval(request_item, initiating_user_pk):
 def userCreationLog(data, initiating_user_pk):
     print("User Creation")
     print(data)
-    # item = None
-    # initiating_user = None
-    # quantity = None
-    # affected_user = None
-    # try:
-    #     initiating_user = User.objects.get(pk=initiating_user_pk)
-    # except User.DoesNotExist:
-    #     raise NotFound('User not found.')
+    item = None
+    initiating_user = None
+    quantity = None
+    affected_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    try:
+        affected_user = User.objects.get(username=data['username'])
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = "User {} was created by {}".format(affected_user, initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='User Creation', message=message, affected_user=affected_user)
+    log.save()
+
+def transactionCreationLog(item, initiating_user_pk, category, amount):
+    print("Transaction Creation")
+    item = item
+    initiating_user = None
+    quantity = amount
+    affected_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = "User {} created a {} transaction on item {} of quantity {} and it now has a quantity of {}".format(initiating_user, category, item, quantity, item.quantity)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Transaction Creation', message=message, affected_user=affected_user)
+    log.save()
