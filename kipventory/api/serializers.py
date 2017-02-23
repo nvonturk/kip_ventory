@@ -133,7 +133,7 @@ class TagSerializer(serializers.ModelSerializer):
 class UserGETSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
 class UserPOSTSerializer(serializers.ModelSerializer):
     class Meta:
