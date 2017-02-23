@@ -4,6 +4,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 
 
+
+
+
 # Landing page for our application - no login required
 # This is the index page at "/"
 # Make sure that we are delivered a CSRF cookie from this view
@@ -18,3 +21,6 @@ def app(request):
         messages.add_message(request, messages.ERROR, 'not-authenticated')
         return redirect('/?next=' + request.path)
     return render(request, 'kipventory/app.html')
+
+# def swagger(request):
+#     return render(request, schema_view)

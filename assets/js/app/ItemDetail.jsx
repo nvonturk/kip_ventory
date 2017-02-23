@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Button, Modal, Table}  from 'react-bootstrap'
+import { Grid, Button, Modal, Table}  from 'react-bootstrap'
 import QuantityBox from './QuantityBox'
 import SimpleRequest from './SimpleRequest'
 import RequestList from './RequestList'
@@ -7,6 +7,7 @@ import $ from "jquery"
 import Item from './Item'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
+import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
 
 class ItemDetailModal extends Component {
@@ -14,24 +15,28 @@ class ItemDetailModal extends Component {
     super(props);
     this.item_name = this.props.params.item_name;
     this.user = this.props.route.user;
-  
+
     this.state = {
       requests: [],
       cart_quantity:"",
+      showModifyButton: this.user.is_staff,
+      showModifyModal: false,
       //item: {}
     }
     this.addToCart = this.addToCart.bind(this);
     this.setCartQuantity = this.setCartQuantity.bind(this);
     this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
+    this.handleModifyClick = this.handleModifyClick.bind(this);
+    this.closeModal = this.closeModal.bind(this);
 
     this.getItem();
     //this.getRequests();
     //this.getTransactions();
+
   }
 
   getItem() {
     var url = '/api/items/' + this.item_name + '/';
-    console.log("get item" + url);
 
     var thisobj = this;
     $.getJSON(url, function(data){
@@ -64,6 +69,15 @@ class ItemDetailModal extends Component {
   // todo display a log of transactions in this detail view
   getTransactions() {
 
+  }
+
+  handleModifyClick(event){
+    event.preventDefault();
+    this.setState({showModifyModal: true})
+  }
+
+  closeModal(){
+    this.setState({showModifyModal: false});
   }
 
   setCartQuantity(value) {
@@ -141,11 +155,22 @@ class ItemDetailModal extends Component {
     )
   }
 
-  // todo refactor this 
+
+  deleteItem(event){
+    event.preventDefault();
+    console.log("we deleting!");
+  }
+
+  saveChanges(event){
+    event.preventDefault();
+  }
+
+
+  // todo refactor this
   render() {
 
     // todo better logic for this
-    if (!this.state.item || !this.state.requests) return null;    
+    if (!this.state.item || !this.state.requests) return null;
 
     var requestListView=[];
 
@@ -166,8 +191,18 @@ class ItemDetailModal extends Component {
         </div>
     }
 
+    var ModifyButton = React.createClass({
+      render: function() {
+        return (
+          <div>
+          <Button onClick={this.props.click} >Modify Item</Button>
+          </div>
+        );
+      }
+    });
+
     return (
-      <div>
+      <Grid>
         <h4>Item Details</h4>
         <Table striped bordered condensed hover>
           {this.getTableHeader()}
@@ -189,8 +224,16 @@ class ItemDetailModal extends Component {
         <h4> Cart </h4>
         <Button onClick={this.addToCart}>Add to Cart</Button>
         <QuantityBox onUserInput={this.setCartQuantity}/>
-      </div>
-    );   
+        {
+          this.state.showModifyButton
+            ? <ModifyButton
+              click={this.handleModifyClick}
+              />
+            : null
+        }
+        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges}/>
+      </Grid>
+    );
   }
 }
 export default ItemDetailModal
