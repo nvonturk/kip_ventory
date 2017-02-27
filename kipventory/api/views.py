@@ -151,11 +151,47 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         item = self.get_instance(item_name=item_name)
 
         # check if we're trying to modify quantity
-        quantity = int(request.data.get('quantity', None))
-        if not (quantity is None):
+        quantity = request.data.get('quantity', None)
+        try:
+            int(quantity)
+            print(quantity)
+        except ValueError:
+            return Response({"error": "Not Integer"}, status=status.HTTP_400_BAD_REQUEST)
+        quantity = int(quantity)
+        if not ((quantity is None) or (quantity < 0)):
             if (quantity != item.quantity):
                 if not (request.user.is_superuser):
-                    return Response({"error": "Admin permissions required."})
+                    return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response({"error": "Null or Negative Quantity"}, status=status.HTTP_400_BAD_REQUEST)
+        # check for other modifications
+        new_name = request.data.get('name', None)
+        if not (new_name == item_name):
+            if not ((item_name is None) or (item_name == "")):
+                items_with_name = models.Item.objects.filter(name=item_name).count()
+                if (items_with_name == 0):
+                    if not (request.user.is_superuser):
+                        return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({"error": "Item Name Already Taken"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                    return Response({"error": "Item needs non null name"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        model_no = request.data.get('model_no', None)
+        if not (model_no is None):
+            if not (request.user.is_superuser):
+                return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
+
+        description = request.data.get('description', None)
+        if not (description is None):
+            if not (request.user.is_superuser):
+                return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
+
+        tags = request.data.get('tags', None)
+        if not (tags is None):
+            if not (request.user.is_superuser):
+                return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(instance=item, data=request.data, partial=True)
         if serializer.is_valid():

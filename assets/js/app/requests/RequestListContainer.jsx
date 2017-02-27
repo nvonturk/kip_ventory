@@ -44,7 +44,7 @@ class RequestListContainer extends Component {
       _this.setState({
         requests: data.results
       })
-    });
+    }, () => console.log(_this.state.requests));
   }
 
   getFilteredRequestContent(filt) {

@@ -9,17 +9,18 @@ import { getCookie } from '../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
 import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
+import {browserHistory} from 'react-router'
 
 class ItemDetailModal extends Component {
   constructor(props) {
     super(props);
-    this.item_name = this.props.params.item_name;
-    this.user = this.props.route.user;
+    this.item_name = props.params.item_name;
+    this.user = props.route.user;
 
     this.state = {
       requests: [],
       quantity:0,
-      showModifyButton: this.user.is_staff,
+      showModifyButton: props.route.user.is_staff,
       showModifyModal: false,
       //item: {}
     }
@@ -28,6 +29,8 @@ class ItemDetailModal extends Component {
     this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
     this.handleModifyClick = this.handleModifyClick.bind(this);
     this.closeModal = this.closeModal.bind(this);
+    this.deleteItem = this.deleteItem.bind(this);
+    this.saveChanges = this.saveChanges.bind(this);
 
     this.getItem();
     //this.getRequests();
@@ -155,13 +158,52 @@ class ItemDetailModal extends Component {
   }
 
 
-  deleteItem(event){
-    event.preventDefault();
-    console.log("we deleting!");
+  deleteItem(){
+    var thisobj = this
+    $.ajax({
+    url:"/api/items/" + thisobj.item_name + "/",
+    type: "DELETE",
+    beforeSend: function(request) {
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    success:function(response){
+      var url = "/app/"
+      browserHistory.push(url)
+
+    },
+    complete:function(){
+        },
+    error:function (xhr, textStatus, thrownError){
+        alert("error doing something");
+
+    }
+    });
   }
 
-  saveChanges(event){
-    event.preventDefault();
+  saveChanges(name, quantity, model_no, description, tags){
+    var thisobj = this
+    $.ajax({
+    url:"/api/items/" + thisobj.item_name + "/",
+    type: "PUT",
+    data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tags},
+    statusCode: {
+       400: function() {
+         alert("Unsuitable Data");
+       }
+     },
+    beforeSend: function(request) {
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    success:function(response){
+      var url = "/app/"
+      browserHistory.push(url)
+    },
+    complete:function(){
+        },
+    error:function (xhr, textStatus, thrownError){
+
+    }
+    });
   }
 
   handleChange(event) {

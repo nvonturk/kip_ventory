@@ -114,7 +114,7 @@ class CartContainer extends Component {
           </Col>
         </Row>
         <Row>
-          <Button bsStyle="primary" onClick={() => this.makeRequest()} className="requestButton">Make Request</Button>
+          <Button bsStyle="primary" onClick={() => this.makeRequest()} disabled={this.state.items.length == 0} className="requestButton">Make Request</Button>
         </Row>
       </Grid>
     )
