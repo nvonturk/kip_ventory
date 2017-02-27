@@ -23,6 +23,7 @@ import Profile from './Profile'
 import {getJSON} from 'jquery'
 
 import ItemDetail from './ItemDetail'
+import RequestDetail from './RequestDetail'
 
 function getManagerPanel(userData) {
   const custom_field_route = userData.is_superuser ? (<Route path="custom-fields" component={CustomFieldContainer} admin={userData} />) : null;
@@ -48,6 +49,7 @@ function initialize(userData) {
         <IndexRoute component={InventoryContainer} user={userData} />
         <Route path="items/:item_name" component={ItemDetail} user={userData} />
         <Route path="requests" component={RequestListContainer} user={userData}/>
+        <Route path="requests/:request_id" component={RequestDetail} user={userData} />
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
         {getManagerPanel(userData)}

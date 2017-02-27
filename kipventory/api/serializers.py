@@ -202,7 +202,6 @@ class RequestSerializer(serializers.ModelSerializer):
     requester      = serializers.SlugRelatedField(read_only=True, slug_field="username")
     request_items  = RequestItemSerializer(read_only=True, many=True)
     date_open      = serializers.ReadOnlyField()
-
     open_comment   = serializers.CharField(max_length=500, default='', allow_blank=True)
 
     date_closed    = serializers.ReadOnlyField()
@@ -233,13 +232,14 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     date_open     = serializers.DateTimeField(read_only=True)
     open_comment  = serializers.CharField(read_only=True)
 
-    date_closed   = serializers.HiddenField(default=timezone.now)
+    administrator  = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    date_closed    = serializers.DateTimeField(read_only=True)
     closed_comment = serializers.CharField(max_length=500, allow_blank=True, default="")
-    status        = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
+    status         = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
 
     class Meta:
         model = models.Request
-        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment','status']
+        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
 
     def to_internal_value(self, data):
         validated_data = {}

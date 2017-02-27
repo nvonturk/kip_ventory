@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button } from 'react-bootstrap'
+import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button, Well } from 'react-bootstrap'
 import { getJSON, ajax, serialize } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import TagMultiSelect from '../../TagMultiSelect'
@@ -9,6 +9,7 @@ var CUSTOM_FIELDS = []
 
 const ItemCreationForm = React.createClass({
   getInitialState() {
+    CUSTOM_FIELDS = []
     return {
       name: "",
       quantity: 0,
@@ -17,13 +18,12 @@ const ItemCreationForm = React.createClass({
       tags: [],
       showCreatedSuccess: false
     }
-
-
   },
 
-  componentWillMount() {
+  componentDidMount() {
     var url = "/api/fields/"
     var _this = this
+    CUSTOM_FIELDS = []
     getJSON(url, null, function(data) {
       CUSTOM_FIELDS = data.map( (field, i) => {return field} )
       data.map( (field, i) => {
@@ -34,6 +34,7 @@ const ItemCreationForm = React.createClass({
     })
   },
 
+
   handleTagSelection(tagsSelected) {
     console.log(tagsSelected.split(","))
     this.setState({tags: tagsSelected.split(",")});
@@ -41,7 +42,7 @@ const ItemCreationForm = React.createClass({
 
   getShortTextField(field_name, presentation_name, is_private) {
     return (
-      <FormGroup bsSize="small">
+      <FormGroup bsSize="small" key={field_name}>
         <Col componentClass={ControlLabel} sm={2}>
           {presentation_name}
         </Col>
@@ -54,7 +55,7 @@ const ItemCreationForm = React.createClass({
 
   getLongTextField(field_name, presentation_name, is_private) {
     return (
-      <FormGroup bsSize="small">
+      <FormGroup bsSize="small" key={field_name}>
         <Col componentClass={ControlLabel} sm={2}>
           {presentation_name}
         </Col>
@@ -67,7 +68,7 @@ const ItemCreationForm = React.createClass({
 
   getIntegerField(field_name, presentation_name, is_private, min, step) {
     return (
-      <FormGroup bsSize="small">
+      <FormGroup bsSize="small" key={field_name}>
         <Col componentClass={ControlLabel} sm={2}>
           {presentation_name}
         </Col>
@@ -80,7 +81,7 @@ const ItemCreationForm = React.createClass({
 
   getFloatField(field_name, presentation_name) {
     return (
-      <FormGroup bsSize="small">
+      <FormGroup bsSize="small" key={field_name}>
         <Col componentClass={ControlLabel} sm={2}>
           {presentation_name}
         </Col>
@@ -93,6 +94,7 @@ const ItemCreationForm = React.createClass({
 
   getCustomFieldForm() {
     var forms = []
+
     if (CUSTOM_FIELDS.length > 0) {
       forms.push(
         <div key={0}>
@@ -100,7 +102,7 @@ const ItemCreationForm = React.createClass({
             <h4>Define Custom Fields</h4>
           <hr />
         </div>
-      )
+      );
       forms.push(CUSTOM_FIELDS.map( (field, i) => {
 
         var field_name = field.name
@@ -124,14 +126,24 @@ const ItemCreationForm = React.createClass({
             return null
         }
       }))
-      return forms
     }
-    return null
+    return forms;
+  },
+
+  getSuccessMessage() {
+    var url = "/app/items/" + this.state.createdName
+    var ret = this.state.showCreatedSuccess ? (
+      <Row>
+        <Col sm={12}>
+          <Well>Item <a href={url}>{this.state.createdName}</a> successfully created!</Well>
+        </Col>
+      </Row>) : (null)
+    return ret
   },
 
   createItem() {
     var _this = this;
-    console.log(_this.state)
+    var item_name = this.state.name;
     ajax({
       url:"/api/items/",
       type: "POST",
@@ -141,7 +153,17 @@ const ItemCreationForm = React.createClass({
       data: _this.state,
       traditional: true,
       success:function(response){
-        console.log(response)
+        var data = _this.getInitialState()
+        _this.setState(data)
+        for (var i=0; i<CUSTOM_FIELDS.length; i++) {
+          _this.setState({
+            [CUSTOM_FIELDS[i].name]: ""
+          })
+        }
+        _this.setState({
+          showCreatedSuccess: true,
+          createdName: item_name
+        })
       },
       complete:function(){
 
@@ -165,36 +187,57 @@ const ItemCreationForm = React.createClass({
   render() {
     return (
       <Grid fluid>
-        <Col xs={8} xsOffset={1}>
 
-          <Form horizontal>
+        { this.getSuccessMessage() }
 
-            <Panel>
-              <h4>Create an Item</h4>
-              <hr />
+        <Row>
+          <Col xs={12}>
+            <h3>Item Creation</h3>
+            <hr />
+            <p>
+              Use this form to add new items to the inventory.
+            </p>
+            <br />
+          </Col>
+        </Row>
 
-              { this.getShortTextField("name", "Name", false) }
-              { this.getShortTextField("model_no", "Model No.", false) }
-              { this.getIntegerField("quantity", "Quantity", false) }
-              { this.getLongTextField("description", "Description", false) }
+        <Row>
+          <Col sm={12}>
+            <Form horizontal>
 
-              <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
+              <Panel>
+                <h4>Create an Item</h4>
+                <hr />
 
+                { this.getShortTextField("name", "Name", false) }
+                { this.getShortTextField("model_no", "Model No.", false) }
+                { this.getIntegerField("quantity", "Quantity", false) }
+                { this.getLongTextField("description", "Description", false) }
 
-              { this.getCustomFieldForm() }
+                <FormGroup bsSize="small">
+                  <Col componentClass={ControlLabel} sm={2}>
+                    Tags
+                  </Col>
+                  <Col sm={9} >
+                    <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
+                  </Col>
+                </FormGroup>
 
-              <FormGroup>
-                <Col smOffset={2} sm={2}>
-                  <Button bsSize="small" type="button" bsStyle="info" onClick={this.createItem}>
-                    Submit
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Panel>
+                { this.getCustomFieldForm() }
 
-          </Form>
+                <FormGroup bsSize="small">
+                  <Col smOffset={2} sm={2}>
+                    <Button bsSize="small" type="button" bsStyle="info" onClick={this.createItem}>
+                      Submit
+                    </Button>
+                  </Col>
+                </FormGroup>
+              </Panel>
 
-        </Col>
+            </Form>
+          </Col>
+
+        </Row>
       </Grid>
     )
   }

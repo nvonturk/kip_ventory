@@ -11,7 +11,7 @@ import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
 import {browserHistory} from 'react-router'
 
-class ItemDetailModal extends Component {
+class ItemDetail extends Component {
   constructor(props) {
     super(props);
     this.item_name = props.params.item_name;
@@ -289,4 +289,4 @@ class ItemDetailModal extends Component {
     );
   }
 }
-export default ItemDetailModal
+export default ItemDetail

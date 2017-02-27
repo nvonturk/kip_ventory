@@ -568,18 +568,19 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        request.data.update({'administrator': request.user})
+        data = request.data.copy()
+        data.update({'administrator': request.user})
         instance = self.get_instance(request_pk)
-        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
             # check integrity of approval operation
-            if request.data['status'] == 'D':
+            if data['status'] == 'D':
                 # Insert Create Log
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                 for ri in instance.request_items.all():
                     requestItemDenial(ri, request.user.pk)
-            if request.data['status'] == 'A':
+            elif data['status'] == 'A':
                 valid_request = True
                 new_quantities = {}
                 for ri in instance.request_items.all():
@@ -607,7 +608,6 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             # item.quantity = item.quantity - int(request.data['quantity'])
             # item.save()
             # createLog(request.data, request.data['administrator'], 'Request')
-            print(request.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

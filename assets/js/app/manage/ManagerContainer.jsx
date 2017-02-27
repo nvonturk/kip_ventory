@@ -58,7 +58,7 @@ const ManagerContainer = React.createClass({
               </Nav>
             </Row>
           </Col>
-          <Col md={10}>
+          <Col md={8} >
             { this.props.children }
           </Col>
         </Row>
