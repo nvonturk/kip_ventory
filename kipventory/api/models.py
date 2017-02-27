@@ -113,7 +113,7 @@ class CustomValue(models.Model):
 
 class Request(models.Model):
     requester      = models.ForeignKey(User, on_delete=models.CASCADE, related_name="requests")
-    date_open      = models.DateTimeField(blank=True, null=True)
+    date_open      = models.DateTimeField(blank=True, auto_now_add=True)
     open_comment   = models.TextField(default='', max_length=500, blank=True)
     date_closed    = models.DateTimeField(blank=True, null=True)
     closed_comment = models.TextField(max_length=500, blank=True)

@@ -201,7 +201,7 @@ class RequestSerializer(serializers.ModelSerializer):
     request_id     = serializers.ReadOnlyField(source='id')
     requester      = serializers.SlugRelatedField(read_only=True, slug_field="username")
     request_items  = RequestItemSerializer(read_only=True, many=True)
-    date_open      = serializers.HiddenField(default=timezone.now)
+    date_open      = serializers.ReadOnlyField()
 
     open_comment   = serializers.CharField(max_length=500, default='', allow_blank=True)
 
@@ -219,12 +219,10 @@ class RequestSerializer(serializers.ModelSerializer):
         errors = {}
 
         requester = data.get('requester', None)
-        date_open = timezone.now()
         open_comment = data.get('open_comment', None)
 
         return {
             'requester': requester,
-            'date_open': date_open,
             'open_comment': open_comment
         }
 

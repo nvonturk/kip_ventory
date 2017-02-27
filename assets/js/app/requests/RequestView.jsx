@@ -25,36 +25,32 @@ class RequestView extends Component {
 
   getContent() {
     var request = this.props.request
+    console.log(request)
     var requester = request.requester
-    var requester_url = "/app/profile/" + requester.id
+    var requester_url = "/app/profile/" + requester.id + "/"
     var requester_name = requester.first_name + " " + requester.last_name
-    var date = new Date(Date.parse(this.props.request.date_open)).toLocaleString()
     return (
       <Grid fluid>
 
         <Row className="show-grid">
 
-          <Col md={2}>
-            <Image src={request.request_items[0].photo_src} alt={request.request_items[0].name} style={{width:'100px', height:'100px'}}/>
-          </Col>
-
-          <Col md={3}>
+          <Col md={4}>
               <Col md={12}>
-                <h6>{request.request_items[0].name}</h6>
+                <h6>{request.request_items[0].item}</h6>
               </Col>
 
               <Col md={12}>
-                <h6>Requester: <Link to={requester_url}> {requester_name}</Link></h6>
+                <h6>Requester: {requester}</h6>
               </Col>
 
               <Col md={12}>
-                <h6>Date: {date}</h6>
+                <h6>Date: {request.date_open}</h6>
               </Col>
           </Col>
 
-          <Col md={5}>
+          <Col md={6}>
                 <h6><strong>Reason</strong></h6>
-                <p style={{maxHeight: '70px', overflow: 'auto'}}><small>{request.open_reason}</small></p>
+                <p style={{maxHeight: '70px', overflow: 'auto'}}><small>{request.open_comment}</small></p>
           </Col>
 
           <Col md={2}>
@@ -67,7 +63,7 @@ class RequestView extends Component {
                         <span>Quantity:</span>
                       </Col>
                       <Col xs={4}>
-                        <span>{request.quantity}</span>
+                        <span>{request.request_items[0].quantity}</span>
                       </Col>
                     </Row>
                   </Col>
