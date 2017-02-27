@@ -40,11 +40,9 @@ class CartContainer extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       data: {
-        item: cartItem.item.id,
-        requester: cartItem.owner.id,
+        item: cartItem.item,
         quantity: cartItem.quantity,
         open_reason: comment,
-        date_open: n
       },
       success:function(response){},
       complete:function(){},

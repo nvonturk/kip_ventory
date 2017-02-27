@@ -3,6 +3,9 @@ import React, { Component } from 'react'
 class QuantityBox extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      placeholder: "0"
+    }
     this.handleChange = this.handleChange.bind(this);
   }
 
@@ -17,7 +20,7 @@ class QuantityBox extends Component {
       <form>
         <input
           type="text"
-          placeholder="0"
+          placeholder={this.state.placeholder}
           ref={(input) => this.quantityInput = input}
           onChange={this.handleChange}
         />

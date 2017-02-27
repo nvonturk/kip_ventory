@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Grid, Button, Modal, Table}  from 'react-bootstrap'
+import { Grid, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
 import QuantityBox from './QuantityBox'
 import SimpleRequest from './SimpleRequest'
 import RequestList from './RequestList'
@@ -18,13 +18,13 @@ class ItemDetailModal extends Component {
 
     this.state = {
       requests: [],
-      cart_quantity:"",
+      quantity:0,
       showModifyButton: this.user.is_staff,
       showModifyModal: false,
       //item: {}
     }
     this.addToCart = this.addToCart.bind(this);
-    this.setCartQuantity = this.setCartQuantity.bind(this);
+    this.handleChange = this.handleChange.bind(this);
     this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
     this.handleModifyClick = this.handleModifyClick.bind(this);
     this.closeModal = this.closeModal.bind(this);
@@ -80,24 +80,20 @@ class ItemDetailModal extends Component {
     this.setState({showModifyModal: false});
   }
 
-  setCartQuantity(value) {
-    this.setState({
-      cart_quantity:value
-    })
-  }
-
   addToCart(){
     // todo add these checks on the backend
-    if (!Number.isInteger(parseFloat(this.state.cart_quantity)) || parseFloat(this.state.cart_quantity)<=0){
+    if ((!Number.isInteger(parseInt(this.state.quantity, 10))) || (this.state.quantity <= 0)){
+      console.log((Number.isInteger(this.state.quantity)))
+      console.log((this.state.quantity > 0))
       alert("Quantity must be a positive integer")
     }
-    else if(this.state.item.quantity < this.state.cart_quantity){
+    else if(this.state.item.quantity < this.state.quantity){
       alert("Quantity Exceeds Inventory Capacity")
     }
     else{
       var thisobj = this;
       $.ajax({
-        url:"/api/cart/",
+        url:"/api/items/" + thisobj.state.item.name + "/addtocart/",
         type: "POST",
         beforeSend: function(request) {
           request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
@@ -105,9 +101,12 @@ class ItemDetailModal extends Component {
         data: {
           item: thisobj.state.item.id,
           owner: thisobj.user.id,
-          quantity: thisobj.state.cart_quantity
+          quantity: thisobj.state.quantity
         },
-        success:function(response){},
+        success:function(response){
+          //reset form
+          thisobj.setState({quantity:0})
+        },
         complete:function(){},
         error:function (xhr, textStatus, thrownError){
             alert("error adding item to cart");
@@ -163,6 +162,10 @@ class ItemDetailModal extends Component {
 
   saveChanges(event){
     event.preventDefault();
+  }
+
+  handleChange(event) {
+    this.setState({ [event.target.name]: event.target.value }, () => console.log(this.state.quantity));
   }
 
 
@@ -223,7 +226,15 @@ class ItemDetailModal extends Component {
         {createTransactionView}
         <h4> Cart </h4>
         <Button onClick={this.addToCart}>Add to Cart</Button>
-        <QuantityBox onUserInput={this.setCartQuantity}/>
+        <FormGroup controlId="formQuantity">
+          <ControlLabel>Quantity</ControlLabel>
+            <FormControl
+              type="number"
+              name="quantity"
+              value={this.state.quantity}
+              onChange={this.handleChange}
+            />
+        </FormGroup>
         {
           this.state.showModifyButton
             ? <ModifyButton

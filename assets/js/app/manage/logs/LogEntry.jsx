@@ -9,12 +9,13 @@ function LogEntry(props){
 
   return (
     <div>
-      <p>Initiating User: {props.log.initiating_user.username}</p>
-      <p>Affected User: {affectedUser}</p>
-      <p>Date: {props.date}</p>
+      <p>Initiating User: {props.log.default_initiating_user}</p>
+      <p>Affected User: {props.log.default_affected_user}</p>
+      <p>Date: {props.log.date_created}</p>
       <p>Category: {props.log.category}</p>
-      <p>Item: {props.log.item.name}</p>
+      <p>Item: {props.log.default_item}</p>
       <p>Quantity: {props.log.quantity}</p>
+      <p>Message: {props.log.message}</p>
     </div>
 )
 

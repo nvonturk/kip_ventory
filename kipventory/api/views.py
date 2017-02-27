@@ -381,11 +381,12 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
     # modify quantity of an item in your cart
     def put(self, request, item_name, format=None):
         cartitem = self.get_instance(item_name=item_name)
+        data = request.data.copy()
 
-        request.data.update({'owner': request.user})
-        request.data.update({'item': cartitem.item})
+        data.update({'owner': request.user})
+        data.update({'item': cartitem.item})
 
-        serializer = self.get_serializer(instance=cartitem, data=request.data, partial=True)
+        serializer = self.get_serializer(instance=cartitem, data=data, partial=True)
         if serializer.is_valid():
             cart_quantity = int(request.data['quantity'])
             if (cart_quantity < 0):
@@ -776,7 +777,7 @@ class TransactionListCreate(generics.GenericAPIView):
 
     def post(self, request, format=None):
         #todo django recommends doing this in middleware
-        data = request.data
+        data = request.data.copy()
 
         data['administrator'] = request.user
         serializer = self.get_serializer(data=data)
@@ -816,7 +817,6 @@ class TokenPoint(generics.GenericAPIView):
             print(token.key)
             return Response({"token": token.key})
 
-# TODO: Manually create log items (not through serializer)
 def itemCreationLog(data, initiating_user_pk):
     print("Item Creation")
     item = None

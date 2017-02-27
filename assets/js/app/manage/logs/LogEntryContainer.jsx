@@ -8,6 +8,7 @@ function LogEntryContainer(props){
     var date = new Date(log.date_created)
     date = date.toString()
     list.push(<ListGroupItem key={i}><LogEntry log={log} date={date}/></ListGroupItem>);
+    console.log(log)
   });
   return(
     <div>

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+import copy
 
 FIELD_TYPES = (
     ('s', 'Single-line text'),
@@ -141,12 +142,17 @@ class Transaction(models.Model):
     administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
 
 class Log(models.Model):
-    item                = models.ForeignKey(Item, on_delete=models.CASCADE, blank=True, null=True)
-    quantity            = models.PositiveIntegerField(blank=True, null=True)
-    initiating_user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiating_user')
-    affected_user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='affected_user', blank=True, null=True)
-    date_created        = models.DateTimeField(blank=True, auto_now_add=True)
-    message             = models.CharField(max_length = 100, blank=True, null=True)
+    item                    = models.ForeignKey(Item, on_delete=models.SET_NULL, blank=True, null=True)
+    quantity                = models.PositiveIntegerField(blank=True, null=True)
+    initiating_user         = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='initiating_user', null=True)
+    affected_user           = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='affected_user', blank=True, null=True)
+    date_created            = models.DateTimeField(blank=True, auto_now_add=True)
+    message                 = models.CharField(max_length = 100, blank=True, null=True)
+    # default values for the foreignkeys in the event those items are deleted or users etc.
+    default_item            = models.CharField(max_length = 100, blank=True, null=True)
+    default_initiating_user = models.CharField(max_length = 100, blank=True, null=True)
+    default_affected_user   = models.CharField(max_length = 100, blank=True, null=True)
+
     # The following categories detail what type of inventory change occurred
     ITEM_CREATION           = "Item Creation"
     ITEM_MODIFICATION       = "Item Modification"
@@ -170,3 +176,16 @@ class Log(models.Model):
 
     def __str__(self):
         return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)
+
+    def createDefaults(self):
+        if self.item is not None:
+            self.default_item            = copy.deepcopy(self.item.name)
+        if self.affected_user is not None:
+            self.default_affected_user   = copy.deepcopy(self.affected_user.username)
+        if self.initiating_user is not None:
+            self.default_initiating_user = copy.deepcopy(self.initiating_user.username)
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            self.createDefaults()
+            super(Log, self).save(*args, **kwargs)

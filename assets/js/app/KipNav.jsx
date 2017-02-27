@@ -20,8 +20,8 @@ const KipNav = React.createClass({
 
   getAdminLink() {
     return this.props.route.user.is_superuser ? (
-      <LinkContainer to="/app/admin/">
-        <NavItem eventKey={6}>Admin</NavItem>
+      <LinkContainer to="/admin/">
+        <NavItem onClick={this.goToURL("/admin/")} eventKey={6}>Admin</NavItem>
       </LinkContainer>
     ) : null;
   },

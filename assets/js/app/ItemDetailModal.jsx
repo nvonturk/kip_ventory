@@ -54,14 +54,13 @@ class ItemDetailModal extends Component {
       this.setState({showModal: false});
       var thisobj = this;
       $.ajax({
-        url:"/api/cart/",
+        url:"/api/items/" + "{thisobj.props.item.name}" + "/addtocart/",
         type: "POST",
         beforeSend: function(request) {
           request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+          console.log(request)
         },
         data: {
-          item: thisobj.props.item.id,
-          owner: thisobj.props.user.id,
           quantity: thisobj.state.quantity
         },
         success:function(response){},

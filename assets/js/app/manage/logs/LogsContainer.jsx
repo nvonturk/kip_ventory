@@ -90,7 +90,7 @@ class LogsContainer extends Component {
     var thisobj = this;
     $.getJSON("/api/logs.json", params, function(data) {
       thisobj.setLogs(data);
-    });
+    })
   }
 
   changeUser(event){

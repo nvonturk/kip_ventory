@@ -138,7 +138,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CartItem
-        fields = ['item', 'quantity']
+        fields = ['item', 'quantity', 'id']
 
     def to_internal_value(self, data):
         quantity = data.get('quantity', None)
@@ -266,4 +266,4 @@ class LogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Log
-        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category"]
+        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category", "default_item", "default_affected_user", "default_initiating_user"]
