@@ -9,7 +9,6 @@ class CartItem extends Component {
     super(props);
     this.state = {
       quantity: props.cartItem['quantity'],
-      comment: ""
     }
     this.handleChange = this.handleChange.bind(this);
     this.changeQuantity = this.changeQuantity.bind(this);
@@ -85,22 +84,8 @@ class CartItem extends Component {
                 </Col>
               </Row>
               <Row>
-                <Col xs={6} md={6}>
-                  <FormGroup controlId="formOpenComment">
-                    <ControlLabel>Comment</ControlLabel>
-                      <FormControl
-                        type = "text"
-                        name="comment"
-                        value={this.state.comment}
-                        placeholder={this.state.comment}
-                        onChange={this.handleChange}
-                      />
-                  </FormGroup>
-                </Col>
-              </Row>
-              <Row>
                 <Col xs={2} md={2}>
-                  <Button bsStyle="primary" block onClick={() => this.props.reRender(this.props.cartItem.id)} className="deleteButton">Delete</Button>
+                  <Button bsStyle="primary" block onClick={() => this.props.reRender(this.props.cartItem.item.name)} className="deleteButton">Delete</Button>
                 </Col>
               </Row>
             </Row>

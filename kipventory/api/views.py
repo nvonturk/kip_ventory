@@ -388,7 +388,10 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
 
         serializer = self.get_serializer(instance=cartitem, data=data, partial=True)
         if serializer.is_valid():
-            cart_quantity = int(request.data['quantity'])
+            try:
+                cart_quantity = int(request.data['quantity'])
+            except:
+                return Response({"quantity": "Quantity must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
             if (cart_quantity < 0):
                 return Response({"quantity": "Quantity must be a positive integer."})
             elif cart_quantity == 0:
@@ -468,14 +471,15 @@ class RequestListCreate(generics.GenericAPIView):
 
     # generate a request that contains all items currently in your cart.
     def post(self, request, format=None):
-        request.data.update({'requester': request.user})
+        data = request.data.copy()
+        data.update({'requester': request.user})
 
         cart_items = models.CartItem.objects.filter(owner__pk=self.request.user.pk)
         if cart_items.count() <= 0:
             d = {"error": "There are no items in your cart. Add an item to request it."}
             return Response(d, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             request_instance = serializer.save()
 
