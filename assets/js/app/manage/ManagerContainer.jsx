@@ -55,6 +55,9 @@ const ManagerContainer = React.createClass({
                 <LinkContainer to="/app/manage/logs">
                   <NavItem eventKey={6}>Logs</NavItem>
                 </LinkContainer>
+                <LinkContainer to="/app/manage/tags">
+                  <NavItem eventKey={7}>Tags</NavItem>
+                </LinkContainer>
               </Nav>
             </Row>
           </Col>

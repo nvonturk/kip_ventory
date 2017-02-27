@@ -743,6 +743,13 @@ class TagListCreate(generics.GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class TagsListAll(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.TagSerializer
+
+    def get_queryset(self):
+        return models.Tag.objects.all()
+
 
 class LogList(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
