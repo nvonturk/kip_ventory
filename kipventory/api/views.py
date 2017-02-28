@@ -860,6 +860,7 @@ class LogList(generics.GenericAPIView):
 
 class TransactionListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Transaction.objects.all()
@@ -873,8 +874,10 @@ class TransactionListCreate(generics.GenericAPIView):
         if not (category is None or category=="All"):
             queryset = models.Transaction.objects.filter(category=category)
 
-        serializer = self.get_serializer(instance=queryset, many=True)
-        return Response(serializer.data)
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
     def post(self, request, format=None):
         #todo django recommends doing this in middleware
