@@ -186,26 +186,15 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
             else:
                     return Response({"error": "Item needs non null name"}, status=status.HTTP_400_BAD_REQUEST)
 
+        data = request.data.copy()
 
-        model_no = request.data.get('model_no', None)
-        if not (model_no is None):
-            if not (request.user.is_superuser):
-                return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
+        tags = data.get('tags', None)
+        if tags is None:
+            for tag in item.tags.all():
+                item.tags.remove(tag)
 
-        description = request.data.get('description', None)
-        if not (description is None):
-            if not (request.user.is_superuser):
-                return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
 
-        tags = request.data.get('tags', None)
-        for tag in item.tags.all():
-            item.tags.remove(tag)
-
-        if not (tags is None):
-            if not (request.user.is_superuser):
-                return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
-
-        serializer = self.get_serializer(instance=item, data=request.data, partial=True)
+        serializer = self.get_serializer(instance=item, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             # Insert Create Log
