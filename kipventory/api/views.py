@@ -146,6 +146,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         return models.Item.objects.all()
 
     def get(self, request, item_name, format=None):
+        print("YO")
         item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item)
         return Response(serializer.data)
