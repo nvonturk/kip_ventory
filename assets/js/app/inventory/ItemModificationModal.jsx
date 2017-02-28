@@ -164,14 +164,17 @@ class ItemModificationModal extends Component{
                 onChange={this.handleChange.bind(this, 'name')}
               ></FormControl>
 
-              <ControlLabel>Quantity</ControlLabel>
-              <FormControl
-                type="number"
-                name="quantity"
-                value={this.state.quantity}
-                placeholder={this.state.quantity}
-                onChange={this.handleChange.bind(this, 'quantity')}
-              ></FormControl>
+              {
+                this.props.is_admin
+                ? <div><ControlLabel>Quantity</ControlLabel>
+                  <FormControl
+                    type="number"
+                    name="quantity"
+                    value={this.state.quantity}
+                    placeholder={this.state.quantity}
+                    onChange={this.handleChange.bind(this, 'quantity')}
+                  ></FormControl></div> :null
+              }
 
               <ControlLabel>Model Number</ControlLabel>
               <FormControl
@@ -201,7 +204,13 @@ class ItemModificationModal extends Component{
 
           <Modal.Footer>
             <Button onClick={this.props.close}>Close</Button>
-            <Button onClick={this.props.deleteItem} bsStyle="danger">Delete Item</Button>
+            {
+              this.props.is_admin
+                ? <Button onClick={this.props.deleteItem} bsStyle="danger">
+                  Delete Item
+                  </Button>
+                : null
+            }
             <Button onClick={e => {this.props.saveChanges(this.state.name, this.state.quantity, this.state.model_no, this.state.description, this.state.tags)}} bsStyle="primary">Save Changes</Button>
           </Modal.Footer>
           </Modal>
