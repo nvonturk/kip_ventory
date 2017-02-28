@@ -6,6 +6,8 @@ import Paginator from '../Paginator'
 import { ajax, getJSON } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 
+const REQUESTS_PER_PAGE = 5;
+
 const STATUS = ["All", "O", "A", "D"];
 
 const RequestsContainer = React.createClass({
@@ -15,8 +17,8 @@ const RequestsContainer = React.createClass({
       activeKey: 0,
       requests: [],
       page: 1,
-      pageCount: 1,
-
+      pageCount: 0,
+      filter_option: 'All',
       showSuccessMessage: false,
       successMessage: "",
       showErrorMessage: false,
@@ -30,7 +32,9 @@ const RequestsContainer = React.createClass({
 
   getRequests() {
     var params = {
-      page: 1,
+      page: this.state.page,
+      itemsPerPage: REQUESTS_PER_PAGE, 
+      status: this.state.filter_option,
     };
     var url = "/api/requests/";
     var _this = this;
@@ -40,6 +44,16 @@ const RequestsContainer = React.createClass({
         pageCount: Math.ceil(data.num_pages),
       })
     })
+  },
+
+  handlePageClick(data) {
+    let selected = data.selected;
+    let offset = Math.ceil(selected * REQUESTS_PER_PAGE);
+    let page = data.selected + 1;
+
+    this.setState({page: page}, () => {
+      this.getRequests();
+    });
   },
 
   deleteRequest(request) {
@@ -76,8 +90,10 @@ const RequestsContainer = React.createClass({
 
   handleSelect(selectedKey) {
     this.setState({
-      activeKey: selectedKey
-    })
+      activeKey: selectedKey, 
+      filter_option: STATUS[selectedKey], 
+      page: 1
+    }, this.getRequests);
   },
 
   getStatusLabel(status) {
@@ -94,20 +110,7 @@ const RequestsContainer = React.createClass({
   },
 
   getRequestView() {
-    var stat = STATUS[this.state.activeKey]
-    var requests = []
-    if (stat == "All") {
-      requests = this.state.requests
-    } else if (stat == "O") {
-      requests = this.state.requests.filter( (request) => {return request.status == "O"})
-    } else if (stat == "A") {
-      requests = this.state.requests.filter( (request) => {return request.status == "A"})
-    } else if (stat == "D") {
-      requests = this.state.requests.filter( (request) => {return request.status == "D"})
-    } else {
-      requests = []
-    }
-
+  
     return (
       <Row>
         <Col sm={12}>
@@ -123,7 +126,7 @@ const RequestsContainer = React.createClass({
               </tr>
             </thead>
             <tbody>
-              {requests.map( (request, i) => {
+              {this.state.requests.map( (request, i) => {
                 var d = new Date(request.date_open)
                 return (
                   <tr key={request.request_id} style={{height: '50px'}}>
@@ -205,6 +208,11 @@ const RequestsContainer = React.createClass({
               </Row>
             </Panel>
 
+          </Col>
+        </Row>
+        <Row>
+          <Col xs={12}>
+            <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
           </Col>
         </Row>
 

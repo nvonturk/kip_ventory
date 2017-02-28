@@ -313,4 +313,4 @@ class LogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Log
-        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category", "default_item", "default_affected_user", "default_initiating_user"]
+        fields = ['id', "item", "request", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category", "default_item", "default_affected_user", "default_initiating_user"]

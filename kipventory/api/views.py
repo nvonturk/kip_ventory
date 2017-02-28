@@ -115,9 +115,9 @@ class ItemListCreate(generics.GenericAPIView):
         try:
             quantity = int(request.data.get('quantity', None))
         except:
-            return Response({'error': 'Ensure the quantity is an integer.'})
+            return Response({'quantity': 'Ensure this value is an integer.'})
         if quantity < 0:
-            return Response({'error': 'Ensure the quantity is greater than or equal to 0.'})
+            return Response({'quantity': 'Ensure this value is greater than or equal to 0.'})
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -146,6 +146,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         return models.Item.objects.all()
 
     def get(self, request, item_name, format=None):
+        print("YO")
         item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item)
         return Response(serializer.data)
@@ -162,8 +163,9 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         quantity = request.data.get('quantity', None)
         try:
             int(quantity)
+            print(quantity)
         except ValueError:
-            return Response({"error": "Not an Integer"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Not Integer"}, status=status.HTTP_400_BAD_REQUEST)
         quantity = int(quantity)
         if not ((quantity is None) or (quantity < 0)):
             if (quantity != item.quantity):
@@ -260,7 +262,7 @@ class AddItemToCart(generics.GenericAPIView):
         if serializer.is_valid():
             cart_quantity      = int(data['quantity'])
             if (cart_quantity <= 0):
-                return Response({"error": "Quantity must be a positive integer."})
+                return Response({"quantity": "Quantity must be a positive integer."})
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -438,9 +440,9 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
             try:
                 cart_quantity = int(request.data['quantity'])
             except:
-                return Response({"error": "Quantity must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"quantity": "Quantity must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
             if (cart_quantity < 0):
-                return Response({"error": "Quantity must be a positive integer."})
+                return Response({"quantity": "Quantity must be a positive integer."})
             elif cart_quantity == 0:
                 cartitem.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -548,7 +550,7 @@ class RequestListCreate(generics.GenericAPIView):
             # Insert Create Log
             # Need {serializer.data, initiating_user_pk, 'Request Created'}
             req_item.save()
-            requestItemCreation(req_item, request.user.pk)
+            requestItemCreation(req_item, request.user.pk, request_instance)
             ci.delete()
 
         serializer = self.get_serializer(instance=request_instance)
@@ -601,7 +603,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                 # Insert Create Log
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                 for ri in instance.request_items.all():
-                    requestItemDenial(ri, request.user.pk)
+                    requestItemDenial(ri, request.user.pk, instance)
             elif data['status'] == 'A':
                 valid_request = True
                 new_quantities = {}
@@ -622,7 +624,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         item.save()
                         # Insert Create Log
                         # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                        requestItemApproval(ri, request.user.pk)
+                        requestItemApproval(ri, request.user.pk, instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
@@ -735,7 +737,7 @@ class GetNetIDToken(generics.GenericAPIView):
     def get(self, request, format=None):
         code = request.query_params.get('code')
 
-        p = {'grant_type' : 'authorization_code', 'code' : code, 'redirect_uri' : 'http://127.0.0.1:8000/api/netidtoken/', 'client_id' : 'kipventory', 'client_secret' : '#4ay9FQFuAPQbv8urcj+R%kd@YtAY4@=ggUXWbuvxjMX2g3kWo'}
+        p = {'grant_type' : 'authorization_code', 'code' : code, 'redirect_uri' : 'https://colab-sbx-277.oit.duke.edu/api/netidtoken/', 'client_id' : 'kipventory', 'client_secret' : '#4ay9FQFuAPQbv8urcj+R%kd@YtAY4@=ggUXWbuvxjMX2g3kWo'}
 
         token_request = requests.post('https://oauth.oit.duke.edu/oauth/token.php', data = p)
         token_json = token_request.json()
@@ -871,7 +873,6 @@ class LogList(generics.GenericAPIView):
 
 class TransactionListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Transaction.objects.all()
@@ -898,6 +899,7 @@ class TransactionListCreate(generics.GenericAPIView):
         print(serializer.data)
         return response
 
+
     def post(self, request, format=None):
         #todo django recommends doing this in middleware
         data = request.data.copy()
@@ -907,7 +909,7 @@ class TransactionListCreate(generics.GenericAPIView):
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
-                return Response({"error": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"quantity": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
 
             item = models.Item.objects.get(name=data['item'])
             if data['category'] == 'Acquisition':#models.ACQUISITION:
@@ -915,7 +917,7 @@ class TransactionListCreate(generics.GenericAPIView):
             elif data['category'] == 'Loss':#models.LOSS:
                 new_quantity = item.quantity - transaction_quantity
                 if new_quantity < 0:
-                    return Response({"error": "Cannot remove more items from the inventory than currently exists."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"quantity": "Cannot remove more items from the inventory than currently exists"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 #should never get here
                 pass
@@ -1008,8 +1010,8 @@ class DisburseCreate(generics.GenericAPIView):
                 item.save()
 
                 # Logging
-                requestItemCreation(req_item, request.user.pk)
-                requestItemApproval(req_item, request.user.pk)
+                requestItemCreation(req_item, request.user.pk, request_instance)
+                requestItemApproval(req_item, request.user.pk, request_instance)
 
             serializer.save()
             return Response(serializer.data)
@@ -1066,44 +1068,47 @@ def itemDeletionLog(item_name, initiating_user_pk):
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Deletion', message=message, affected_user=affected_user)
     log.save()
 
-def requestItemCreation(request_item, initiating_user_pk):
+def requestItemCreation(request_item, initiating_user_pk, requestObj):
     item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
     affected_user = None
+    request = requestObj
     try:
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
     message = 'Request Item for item {} created by {}'.format(request_item.item.name, initiating_user)
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
+    log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
     log.save()
 
-def requestItemDenial(request_item, initiating_user_pk):
+def requestItemDenial(request_item, initiating_user_pk, requestObj):
     item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
     affected_user = request_item.request.requester
+    request = requestObj
     try:
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
     message = 'Request Item for item {} denied by {}'.format(request_item.item.name, initiating_user.username)
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Request Item Denial', message=message, affected_user=affected_user)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category='Request Item Denial', message=message, affected_user=affected_user)
     log.save()
 
-def requestItemApproval(request_item, initiating_user_pk):
+def requestItemApproval(request_item, initiating_user_pk, requestObj):
     item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
     print(request_item.request.requester)
     affected_user = request_item.request.requester
+    request = requestObj
     try:
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
     message = 'Request Item for item {} approved by {}'.format(request_item.item.name, initiating_user.username)
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Request Item Approval', message=message, affected_user=affected_user)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category='Request Item Approval', message=message, affected_user=affected_user)
     log.save()
 
 def userCreationLog(data, initiating_user_pk):
