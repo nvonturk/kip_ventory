@@ -63,11 +63,19 @@ comment       --> CharField
 date          --> DateTimeField
 administrator --> ForeignKey --> User (each Transaction has one User administrator)
 ```
+#### NewUserRequest
+```
+username            --> CharField
+first_name          --> CharField
+last_name           --> CharField
+email               --> CharField
+comment             --> CharField
+```
 
 REST Endpoints
 ------------
 
-The following is a list of all REST endpoints in the web app. Under each endpoint, the available actions are listed. If an action is not listed, it is not supported by the API. If permissions are not listed, any user can access that endpoint. If parameters are not listed, no data needs to be included with the HTTP request. 
+The following is a list of all REST endpoints in the web app. Under each endpoint, the available actions are listed. If an action is not listed, it is not supported by the API. If permissions are not listed, any user can access that endpoint. If parameters are not listed, no data needs to be included with the HTTP request.
 
 * `/items/`
   * GET: get all items
@@ -75,7 +83,7 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
   * GET: get the item with the specified id
 * `/requests/`
   * GET: get all requests made by the current user
-  * POST: create a request 
+  * POST: create a request
     * Parameters (note: date_open, status, date_closed, closed_comment, and administrator should not be included in the POST data. date_open gets automatically set to the current time, status gets set to 'Outstanding', and the other fields get populated when an admin approves or denies a request)
 
 
@@ -136,8 +144,8 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
 
 * `/cart/[id]/`
   * GET: get the cart item with the specified id
-  * PUT: modify the quantity of the cart item with the specified id 
-    * Parameters: 
+  * PUT: modify the quantity of the cart item with the specified id
+    * Parameters:
 
     | Parameter | Type             | Purpose                          | Required? |
     |-----------|------------------|----------------------------------|-----------|
@@ -170,7 +178,7 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
   |------------|--------|---------------------------|-----------|
   | username   | string | the new user's username   | yes       |
   | password   | string | the new user's password   | yes       |
- 
+
 
 * `/signup/`
   * POST: create a new user
@@ -199,8 +207,8 @@ Technologies
 ------------
 
 The following technologies are used for the kip-ventory web app:
-  * Django 
-    * web framework in Python used for the backend and code organization 
+  * Django
+    * web framework in Python used for the backend and code organization
     * Dependencies
       * our python code contains a few dependencies listed in requirements.txt
   * React.js
@@ -215,7 +223,7 @@ The following technologies are used for the kip-ventory web app:
 High Level Design
 ------------
 
-There are two distinct kinds of users of the kip-ventory web app: admins and common users. The website is set up so that both admins and common users have almost the same experience, with the admin having a few special privileges. The website is mostly a single page app, with React router being used to mimic url routing for different parts of the home page. The only true pages that are at different url endpoints are the login page and the admin panel. 
+There are two distinct kinds of users of the kip-ventory web app: admins and common users. The website is set up so that both admins and common users have almost the same experience, with the admin having a few special privileges. The website is mostly a single page app, with React router being used to mimic url routing for different parts of the home page. The only true pages that are at different url endpoints are the login page and the admin panel.
 
 ####Login Page (/)
 
@@ -231,37 +239,63 @@ There are two distinct kinds of users of the kip-ventory web app: admins and com
 
   * When the user clicks an item, a modal window pops up with information about the item. In addition to item parameters, this also includes all of the user's outstanding requests for that item. The user can enter a quantity and add the item to his/her cart. When the user hits Add To Cart, a POST request is sent to /api/cart that creates a CartItem object with the item and quantity selected. Once the user adds all items of interest to his/her cart, the user can navigate to the Cart tab to initiate a request for those items.
 
-  * If the user is an admin, all outstanding requests for an item are shown in the modal window for that item, regardless of user. In addition, a Create Transactions button is shown. This button pops up another modal window, where the admin can initiate a transaction that logs the Acquisition or Loss of the selected item. When the admin his create transaction, a POST request is sent to /api/transaction, where a transaction object is created and shows up under the tranactions list in the Admin tab.
+  * If the user is an admin, all outstanding requests for an item are shown in the modal window for that item, regardless of user. In addition, a Create Transactions button is shown. This button pops up another modal window, where the admin can initiate a transaction that logs the Acquisition or Loss of the selected item. When the admin his create transaction, a POST request is sent to /api/transaction, where a transaction object is created and shows up under the transactions list in the Admin tab.
 
 * Cart
 
   * In this view, the user can see all of the items he/she has added to his/her cart. The user can update any of the quantities, and initiate a request for those items. This brings up a request form, in which the user fills out a few fields and initiates a request. A POST request is sent to /api/request to store the request for each item in the database. The requests now show up in the Requests tab.
 
-* Requests 
+* Requests
 
-  * In this view, the user can see all of the requests they've made (GET /api/requests). They can filter the requests by status: Outstanding, Approved, or Denied. 
+  * In this view, the user can see all of the requests they've made (GET /api/requests). They can filter the requests by status: Outstanding, Approved, or Denied.
 
 * Profile
- 
-  * This tab displays basic information about the current user.
+
+  * This tab displays basic information about the current user.  This tab also allows the user to generate a permission-restricted alphanumeric API token for out of application API calls.
 
 * Logout
 
   * This button logs out the current user and redirects them to the login page.
 
-* Admin
+* Manage
 
-  * This view is only shown if the user is an admin, and contains a few admin-specific controls. 
+  * This view is contains the majority of functionality availability to managers and admins.
     * Disburse Items
       * The admin can choose to disburse an item directly to a user without a user initiated request. Disbursing an item makes a POST to /api/disburse, which creates a Request with status Approved for the specified item and user.
     * Respond to Requests
       * The admin can see a list of all requests made for all items, and can filter by request status. Clicking an outstanding request allows the admin to approve our deny the request.
     * View transactions history
-      * The admin can see a list of all transactions, and can filter by transaction type: Acquisition or loss. 
+      * The admin can see a list of all transactions, and can filter by transaction type: Acquisition or loss.
+    * Item Creation
+      * Admins and managers may create new items.
+    * Custom Fields Management
+      * Admins and managers may create and remove customized data fields for items in the inventory system. These fields are comprised of four different types short text, long text, integer, and float.
+    * Transactions   
+      * Admins and managers may view a history of transactions in the inventory system.  Transactions are created for a specific item in the Item Detail view (/app/items/{item_name}/).
+    * Logs
+      * Admins and managers may view a read-only log of all major events in the system.
+    * Tags
+      * Admins and managers may view a list of item tags in the system, and delete and create tags.  Tags are unique and and identical tags may not be created.
+
+* Admin
+
+  * This view is only shown if the user is an admin, and contains a few admin-exclusive controls.
+    * Create Users
+      * Administrators may create new users in the systems.
+    * Manage Users
+      * Administrators may manage the information of users and their varying permission levels.  
+    * Admin Panel
+      * Administrators have access to the Django admin panel with can provide more fine-grained controls if necessary.  However we believe the great majority of functionality is encapsulated within the web application's Admin and Manage views.
+
+* API Test
+
+  * This view directs the user to a Swagger Documentation view that will allow them to test the API endpoints using an access token that is in accordance with their permission level.  Tokens must be obtained from the Profile view inside the application.
+
+
 
 ####Admin panel (/admin/)
 
-  * This view is the Django admin panel, where the admin can go to create items and tags and manage many things. Eventually much of this functionality will be moved to the main app. 
+  * This view is the Django admin panel, where the admin can go to create items and tags and manage many things. Eventually much of this functionality will be moved to the main app.
 
 ####Api (/api/)
 
@@ -270,4 +304,4 @@ There are two distinct kinds of users of the kip-ventory web app: admins and com
 Configuration
 ------------
 
-The [readme](https://github.com/nbv3/kip_ventory/blob/docs/README.md) on the kip-ventory github page contains detailed instructions on how to setup and install your own version of the web app. 
+The [readme](https://github.com/nbv3/kip_ventory/blob/docs/README.md) on the kip-ventory github page contains detailed instructions on how to setup and install your own version of the web app.
