@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 from . import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import re
 
 class CustomFieldSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True)
@@ -187,15 +188,42 @@ class UserGETSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
+def validate_username(value):
+    reg = re.compile('[a-z]{2,3}[0-9]{1,3}')
+    print(reg.match(value))
+    print(reg.fullmatch(value))
+    if reg.fullmatch(value):
+        raise serializers.ValidationError("Username cannot be a net id.")
+    username_taken = (User.objects.filter(username=value).count() > 0)
+    if username_taken:
+        raise serializers.ValidationError("Username is already taken.")
+    return value
+
 class UserPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
 
+    def validate_username(self, value):
+        return validate_username(value)
+
+    # add unique email when we add user signup back in
+    '''
+    def validate_email(self, value):
+        email_taken = (User.objects.filter(email=email).count() > 0)
+         
+        if email_taken:
+            raise serializers.ValidationError("Email is already taken.")
+        return value
+    '''
+
 class UserPUTSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
+
+    def validate_username(self, value):
+        return validate_username(value)
 
 class RequestItemSerializer(serializers.ModelSerializer):
     item     = serializers.SlugRelatedField(read_only=True, slug_field="name")
