@@ -158,7 +158,6 @@ class ItemDetail extends Component {
 
   deleteItem(){
     if(confirm("Are you sure you wish to continue?") == true){
-      console.log("we got here")
       var thisobj = this
       $.ajax({
       url:"/api/items/" + thisobj.item_name + "/",
