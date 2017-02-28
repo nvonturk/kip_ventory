@@ -27,7 +27,7 @@ const LoginForm = React.createClass({
   render() {
     var scope = "scope=basic%20identity:netid:read";
     var identity = "client_id=kipventory";
-    var redirect = "redirect_uri=http://colab-sbx-277.oit.duke.edu/api/netidtoken/";
+    var redirect = "redirect_uri=http://colab-sbx-277.oit.duke.edu/api/netidtoken";
     // var redirect = "redirect_uri=http://127.0.0.1:8000/api/netidtoken/";
     var urlstate = "state=11291";
     var netid_url = "https://oauth.oit.duke.edu/oauth/authorize.php?response_type=code"+"&"+identity+"&"+redirect+"&"+scope+"&"+urlstate;
