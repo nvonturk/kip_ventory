@@ -60,10 +60,13 @@ class Migration(migrations.Migration):
                 ('quantity', models.PositiveIntegerField(blank=True, null=True)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('message', models.CharField(blank=True, max_length=100, null=True)),
+                ('default_item', models.CharField(blank=True, max_length=100, null=True)),
+                ('default_initiating_user', models.CharField(blank=True, max_length=100, null=True)),
+                ('default_affected_user', models.CharField(blank=True, max_length=100, null=True)),
                 ('category', models.CharField(choices=[('Item Modification', 'Item Modification'), ('Item Creation', 'Item Creation'), ('Item Deletion', 'Item Deletion'), ('Request Item Creation', 'Request Item Creation'), ('Request Item Approval', 'Request Item Approval'), ('Request Item Denial', 'Request Item Denial'), ('User Creation', 'User Creation'), ('Transaction Creation', 'Transaction Creation')], max_length=20)),
-                ('affected_user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='affected_user', to=settings.AUTH_USER_MODEL)),
-                ('initiating_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='initiating_user', to=settings.AUTH_USER_MODEL)),
-                ('item', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='api.Item')),
+                ('affected_user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='affected_user', to=settings.AUTH_USER_MODEL)),
+                ('initiating_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='initiating_user', to=settings.AUTH_USER_MODEL)),
+                ('item', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='api.Item')),
             ],
         ),
         migrations.CreateModel(
@@ -81,7 +84,7 @@ class Migration(migrations.Migration):
             name='Request',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date_open', models.DateTimeField(blank=True, null=True)),
+                ('date_open', models.DateTimeField(auto_now_add=True)),
                 ('open_comment', models.TextField(blank=True, default='', max_length=500)),
                 ('date_closed', models.DateTimeField(blank=True, null=True)),
                 ('closed_comment', models.TextField(blank=True, max_length=500)),
@@ -103,7 +106,7 @@ class Migration(migrations.Migration):
             name='Tag',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
+                ('name', models.CharField(max_length=100, unique=True)),
             ],
         ),
         migrations.CreateModel(

@@ -1,5 +1,5 @@
 import React from 'react'
-import {Grid, Row} from 'react-bootstrap'
+import {Grid, Row, Col} from 'react-bootstrap'
 
 const ManagerWelcome = React.createClass({
 
@@ -7,7 +7,9 @@ const ManagerWelcome = React.createClass({
     return (
       <Grid fluid>
         <Row>
-          <p>Use the links on the left to disburse items, respond to requests, and view transaction history.</p>
+          <Col sm={12}>
+            <p>Use the links on the left to disburse items, respond to requests, and view transaction history.</p>
+          </Col>
         </Row>
       </Grid>
     )

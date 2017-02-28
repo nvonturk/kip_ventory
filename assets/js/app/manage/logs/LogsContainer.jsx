@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
 import LogEntry from './LogEntry'
-import { ListGroup, ListGroupItem, Label, Row, Col, Grid, Well, Button } from 'react-bootstrap'
+import { ListGroup, ListGroupItem, Label, Row, Col, Grid, Panel, Well, Button } from 'react-bootstrap'
 import $ from 'jquery'
 import SimpleDropdown from '../../SimpleDropdown'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
@@ -90,7 +90,7 @@ class LogsContainer extends Component {
     var thisobj = this;
     $.getJSON("/api/logs.json", params, function(data) {
       thisobj.setLogs(data);
-    });
+    })
   }
 
   changeUser(event){
@@ -129,27 +129,42 @@ class LogsContainer extends Component {
 
     return(
       <Grid fluid>
+
         <Row>
-          <Col md = {4} xs = {4}>
-            <Select ref="userSelect" autofocus options={this.state.userlist} simpleValue clearable={true} placeholder="Select User" name="selected-user" value={this.state.currentuser} onChange={this.changeUser} searchable={true}/>
-          </Col>
-          <Col md = {4} xs = {4}>
-            <Select ref="itemSelect" autofocus options={this.state.itemlist} simpleValue clearable={true} placeholder="Select Item" name="selected-item" value={this.state.currentitem} onChange={this.changeItem} searchable={true}/>
-          </Col>
-          <Col md = {2} xs = {2}>
-            <Well>
-              <DateRangePicker onApply={this.changeDate}>Pick Date</DateRangePicker>
-            </Well>
-          </Col>
-          <Col md = {2} xs = {2}>
-            <Button onClick={this.clearSearch}>Clear</Button>
+          <Col xs={12}>
+            <h3>Logs</h3>
+            <hr />
+            <p>
+              View all logging history. Logs are searchable by item, user, specific date, or range of dates.
+            </p>
+            <br />
           </Col>
         </Row>
+
+        <Panel>
         <Row>
-          <Col md = {9} xs = {9}>
+          <Col md={4}>
+            <Select ref="userSelect" autofocus options={this.state.userlist} simpleValue clearable={true} placeholder="Select User" name="selected-user" value={this.state.currentuser} onChange={this.changeUser} searchable={true}/>
+          </Col>
+          <Col md={4}>
+            <Select ref="itemSelect" autofocus options={this.state.itemlist} simpleValue clearable={true} placeholder="Select Item" name="selected-item" value={this.state.currentitem} onChange={this.changeItem} searchable={true}/>
+          </Col>
+          <Col md={2}>
+              <DateRangePicker showDropdowns onApply={this.changeDate}><Button bsStyle="info">Pick Date</Button></DateRangePicker>
+          </Col>
+          <Col md={2}>
+            <Button onClick={this.clearSearch} bsStyle="danger">Clear</Button>
+          </Col>
+        </Row>
+
+        <hr />
+
+        <Row>
+          <Col md={12}>
             <LogEntryContainer className="log-list" logs={this.state.logs} />
           </Col>
         </Row>
+        </Panel>
       </Grid>
     )
   }

@@ -1,9 +1,8 @@
 import React, { Component } from 'react'
-import $ from "jquery"
 import { getJSON, ajax } from 'jquery'
 import { FormGroup, Button, Modal, FormControl, ControlLabel }  from 'react-bootstrap'
-import { getCookie } from '../csrf/DjangoCSRFToken'
-import TagMultiSelect from './TagMultiSelect'
+import { getCookie } from '../../csrf/DjangoCSRFToken'
+import TagMultiSelect from '../TagMultiSelect'
 
 var CUSTOM_FIELDS = []
 
@@ -203,7 +202,7 @@ class ItemModificationModal extends Component{
           <Modal.Footer>
             <Button onClick={this.props.close}>Close</Button>
             <Button onClick={this.props.deleteItem} bsStyle="danger">Delete Item</Button>
-            <Button onClick={this.props.saveChanges} bsStyle="primary">Save Changes</Button>
+            <Button onClick={e => {this.props.saveChanges(this.state.name, this.state.quantity, this.state.model_no, this.state.description, this.state.tags)}} bsStyle="primary">Save Changes</Button>
           </Modal.Footer>
           </Modal>
       </div>

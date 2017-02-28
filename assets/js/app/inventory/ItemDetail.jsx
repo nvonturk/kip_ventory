@@ -1,33 +1,33 @@
 import React, { Component } from 'react'
-import { Grid, Button, Modal, Table}  from 'react-bootstrap'
-import QuantityBox from './QuantityBox'
-import SimpleRequest from './SimpleRequest'
-import RequestList from './RequestList'
-import $ from "jquery"
-import Item from './Item'
-import { getCookie } from '../csrf/DjangoCSRFToken'
+import { Grid, Row, Col, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
+import RequestList from '../RequestList'
+import { getJSON, ajax } from "jquery"
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
 import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
+import {browserHistory} from 'react-router'
 
-class ItemDetailModal extends Component {
+class ItemDetail extends Component {
   constructor(props) {
     super(props);
-    this.item_name = this.props.params.item_name;
-    this.user = this.props.route.user;
+    this.item_name = props.params.item_name;
+    this.user = props.route.user;
 
     this.state = {
       requests: [],
-      cart_quantity:"",
-      showModifyButton: this.user.is_staff,
+      quantity:0,
+      showModifyButton: props.route.user.is_staff,
       showModifyModal: false,
       //item: {}
     }
     this.addToCart = this.addToCart.bind(this);
-    this.setCartQuantity = this.setCartQuantity.bind(this);
+    this.handleChange = this.handleChange.bind(this);
     this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
     this.handleModifyClick = this.handleModifyClick.bind(this);
     this.closeModal = this.closeModal.bind(this);
+    this.deleteItem = this.deleteItem.bind(this);
+    this.saveChanges = this.saveChanges.bind(this);
 
     this.getItem();
     //this.getRequests();
@@ -37,11 +37,13 @@ class ItemDetailModal extends Component {
 
   getItem() {
     var url = '/api/items/' + this.item_name + '/';
+    console.log("HERE")
 
     var thisobj = this;
-    $.getJSON(url, function(data){
+    getJSON(url, function(data){
       thisobj.setState({
         item: data,
+
       });
     });
   }
@@ -52,7 +54,7 @@ class ItemDetailModal extends Component {
     // Another thing I noticed: all item detail modals get renderd on page load, just with showModal = false. Could be performance issue later on
     var url = "/api/items/" + this.item_name + "/requests/";
     var thisObj = this;
-    $.getJSON(url, function(data) {
+    getJSON(url, function(data) {
       var outstandingRequests = data.filter(function(request) {
         return request.status == "O";
       });
@@ -80,24 +82,20 @@ class ItemDetailModal extends Component {
     this.setState({showModifyModal: false});
   }
 
-  setCartQuantity(value) {
-    this.setState({
-      cart_quantity:value
-    })
-  }
-
   addToCart(){
     // todo add these checks on the backend
-    if (!Number.isInteger(parseFloat(this.state.cart_quantity)) || parseFloat(this.state.cart_quantity)<=0){
+    if ((!Number.isInteger(parseInt(this.state.quantity, 10))) || (this.state.quantity <= 0)){
+      console.log((Number.isInteger(this.state.quantity)))
+      console.log((this.state.quantity > 0))
       alert("Quantity must be a positive integer")
     }
-    else if(this.state.item.quantity < this.state.cart_quantity){
+    else if(this.state.item.quantity < this.state.quantity){
       alert("Quantity Exceeds Inventory Capacity")
     }
     else{
       var thisobj = this;
-      $.ajax({
-        url:"/api/cart/",
+      ajax({
+        url:"/api/items/" + thisobj.state.item.name + "/addtocart/",
         type: "POST",
         beforeSend: function(request) {
           request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
@@ -105,9 +103,12 @@ class ItemDetailModal extends Component {
         data: {
           item: thisobj.state.item.id,
           owner: thisobj.user.id,
-          quantity: thisobj.state.cart_quantity
+          quantity: thisobj.state.quantity
         },
-        success:function(response){},
+        success:function(response){
+          //reset form
+          thisobj.setState({quantity:0})
+        },
         complete:function(){},
         error:function (xhr, textStatus, thrownError){
             alert("error adding item to cart");
@@ -156,13 +157,56 @@ class ItemDetailModal extends Component {
   }
 
 
-  deleteItem(event){
-    event.preventDefault();
-    console.log("we deleting!");
+  deleteItem(){
+    var thisobj = this
+    ajax({
+    url:"/api/items/" + thisobj.item_name + "/",
+    type: "DELETE",
+    beforeSend: function(request) {
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    success:function(response){
+      var url = "/app/"
+      browserHistory.push(url)
+
+    },
+    complete:function(){
+        },
+    error:function (xhr, textStatus, thrownError){
+        alert("error doing something");
+
+    }
+    });
   }
 
-  saveChanges(event){
-    event.preventDefault();
+  saveChanges(name, quantity, model_no, description, tags){
+    var thisobj = this
+    ajax({
+    url:"/api/items/" + thisobj.item_name + "/",
+    type: "PUT",
+    data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tags},
+    statusCode: {
+       400: function() {
+         alert("Unsuitable Data");
+       }
+     },
+    beforeSend: function(request) {
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    success:function(response){
+      var url = "/app/"
+      browserHistory.push(url)
+    },
+    complete:function(){
+        },
+    error:function (xhr, textStatus, thrownError){
+
+    }
+    });
+  }
+
+  handleChange(event) {
+    this.setState({ [event.target.name]: event.target.value }, () => console.log(this.state.quantity));
   }
 
 
@@ -170,7 +214,7 @@ class ItemDetailModal extends Component {
   render() {
 
     // todo better logic for this
-    if (!this.state.item || !this.state.requests) return null;
+    if (!this.state.item || !this.state.requests) return <div>Item Does Not Exist</div>;
 
     var requestListView=[];
 
@@ -203,8 +247,14 @@ class ItemDetailModal extends Component {
 
     return (
       <Grid>
-        <h4>Item Details</h4>
-        <Table striped bordered condensed hover>
+        <Row>
+          <Col sm={12}>
+            <h3>Item Details</h3>
+            <hr />
+          </Col>
+        </Row>
+
+        <Table hover>
           {this.getTableHeader()}
           <tbody>
             {this.getTableRow(this.state.item, 0)}
@@ -223,7 +273,15 @@ class ItemDetailModal extends Component {
         {createTransactionView}
         <h4> Cart </h4>
         <Button onClick={this.addToCart}>Add to Cart</Button>
-        <QuantityBox onUserInput={this.setCartQuantity}/>
+        <FormGroup controlId="formQuantity">
+          <ControlLabel>Quantity</ControlLabel>
+            <FormControl
+              type="number"
+              name="quantity"
+              value={this.state.quantity}
+              onChange={this.handleChange}
+            />
+        </FormGroup>
         {
           this.state.showModifyButton
             ? <ModifyButton
@@ -236,4 +294,4 @@ class ItemDetailModal extends Component {
     );
   }
 }
-export default ItemDetailModal
+export default ItemDetail
