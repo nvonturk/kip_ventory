@@ -17,18 +17,20 @@ const ManagerRequestsContainer = React.createClass({
       "activeKey": 0,
       "requests": [],
       "page": 1,
-      "pageCount": 0
+      "pageCount": 0,
+      "filter_option": "All"
     }
   },
 
   componentWillMount() {
-    this.handlePageClick = this.handlePageClick.bind(this)
     this.getRequests();
   },
 
   getRequests() {
     var params = {
       page: this.state.page,
+      itemsPerPage: REQUESTS_PER_PAGE, 
+      status: this.state.filter_option,
     };
     var url = "/api/requests/all/";
     var _this = this;
@@ -42,7 +44,7 @@ const ManagerRequestsContainer = React.createClass({
 
   handlePageClick(data) {
     let selected = data.selected;
-    let offset = Math.ceil(selected * LOGS_PER_PAGE);
+    let offset = Math.ceil(selected * REQUESTS_PER_PAGE);
     let page = data.selected + 1;
 
     this.setState({page: page}, () => {
@@ -52,8 +54,10 @@ const ManagerRequestsContainer = React.createClass({
 
   handleSelect(selectedKey) {
     this.setState({
-      activeKey: selectedKey
-    })
+      activeKey: selectedKey,
+      filter_option: STATUS[selectedKey], 
+      page: 1
+    }, this.getRequests);
   },
 
   getStatusLabel(status) {

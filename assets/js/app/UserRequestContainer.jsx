@@ -4,39 +4,31 @@ import RequestSelectFilter from './RequestSelectFilter'
 import RequestList from './RequestList'
 import { getCookie } from '../csrf/DjangoCSRFToken'
 import { Grid, Row, Col } from 'react-bootstrap'
+import Paginator from '../../Paginator'
+
+const REQUESTS_PER_PAGE = 1;
+
 
 class UserRequestContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
       requests:[],
-      all_requests:[],
       options: [
                 { value: 'O', label: 'Outstanding' },
                 { value: 'A', label: 'Approved' },
                 { value: 'D', label: 'Denied' },
                 { value: 'all', label: 'All' }
             ],
-      value: "all",
-      placeholder: "Request Types"
+      filter_option: "all",
+      placeholder: "Request Types",
+      "page": 1,
+      "pageCount": 0
     };
-    this.setRequests = this.setRequests.bind(this);
-    this.setFilter = this.setFilter.bind(this);
+    this.filterRequests = this.filterRequests.bind(this);
     this.deleteRequest = this.deleteRequest.bind(this);
 
     this.getMyRequests();
-  }
-
-  setRequests(requests){
-    this.setState({
-      requests: requests
-    });
-  }
-
-  setAllRequests(requests){
-    this.setState({
-      all_requests: requests
-    });
   }
 
   deleteRequest(request){
@@ -66,45 +58,58 @@ class UserRequestContainer extends Component {
 
   }
 
-  setFilter(type){
+  filterRequests(type){
     this.setState({
-      value : type.value,
-      requests: this.filterRequests(type.value)
-    });
+      filter_option : type.value,
+      page: 1,
+    }, this.getMyRequests);
   }
 
 
   getMyRequests(){
-    var thisobj = this;
-    $.getJSON("/api/requests.json", function(data){
-      thisobj.setAllRequests(data);
-      thisobj.setRequests(data);
+    var params = {
+      page: this.state.page,
+      itemsPerPage: REQUESTS_PER_PAGE, 
+      status: this.state.filter_option
+    };
+    var url = "/api/requests.json";
+    var _this = this;
+    $.getJSON(url, params, function(data) {
+      _this.setState({
+        requests: data.results,
+        pageCount: Math.ceil(data.num_pages),
+      })
+    })
+  }
+
+  handlePageClick(data) {
+    let selected = data.selected;
+    let offset = Math.ceil(selected * LOGS_PER_PAGE);
+    let page = data.selected + 1;
+
+    this.setState({page: page}, () => {
+      this.getMyRequests();
     });
   }
 
-  filterRequests(option){
-    var new_reqs;
-    if(option == "all"){
-        new_reqs = this.state.all_requests.slice();
-    } else{
-        new_reqs = this.state.all_requests.filter(function(request){
-          return option == request.status;
-        });
-    }
-    return new_reqs;
-  }
 
   render() {
     return (
       <Grid>
         <Row>
           <Col xs={12} xsOffset={0}>
-            <RequestSelectFilter value={this.state.value} placeholder={this.state.placeholder} options={this.state.options} onChange={this.setFilter} />
+            <RequestSelectFilter value={this.state.filter_option} placeholder={this.state.placeholder} options={this.state.options} onChange={this.filterRequests} />
           </Col>
         </Row>
         <Row>
           <Col xs={12} xsOffset={0}>
             <RequestList deleteRequest={this.deleteRequest} requests={this.state.requests} />
+          </Col>
+
+        </Row>
+        <Row>
+          <Col xs={12} xsOffset={0}>
+            <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
           </Col>
         </Row>
       </Grid>
