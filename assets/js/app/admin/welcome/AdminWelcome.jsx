@@ -7,7 +7,7 @@ const AdminWelcome = React.createClass({
     return (
       <Grid fluid>
         <Row>
-          <p>Use the links on the left to disburse items, respond to requests, and view transaction history.</p>
+          <p>Use the links on the left to create and manage users.</p>
         </Row>
       </Grid>
     )

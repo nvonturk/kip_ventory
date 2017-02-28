@@ -9,6 +9,12 @@ class Profile extends React.Component {
   	this.user = this.props.route.user;
   }
 
+  getPrivilegeValue(user) {
+    if (user.is_superuser) return "Admin";
+    else if (user.is_staff) return "Manager";
+    else return "User";
+  }
+
   render() {
   	var element = "";
   	if(this.user) {
@@ -17,7 +23,7 @@ class Profile extends React.Component {
   			<p>First name: {this.user.first_name}</p>
     		<p>Last name: {this.user.last_name}</p>
     		<p>Email: {this.user.email}</p>
-    		<p>Admin? {this.user.is_staff ? "Yes": "No"}</p>
+    		<p>Privilege: {this.getPrivilegeValue(this.user)}</p>
     		</div>
     	);
   	}

@@ -6,6 +6,11 @@ import KipNav from './KipNav'
 
 // ADMIN PAGES
 import AdminContainer from './admin/AdminContainer'
+import LocalUserCreationForm from './admin/usercreation/LocalUserCreationForm'
+import UserPrivilegesContainer from './admin/users/UserPrivilegesContainer'
+import AdminWelcome from './admin/welcome/AdminWelcome'
+//import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
+
 
 // Manager Pages
 import ManagerContainer from './manage/ManagerContainer'
@@ -15,7 +20,6 @@ import CustomFieldContainer from './manage/customfields/CustomFieldContainer'
 import DisbursementContainer from './manage/disbursement/DisbursementContainer'
 import ManagerRequestsContainer from './manage/requests/ManagerRequestsContainer'
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
-import NewUserRequestsContainer from './manage/newuserrequests/NewUserRequestsContainer'
 import LogsContainer from './manage/logs/LogsContainer'
 
 // MAIN APP PAGES
@@ -39,13 +43,15 @@ function getManagerPanel(userData) {
       <Route path="requests" component={ManagerRequestsContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="logs" component={LogsContainer} admin={userData} />
-      <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
     </Route>) : null
 }
 
 function getAdminPanel(userData) {
   return userData.is_superuser ? (
     <Route path="admin" component={AdminContainer} admin={userData}>
+      <IndexRoute component={AdminWelcome} admin={userData} />
+      <Route path="users/create/" component={LocalUserCreationForm} admin={userData} />
+      <Route path="users/manage/" component={UserPrivilegesContainer} admin={userData} />
     </Route>) : null
 }
 

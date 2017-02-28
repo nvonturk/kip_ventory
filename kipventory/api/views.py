@@ -605,8 +605,7 @@ def post_user_login(request, format=None):
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
         return redirect('/')
 
-
-class UserListCreate(generics.GenericAPIView):
+class UserList(generics.GenericAPIView):
     def get_queryset(self):
         return User.objects.all()
 
@@ -618,10 +617,18 @@ class UserListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(instance=users, many=True)
         return Response(serializer.data)
 
+class UserCreate(generics.GenericAPIView):
+    def get_queryset(self):
+        return User.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.UserPOSTSerializer
+  
     def post(self, request, format=None):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = User.objects.create_user(**serializer.validated_data)
+            #todo do we log this for net id creations?
             userCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
