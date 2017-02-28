@@ -22,6 +22,9 @@ class ItemDetail extends Component {
       showModifyModal: false,
       //item: {}
     }
+
+    this.getItem = this.getItem.bind(this);
+    this.getRequests = this.getRequests.bind(this)
     this.addToCart = this.addToCart.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
@@ -31,7 +34,7 @@ class ItemDetail extends Component {
     this.saveChanges = this.saveChanges.bind(this);
 
     this.getItem();
-    //this.getRequests();
+    this.getRequests();
     //this.getTransactions();
 
   }

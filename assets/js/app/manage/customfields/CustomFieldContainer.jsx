@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button, Checkbox, Table, Modal, Well } from 'react-bootstrap'
+import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button, Checkbox, Table, Modal, Well, Alert } from 'react-bootstrap'
 import { getJSON, ajax } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 
@@ -15,13 +15,12 @@ const CustomFieldContainer = React.createClass({
   getInitialState() {
     return {
       existing_fields: [],
-
       name: "",
       field_type: 's',
       private: false,
-
       showCreatedSuccess: false,
-
+      showErrorMessage: false,
+      errorMessage: "",
       fieldToDelete: null,
       showDeleteModal: false,
     }
@@ -68,17 +67,20 @@ const CustomFieldContainer = React.createClass({
           name: "",
           field_type: 's',
           private: false,
-          showCreatedSuccess: true
+          showCreatedSuccess: true,
+          showErrorMessage: false
         })
       },
       complete:function(){
 
       },
       error:function (xhr, textStatus, thrownError){
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
-        alert("error doing something");
+        var response = xhr.responseJSON
+        _this.setState({
+          showCreatedSuccess: false,
+          showErrorMessage: true,
+          errorMessage: "Field name: " + response.name[0]
+        });
       }
     });
   },
@@ -89,7 +91,8 @@ const CustomFieldContainer = React.createClass({
     this.setState({
       showDeleteModal: true,
       fieldToDelete: field.name,
-      showCreatedSuccess: false
+      showCreatedSuccess: false,
+      showErrorMessage: false
     })
   },
 
@@ -97,12 +100,12 @@ const CustomFieldContainer = React.createClass({
     this.setState({
       showDeleteModal: false,
       fieldToDelete: null,
-      showCreatedSuccess: false
+      showCreatedSuccess: false,
+      showErrorMessage: false
     })
   },
 
   deleteField(e) {
-    console.log("DPING ")
     e.preventDefault()
     var field = this.state.fieldToDelete;
     const _this = this;
@@ -119,10 +122,13 @@ const CustomFieldContainer = React.createClass({
       },
       complete: function(){},
       error:    function (xhr, textStatus, thrownError){
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
-        alert("error doing something");
+        var response = xhr.responseJSON
+        console.log(response)
+        _this.setState({
+          showCreatedSuccess: false,
+          showErrorMessage: true,
+          errorMessage: "Deletion failed."
+        });
       }
     });
   },
@@ -131,7 +137,17 @@ const CustomFieldContainer = React.createClass({
     var ret = this.state.showCreatedSuccess ? (
       <Row>
         <Col sm={12}>
-          <Well>Field <span style={{color: "red"}}>{this.state.createdName}</span> successfully created!</Well>
+          <Alert bsSize="small" bsStyle="success">Field <span style={{color: "red"}}>{this.state.createdName}</span> successfully created!</Alert>
+        </Col>
+      </Row>) : (null)
+    return ret
+  },
+
+  getErrorMessage() {
+    var ret = this.state.showErrorMessage ? (
+      <Row>
+        <Col sm={12}>
+          <Alert bsSize="small" bsStyle="danger">{this.state.errorMessage}</Alert>
         </Col>
       </Row>) : (null)
     return ret
@@ -154,8 +170,6 @@ const CustomFieldContainer = React.createClass({
             <br />
           </Col>
         </Row>
-
-        { this.getSuccessMessage() }
 
         <Row>
           <Col xs={12}>
@@ -193,6 +207,9 @@ const CustomFieldContainer = React.createClass({
           </Col>
         </Row>
 
+        { this.getErrorMessage() }
+        { this.getSuccessMessage() }
+
 
         <Modal show={this.state.showDeleteModal} onHide={this.closeDeleteModal}>
         <Modal.Header closeButton>
@@ -206,7 +223,6 @@ const CustomFieldContainer = React.createClass({
           <Button bsStyle="danger" bsSize="small" onClick={this.deleteField}>Delete</Button>
         </Modal.Footer>
       </Modal>
-
 
           <Panel>
             <h4>Create a custom field</h4>

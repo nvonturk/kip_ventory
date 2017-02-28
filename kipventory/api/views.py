@@ -115,9 +115,9 @@ class ItemListCreate(generics.GenericAPIView):
         try:
             quantity = int(request.data.get('quantity', None))
         except:
-            return Response({'quantity': 'Ensure this value is an integer.'})
+            return Response({'error': 'Ensure the quantity is an integer.'})
         if quantity < 0:
-            return Response({'quantity': 'Ensure this value is greater than or equal to 0.'})
+            return Response({'error': 'Ensure the quantity is greater than or equal to 0.'})
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -146,7 +146,6 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         return models.Item.objects.all()
 
     def get(self, request, item_name, format=None):
-        print("YO")
         item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item)
         return Response(serializer.data)
@@ -163,9 +162,8 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         quantity = request.data.get('quantity', None)
         try:
             int(quantity)
-            print(quantity)
         except ValueError:
-            return Response({"error": "Not Integer"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Not an Integer"}, status=status.HTTP_400_BAD_REQUEST)
         quantity = int(quantity)
         if not ((quantity is None) or (quantity < 0)):
             if (quantity != item.quantity):
@@ -262,7 +260,7 @@ class AddItemToCart(generics.GenericAPIView):
         if serializer.is_valid():
             cart_quantity      = int(data['quantity'])
             if (cart_quantity <= 0):
-                return Response({"quantity": "Quantity must be a positive integer."})
+                return Response({"error": "Quantity must be a positive integer."})
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -440,9 +438,9 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
             try:
                 cart_quantity = int(request.data['quantity'])
             except:
-                return Response({"quantity": "Quantity must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Quantity must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
             if (cart_quantity < 0):
-                return Response({"quantity": "Quantity must be a positive integer."})
+                return Response({"error": "Quantity must be a positive integer."})
             elif cart_quantity == 0:
                 cartitem.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -863,6 +861,7 @@ class LogList(generics.GenericAPIView):
 
 class TransactionListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Transaction.objects.all()
@@ -876,8 +875,10 @@ class TransactionListCreate(generics.GenericAPIView):
         if not (category is None or category=="All"):
             queryset = models.Transaction.objects.filter(category=category)
 
-        serializer = self.get_serializer(instance=queryset, many=True)
-        return Response(serializer.data)
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
     def post(self, request, format=None):
         #todo django recommends doing this in middleware
@@ -888,7 +889,7 @@ class TransactionListCreate(generics.GenericAPIView):
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
             transaction_quantity = int(data['quantity'])
             if transaction_quantity < 0:
-                return Response({"quantity": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
 
             item = models.Item.objects.get(name=data['item'])
             if data['category'] == 'Acquisition':#models.ACQUISITION:
@@ -896,7 +897,7 @@ class TransactionListCreate(generics.GenericAPIView):
             elif data['category'] == 'Loss':#models.LOSS:
                 new_quantity = item.quantity - transaction_quantity
                 if new_quantity < 0:
-                    return Response({"quantity": "Cannot remove more items from the inventory than currently exists"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Cannot remove more items from the inventory than currently exists."}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 #should never get here
                 pass

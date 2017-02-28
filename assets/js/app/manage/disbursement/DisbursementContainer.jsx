@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import { Grid, Row, Col, Button, FormGroup, ControlLabel, FormControl, Panel, Form, Table } from 'react-bootstrap'
+import { Grid, Row, Col, Button, FormGroup, ControlLabel, FormControl, Panel, Form, Table, Well, Alert } from 'react-bootstrap'
 import { getJSON, ajax } from 'jquery'
 import SimpleDropdown from '../../SimpleDropdown'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
@@ -7,8 +7,6 @@ import MultiSelect from '../../MultiSelect'
 import Select from 'react-select'
 import 'react-select/dist/react-select.css'
 
-var SELECTED_ITEMS = []
-var QUANTITIES = []
 
 const DisbursementContainer = React.createClass({
   getInitialState() {
@@ -24,6 +22,12 @@ const DisbursementContainer = React.createClass({
 
       selectedItems: [],
       quantities: [],
+
+      showCreatedSuccess: false,
+      createdMessage: "",
+
+      showErrorMessage: false,
+      errorMessage: ""
     }
   },
 
@@ -137,13 +141,7 @@ const DisbursementContainer = React.createClass({
   disburse() {
     var items = this.state.selectedItems;
     var quantities = this.state.quantities;
-    // var itemQuantityList = []
-    // items.map( (item, i) => {
-    //   itemQuantityList.push({
-    //     item: item,
-    //     quantity: quantities[i]
-    //   })
-    // });
+    var _this = this;
     ajax({
       url:"/api/disburse/",
       type: "POST",
@@ -158,20 +156,57 @@ const DisbursementContainer = React.createClass({
         quantities: quantities
       },
       success:  function(response){
-        console.log(response)
+        var user = _this.state.selectedUser
+        _this.setState(_this.getInitialState(), _this.componentWillMount);
+        _this.setState({
+          showErrorMessage: false,
+          errorMessage: "",
+          showCreatedSuccess: true,
+          createdMessage: "Successfully disbursed to " + user + "."
+        })
       },
       complete: function(){},
       error:    function (xhr, textStatus, thrownError){
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
-        alert("error doing something");
+        var response = xhr.responseJSON
+        _this.setState({
+          showErrorMessage: true,
+          errorMessage: response.error,
+          showCreatedSuccess: false,
+          createdMessage: ""
+        })
       }
     });
   },
 
   isValidAddition() {
     return ((this.state.selectedItem.length <= 0) || (Number(this.state.quantity) <= 0))
+  },
+
+  isValidDisbursement() {
+    return (
+      (this.state.selectedItems.length <= 0) ||
+      (this.state.selectedUser == "")
+    )
+  },
+
+  getSuccessMessage() {
+    var ret = this.state.showCreatedSuccess ? (
+      <Row>
+        <Col sm={12}>
+          <Alert bsStyle="success" bsSize="small">{this.state.createdMessage}</Alert>
+        </Col>
+      </Row>) : (null)
+    return ret
+  },
+
+  getErrorMessage() {
+    return this.state.showErrorMessage ? (
+      <Row>
+        <Col sm={12}>
+          <Alert bsStyle="danger" bsSize="small">{this.state.errorMessage}</Alert>
+        </Col>
+      </Row>
+    ) : null
   },
 
   render() {
@@ -190,6 +225,9 @@ const DisbursementContainer = React.createClass({
             <br />
           </Col>
         </Row>
+
+        { this.getSuccessMessage() }
+        { this.getErrorMessage() }
 
         <Row>
           <Col xs={12}>
@@ -264,7 +302,7 @@ const DisbursementContainer = React.createClass({
 
                 <FormGroup>
                   <Col sm={2} smOffset={2}>
-                    <Button bsStyle="info" bsSize="small" onClick={this.disburse}>Disburse</Button>
+                    <Button bsStyle="info" bsSize="small" disabled={this.isValidDisbursement()} onClick={this.disburse}>Disburse</Button>
                   </Col>
                 </FormGroup>
 
