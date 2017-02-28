@@ -183,7 +183,7 @@ const ItemDetail = React.createClass({
     var createTransactionView = "";
     if(this.props.route.user.is_staff) {
       createTransactionView =
-          <CreateTransactionsContainer item_name={this.props.params.item_name} handleTransactionCreated={() => {this.getTransactions(); this.getItem();}}/> 
+          <CreateTransactionsContainer item_name={this.props.params.item_name} handleTransactionCreated={() => {this.getTransactions(); this.getItem();}}/>
     }
 
     return (
@@ -366,8 +366,6 @@ const ItemDetail = React.createClass({
           request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
         },
         data: {
-          item: thisobj.state.item.id,
-          owner: thisobj.user.id,
           quantity: thisobj.state.quantity
         },
         success:function(response){
