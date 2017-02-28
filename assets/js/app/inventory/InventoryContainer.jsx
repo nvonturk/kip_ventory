@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Table, Image, Button, Panel, Label } from 'react-bootstrap'
 import InventoryItem from './InventoryItem'
+import InventoryGridHeader from './InventoryGridHeader'
 import Paginator from '../Paginator'
 import { getJSON } from 'jquery'
 import { browserHistory } from 'react-router';
@@ -65,21 +66,18 @@ class InventoryContainer extends Component {
   }
 
   handleSearch(text) {
-    console.log("Search text: " + text);
     this.setState({searchText: text, page: 1}, () => {
       this.filterItems();
     });
   }
 
   handleTagSelection(tagsSelected) {
-    console.log("tags: " + tagsSelected);
     this.setState({tagsSelected: tagsSelected, page: 1}, () => {
       this.filterItems();
     });
   }
 
   handleExcludeTagSelection(excludeTagsSelected) {
-    console.log("ex tags: " + excludeTagsSelected);
     this.setState({excludeTagsSelected: excludeTagsSelected, page: 1}, () => {
       this.filterItems();
     });
@@ -107,38 +105,48 @@ class InventoryContainer extends Component {
   render() {
     return (
       <Grid>
-        <Row>
-          <Col md={12}>
-            <h3>Inventory</h3>
-            <hr />
-          </Col>
-        </Row>
-        
-        <Row>
-          <Col md={12}>
-            <Table hover>
-              <thead>
-                <tr>
-                  <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
-                  <th style={{width:"8%"}} className="text-center">Available</th>
-                  <th style={{width:"10%"}} className="text-center">Status</th>
-                  <th style={{width:"7%"}} className="text-center">Quantity</th>
-                  <th style={{width:"8%"}} className="text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {this.state.items.map( (item, i) => {
-                  return (<InventoryItem key={item.name} item={item} />)
-                })}
-              </tbody>
-            </Table>
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={4} smOffset={4}>
-            <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
-          </Col>
-        </Row>
+        <Col sm={8} smOffset={2}>
+          <Row>
+            <Col md={12}>
+              <h3>Inventory</h3>
+              <hr />
+            </Col>
+          </Row>
+
+          <Row>
+            <Col sm={12}>
+              <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
+            </Col>
+          </Row>
+
+          <hr />
+
+          <Row>
+            <Col md={12}>
+              <Table hover>
+                <thead>
+                  <tr>
+                    <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
+                    <th style={{width:"8%"}} className="text-center">Available</th>
+                    <th style={{width:"10%"}} className="text-center">Status</th>
+                    <th style={{width:"7%"}} className="text-center">Quantity</th>
+                    <th style={{width:"8%"}} className="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.items.map( (item, i) => {
+                    return (<InventoryItem key={item.name} item={item} />)
+                  })}
+                </tbody>
+              </Table>
+            </Col>
+          </Row>
+          <Row>
+            <Col sm={4} smOffset={4}>
+              <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
+            </Col>
+          </Row>
+        </Col>
       </Grid>
     )
   }

@@ -164,11 +164,6 @@ const RequestsContainer = React.createClass({
   render() {
     return (
       <Grid fluid>
-        <Row>
-          <Col sm={2}>
-            <br />
-          </Col>
-        </Row>
 
         <Row>
           <Col sm={2}>

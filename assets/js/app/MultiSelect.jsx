@@ -24,7 +24,7 @@ class MultiSelect extends Component {
   render () {
     return (
       <div>
-        <Select multi simpleValue value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
+        <Select style={{fontSize:"12px"}} multi simpleValue value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
       </div>
     );
   }

@@ -28,11 +28,7 @@ const ManagerContainer = React.createClass({
   render() {
     return (
       <Grid>
-        <Row>
-          <Col md={2}>
-            <br />
-          </Col>
-        </Row>
+
         <Row>
           <Col md={2}>
             <Row>
