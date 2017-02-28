@@ -6,6 +6,8 @@ import Paginator from '../../Paginator'
 import { ajax, getJSON } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 
+const REQUESTS_PER_PAGE = 5;
+
 const STATUS = ["All", "O", "A", "D"];
 
 const ManagerRequestsContainer = React.createClass({
@@ -15,17 +17,18 @@ const ManagerRequestsContainer = React.createClass({
       "activeKey": 0,
       "requests": [],
       "page": 1,
-      "pageCount": 1
+      "pageCount": 0
     }
   },
 
   componentWillMount() {
+    this.handlePageClick = this.handlePageClick.bind(this)
     this.getRequests();
   },
 
   getRequests() {
     var params = {
-      page: 1,
+      page: this.state.page,
     };
     var url = "/api/requests/all/";
     var _this = this;
@@ -35,6 +38,16 @@ const ManagerRequestsContainer = React.createClass({
         pageCount: Math.ceil(data.num_pages),
       })
     })
+  },
+
+  handlePageClick(data) {
+    let selected = data.selected;
+    let offset = Math.ceil(selected * LOGS_PER_PAGE);
+    let page = data.selected + 1;
+
+    this.setState({page: page}, () => {
+      this.getRequests();
+    });
   },
 
   handleSelect(selectedKey) {
@@ -142,6 +155,8 @@ const ManagerRequestsContainer = React.createClass({
           <Row>
             <Col sm={12}>
               { this.getRequestView() }
+              <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
+
             </Col>
           </Row>
         </Panel>
