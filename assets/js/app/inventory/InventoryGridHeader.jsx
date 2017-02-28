@@ -1,8 +1,8 @@
 import React from 'react'
-import SearchBar from './SearchBar'
+import SearchBar from '../SearchBar'
 import { Button, Grid, Row, Col } from 'react-bootstrap'
-import SimpleRow from './SimpleRow'
-import TagMultiSelect from './TagMultiSelect'
+import SimpleRow from '../SimpleRow'
+import TagMultiSelect from '../TagMultiSelect'
 
 function InventoryGridHeader(props) {
 	var columnContents = [
@@ -12,8 +12,8 @@ function InventoryGridHeader(props) {
 	];
 
 	return (
-		<Grid className="search-tag-container">
-		    <Row className="show-grid relative-container">
+		<Grid fluid className="search-tag-container">
+		    <Row className="relative-container">
 		      <Col xs={4} className="relative-container">{columnContents[0]}</Col>
 		      <Col xs={4} className="relative-container">{columnContents[1]}</Col>
 		      <Col xs={4} className="relative-container">{columnContents[2]}</Col>

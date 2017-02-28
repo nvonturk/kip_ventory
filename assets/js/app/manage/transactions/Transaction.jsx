@@ -14,15 +14,16 @@ function Transaction(props){
 		console.log("Label equals null for " + props.transaction.category);
 	}
 
-	/* Ex: 
+	/* Ex:
 		Acquisition of 10 resistors on Jan 1, 2017
 		Administrator: kip
 		Comment: bought them
-	*/	
+	*/
+	console.log(props);
   return (
   	<div>
-  		<p>{props.transaction.category} of {props.transaction.quantity} {props.transaction.item.name}(s) on {new Date(props.transaction.date).toLocaleString()}</p>
-    	<p>Administrator: {props.transaction.administrator.first_name} {props.transaction.administrator.last_name} {label}</p>
+  		<p>{props.transaction.category} of {props.transaction.quantity} {props.transaction.item}(s) on {new Date(props.transaction.date).toLocaleString()}</p>
+    	<p>Administrator: {props.transaction.administrator} {label}</p>
     	<p>Comment: {props.transaction.comment}</p>
     </div>
     )

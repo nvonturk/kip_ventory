@@ -138,7 +138,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CartItem
-        fields = ['item', 'quantity']
+        fields = ['item', 'quantity', 'id']
 
     def to_internal_value(self, data):
         quantity = data.get('quantity', None)
@@ -201,8 +201,7 @@ class RequestSerializer(serializers.ModelSerializer):
     request_id     = serializers.ReadOnlyField(source='id')
     requester      = serializers.SlugRelatedField(read_only=True, slug_field="username")
     request_items  = RequestItemSerializer(read_only=True, many=True)
-    date_open      = serializers.HiddenField(default=timezone.now)
-
+    date_open      = serializers.ReadOnlyField()
     open_comment   = serializers.CharField(max_length=500, default='', allow_blank=True)
 
     date_closed    = serializers.ReadOnlyField()
@@ -219,12 +218,10 @@ class RequestSerializer(serializers.ModelSerializer):
         errors = {}
 
         requester = data.get('requester', None)
-        date_open = timezone.now()
         open_comment = data.get('open_comment', None)
 
         return {
             'requester': requester,
-            'date_open': date_open,
             'open_comment': open_comment
         }
 
@@ -235,13 +232,14 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     date_open     = serializers.DateTimeField(read_only=True)
     open_comment  = serializers.CharField(read_only=True)
 
-    date_closed   = serializers.HiddenField(default=timezone.now)
+    administrator  = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    date_closed    = serializers.DateTimeField(read_only=True)
     closed_comment = serializers.CharField(max_length=500, allow_blank=True, default="")
-    status        = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
+    status         = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
 
     class Meta:
         model = models.Request
-        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment','status']
+        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
 
     def to_internal_value(self, data):
         validated_data = {}
@@ -266,4 +264,4 @@ class LogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Log
-        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category"]
+        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category", "default_item", "default_affected_user", "default_initiating_user"]

@@ -28,11 +28,7 @@ const ManagerContainer = React.createClass({
   render() {
     return (
       <Grid>
-        <Row>
-          <Col md={2}>
-            <br />
-          </Col>
-        </Row>
+
         <Row>
           <Col md={2}>
             <Row>
@@ -55,10 +51,13 @@ const ManagerContainer = React.createClass({
                 <LinkContainer to="/app/manage/logs">
                   <NavItem eventKey={6}>Logs</NavItem>
                 </LinkContainer>
+                <LinkContainer to="/app/manage/tags">
+                  <NavItem eventKey={7}>Tags</NavItem>
+                </LinkContainer>
               </Nav>
             </Row>
           </Col>
-          <Col md={10}>
+          <Col md={8} >
             { this.props.children }
           </Col>
         </Row>

@@ -3,6 +3,7 @@ import { Grid, Row, Col, Label, Button, Image, Panel, FormGroup, FormControl} fr
 import { browserHistory } from 'react-router'
 import { ajax } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
+import ItemTableDetail from './ItemTableDetail'
 
 const InventoryItem = React.createClass({
   getInitialState() {
@@ -57,35 +58,11 @@ const InventoryItem = React.createClass({
   },
 
 
-  getCustomFieldView(field, i) {
-    return (
-      <div key={i}>
-        <p><span>{field.name}: </span><span>{field.value}</span></p>
-      </div>
-    )
-  },
-
   render() {
     return (
       <tr>
         <td data-th="Item Information">
-          <Row>
-            <Col sm={12}>
-              <div style={{margin:"auto"}} className="clickable" onClick={() => browserHistory.push("/app/items/" + this.props.item.name + "/")}>
-                <Row>
-                  <Col sm={8}>
-                    <h5>{this.props.item.name}</h5>
-                    <p>{this.props.item.description}</p>
-                  </Col>
-                  <Col sm={4}>
-                    {this.props.item.custom_fields.map( (field, i) => {
-                      return field.field_type !== "m" ? this.getCustomFieldView(field, i) : null
-                    })}
-                  </Col>
-                </Row>
-              </div>
-            </Col>
-          </Row>
+          <ItemTableDetail item={this.props.item} />
         </td>
         <td data-th="Available" className="text-center">{this.props.item.quantity}</td>
         <td data-th="Status" className="text-center">
