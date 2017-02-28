@@ -23,7 +23,7 @@ import RequestsContainer from './requests/RequestsContainer'
 import Profile from './Profile'
 import {getJSON} from 'jquery'
 
-import ItemDetail from './ItemDetail'
+import ItemDetail from './inventory/ItemDetail'
 import RequestDetail from './requests/RequestDetail'
 
 function getManagerPanel(userData) {

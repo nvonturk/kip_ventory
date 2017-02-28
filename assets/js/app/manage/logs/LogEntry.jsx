@@ -18,7 +18,7 @@ function LogEntry(props){
       <td data-th="Affected User" className="text-left">{affectedUser}</td>
       <td data-th="Date" className="text-left">{dateString}</td>
       <td data-th="Category" className="text-left">{props.log.category}</td>
-      <td data-th="Item" className="text-left"> <a href={requester_url} >Item: {props.log.default_item}</a></td>
+      <td data-th="Item" className="text-left"> <a href={requester_url}>{props.log.default_item}</a></td>
       <td data-th="Quantity" className="text-left">{props.log.quantity}</td>
       <td data-th="Message" className="text-left">{props.log.message}</td>
     </tr>

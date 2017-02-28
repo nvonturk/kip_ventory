@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
-import $ from "jquery"
+import { ajax } from "jquery"
 import { FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Button} from 'react-bootstrap'
-import { getCookie } from '../csrf/DjangoCSRFToken'
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 
 
 class CreateTransactionsContainer extends Component {
@@ -56,7 +56,7 @@ class CreateTransactionsContainer extends Component {
     }
 
     var thisObj = this;
-    $.ajax({
+    ajax({
       type: "POST",
       url:"/api/transactions/",
       data: data,
@@ -67,13 +67,13 @@ class CreateTransactionsContainer extends Component {
         thisObj.setState({
           showModal: false,
           category: "Acquisition",
-          quantity: "", 
+          quantity: "",
           comment: ""
         });
       },
       complete:function() {
         //todo success vs complete
-        thisObj.props.handleTransactionCreated(); 
+        thisObj.props.handleTransactionCreated();
       },
       error:function (xhr, textStatus, thrownError){
           alert(xhr.responseText);

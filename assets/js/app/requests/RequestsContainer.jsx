@@ -116,10 +116,10 @@ const RequestsContainer = React.createClass({
               <tr>
                 <th style={{width: "15%"}} className="text-left">Requester</th>
                 <th style={{width: "20%"}} className="text-left">Date Open</th>
-                <th style={{width: "30%"}} className="text-left">Comment</th>
+                <th style={{width: "25%"}} className="text-left">Comment</th>
                 <th style={{width: "15%"}} className="text-center">Status</th>
-                <th style={{width: "10%"}} className="text-center"></th>
-                <th style={{width: "10%"}} className="text-center"></th>
+                <th style={{width: "12%"}} className="text-center"></th>
+                <th style={{width: "13%"}} className="text-center"></th>
               </tr>
             </thead>
             <tbody>
@@ -135,10 +135,10 @@ const RequestsContainer = React.createClass({
                       </div>
                     </td>
                     <td data-th="Status" className="text-center">{this.getStatusLabel(request.status)}</td>
-                    <td style={{width: "10%"}} className="text-center">
+                    <td style={{width: "12%"}} className="text-center">
                       <Button block bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
                     </td>
-                    <td style={{width: "10%"}} className="text-center">
+                    <td style={{width: "13%"}} className="text-center">
                       <Button block bsSize="small" bsStyle="danger" onClick={e => this.deleteRequest(request)} disabled={request.status != 'O'}>Cancel</Button>
                     </td>
                   </tr>
@@ -163,7 +163,7 @@ const RequestsContainer = React.createClass({
 
   render() {
     return (
-      <Grid>
+      <Grid fluid>
         <Row>
           <Col sm={2}>
             <br />

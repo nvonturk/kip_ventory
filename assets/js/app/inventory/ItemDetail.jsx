@@ -1,11 +1,8 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
-import QuantityBox from './QuantityBox'
-import SimpleRequest from './SimpleRequest'
-import RequestList from './RequestList'
-import $ from "jquery"
-import Item from './Item'
-import { getCookie } from '../csrf/DjangoCSRFToken'
+import RequestList from '../RequestList'
+import { getJSON, ajax } from "jquery"
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
 import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
@@ -43,7 +40,7 @@ class ItemDetail extends Component {
     console.log("HERE")
 
     var thisobj = this;
-    $.getJSON(url, function(data){
+    getJSON(url, function(data){
       thisobj.setState({
         item: data,
 
@@ -57,7 +54,7 @@ class ItemDetail extends Component {
     // Another thing I noticed: all item detail modals get renderd on page load, just with showModal = false. Could be performance issue later on
     var url = "/api/items/" + this.item_name + "/requests/";
     var thisObj = this;
-    $.getJSON(url, function(data) {
+    getJSON(url, function(data) {
       var outstandingRequests = data.filter(function(request) {
         return request.status == "O";
       });
@@ -97,7 +94,7 @@ class ItemDetail extends Component {
     }
     else{
       var thisobj = this;
-      $.ajax({
+      ajax({
         url:"/api/items/" + thisobj.state.item.name + "/addtocart/",
         type: "POST",
         beforeSend: function(request) {
@@ -162,7 +159,7 @@ class ItemDetail extends Component {
 
   deleteItem(){
     var thisobj = this
-    $.ajax({
+    ajax({
     url:"/api/items/" + thisobj.item_name + "/",
     type: "DELETE",
     beforeSend: function(request) {
@@ -184,7 +181,7 @@ class ItemDetail extends Component {
 
   saveChanges(name, quantity, model_no, description, tags){
     var thisobj = this
-    $.ajax({
+    ajax({
     url:"/api/items/" + thisobj.item_name + "/",
     type: "PUT",
     data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tags},
