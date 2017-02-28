@@ -8,19 +8,20 @@ function LogEntry(props){
   var requester_url = "/app/items/" + props.log.default_item + "/"
   console.log(requester_url)
   if (props.log.affected_user != null){
-    affectedUser = props.log.affected_user.username
+    affectedUser = props.log.affected_user
   }
+  var dateString = new Date(props.log.date_created).toLocaleString()
 
   return (
-    <div>
-      <p>Initiating User: {props.log.default_initiating_user}</p>
-      <p>Affected User: {props.log.default_affected_user}</p>
-      <p>Date: {props.log.date_created}</p>
-      <a href={requester_url} >Item: {props.log.default_item}</a>
-      <p>Category: {props.log.category}</p>
-      <p>Quantity: {props.log.quantity}</p>
-      <p>Message: {props.log.message}</p>
-    </div>
+    <tr>
+      <td data-th="Initiating User" className="text-left">{props.log.default_initiating_user}</td>
+      <td data-th="Affected User" className="text-left">{affectedUser}</td>
+      <td data-th="Date" className="text-left">{dateString}</td>
+      <td data-th="Category" className="text-left">{props.log.category}</td>
+      <td data-th="Item" className="text-left"> <a href={requester_url} >Item: {props.log.default_item}</a></td>
+      <td data-th="Quantity" className="text-left">{props.log.quantity}</td>
+      <td data-th="Message" className="text-left">{props.log.message}</td>
+    </tr>
 )
 
 

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Grid, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
+import { Grid, Row, Col, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
 import QuantityBox from './QuantityBox'
 import SimpleRequest from './SimpleRequest'
 import RequestList from './RequestList'
@@ -250,8 +250,14 @@ class ItemDetail extends Component {
 
     return (
       <Grid>
-        <h4>Item Details</h4>
-        <Table striped bordered condensed hover>
+        <Row>
+          <Col sm={12}>
+            <h3>Item Details</h3>
+            <hr />
+          </Col>
+        </Row>
+
+        <Table hover>
           {this.getTableHeader()}
           <tbody>
             {this.getTableRow(this.state.item, 0)}
