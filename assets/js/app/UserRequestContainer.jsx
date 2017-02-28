@@ -84,7 +84,7 @@ class UserRequestContainer extends Component {
 
   handlePageClick(data) {
     let selected = data.selected;
-    let offset = Math.ceil(selected * LOGS_PER_PAGE);
+    let offset = Math.ceil(selected * REQUESTS_PER_PAGE);
     let page = data.selected + 1;
 
     this.setState({page: page}, () => {
