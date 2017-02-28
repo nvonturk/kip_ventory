@@ -78,10 +78,10 @@ const ManagerRequestsContainer = React.createClass({
             <thead>
               <tr>
                 <th style={{width: "15%"}} className="text-left">Requester</th>
-                <th style={{width: "25%"}} className="text-left">Date Open</th>
-                <th style={{width: "40%"}} className="text-center">Comment</th>
-                <th style={{width: "10%"}} className="text-center">Status</th>
-                <th style={{width: "10%"}} className="text-center">Action</th>
+                <th style={{width: "20%"}} className="text-left">Date Open</th>
+                <th style={{width: "40%"}} className="text-left">Comment</th>
+                <th style={{width: "13%"}} className="text-center">Status</th>
+                <th style={{width: "12%"}} className="text-center"></th>
               </tr>
             </thead>
             <tbody>
@@ -89,11 +89,11 @@ const ManagerRequestsContainer = React.createClass({
                 var d = new Date(request.date_open)
                 return (
                   <tr key={request.request_id} style={{height: '50px'}}>
-                    <td data-th="Requester" style={{width: "20%"}} className="text-left">{request.requester}</td>
-                    <td data-th="Date Open" style={{width: "20%"}} className="text-left">{d.toLocaleString()}</td>
-                    <td data-th="Comment" style={{width: "40%"}} className="text-left"><div style={{maxHeight: '100px', overflow: 'auto'}}>{request.open_comment}</div></td>
-                    <td data-th="Status" style={{width: "10%"}} className="text-center">{this.getStatusLabel(request.status)}</td>
-                    <td data-th="Action" style={{width: "10%"}} className="text-center">
+                    <td data-th="Requester" className="text-left">{request.requester}</td>
+                    <td data-th="Date Open" className="text-left">{d.toLocaleString()}</td>
+                    <td data-th="Comment" className="text-left"><div style={{maxHeight: '100px', overflow: 'auto'}}>{request.open_comment}</div></td>
+                    <td data-th="Status" className="text-center">{this.getStatusLabel(request.status)}</td>
+                    <td style={{width: "12%"}} className="text-center">
                         <Button bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
                     </td>
                   </tr>
@@ -124,7 +124,6 @@ const ManagerRequestsContainer = React.createClass({
             <br />
           </Col>
         </Row>
-
 
         <Row>
           <Col sm={12}>
