@@ -725,7 +725,7 @@ class GetNetIDToken(generics.GenericAPIView):
     def get(self, request, format=None):
         code = request.query_params.get('code')
 
-        p = {'grant_type' : 'authorization_code', 'code' : code, 'redirect_uri' : "https://colab-sbx-277.oit.duke.edu/api/netidtoken/", 'client_id' : 'kipventory', 'client_secret' : 'bNPVMx8m9dHyL173uY$HKn1DzoMFn1lrGvw6jFMkrJ=r=!cNjo'}
+        p = {'grant_type' : 'authorization_code', 'code' : code, 'redirect_uri' : "https://colab-sbx-277.oit.duke.edu/api/netidtoken/", 'client_id' : 'kipventory', 'client_secret' : '%Y1S@xJm8VUSp*LZL!hgdgv5IWdVl7gugIpb*vXNrnKLzL1dQd'}
 
         token_request = requests.post('https://oauth.oit.duke.edu/oauth/token.php', data = p)
         token_json = token_request.json()
