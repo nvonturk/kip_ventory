@@ -175,7 +175,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         # check for other modifications
         new_name = request.data.get('name', None)
         if not (new_name == item_name):
-            if not ((item_name is None) or (item_name == "")):
+            if not ((new_name is None) or (new_name == "")):
                 items_with_name = models.Item.objects.filter(name=new_name).count()
                 if (items_with_name == 0):
                     if not (request.user.is_superuser):

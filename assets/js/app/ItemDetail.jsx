@@ -158,69 +158,77 @@ class ItemDetail extends Component {
 
 
   deleteItem(){
-    var thisobj = this
-    $.ajax({
-    url:"/api/items/" + thisobj.item_name + "/",
-    type: "DELETE",
-    beforeSend: function(request) {
-      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-    },
-    success:function(response){
-      var url = "/app/"
-      browserHistory.push(url)
+    if(confirm("Are you sure you wish to continue?") == true){
+      var thisobj = this
+      $.ajax({
+      url:"/api/items/" + thisobj.item_name + "/",
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        var url = "/app/"
+        browserHistory.push(url)
 
-    },
-    complete:function(){
-        },
-    error:function (xhr, textStatus, thrownError){
-        alert("error doing something");
+      },
+      complete:function(){
+          },
+      error:function (xhr, textStatus, thrownError){
+          alert("error doing something");
+
+      }
+      });
+    } else{
 
     }
-    });
   }
 
   saveChanges(name, quantity, model_no, description, tags){
-    if ((!Number.isInteger(parseInt(quantity, 10))) || (quantity <= 0)){
-      alert("Quantity must be a positive integer " + (this.state.quantity <= 0) )
-    }
-    var thisobj = this
-    console.log(tags);
+    if(confirm("Are you sure you wish to continue?") == true){
 
-    if( !Object.prototype.toString.call( tags ) === '[object Array]' ) {
-      if(tags==""){
-        var tagArray = [];
-      } else{
-        var tagArray = tags.split(",");
+      if ((!Number.isInteger(parseInt(quantity, 10))) || (quantity <= 0)){
+        alert("Quantity must be a positive integer " + (this.state.quantity <= 0) )
       }
-    } else{
-      var tagArray = tags;
-    }
+      var thisobj = this
 
-    $.ajax({
-    url:"/api/items/" + thisobj.item_name + "/",
-    type: "PUT",
-    traditional: true,
-    data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tagArray},
-    statusCode: {
-       400: function() {
-         alert("Unsuitable Data");
-       }
-     },
-    beforeSend: function(request) {
-      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-    },
-    success:function(response){
-      var url = "/app/"
-      browserHistory.push(url)
-    },
-    complete:function(){
-        },
-    error:function (xhr, textStatus, thrownError){
-      console.log(xhr);
-      console.log(textStatus);
-      console.log(thrownError);
+      if( !Object.prototype.toString.call( tags ) === '[object Array]' ) {
+        if(tags==""){
+          var tagArray = [];
+        } else{
+          var tagArray = tags.split(",");
+        }
+      } else{
+        var tagArray = tags;
+      }
+
+      $.ajax({
+      url:"/api/items/" + thisobj.item_name + "/",
+      type: "PUT",
+      traditional: true,
+      data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tagArray},
+      statusCode: {
+         400: function() {
+           alert("Unsuitable Data");
+         }
+       },
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        var url = "/app/"
+        browserHistory.push(url)
+      },
+      complete:function(){
+          },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr);
+        console.log(textStatus);
+        console.log(thrownError);
+      }
+      });
+    } else{
+
     }
-    });
   }
 
   handleChange(event) {
