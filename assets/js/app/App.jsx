@@ -24,7 +24,7 @@ import Profile from './Profile'
 import {getJSON} from 'jquery'
 
 import ItemDetail from './ItemDetail'
-import RequestDetail from './RequestDetail'
+import RequestDetail from './requests/RequestDetail'
 
 function getManagerPanel(userData) {
   const custom_field_route = userData.is_superuser ? (<Route path="custom-fields" component={CustomFieldContainer} admin={userData} />) : null;

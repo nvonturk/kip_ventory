@@ -125,24 +125,26 @@ const ManagerRequestsContainer = React.createClass({
           </Col>
         </Row>
 
-        <Row>
-          <Col sm={12}>
-            <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-              <NavItem eventKey={0} title="all">All</NavItem>
-              <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
-              <NavItem eventKey={2} title="approved">Approved</NavItem>
-              <NavItem eventKey={3} title="denied">Denied</NavItem>
-            </Nav>
-          </Col>
-        </Row>
+        <Panel>
+          <Row>
+            <Col sm={12}>
+              <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
+                <NavItem eventKey={0} title="all">All</NavItem>
+                <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
+                <NavItem eventKey={2} title="approved">Approved</NavItem>
+                <NavItem eventKey={3} title="denied">Denied</NavItem>
+              </Nav>
+            </Col>
+          </Row>
 
-        <hr />
+          <hr />
 
-        <Row>
-          <Col sm={12}>
-            { this.getRequestView() }
-          </Col>
-        </Row>
+          <Row>
+            <Col sm={12}>
+              { this.getRequestView() }
+            </Col>
+          </Row>
+        </Panel>
 
       </Grid>
     )
