@@ -16,7 +16,6 @@ urlpatterns = [
     url(r'^items/(?P<item_name>[\w\s]+)/requests/?$',                     views.GetOutstandingRequestsByItem.as_view()),
 
     url(r'^tags/?$', views.TagListCreate.as_view()),
-    url(r'^tags/all/?$', views.TagsListAll.as_view()),
 
     url(r'^fields/?$',                       views.CustomFieldListCreate.as_view()),
     url(r'^fields/(?P<field_name>[\w\s]+)/?$', views.CustomFieldDetailDelete.as_view()),

@@ -14,6 +14,7 @@ import AdminRequestsContainer from './manage/requests/ManagerRequestsContainer'
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import NewUserRequestsContainer from './manage/newuserrequests/NewUserRequestsContainer'
 import LogsContainer from './manage/logs/LogsContainer'
+import TagsContainer from './manage/tags/TagsContainer'
 
 // MAIN APP PAGES
 import InventoryContainer from './inventory/InventoryContainer'

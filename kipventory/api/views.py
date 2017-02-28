@@ -725,6 +725,12 @@ class TagListCreate(generics.GenericAPIView):
     serializer_class = serializers.TagSerializer
     pagination_class = CustomPagination
 
+    def get_instance(self, tag_name):
+        try:
+            return models.Tag.objects.get(name=tag_name)
+        except models.Tag.DoesNotExist:
+            raise NotFound('Tag {} not found.'.format(tag_name))
+
     def get_queryset(self):
         return models.Tag.objects.all()
 
@@ -732,9 +738,16 @@ class TagListCreate(generics.GenericAPIView):
         tags = self.get_queryset()
 
         paginated_tags = self.paginate_queryset(tags)
-        serializer = self.get_serializer(instance=paginated_tags, many=True)
-        response = self.get_paginated_response(serializer.data)
-        return response
+
+        if(request.query_params.get("all") == "true"):
+            serializer = self.get_serializer(instance=tags, many=True)
+            return Response(serializer.data)
+        else:
+            serializer = self.get_serializer(instance=paginated_tags, many=True)
+            response = self.get_paginated_response(serializer.data)
+            return response
+
+        # return response
 
     def post(self, request, format=None):
         serializer = self.get_serializer(data=request.data)
@@ -743,12 +756,20 @@ class TagListCreate(generics.GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class TagsListAll(generics.GenericAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = serializers.TagSerializer
+    # Maybe put into its own view? Seems like a lot for now
+    # manager restricted
+    def delete(self, request, format=None):
+        if not (request.user.is_staff):
+            d = {"error": "Administrator permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-    def get_queryset(self):
-        return models.Tag.objects.all()
+        tag = self.get_instance(tag_name=request.query_params.get("name"))
+        tag.delete()
+        # Insert Delete Log
+        # Need {serializer.data, initiating_user_pk, 'Item Changed'}
+        # itemDeletionLog(item_name, request.user.pk)
+        #TODO NEED TO LOG DELETION HERE
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LogList(generics.GenericAPIView):
