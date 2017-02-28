@@ -61,6 +61,12 @@ class ItemListCreate(generics.GenericAPIView):
         # CHECK PERMISSION
         queryset = self.get_queryset()
 
+        # Return all items if query parameter "all" is set
+        all_items = self.request.query_params.get("all", None)
+        if all_items:
+            serializer = self.get_serializer(instance=queryset, many=True)
+            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+
         # Search and Tag Filtering
         search = self.request.query_params.get("search")
         tags = self.request.query_params.get("tags")
@@ -84,6 +90,8 @@ class ItemListCreate(generics.GenericAPIView):
             excludeTagsArray = excludeTags.split(",")
             for tag in excludeTagsArray:
                 queryset = queryset.exclude(tags__name=tag)
+
+
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
@@ -847,7 +855,6 @@ class TokenPoint(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, format=None):
-
         if Token.objects.filter(user=request.user).count() > 0:
             #User has a token, return created token
             print(Token.objects.get(user=request.user).key)
@@ -857,8 +864,85 @@ class TokenPoint(generics.GenericAPIView):
             print(token.key)
             return Response({"token": token.key})
 
+
+class DisburseCreate(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    queryset = models.Request.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.RequestSerializer
+
+    def post(self, request, format=None):
+        # check that all item names and quantities are valid
+        errors = {}
+
+        # validate user input
+        data = {}
+        data.update(request.data)
+        requester = data.get('requester')[0]
+        closed_comment = data.get('closed_comment')[0]
+        items = data['items']
+        quantities = data['quantities']
+
+        try:
+            requester = User.objects.get(username=requester)
+        except User.DoesNotExist:
+            return Response({"error": "Could not find user with username '{}'".format(requester)})
+
+        data = {}
+        data.update({'requester': requester, 'open_comment': "Administrative disbursement to user '{}'".format(requester.username)})
+
+        # Verify that the disbursement quantities are valid (ie. less than or equal to inventory stock)
+        for i in range(len(items)):
+            item = None
+            try:
+                item = models.Item.objects.get(name=items[i])
+            except models.Item.DoesNotExist:
+                return Response({"error": "Item '{}' not found.".format(items[i])})
+            items[i] = item
+            # convert to int
+            quantity = int(quantities[i])
+            quantities[i] = quantity
+            if quantity > item.quantity:
+                errors.update({'error': "Request for {} instances of '{}' exceeds current stock of {}.".format(quantity, item.name, item.quantity)})
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # if we made it here, we know we can go ahead and create the request, all the request items, and approve it
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            request_instance = serializer.save()
+
+        data = {}
+        data.update({'administrator': request.user})
+        data.update({'closed_comment': closed_comment})
+        data.update({'status': 'A'})
+
+        serializer = serializers.RequestPUTSerializer(instance=request_instance, data=data, partial=True)
+
+        # We're good to go!
+        if serializer.is_valid():
+            for item, quantity in zip(items, quantities):
+                # Create the request item
+                req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
+                req_item.save()
+
+                # Decrement the quantity remaining on the Item
+                setattr(item, 'quantity', (item.quantity - quantity))
+                item.save()
+
+                # Logging
+                requestItemCreation(req_item, request.user.pk)
+                requestItemApproval(req_item, request.user.pk)
+
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 def itemCreationLog(data, initiating_user_pk):
-    print("Item Creation")
     item = None
     initiating_user = None
     quantity = None
@@ -877,12 +961,10 @@ def itemCreationLog(data, initiating_user_pk):
     log.save()
 
 def itemModificationLog(data, initiating_user_pk):
-    print("Item Modification")
     item = None
     initiating_user = None
     quantity = None
     affected_user = None
-    print(data)
     try:
         item = models.Item.objects.get(name=data['name'])
     except models.Item.DoesNotExist:
@@ -897,7 +979,6 @@ def itemModificationLog(data, initiating_user_pk):
     log.save()
 
 def itemDeletionLog(item_name, initiating_user_pk):
-    print("Item Deletion")
     item = None
     initiating_user = None
     quantity = None
@@ -911,8 +992,6 @@ def itemDeletionLog(item_name, initiating_user_pk):
     log.save()
 
 def requestItemCreation(request_item, initiating_user_pk):
-    print("Request Item Creation")
-    print(request_item)
     item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
@@ -926,7 +1005,6 @@ def requestItemCreation(request_item, initiating_user_pk):
     log.save()
 
 def requestItemDenial(request_item, initiating_user_pk):
-    print("Request Item Denial")
     item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
@@ -940,7 +1018,6 @@ def requestItemDenial(request_item, initiating_user_pk):
     log.save()
 
 def requestItemApproval(request_item, initiating_user_pk):
-    print("Request Item Approval")
     item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
@@ -955,8 +1032,6 @@ def requestItemApproval(request_item, initiating_user_pk):
     log.save()
 
 def userCreationLog(data, initiating_user_pk):
-    print("User Creation")
-    print(data)
     item = None
     initiating_user = None
     quantity = None
@@ -974,7 +1049,6 @@ def userCreationLog(data, initiating_user_pk):
     log.save()
 
 def transactionCreationLog(item, initiating_user_pk, category, amount):
-    print("Transaction Creation")
     item = item
     initiating_user = None
     quantity = amount

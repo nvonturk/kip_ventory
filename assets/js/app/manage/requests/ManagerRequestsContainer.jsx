@@ -12,7 +12,7 @@ const ManagerRequestsContainer = React.createClass({
 
   getInitialState() {
     return {
-      "activeKey": 1,
+      "activeKey": 0,
       "requests": [],
       "page": 1,
       "pageCount": 1
@@ -58,7 +58,6 @@ const ManagerRequestsContainer = React.createClass({
 
   getRequestView() {
     var stat = STATUS[this.state.activeKey]
-    console.log(this.state.requests)
     var requests = []
     if (stat == "All") {
       requests = this.state.requests
@@ -75,12 +74,12 @@ const ManagerRequestsContainer = React.createClass({
     return (
       <Row>
         <Col sm={12}>
-          <Table condensed striped >
+          <Table condensed hover >
             <thead>
               <tr>
-                <th style={{width: "20%"}} className="text-left">Requester</th>
-                <th style={{width: "20%"}} className="text-left">Date Open</th>
-                <th style={{width: "40%"}} className="text-left">Comment</th>
+                <th style={{width: "15%"}} className="text-left">Requester</th>
+                <th style={{width: "25%"}} className="text-left">Date Open</th>
+                <th style={{width: "40%"}} className="text-center">Comment</th>
                 <th style={{width: "10%"}} className="text-center">Status</th>
                 <th style={{width: "10%"}} className="text-center">Action</th>
               </tr>
@@ -89,10 +88,10 @@ const ManagerRequestsContainer = React.createClass({
               {requests.map( (request, i) => {
                 var d = new Date(request.date_open)
                 return (
-                  <tr key={request.request_id} style={{height: '100px'}}>
-                    <td data-th="Requester" style={{width: "20%"}} className="text-left"><h5>{request.requester}</h5></td>
-                    <td data-th="Date Open" style={{width: "20%"}} className="text-left">{d.toLocaleDateString()}</td>
-                    <td data-th="Comment" style={{width: "40%"}} className="text-left"><p style={{maxHeight: '75px', overflow: 'auto'}}>{request.open_comment}</p></td>
+                  <tr key={request.request_id} style={{height: '50px'}}>
+                    <td data-th="Requester" style={{width: "20%"}} className="text-left">{request.requester}</td>
+                    <td data-th="Date Open" style={{width: "20%"}} className="text-left">{d.toLocaleString()}</td>
+                    <td data-th="Comment" style={{width: "40%"}} className="text-left"><div style={{maxHeight: '100px', overflow: 'auto'}}>{request.open_comment}</div></td>
                     <td data-th="Status" style={{width: "10%"}} className="text-center">{this.getStatusLabel(request.status)}</td>
                     <td data-th="Action" style={{width: "10%"}} className="text-center">
                         <Button bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
@@ -129,18 +128,22 @@ const ManagerRequestsContainer = React.createClass({
 
         <Row>
           <Col sm={12}>
-            <Panel header={
             <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
               <NavItem eventKey={0} title="all">All</NavItem>
               <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
               <NavItem eventKey={2} title="approved">Approved</NavItem>
               <NavItem eventKey={3} title="denied">Denied</NavItem>
-            </Nav>}>
-                { this.getRequestView() }
-            </Panel>
+            </Nav>
           </Col>
         </Row>
 
+        <hr />
+
+        <Row>
+          <Col sm={12}>
+            { this.getRequestView() }
+          </Col>
+        </Row>
 
       </Grid>
     )
