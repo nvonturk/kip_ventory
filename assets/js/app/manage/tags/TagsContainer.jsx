@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Form, Grid, Row, Button, Col, ListGroup, ListGroupItem, FormGroup, FormControl, ControlLabel } from 'react-bootstrap'
+import { Form, Grid, Row, Button, Col, ListGroup, ListGroupItem, FormGroup, FormControl, ControlLabel, Alert } from 'react-bootstrap'
 import $ from "jquery"
 import { getJSON, ajax } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
@@ -10,6 +10,10 @@ class TagsContainer extends Component{
     this.state = {
       tags: [],
       name: "",
+      showCreatedSuccess: false,
+      createdMessage: "",
+      showErrorMessage: false,
+      errorMessage: ""
     }
 
     this.getAllTags = this.getAllTags.bind(this);
@@ -58,20 +62,31 @@ class TagsContainer extends Component{
         },
         traditional: true,
         success:function(response){
+          var name = response.name
           _this.getAllTags();
+          _this.setState({
+            name: "",
+            showCreatedSuccess: true,
+            createdMessage: "Tag '" + name + "' successfully created.",
+            showErrorMessage: false,
+            errorMessage: ""
+          })
         },
         complete:function(){
 
         },
         error:function (xhr, textStatus, thrownError){
-          console.log(xhr)
-          console.log(textStatus)
-          console.log(thrownError)
-          alert("error doing something");
+          var response = xhr.responseJSON
+          console.log(response)
+          _this.setState({
+            showCreatedSuccess: false,
+            createdMessage: "",
+            showErrorMessage: true,
+            errorMessage: "A " + response.name[0]
+          })
         }
       });
     }
-
   }
 
   deleteTag(event, tag){
@@ -86,12 +101,20 @@ class TagsContainer extends Component{
       },
       success:function(response){
         _this.getAllTags();
+        _this.setState({
+          showCreatedSuccess: false,
+          showErrorMessage: false,
+          errorMessage: "",
+          createdMessage: ""
+        })
       },
       complete:function(){
           },
       error:function (xhr, textStatus, thrownError){
-          alert("error doing something");
-
+        _this.setState({
+          showErrorMessage: false,
+          errorMessage: "Error deleting tag.",
+        });
       }
     });
   }
@@ -110,7 +133,26 @@ class TagsContainer extends Component{
     return html;
   }
 
-  // <ControlLabel>New Tag:</ControlLabel>
+
+  showSuccessMessage() {
+    var ret = this.state.showCreatedSuccess ? (
+      <Row>
+        <Col sm={12}>
+          <Alert bsSize="small" bsStyle="success">{this.state.createdMessage}</Alert>
+        </Col>
+      </Row>) : (null)
+    return ret
+  }
+
+  showErrorMessage() {
+    return this.state.showErrorMessage ? (
+      <Row>
+        <Col sm={12}>
+          <Alert bsStyle="danger" bsSize="small">{this.state.errorMessage}</Alert>
+        </Col>
+      </Row>
+    ) : null
+  }
 
   render(){
     var tagList = this.getTagList();
@@ -128,13 +170,18 @@ class TagsContainer extends Component{
               <br />
             </Col>
           </Row>
+
+          { this.showErrorMessage() }
+          { this.showSuccessMessage() }
+
           <Row>
             <Col xs={12} style={{maxHeight: '500px', overflow: 'auto'}}>
               {finalList}
             </Col>
           </Row>
+
           <Row>
-            <Form horizontal>
+            <Form horizontal onSubmit={e => e.preventDefault()}>
               <FormGroup controlId="newTagForm">
                 <Col componentClass={ControlLabel} sm={2}>
                   New Tag:
@@ -154,6 +201,7 @@ class TagsContainer extends Component{
               </FormGroup>
             </Form>
           </Row>
+          
         </Grid>
     );
   }

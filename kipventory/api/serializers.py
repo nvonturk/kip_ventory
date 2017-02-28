@@ -211,7 +211,7 @@ class UserPOSTSerializer(serializers.ModelSerializer):
     '''
     def validate_email(self, value):
         email_taken = (User.objects.filter(email=email).count() > 0)
-         
+
         if email_taken:
             raise serializers.ValidationError("Email is already taken.")
         return value
@@ -223,7 +223,9 @@ class UserPUTSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
     def validate_username(self, value):
-        return validate_username(value)
+        #todo make sure you can't change username to somebody else's.
+        #return validate_username(value)
+        return value
 
 class RequestItemSerializer(serializers.ModelSerializer):
     item     = serializers.SlugRelatedField(read_only=True, slug_field="name")

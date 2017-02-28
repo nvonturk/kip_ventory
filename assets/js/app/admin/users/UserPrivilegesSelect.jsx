@@ -5,7 +5,7 @@ import $ from 'jquery'
 
 class UserPrivilegesSelect extends Component {
 	constructor(props) {
-	    super(props); 
+	    super(props);
 	    this.state = {
 	      user: this.props.user,
 	      editMode: false,
@@ -20,7 +20,7 @@ class UserPrivilegesSelect extends Component {
 	    this.handleEditButtonClicked = this.handleEditButtonClicked.bind(this);
 	    this.changePrivilege = this.changePrivilege.bind(this);
 
-	}	
+	}
 
 	getEditButtonName() {
 		return this.state.editMode ? "Done" : "Edit";
@@ -36,7 +36,7 @@ class UserPrivilegesSelect extends Component {
 
 	getPrivilege(is_superuser, is_staff) {
 		return this.state.editMode ? this.getPrivilegeEditMode(is_superuser, is_staff) : this.getPrivilegeNormalMode(is_superuser, is_staff);
-		
+
 	}
 
 	getPrivilegeValue(is_superuser, is_staff) {
@@ -68,11 +68,11 @@ class UserPrivilegesSelect extends Component {
 		var privilegeDiv = this.getPrivilege(this.state.user.is_superuser, this.state.user.is_staff);
 		return (
 			<div>
-			<Button onClick={this.handleEditButtonClicked}>{this.getEditButtonName()}</Button>
 			{privilegeDiv}
+			<Button onClick={this.handleEditButtonClicked}>{this.getEditButtonName()}</Button>
 			</div>
 		)
 	}
-}	
+}
 
 export default UserPrivilegesSelect

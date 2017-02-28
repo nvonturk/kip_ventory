@@ -9,7 +9,7 @@ import AdminContainer from './admin/AdminContainer'
 import LocalUserCreationForm from './admin/usercreation/LocalUserCreationForm'
 import UserPrivilegesContainer from './admin/users/UserPrivilegesContainer'
 import AdminWelcome from './admin/welcome/AdminWelcome'
-//import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
+import DjangoAdminPanelLink from './admin/DjangoAdminPanelLink'
 
 
 // Manager Pages
@@ -46,7 +46,6 @@ function getManagerPanel(userData) {
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="tags" component={TagsContainer} admin={userData} />
-      <Route path="newuserrequests" component={NewUserRequestsContainer} admin={userData} />
     </Route>) : null
 }
 
@@ -56,6 +55,7 @@ function getAdminPanel(userData) {
       <IndexRoute component={AdminWelcome} admin={userData} />
       <Route path="users/create/" component={LocalUserCreationForm} admin={userData} />
       <Route path="users/manage/" component={UserPrivilegesContainer} admin={userData} />
+      <Route path="adminpanel/" component={DjangoAdminPanelLink} admin={userData} />
     </Route>) : null
 }
 
