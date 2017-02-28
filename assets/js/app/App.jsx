@@ -5,6 +5,9 @@ import KipNav from './KipNav'
 // import Home from './Home'
 
 // ADMIN PAGES
+import AdminContainer from './admin/AdminContainer'
+
+// Manager Pages
 import ManagerContainer from './manage/ManagerContainer'
 import ManagerWelcome from './manage/welcome/ManagerWelcome'
 import ItemCreationForm from './manage/items/ItemCreationForm'
@@ -43,6 +46,11 @@ function getManagerPanel(userData) {
     </Route>) : null
 }
 
+function getAdminPanel(userData) {
+  return userData.is_superuser ? (
+    <Route path="admin" component={AdminContainer} admin={userData}>
+    </Route>) : null
+}
 
 function initialize(userData) {
   render((
@@ -55,6 +63,7 @@ function initialize(userData) {
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
         {getManagerPanel(userData)}
+        {getAdminPanel(userData)}
       </Route>
     </Router>),
     document.getElementById('root'));
