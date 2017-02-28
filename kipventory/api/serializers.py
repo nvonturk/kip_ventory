@@ -211,7 +211,7 @@ class UserPOSTSerializer(serializers.ModelSerializer):
     '''
     def validate_email(self, value):
         email_taken = (User.objects.filter(email=email).count() > 0)
-         
+
         if email_taken:
             raise serializers.ValidationError("Email is already taken.")
         return value
@@ -223,7 +223,7 @@ class UserPUTSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
     def validate_username(self, value):
-        #todo make sure you can't change username to somebody else's. 
+        #todo make sure you can't change username to somebody else's.
         #return validate_username(value)
         return value
 
@@ -300,7 +300,9 @@ class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)
     initiating_user = serializers.SlugRelatedField(slug_field="username", read_only=True)
     affected_user   = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    # request   = serializers.SlugRelatedField(slug_field="request_id", read_only=True, allow_null=True)
+
 
     class Meta:
         model = models.Log
-        fields = ['id', "item", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category", "default_item", "default_affected_user", "default_initiating_user"]
+        fields = ['id', "item", "request", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category", "default_item", "default_affected_user", "default_initiating_user"]
