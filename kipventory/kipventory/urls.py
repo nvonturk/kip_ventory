@@ -19,24 +19,35 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.views import static
 from . import views
+from rest_framework_swagger.views import get_swagger_view
+
+
+schema_view = get_swagger_view(title='Pastebin API')
+
+from rest_framework_swagger.views import get_swagger_view
+
+
+schema_view = get_swagger_view(title='Kipventory API')
+
 
 urlpatterns = [
     # admin site for quick dev testing
-    url(r'^admin/?', admin.site.urls),
+    url(r'^admin/', admin.site.urls),
 
     # URLs for our REST API endpoints
     url(r'^api/', include('api.urls')),
 
+    # Swagger Docs for API testing
+    url(r'^swagger/', schema_view),
+
     # Main view for our Single Page App (React, client side)
     url(r'^app/?', views.app, name='app'),
 
-url(r'^media/(?P<path>.*)$', static.serve, {
-    'document_root': settings.MEDIA_ROOT,
-}),
-url(r'^static/(?P<path>.*)$', static.serve, {
-    'document_root': settings.STATIC_ROOT,
-}),
+    url(r'^media/(?P<path>.*)$', static.serve, {'document_root': settings.MEDIA_ROOT,}),
+    url(r'^static/(?P<path>.*)$', static.serve, {'document_root': settings.STATIC_ROOT,}),
 
     # Landing page (no auth necessary)
     url(r'$', views.landing, name='landing'),
+
+
 ]

@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from . import views
@@ -6,28 +6,43 @@ from django.contrib.auth import views as auth_views
 
 
 urlpatterns = [
-    url(r'^items/?$', views.ItemView.as_view()),
-    url(r'^items/(?P<pk>[0-9]+)/?$', views.ItemView.as_view()),
 
-    url(r'^requests/?$', views.request_get_create),
-    url(r'^requests/(?P<pk>[0-9]+)/?$', views.request_detail_modify_delete),
-    url(r'^requests/all/?$', views.request_get_all_admin),
+    # ITEM ENDPOINTS
+    url(r'^items/?$',                                                     views.ItemListCreate.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/?$',                              views.ItemDetailModifyDelete.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/addtocart/?$',                    views.AddItemToCart.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/fields/?$',                       views.CustomValueList.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/fields/(?P<field_name>[\w\s]*)/?$', views.CustomValueDetailModify.as_view()),
+    url(r'^items/(?P<item_name>[\w\s]+)/requests/?$',                     views.GetOutstandingRequestsByItem.as_view()),
 
-    url(r'^disburse/?$', views.disburse_to_user),
+    url(r'^tags/?$', views.TagListCreate.as_view()),
 
-    url(r'^cart/?$', views.cart_get_create),
-    url(r'^cart/(?P<pk>[0-9]+)/?$', views.cart_detail_modify_delete),
+    url(r'^fields/?$',                       views.CustomFieldListCreate.as_view()),
+    url(r'^fields/(?P<field_name>[\w\s]+)/?$', views.CustomFieldDetailDelete.as_view()),
 
-    url(r'^tags/?$', views.TagListView.as_view()),
+    url(r'^cart/?$',                       views.CartItemList.as_view()),
+    url(r'^cart/?(?P<item_name>[\w\s]+)/?$', views.CartItemDetailModifyDelete.as_view()),
 
-    url(r'^transactions/?$', views.transaction_get_create),
+    url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 
-    url(r'^login/?$', views.post_user_login),
-    url(r'^signup/?$', views.post_user_signup),
+    url(r'^disburse/?$', views.DisburseCreate.as_view()),
+
+    url(r'^requests/?$',                        views.RequestListCreate.as_view()),
+    url(r'^requests/all/?$',                    views.RequestListAll.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]*)/?$', views.RequestDetailModifyDelete.as_view()),
+
+    url(r'^login/?$',  views.post_user_login),
     url(r'^logout/?$', auth_views.logout),
+    url(r'^apitoken/?$', views.TokenPoint.as_view()),
 
-    url(r'^users/?$', views.get_all_users),
-    url(r'^users/current/?$', views.get_current_user),
+    url(r'^logs/?$', views.LogList.as_view()),
+
+    url(r'^users/?$',         views.UserList.as_view()),
+    url(r'^users/current/?$', views.GetCurrentUser.as_view()),
+    url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.edit_user),
+    url(r'^users/create/?$',         views.UserCreate.as_view()),
+
+    url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

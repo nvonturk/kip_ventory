@@ -18,13 +18,13 @@ class TagMultiSelect extends Component {
 
   getAllTags() {
   	var thisobj = this;
-  	$.getJSON("/api/tags.json", function(data) {
-  		for(var i = 0; i < data.length; i++) {
-  			var tag = data[i];
+  	$.getJSON("/api/tags/", function(data) {
+  		for(var i = 0; i < data.results.length; i++) {
+  			var tag = data.results[i];
   			tag["value"] = tag.name;
   			tag["label"] = tag.name;
   		}
-  		thisobj.setTags(data);
+  		thisobj.setTags(data.results);
   	});
   }
 

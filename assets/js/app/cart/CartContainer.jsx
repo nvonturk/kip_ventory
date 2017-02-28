@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import ShoppingCart from './ShoppingCart'
+import { Grid, Row, Col, Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap'
+import CartItem from './CartItem'
 import $ from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 
@@ -9,68 +10,65 @@ class CartContainer extends Component {
     super(props);
     this.state = {
       items: [],
+      comment: "",
     };
 
     this.getCartItems = this.getCartItems.bind(this);
     this.reRender = this.reRender.bind(this);
     this.makeRequest = this.makeRequest.bind(this);
+    this.makeRequests = this.makeRequests.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
   componentWillMount() {
     this.getCartItems()
   }
 
-  makeRequest(cartItem, comment){
-    // CHeck to make sure the quantity is possible
-    var thisobj = this
-    if(cartItem.item.quantity < cartItem.quantity){
-      alert("Quantity Exceeds Capacity. Current quantity for " + cartItem.item.name + " is: " + cartItem.item.quantity)
-    }
-    else if(!comment){
-      alert("Justification Needed for Request")
+  makeRequests(){
+    if(this.state.comment == ""){
+      alert("Justification needed for request")
     }
     else{
-      var d = new Date();
-      var n = d.toISOString();
-      $.ajax({
-      url:"/api/requests/",
-      type: "POST",
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      data: {
-        item: cartItem.item.id,
-        requester: cartItem.owner.id,
-        quantity: cartItem.quantity,
-        open_reason: comment,
-        date_open: n
-      },
-      success:function(response){},
-      complete:function(){},
-      error:function (xhr, textStatus, thrownError){
-          alert("error doing something");
-
+      for (var i = 0; i < length(this.state.items); i++){
+        this.makeRequest(this.state.items[i])
       }
-  });
-      thisobj.reRender(cartItem.id)
     }
+  }
+
+  handleChange(event) {
+    this.setState({ [event.target.name]: event.target.value });
+  }
+
+  makeRequest(){
+    // CHeck to make sure the quantity is possible
+    var thisobj = this
+
+    $.ajax({
+    url:"/api/requests/",
+    type: "POST",
+    data: {open_comment: this.state.comment},
+    beforeSend: function(request) {
+      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    },
+    success:function(response){thisobj.getCartItems()},
+    complete:function(){},
+    error:function (xhr, textStatus, thrownError){
+        alert("error doing something");
+    }
+    });
 
   }
 
-  reRender(itemID) {
+  reRender(item_name) {
     var thisobj = this
     $.ajax({
-    url:"/api/cart/" + itemID,
+    url:"/api/cart/" + item_name,
     type: "DELETE",
     beforeSend: function(request) {
       request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
     },
-    success:function(response){},
-    complete:function(){      var items = thisobj.state.items.filter(item => (item.id != itemID))
-
-          thisobj.setState({
-            items: items
-          })
+    success:function(response){thisobj.getCartItems();},
+    complete:function(){
         },
     error:function (xhr, textStatus, thrownError){
         alert("error doing something");
@@ -82,14 +80,44 @@ class CartContainer extends Component {
 
   getCartItems() {
     var thisobj = this
-    $.getJSON("/api/cart/.json", function(data) {
+    $.getJSON("/api/cart/", function(data) {
       thisobj.setState({items: data,})
     });
   }
 
   render() {
     var items = this.state.items
-    return <ShoppingCart reRender={this.reRender} makeRequest={this.makeRequest} cartItems={items} />
+    return (
+      <Grid>
+        <Row>
+          <Col xs={12}>
+          {this.state.items.map(function(cartItem, i) {
+            return (
+              <Row key={cartItem.item.name}>
+                <CartItem reRender={this.reRender} cartItem={cartItem}/>
+              </Row>
+            )}.bind(this))}
+          </Col>
+        </Row>
+        <Row>
+          <Col xs={6} md={6}>
+            <FormGroup controlId="formOpenComment">
+              <ControlLabel>Comment</ControlLabel>
+                <FormControl
+                  type = "text"
+                  name="comment"
+                  value={this.state.comment}
+                  placeholder={this.state.comment}
+                  onChange={this.handleChange}
+                />
+            </FormGroup>
+          </Col>
+        </Row>
+        <Row>
+          <Button bsStyle="primary" onClick={() => this.makeRequest()} disabled={this.state.items.length == 0} className="requestButton">Make Request</Button>
+        </Row>
+      </Grid>
+    )
   }
 
 }

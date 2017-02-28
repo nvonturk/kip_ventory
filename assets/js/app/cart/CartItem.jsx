@@ -9,7 +9,6 @@ class CartItem extends Component {
     super(props);
     this.state = {
       quantity: props.cartItem['quantity'],
-      comment: ""
     }
     this.handleChange = this.handleChange.bind(this);
     this.changeQuantity = this.changeQuantity.bind(this);
@@ -20,22 +19,20 @@ class CartItem extends Component {
   }
 
   changeQuantity(event) {
-    if (this.state.quantity == this.props.cartItem['quantity']) {
-    }
-    else if (!Number.isInteger(parseFloat(this.state.quantity)) || parseFloat(this.state.quantity)<=0){
+    if (!Number.isInteger(parseInt(this.state.quantity,10)) || parseInt(this.state.quantity)<=0){
       alert("Must be a positive integer")
     }else {
       this.props.cartItem['quantity'] = this.state.quantity
-
+      console.log("/api/cart/" + this.props.cartItem.item.name + "/")
       var thisobj = this
       $.ajax({
-      url:"/api/cart/" + thisobj.props.cartItem.id,
+      url:"/api/cart/" + this.props.cartItem.item.name + "/",
       type: "PUT",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       data: {
-        quantity: thisobj.state.quantity
+        quantity: thisobj.state.quantity,
       },
       success:function(response){},
       complete:function(){},
@@ -87,25 +84,8 @@ class CartItem extends Component {
                 </Col>
               </Row>
               <Row>
-                <Col xs={6} md={6}>
-                  <FormGroup controlId="formOpenComment">
-                    <ControlLabel>Comment</ControlLabel>
-                      <FormControl
-                        type = "text"
-                        name="comment"
-                        value={this.state.comment}
-                        placeholder={this.state.comment}
-                        onChange={this.handleChange}
-                      />
-                  </FormGroup>
-                </Col>
-              </Row>
-              <Row>
                 <Col xs={2} md={2}>
-                  <Button bsStyle="primary" block onClick={() => this.props.reRender(this.props.cartItem.id)} className="deleteButton">Delete</Button>
-                </Col>
-                <Col xs={2} md={2}>
-                  <Button bsStyle="primary" onClick={() => this.props.makeRequest(this.props.cartItem, this.state.comment)} className="requestButton">Make Request</Button>
+                  <Button bsStyle="primary" block onClick={() => this.props.reRender(this.props.cartItem.item.name)} className="deleteButton">Delete</Button>
                 </Col>
               </Row>
             </Row>
