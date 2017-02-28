@@ -174,8 +174,8 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         # check for other modifications
         new_name = request.data.get('name', None)
         if not (new_name == item_name):
-            if not ((item_name is None) or (item_name == "")):
-                items_with_name = models.Item.objects.filter(name=item_name).count()
+            if not ((new_name is None) or (new_name == "")):
+                items_with_name = models.Item.objects.filter(name=new_name).count()
                 if (items_with_name == 0):
                     if not (request.user.is_superuser):
                         return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
@@ -196,6 +196,10 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
                 return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
 
         tags = request.data.get('tags', None)
+
+        for tag in item.tags.all():
+            item.tags.remove(tag)
+
         if not (tags is None):
             if not (request.user.is_superuser):
                 return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
