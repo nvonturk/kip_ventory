@@ -26,6 +26,14 @@ const KipNav = React.createClass({
     ) : null;
   },
 
+  getSwaggerLink(){
+    return  (
+      <LinkContainer to="/admin/">
+        <NavItem onClick={this.goToURL("/swagger/")} eventKey={7}>API Test</NavItem>
+      </LinkContainer>
+    );
+  },
+
   render() {
     return (
       <div>
@@ -51,6 +59,7 @@ const KipNav = React.createClass({
               <LinkContainer to="/app/profile/">
                 <NavItem eventKey={3}>Profile</NavItem>
               </LinkContainer>
+              {this.getSwaggerLink()}
               <NavItem eventKey={4} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
             </Nav>
           </Navbar.Collapse>
