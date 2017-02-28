@@ -300,8 +300,6 @@ class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)
     initiating_user = serializers.SlugRelatedField(slug_field="username", read_only=True)
     affected_user   = serializers.SlugRelatedField(slug_field="username", read_only=True)
-    # request   = serializers.SlugRelatedField(slug_field="request_id", read_only=True, allow_null=True)
-
 
     class Meta:
         model = models.Log
