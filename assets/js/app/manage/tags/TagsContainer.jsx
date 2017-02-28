@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Grid, Button, Col, ListGroup, ListGroupItem, FormGroup, FormControl, ControlLabel } from 'react-bootstrap'
+import { Form, Grid, Row, Button, Col, ListGroup, ListGroupItem, FormGroup, FormControl, ControlLabel } from 'react-bootstrap'
 import $ from "jquery"
 import { getJSON, ajax } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
@@ -104,32 +104,57 @@ class TagsContainer extends Component{
     var html = [];
 
     html.push(this.state.tags.map( (tag, i) => {
-      return (<ListGroupItem>{tag.name} <Button bsStyle="danger" onClick={e => {this.deleteTag(e, tag)}}>Delete</Button></ListGroupItem>);
+      return (<ListGroupItem><Row><Col xs={10}>{tag.name} </Col><Col xs={2}><Button bsStyle="danger" onClick={e => {this.deleteTag(e, tag)}}>Delete</Button></Col></Row></ListGroupItem>);
     }));
 
     return html;
   }
 
+  // <ControlLabel>New Tag:</ControlLabel>
 
   render(){
     var tagList = this.getTagList();
+    var finalList = (<ListGroup>{tagList}</ListGroup>);
     return (
-      <div>
-        <ListGroup>
-          {tagList}
-        </ListGroup>
-        <FormGroup controlId="newTagForm">
-          <ControlLabel>New Tag:</ControlLabel>
-          <FormControl
-            type="text"
-            name="name"
-            value={this.state.name ? this.state.name : ""}
-            placeholder={this.state.name}
-            onChange={this.handleChange.bind(this, 'name')}
-          ></FormControl>
-          <Button onClick={e =>{this.createTag(e)}}>Create Tag</Button>
-        </FormGroup>
-      </div>
+
+        <Grid fluid>
+          <Row>
+            <Col xs={12}>
+              <h3>Tag Manager</h3>
+              <hr />
+              <p>
+                Create and delete tags in the system.
+              </p>
+              <br />
+            </Col>
+          </Row>
+          <Row>
+            <Col xs={12}>
+              {finalList}
+            </Col>
+          </Row>
+          <Row>
+            <Form horizontal>
+              <FormGroup controlId="newTagForm">
+                <Col componentClass={ControlLabel} sm={2}>
+                  New Tag:
+                </Col>
+                <Col sm={6}>
+                  <FormControl
+                    type="text"
+                    name="name"
+                    value={this.state.name ? this.state.name : ""}
+                    placeholder={this.state.name}
+                    onChange={this.handleChange.bind(this, 'name')}
+                  ></FormControl>
+                </Col>
+                <Col sm={3}>
+                  <Button onClick={e =>{this.createTag(e)}}>Create Tag</Button>
+                </Col>
+              </FormGroup>
+            </Form>
+          </Row>
+        </Grid>
     );
   }
 
