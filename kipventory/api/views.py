@@ -677,7 +677,7 @@ class UserCreate(generics.GenericAPIView):
 
     def get_serializer_class(self):
         return serializers.UserPOSTSerializer
-  
+
     def post(self, request, format=None):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -715,7 +715,7 @@ def edit_user(request, username, format=None):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-      
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetNetIDToken(generics.GenericAPIView):

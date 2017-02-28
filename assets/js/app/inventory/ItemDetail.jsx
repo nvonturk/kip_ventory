@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
 import RequestList from '../RequestList'
+import $ from "jquery"
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
@@ -158,6 +159,7 @@ class ItemDetail extends Component {
 
   deleteItem(){
     if(confirm("Are you sure you wish to continue?") == true){
+      console.log("we got here")
       var thisobj = this
       $.ajax({
       url:"/api/items/" + thisobj.item_name + "/",
@@ -168,7 +170,6 @@ class ItemDetail extends Component {
       success:function(response){
         var url = "/app/"
         browserHistory.push(url)
-
       },
       complete:function(){
           },
@@ -183,7 +184,6 @@ class ItemDetail extends Component {
 
   saveChanges(name, quantity, model_no, description, tags){
     if(confirm("Are you sure you wish to continue?") == true){
-
       if ((!Number.isInteger(parseInt(quantity, 10))) || (quantity <= 0)){
         alert("Quantity must be a positive integer " + (this.state.quantity <= 0) )
       }
@@ -224,6 +224,7 @@ class ItemDetail extends Component {
           console.log(thrownError);
         }
       });
+
     } else{
 
     }
