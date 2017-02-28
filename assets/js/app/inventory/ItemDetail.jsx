@@ -38,7 +38,6 @@ class ItemDetail extends Component {
 
   getItem() {
     var url = '/api/items/' + this.item_name + '/';
-    console.log("HERE")
 
     var thisobj = this;
     getJSON(url, function(data){
