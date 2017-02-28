@@ -99,7 +99,7 @@ const ItemCreationForm = React.createClass({
       forms.push(
         <div key={0}>
           <br />
-            <h4>Define Custom Fields</h4>
+          <h4>Define custom fields</h4>
           <hr />
         </div>
       );
@@ -206,7 +206,7 @@ const ItemCreationForm = React.createClass({
             <Form horizontal>
 
               <Panel>
-                <h4>Create an Item</h4>
+                <h4>Create an item</h4>
                 <hr />
 
                 { this.getShortTextField("name", "Name", false) }

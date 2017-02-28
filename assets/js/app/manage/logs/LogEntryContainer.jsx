@@ -1,21 +1,29 @@
 import React from 'react'
-import { ListGroup, ListGroupItem, Label } from 'react-bootstrap'
+import { Table, Label } from 'react-bootstrap'
 import LogEntry from './LogEntry'
 
 function LogEntryContainer(props){
   var list = [];
-  props.logs.map(function(log, i){
-    var date = new Date(log.date_created)
-    date = date.toString()
-    list.push(<ListGroupItem key={i}><LogEntry log={log} date={date}/></ListGroupItem>);
-    console.log(log)
+  list = props.logs.map(function(log, i){
+    return (<LogEntry key={i} log={log}/>);
   });
   return(
-    <div>
-      <ListGroup>
-        {list}
-      </ListGroup>
-    </div>
+    <Table hover>
+      <thead>
+        <tr>
+          <th style={{width:'10%'}} className="text-left">Initiating User</th>
+          <th style={{width:'10%'}} className="text-left">Affected User</th>
+          <th style={{width:'10%'}} className="text-left">Date</th>
+          <th style={{width:'10%'}} className="text-left">Category</th>
+          <th style={{width:'10%'}} className="text-left">Item</th>
+          <th style={{width:'10%'}} className="text-left">Quantity</th>
+          <th style={{width:'30%'}} className="text-left">Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        { list }
+      </tbody>
+    </Table>
   )
 }
 
