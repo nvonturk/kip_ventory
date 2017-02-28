@@ -109,11 +109,11 @@ class InventoryContainer extends Component {
       <Grid>
         <Row>
           <Col md={12}>
-            <a href="/app/">
-              <h4>Inventory</h4>
-            </a>
+            <h3>Inventory</h3>
+            <hr />
           </Col>
         </Row>
+        
         <Row>
           <Col md={12}>
             <Table hover>

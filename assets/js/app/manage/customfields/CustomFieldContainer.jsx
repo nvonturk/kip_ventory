@@ -161,7 +161,7 @@ const CustomFieldContainer = React.createClass({
           <Col xs={12}>
             <Panel>
               <div>
-                <h4>Existing Custom Fields</h4>
+                <h4>Existing custom fields</h4>
                 <hr />
               </div>
               <div style={{maxHeight: '300px', overflow:'auto'}}>
@@ -209,7 +209,7 @@ const CustomFieldContainer = React.createClass({
 
 
           <Panel>
-            <h4>Create a Custom Field</h4>
+            <h4>Create a custom field</h4>
             <hr />
 
             <Form horizontal onSubmit={this.createField}>

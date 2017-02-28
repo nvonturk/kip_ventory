@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, browserHistory } from 'react-router'
-import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
+import { Grid, Row, Col, Navbar, Nav, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap';
 
 const KipNav = React.createClass({
@@ -28,7 +28,7 @@ const KipNav = React.createClass({
 
   render() {
     return (
-      <div id="container">
+      <div>
         <Navbar staticTop collapseOnSelect inverse>
           <Navbar.Header>
             <Navbar.Brand>
@@ -55,9 +55,13 @@ const KipNav = React.createClass({
             </Nav>
           </Navbar.Collapse>
         </Navbar>
-        <div>
-          {this.props.children}
-        </div>
+        <Grid>
+          <Row>
+            <Col sm={12}>
+              {this.props.children}
+            </Col>
+          </Row>
+        </Grid>
       </div>
     );
   }

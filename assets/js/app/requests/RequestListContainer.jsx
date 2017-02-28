@@ -63,30 +63,39 @@ class RequestListContainer extends Component {
     var _this = this;
     return (
       <Grid>
+
         <Row>
-          <div className="page-header" style={{margin:'25px 0px 25px'}}>
+          <Col sm={12}>
             <h3>Your requests</h3>
-          </div>
+            <hr />
+          </Col>
         </Row>
+
         <Row>
-          <Col xs={12} xsOffset={0}>
+          <Col xs={12}>
 
             <Row>
-              <Panel collapsible bsStyle="warning" header={<Grid fluid><Row><Col xs={12}><h5>Outstanding</h5></Col></Row></Grid>}>
-                {this.getFilteredRequestContent(req => (req.status == 'O'))}
-              </Panel>
+              <Col xs={12}>
+                <Panel collapsible bsStyle="warning" header={<Grid fluid><Row><Col xs={12}><h5>Outstanding</h5></Col></Row></Grid>}>
+                  {this.getFilteredRequestContent(req => (req.status == 'O'))}
+                </Panel>
+              </Col>
             </Row>
 
             <Row>
-              <Panel collapsible bsStyle="success" header={<Grid fluid><Row><Col xs={12}><h5>Approved</h5></Col></Row></Grid>}>
-                {this.getFilteredRequestContent(req => (req.status == 'A'))}
-              </Panel>
+              <Col xs={12}>
+                <Panel collapsible bsStyle="success" header={<Grid fluid><Row><Col xs={12}><h5>Approved</h5></Col></Row></Grid>}>
+                  {this.getFilteredRequestContent(req => (req.status == 'A'))}
+                </Panel>
+              </Col>
             </Row>
 
             <Row>
-              <Panel collapsible bsStyle="danger" header={<Grid fluid><Row><Col xs={12}><h5>Denied</h5></Col></Row></Grid>}>
-                {this.getFilteredRequestContent(req => (req.status == 'D'))}
-              </Panel>
+              <Col xs={12}>
+                <Panel collapsible bsStyle="danger" header={<Grid fluid><Row><Col xs={12}><h5>Denied</h5></Col></Row></Grid>}>
+                  {this.getFilteredRequestContent(req => (req.status == 'D'))}
+                </Panel>
+              </Col>
             </Row>
 
           </Col>

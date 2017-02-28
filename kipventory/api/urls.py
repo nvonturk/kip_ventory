@@ -25,6 +25,8 @@ urlpatterns = [
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 
+    url(r'^disburse/?$', views.DisburseCreate.as_view()),
+
     url(r'^requests/?$',                        views.RequestListCreate.as_view()),
     url(r'^requests/all/?$',                    views.RequestListAll.as_view()),
     url(r'^requests/(?P<request_pk>[0-9]*)/?$', views.RequestDetailModifyDelete.as_view()),
