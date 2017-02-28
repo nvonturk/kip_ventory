@@ -48,6 +48,10 @@ class AdminContainer extends Component {
                 <LinkContainer to="/app/admin/users/manage/">
                   <NavItem eventKey={2}>{this.state.headers[2]}</NavItem>
                 </LinkContainer>
+                <LinkContainer to="/app/admin/adminpanel/">
+                  <NavItem eventKey={3}>Django Admin Panel</NavItem>
+                </LinkContainer>
+                
               </Nav>
             </Row>
           </Col>

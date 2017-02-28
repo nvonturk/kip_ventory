@@ -9,6 +9,7 @@ import AdminContainer from './admin/AdminContainer'
 import LocalUserCreationForm from './admin/usercreation/LocalUserCreationForm'
 import UserPrivilegesContainer from './admin/users/UserPrivilegesContainer'
 import AdminWelcome from './admin/welcome/AdminWelcome'
+import DjangoAdminPanelLink from './admin/DjangoAdminPanelLink'
 //import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
 
 
@@ -56,6 +57,7 @@ function getAdminPanel(userData) {
       <IndexRoute component={AdminWelcome} admin={userData} />
       <Route path="users/create/" component={LocalUserCreationForm} admin={userData} />
       <Route path="users/manage/" component={UserPrivilegesContainer} admin={userData} />
+      <Route path="adminpanel/" component={DjangoAdminPanelLink} admin={userData} />
     </Route>) : null
 }
 
