@@ -23,9 +23,16 @@ const LoginSignupContainer = React.createClass({
     return (
       <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
           <NavItem eventKey={1} title="login">Login</NavItem>
+        </Nav>
+    )
+    /*
+    return (
+      <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
+          <NavItem eventKey={1} title="login">Login</NavItem>
           <NavItem eventKey={2} title="signup">Signup</NavItem>
         </Nav>
     )
+*/
   },
 
   getPanelContent() {
@@ -36,10 +43,12 @@ const LoginSignupContainer = React.createClass({
       elems.push(<Well id="login-error-message" key={1}>Your username or password was incorrect - try again.</Well>)
     }
 
+    /*
     var node2 = document.getElementById('username-taken')
     if (node2 != null && showLogin) {    //if (node2 != null && !showLogin) {
       elems.push(<Well id="signup-error-message" key={1}>A user already exists with this username.</Well>)
     }
+    */
 
     elems.push(showLogin ? <LoginForm key={2}/> : <SignupForm key={2}/>)
     return (<div>{elems}</div>)

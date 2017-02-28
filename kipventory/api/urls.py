@@ -37,8 +37,10 @@ urlpatterns = [
 
     url(r'^logs/?$', views.LogList.as_view()),
 
-    url(r'^users/?$',         views.UserListCreate.as_view()),
+    url(r'^users/?$',         views.UserList.as_view()),
     url(r'^users/current/?$', views.GetCurrentUser.as_view()),
+    url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.edit_user),
+    url(r'^users/create/?$',         views.UserCreate.as_view()),
 
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 ]
