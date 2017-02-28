@@ -116,10 +116,9 @@ class TagsContainer extends Component{
     var tagList = this.getTagList();
     var finalList = (<ListGroup>{tagList}</ListGroup>);
     return (
-
         <Grid fluid>
           <Row>
-            <Col xs={12}>
+            <Col xs={12} >
               <h3>Tag Manager</h3>
               <hr />
               <p>
@@ -129,7 +128,7 @@ class TagsContainer extends Component{
             </Col>
           </Row>
           <Row>
-            <Col xs={12}>
+            <Col xs={12} style={{maxHeight: '500px', overflow: 'auto'}}>
               {finalList}
             </Col>
           </Row>
