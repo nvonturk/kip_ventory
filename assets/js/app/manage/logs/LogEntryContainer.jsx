@@ -4,6 +4,7 @@ import LogEntry from './LogEntry'
 
 function LogEntryContainer(props){
   var list = [];
+
   list = props.logs.map(function(log, i){
     return (<LogEntry key={i} log={log}/>);
   });

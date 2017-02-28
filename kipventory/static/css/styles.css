@@ -102,7 +102,6 @@ body, html {
 .search-tag-container {
 	height: 50px; /*todo*/
 	padding-bottom: 5px;
-	border-bottom: 4px solid lightgray;
 }
 
 .container {

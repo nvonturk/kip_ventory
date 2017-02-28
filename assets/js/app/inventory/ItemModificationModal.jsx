@@ -1,9 +1,8 @@
 import React, { Component } from 'react'
-import $ from "jquery"
 import { getJSON, ajax } from 'jquery'
 import { FormGroup, Button, Modal, FormControl, ControlLabel }  from 'react-bootstrap'
-import { getCookie } from '../csrf/DjangoCSRFToken'
-import TagMultiSelect from './TagMultiSelect'
+import { getCookie } from '../../csrf/DjangoCSRFToken'
+import TagMultiSelect from '../TagMultiSelect'
 
 var CUSTOM_FIELDS = []
 

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Button, Nav, NavItem, Table, Panel, Label, Form, FormControl, FormGroup, ControlLabel } from 'react-bootstrap'
 import { getJSON, ajax } from 'jquery'
-import { getCookie } from '../csrf/DjangoCSRFToken'
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 
 const STATUS = {
   O: <Label bsStyle="warning">Outstanding</Label>,
@@ -148,7 +148,7 @@ const RequestDetail = React.createClass({
   },
 
   getRequestModifyPanel() {
-    if (this.state.status == "O") {
+    if ((this.state.status == "O") && (this.props.route.user.is_staff || this.props.route.user.is_superuser)) {
       return this.getOutstandingRequestPanel()
     } else {
       return null

@@ -1,11 +1,8 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
-import QuantityBox from './QuantityBox'
-import SimpleRequest from './SimpleRequest'
-import RequestList from './RequestList'
-import $ from "jquery"
-import Item from './Item'
-import { getCookie } from '../csrf/DjangoCSRFToken'
+import RequestList from '../RequestList'
+import { getJSON, ajax } from "jquery"
+import { getCookie } from '../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
 import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
@@ -40,11 +37,13 @@ class ItemDetail extends Component {
 
   getItem() {
     var url = '/api/items/' + this.item_name + '/';
+    console.log("HERE")
 
     var thisobj = this;
-    $.getJSON(url, function(data){
+    getJSON(url, function(data){
       thisobj.setState({
         item: data,
+
       });
     });
   }
@@ -55,7 +54,7 @@ class ItemDetail extends Component {
     // Another thing I noticed: all item detail modals get renderd on page load, just with showModal = false. Could be performance issue later on
     var url = "/api/items/" + this.item_name + "/requests/";
     var thisObj = this;
-    $.getJSON(url, function(data) {
+    getJSON(url, function(data) {
       var outstandingRequests = data.filter(function(request) {
         return request.status == "O";
       });
@@ -94,7 +93,7 @@ class ItemDetail extends Component {
     }
     else{
       var thisobj = this;
-      $.ajax({
+      ajax({
         url:"/api/items/" + thisobj.state.item.name + "/addtocart/",
         type: "POST",
         beforeSend: function(request) {
@@ -175,7 +174,6 @@ class ItemDetail extends Component {
           },
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
-
       }
       });
     } else{
@@ -202,29 +200,29 @@ class ItemDetail extends Component {
       }
 
       $.ajax({
-      url:"/api/items/" + thisobj.item_name + "/",
-      type: "PUT",
-      traditional: true,
-      data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tagArray},
-      statusCode: {
-         400: function() {
-           alert("Unsuitable Data");
-         }
-       },
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      success:function(response){
-        var url = "/app/"
-        browserHistory.push(url)
-      },
-      complete:function(){
-          },
-      error:function (xhr, textStatus, thrownError){
-        console.log(xhr);
-        console.log(textStatus);
-        console.log(thrownError);
-      }
+        url:"/api/items/" + thisobj.item_name + "/",
+        type: "PUT",
+        traditional: true,
+        data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tagArray},
+        statusCode: {
+           400: function() {
+             alert("Unsuitable Data");
+           }
+         },
+        beforeSend: function(request) {
+          request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        },
+        success:function(response){
+          var url = "/app/"
+          browserHistory.push(url)
+        },
+        complete:function(){
+            },
+        error:function (xhr, textStatus, thrownError){
+          console.log(xhr);
+          console.log(textStatus);
+          console.log(thrownError);
+        }
       });
     } else{
 
@@ -240,7 +238,7 @@ class ItemDetail extends Component {
   render() {
 
     // todo better logic for this
-    if (!this.state.item || !this.state.requests) return null;
+    if (!this.state.item || !this.state.requests) return <div>Item Does Not Exist</div>;
 
     var requestListView=[];
 
