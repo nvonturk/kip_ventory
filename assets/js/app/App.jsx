@@ -60,6 +60,9 @@ function getAdminPanel(userData) {
 }
 
 function initialize(userData) {
+
+  setInitialCustomFields
+
   render((
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
