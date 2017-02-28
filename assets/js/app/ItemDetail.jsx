@@ -40,11 +40,13 @@ class ItemDetail extends Component {
 
   getItem() {
     var url = '/api/items/' + this.item_name + '/';
+    console.log("HERE")
 
     var thisobj = this;
     $.getJSON(url, function(data){
       thisobj.setState({
         item: data,
+
       });
     });
   }
@@ -215,7 +217,7 @@ class ItemDetail extends Component {
   render() {
 
     // todo better logic for this
-    if (!this.state.item || !this.state.requests) return null;
+    if (!this.state.item || !this.state.requests) return <div>Item Does Not Exist</div>;
 
     var requestListView=[];
 
