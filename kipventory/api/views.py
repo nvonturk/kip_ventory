@@ -198,7 +198,6 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
                 return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
 
         tags = request.data.get('tags', None)
-        tags = tags.split(",")
         for tag in item.tags.all():
             item.tags.remove(tag)
 

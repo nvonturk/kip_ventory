@@ -179,6 +179,13 @@ const ItemDetail = React.createClass({
 
 
   getTransactionList() {
+
+    var createTransactionView = "";
+    if(this.props.route.user.is_staff) {
+      createTransactionView =
+          <CreateTransactionsContainer item_name={this.props.params.item_name} handleTransactionCreated={() => {this.getTransactions(); this.getItem();}}/> 
+    }
+
     return (
       <Panel style={{fontSize: "12px"}}>
         <div>
@@ -187,13 +194,11 @@ const ItemDetail = React.createClass({
               <h4>Transactions</h4>
             </Col>
             <Col sm={3} smOffset={3}>
-              <Button block bsStyle="info">Create Transaction</Button>
+              {createTransactionView}
             </Col>
           </Row>
           <hr />
         </div>
-
-
 
         <Table>
           <thead>
@@ -439,7 +444,6 @@ const ItemDetail = React.createClass({
   },
 
   render() {
-    console.log(this.state.requests)
     return this.state.item !== null ? (
       <Grid>
 

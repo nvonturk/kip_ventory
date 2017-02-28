@@ -29,7 +29,7 @@ class ItemModificationModal extends Component{
   }
 
   componentWillMount() {
-    var url = "/api/fields/"
+    var url = "/api/items/" + this.props.item.name + "/fields/"
     var _this = this
     CUSTOM_FIELDS = []
     getJSON(url, null, function(data) {

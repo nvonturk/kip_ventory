@@ -52,7 +52,7 @@ class CreateTransactionsContainer extends Component {
       quantity: this.state.quantity,
       comment: this.state.comment,
       category: this.state.category,
-      item: this.props.item.name
+      item: this.props.item_name
     }
 
     var thisObj = this;
