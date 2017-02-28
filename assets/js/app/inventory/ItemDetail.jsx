@@ -399,6 +399,8 @@ const ItemDetail = React.createClass({
         var tagArray = tags;
       }
 
+      state.tags = tagArray;
+
       ajax({
         url:"/api/items/" + thisobj.state.item.name + "/",
         type: "PUT",
