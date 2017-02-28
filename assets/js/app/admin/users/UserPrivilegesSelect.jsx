@@ -68,8 +68,8 @@ class UserPrivilegesSelect extends Component {
 		var privilegeDiv = this.getPrivilege(this.state.user.is_superuser, this.state.user.is_staff);
 		return (
 			<div>
-			<Button onClick={this.handleEditButtonClicked}>{this.getEditButtonName()}</Button>
 			{privilegeDiv}
+			<Button onClick={this.handleEditButtonClicked}>{this.getEditButtonName()}</Button>
 			</div>
 		)
 	}
