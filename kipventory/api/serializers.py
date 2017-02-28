@@ -91,6 +91,7 @@ class ItemSerializer(serializers.ModelSerializer):
             cf_exists = (fields.filter(name=field_name).count() > 0)
             if cf_exists:
                 cf = fields.get(name=field_name)
+                print(cf)
                 try:
                     val = models.FIELD_TYPE_DICT[cf.field_type](value)
                     field_data.update({cf: val})
@@ -105,9 +106,7 @@ class ItemSerializer(serializers.ModelSerializer):
         item_data  = validated_data['item_data']
         field_data = validated_data['field_data']
         # create the item from the intrinsic data fields
-        print(item_data)
         item = super(ItemSerializer, self).create(item_data)
-        print(item_data)
         # there will be a complete set of blank CustomValues associated with this Item
         # as a result of the Item.save() method.
         item_values = item.values.all()
@@ -124,10 +123,21 @@ class ItemSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         item_data = validated_data['item_data']
         field_data = validated_data['field_data']
-        print(item_data)
-        instance = super(ItemSerializer, self).update(instance, item_data)
-        instance.save()
-        return instance
+
+        item = super(ItemSerializer, self).update(instance, item_data)
+
+        item_values = item.values.all()
+        # If we have
+        for field, value in field_data.items():
+            try:
+                cv = item_values.get(field__pk=field.pk)
+                setattr(cv, field.field_type, value)
+                cv.save()
+            except:
+                print("baseee")
+
+        item.save()
+        return item
 
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):

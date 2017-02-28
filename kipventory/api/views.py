@@ -196,7 +196,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
                 return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
 
         tags = request.data.get('tags', None)
-
+        tags = tags.split(",")
         for tag in item.tags.all():
             item.tags.remove(tag)
 
@@ -457,6 +457,7 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
 
 class GetOutstandingRequestsByItem(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Request.objects.all()
@@ -470,8 +471,18 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
             requests = models.Request.objects.filter(request_items__item__name=item_name)
         else:
             requests = models.Request.objects.filter(request_items__item__name=item_name, requester=request.user.pk)
-        serializer = serializers.RequestSerializer(requests, many=True)
-        return Response(serializer.data)
+
+        # Return all items if query parameter "all" is set
+        all_items = self.request.query_params.get("all", None)
+        if all_items:
+            serializer = self.get_serializer(instance=requests, many=True)
+            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(requests)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
 
 class RequestListAll(generics.GenericAPIView):
@@ -874,9 +885,17 @@ class TransactionListCreate(generics.GenericAPIView):
         if not (category is None or category=="All"):
             queryset = models.Transaction.objects.filter(category=category)
 
+        # Return all items if query parameter "all" is set
+        all_items = self.request.query_params.get("all", None)
+        if all_items:
+            serializer = self.get_serializer(instance=queryset, many=True)
+            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+
+        # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
+        print(serializer.data)
         return response
 
     def post(self, request, format=None):

@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Modal, Table, FormGroup, FormControl, ControlLabel}  from 'react-bootstrap'
+import { Grid, Row, Col, Button, Modal, Table, Form, FormGroup, FormControl, ControlLabel, Panel, Label }  from 'react-bootstrap'
 import RequestList from '../RequestList'
-import $ from "jquery"
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
@@ -9,86 +8,345 @@ import ItemModificationModal from './ItemModificationModal'
 import _ from 'underscore'
 import {browserHistory} from 'react-router'
 
-class ItemDetail extends Component {
-  constructor(props) {
-    super(props);
-    this.item_name = props.params.item_name;
-    this.user = props.route.user;
 
-    this.state = {
+
+const ItemDetail = React.createClass({
+
+  getInitialState() {
+    return {
       requests: [],
-      quantity:0,
-      showModifyButton: props.route.user.is_staff,
+      transactions: [],
+      item: null,
+      quantity: 0,
+      showModifyButton: this.props.route.user.is_staff,
       showModifyModal: false,
-      //item: {}
     }
+  },
 
-    this.getItem = this.getItem.bind(this);
-    this.getRequests = this.getRequests.bind(this)
-    this.addToCart = this.addToCart.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    this.handleTransactionCreated = this.handleTransactionCreated.bind(this);
-    this.handleModifyClick = this.handleModifyClick.bind(this);
-    this.closeModal = this.closeModal.bind(this);
-    this.deleteItem = this.deleteItem.bind(this);
-    this.saveChanges = this.saveChanges.bind(this);
-
+  componentWillMount() {
     this.getItem();
-    this.getRequests();
-    //this.getTransactions();
-
-  }
+    this.getOutstandingRequests();
+    this.getTransactions();
+  },
 
   getItem() {
-    var url = '/api/items/' + this.item_name + '/';
-
-    var thisobj = this;
-    getJSON(url, function(data){
-      thisobj.setState({
-        item: data,
-
-      });
-    });
-  }
-
-  // todo update this code now that we switched away from ItemDetailModal
-  getRequests() {
-    // Get outstanding requests and re-render if they are different than local state
-    // Another thing I noticed: all item detail modals get renderd on page load, just with showModal = false. Could be performance issue later on
-    var url = "/api/items/" + this.item_name + "/requests/";
-    var thisObj = this;
+    var url = "/api/items/" + this.props.params.item_name + "/";
+    var _this = this;
     getJSON(url, function(data) {
-      var outstandingRequests = data.filter(function(request) {
-        return request.status == "O";
-      });
+      _this.setState({
+        item: data
+      })
+    })
+  },
 
-      var shouldUpdateRequests = !_.isEqual(outstandingRequests, thisObj.state.requests);
-      if(shouldUpdateRequests) {
-        thisObj.setState({
-          requests: outstandingRequests
-        });
+  getOutstandingRequests() {
+    var url = "/api/items/" + this.props.params.item_name + "/requests/";
+    var params = {all: true}
+    var _this = this;
+    getJSON(url, params, function(data) {
+      _this.setState({
+        requests: data.results.filter( (request) => {
+          return (request.status == 'O')
+        })
+      })
+    })
+  },
+
+  getTransactions() {
+    var url = "/api/transactions/"
+    var params = {all: true}
+    var _this = this;
+    getJSON(url, params, function(data) {
+      _this.setState({
+        transactions: data.results.filter( (transaction) => {
+          return (transaction.item == _this.props.params.item_name)
+        })
+      })
+    })
+  },
+
+  getItemInformation() {
+
+    var ModifyButton = React.createClass({
+      render: function() {
+        return (
+          <Button bsStyle="info" onClick={this.props.click}>Modify</Button>
+        );
       }
     });
-  }
 
-  // todo display a log of transactions in this detail view
-  getTransactions() {
+    return (
+      <Panel style={{fontSize: "12px"}}>
+        <div>
+          <Row>
+            <Col sm={6}>
+              <h4>Item Information</h4>
+            </Col>
+            <Col sm={4} smOffset={2}>
+            {this.state.showModifyButton ? (
+                <ModifyButton click={this.handleModifyClick} />
+              ) : null
+            }
+            </Col>
+          </Row>
+          <hr />
+        </div>
 
-  }
+        <Row>
+          <Col sm={6}>
+            <p>Name :</p>
+          </Col>
+          <Col sm={6}>
+            <p>{this.props.params.item_name}</p>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col sm={6}>
+            <p>Model number :</p>
+          </Col>
+          <Col sm={6}>
+            <p>{this.state.item.model_no}</p>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col sm={6}>
+            <p>Quantity :</p>
+          </Col>
+          <Col sm={6}>
+            <p>{this.state.item.quantity}</p>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col sm={6}>
+            <p>Description :</p>
+          </Col>
+          <Col sm={6}>
+            <p>{this.state.item.description}</p>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col sm={6}>
+            Tags :
+          </Col>
+          <Col sm={6}>
+            {this.state.item.tags.join(", ")}
+          </Col>
+        </Row>
+
+      </Panel>
+    )
+  },
+
+
+  getCustomFields() {
+    return (
+      <Panel style={{fontSize: "12px"}}>
+        <div>
+          <h4>Custom Fields</h4>
+          <hr />
+        </div>
+
+        {this.state.item.custom_fields.map( (field, i) => {
+          return (
+            <Row key={field.name}>
+              <Col sm={6}>
+                <p>{field.name} :</p>
+              </Col>
+              <Col sm={6}>
+                <p>{field.value}</p>
+              </Col>
+            </Row>
+          )
+        })}
+
+      </Panel>
+    )
+  },
+
+  getCategoryLabel(category) {
+    if (category == 'Acquisition') {
+      return (<Label bsStyle="success" bsSize="small">Acquisition</Label>)
+    } else if (category == "Loss") {
+      return (<Label bsStyle="danger" bsSize="small">Loss</Label>)
+    } else {
+      return null
+    }
+  },
+
+
+  getTransactionList() {
+    return (
+      <Panel style={{fontSize: "12px"}}>
+        <div>
+          <Row>
+            <Col sm={6}>
+              <h4>Transactions</h4>
+            </Col>
+            <Col sm={3} smOffset={3}>
+              <Button block bsStyle="info">Create Transaction</Button>
+            </Col>
+          </Row>
+          <hr />
+        </div>
+
+
+
+        <Table>
+          <thead>
+            <tr>
+              <th style={{width: "15%"}} className="text-left">Item</th>
+              <th style={{width: "15%"}} className="text-left">Administrator</th>
+              <th style={{width: "15%"}} className="text-left">Date</th>
+              <th style={{width: "25%"}} className="text-left">Comment</th>
+              <th style={{width: "15%"}} className="text-center">Category</th>
+              <th style={{width: "15%"}} className="text-center">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            { this.state.transactions.map( (transaction, i) => {
+              return (
+                <tr key={transaction.id}>
+                  <td data-th="Item" className="text-left">{transaction.item}</td>
+                  <td data-th="Administrator" className="text-left">{transaction.administrator}</td>
+                  <td data-th="Date" className="text-left">{new Date(transaction.date).toLocaleString()}</td>
+                  <td data-th="Comment" className="text-left">{transaction.comment}</td>
+                  <td data-th="Category" className="text-center">{this.getCategoryLabel(transaction.category)}</td>
+                  <td data-th="Quantity" className="text-center">{transaction.quantity}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </Table>
+      </Panel>
+    )
+  },
+
+  getRequestList() {
+    return (
+      <Panel style={{fontSize: "12px"}}>
+        <div>
+          <h4>Outstanding Requests</h4>
+          <hr />
+        </div>
+
+        <Table condensed hover >
+          <thead>
+            <tr>
+              <th style={{width: "15%"}} className="text-left">Requester</th>
+              <th style={{width: "20%"}} className="text-left">Date Open</th>
+              <th style={{width: "40%"}} className="text-left">Comment</th>
+              <th style={{width: "13%"}} className="text-center">Status</th>
+              <th style={{width: "12%"}} className="text-center"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {this.state.requests.map( (request, i) => {
+              var d = new Date(request.date_open)
+              return (
+                <tr key={request.request_id} style={{height: '50px'}}>
+                  <td data-th="Requester" className="text-left">{request.requester}</td>
+                  <td data-th="Date Open" className="text-left">{d.toLocaleString()}</td>
+                  <td data-th="Comment" className="text-left"><div style={{maxHeight: '100px', overflow: 'auto'}}>{request.open_comment}</div></td>
+                  <td data-th="Status" className="text-center">{this.getStatusLabel(request.status)}</td>
+                  <td style={{width: "12%"}} className="text-center">
+                      <Button bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </Table>
+      </Panel>
+    )
+  },
+
+  viewRequest(request) {
+    browserHistory.push("/app/requests/" + request.request_id);
+  },
+
+  getStatusLabel(status) {
+    if (status == "A") {
+      return (<Label bsStyle='success'>Approved</Label>)
+    } else if (status == "D") {
+      return (<Label bsStyle='danger'>Denied</Label>)
+    } else if (status == "O") {
+      return (<Label bsStyle='warning'>Outstanding</Label>)
+    }
+    else {
+      return null
+    }
+  },
+
+  getAddToCartForm() {
+    return (
+      <Panel style={{fontSize: "12px"}}>
+        <div>
+          <h4>Add to Cart</h4>
+          <hr />
+        </div>
+
+        <Form horizontal onSubmit={e => e.preventDefault()}>
+
+          <FormGroup bsSize="small">
+            <Col componentClass={ControlLabel} sm={2}>
+              Quantity
+            </Col>
+            <Col sm={4}>
+              <FormControl type="number" min={0} step={1} max={this.state.item.quantity} value={this.state.quantity} name="quantity" onChange={this.onChange} />
+            </Col>
+            <Col sm={4} smOffset={2}>
+              <Button block bsStyle="info" bsSize="small" onClick={this.addToCart}>Add to Cart</Button>
+            </Col>
+          </FormGroup>
+
+        </Form>
+
+      </Panel>
+    )
+  },
+
+  onChange(e) {
+    e.preventDefault();
+    this.setState({
+      [e.target.name]: e.target.value
+    })
+  },
 
   handleModifyClick(event){
     event.preventDefault();
     this.setState({showModifyModal: true})
-  }
+  },
 
-  closeModal(){
-    this.setState({showModifyModal: false});
-  }
+  deleteItem(){
+    if(confirm("Are you sure you wish to continue?") == true){
+      var thisobj = this
+      ajax({
+      url:"/api/items/" + thisobj.item_name + "/",
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        var url = "/app/"
+        browserHistory.push(url)
+      },
+      complete:function(){
+          },
+      error:function (xhr, textStatus, thrownError){
+          alert("error doing something");
+      }
+      });
+    } else{
+
+    }
+  },
 
   addToCart(){
-    // todo add these checks on the backend
     if ((!Number.isInteger(parseInt(this.state.quantity, 10))) || (this.state.quantity <= 0)){
-
       alert("Quantity must be a positive integer")
     }
     else if(this.state.item.quantity < this.state.quantity){
@@ -117,80 +375,18 @@ class ItemDetail extends Component {
         }
       });
     }
-  }
+  },
 
-  // Item quantity has changed, so update it
-  handleTransactionCreated() {
-    this.getItem();
-  }
-
-  getTableRow(item, i) {
-    var tags = "";
-    for(var i = 0; i < item.tags.length; i++) {
-      var tag = item.tags[i];
-      tags += " " + tag;
-    }
-    return (
-      <tr key={item.name}>
-        <td>{item.name}</td>
-        <td>{item.model_no}</td>
-        <td>{item.description}</td>
-        <td>{item.quantity}</td>
-        <td>{item.location}</td>
-        <td>{tags}</td>
-      </tr>
-    )
-  }
-
-  // todo: custom fields
-  getTableHeader() {
-    return (
-      <thead>
-        <tr>
-          <th>Item Name</th>
-          <th>Model No</th>
-          <th>Description</th>
-          <th>Quantity Available</th>
-          <th>Location</th>
-          <th>Tags</th>
-        </tr>
-      </thead>
-    )
-  }
-
-
-  deleteItem(){
+  saveChanges(e, state){
+    e.preventDefault()
     if(confirm("Are you sure you wish to continue?") == true){
-      var thisobj = this
-      $.ajax({
-      url:"/api/items/" + thisobj.item_name + "/",
-      type: "DELETE",
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      success:function(response){
-        var url = "/app/"
-        browserHistory.push(url)
-      },
-      complete:function(){
-          },
-      error:function (xhr, textStatus, thrownError){
-          alert("error doing something");
-      }
-      });
-    } else{
-
-    }
-  }
-
-  saveChanges(name, quantity, model_no, description, tags){
-    if(confirm("Are you sure you wish to continue?") == true){
-      if ((!Number.isInteger(parseInt(quantity, 10))) || (quantity <= 0)){
-        alert("Quantity must be a positive integer " + (this.state.quantity <= 0) )
+      if ((!Number.isInteger(parseInt(state.quantity, 10))) || (state.quantity <= 0)){
+        alert("Quantity must be a positive integer " + (state.quantity <= 0) )
       }
       var thisobj = this
+      var tags = state.tags
 
-      if( !Object.prototype.toString.call( tags ) === '[object Array]' ) {
+      if( Object.prototype.toString.call( tags ) !== '[object Array]' ) {
         if(tags==""){
           var tagArray = [];
         } else{
@@ -200,11 +396,11 @@ class ItemDetail extends Component {
         var tagArray = tags;
       }
 
-      $.ajax({
-        url:"/api/items/" + thisobj.item_name + "/",
+      ajax({
+        url:"/api/items/" + thisobj.state.item.name + "/",
         type: "PUT",
         traditional: true,
-        data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tagArray},
+        data: state,
         statusCode: {
            400: function() {
              alert("Unsuitable Data");
@@ -214,8 +410,15 @@ class ItemDetail extends Component {
           request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
         },
         success:function(response){
-          var url = "/app/"
-          browserHistory.push(url)
+          if (thisobj.state.item.name !== response.name) {
+            var url = "/app/"
+            browserHistory.push(url)
+          } else {
+            thisobj.getItem(thisobj.props.params.item_name)
+            thisobj.setState({
+              showModifyModal: false
+            })
+          }
         },
         complete:function(){
             },
@@ -229,95 +432,70 @@ class ItemDetail extends Component {
     } else{
 
     }
-  }
+  },
 
-  handleChange(event) {
-    this.setState({ [event.target.name]: event.target.value }, () => console.log(this.state.quantity));
-  }
+  closeModal(){
+    this.setState({showModifyModal: false});
+  },
 
-
-  // todo refactor this
   render() {
-
-    // todo better logic for this
-    if (!this.state.item || !this.state.requests) return <div>Item Does Not Exist</div>;
-
-    var requestListView=[];
-
-    if(this.state.requests.length == 0) {
-      requestListView = "No outstanding requests."
-    }
-
-    else {
-      requestListView = <RequestList simple requests={this.state.requests} />
-    }
-
-    var createTransactionView = "";
-    if(this.user.is_staff) {
-      createTransactionView =
-        <div>
-          <h4>Transactions</h4>
-          <CreateTransactionsContainer item={this.state.item} handleTransactionCreated={this.handleTransactionCreated}/>
-        </div>
-    }
-
-    var ModifyButton = React.createClass({
-      render: function() {
-        return (
-          <div>
-          <Button onClick={this.props.click} >Modify Item</Button>
-          </div>
-        );
-      }
-    });
-
-    return (
+    console.log(this.state.requests)
+    return this.state.item !== null ? (
       <Grid>
-        <Row>
-          <Col sm={12}>
-            <h3>Item Details</h3>
-            <hr />
-          </Col>
-        </Row>
 
-        <Table hover>
-          {this.getTableHeader()}
-          <tbody>
-            {this.getTableRow(this.state.item, 0)}
-          </tbody>
-        </Table>
-        <h4>Outstanding Requests</h4>
-        {/*
-        <Table striped bordered condensed hover>
-          {getRequestTableHeader()}
-          <tbody>
-            {this.getRequestTableRow(request, i))}
-          </tbody>
-        </Table>
-        */}
-        {requestListView}
-        {createTransactionView}
-        <h4> Cart </h4>
-        <Button onClick={this.addToCart}>Add to Cart</Button>
-        <FormGroup controlId="formQuantity">
-          <ControlLabel>Quantity</ControlLabel>
-            <FormControl
-              type="number"
-              name="quantity"
-              value={this.state.quantity}
-              onChange={this.handleChange}
-            />
-        </FormGroup>
-        {
-          this.state.showModifyButton
-            ? <ModifyButton
-              click={this.handleModifyClick}
-              />
-            : null
-        }
-        <ItemModificationModal showModal={this.state.showModifyModal} close={this.closeModal} item={this.state.item} deleteItem={this.deleteItem} saveChanges={this.saveChanges} is_admin={this.user.is_superuser}/>
+        <Col sm={8} smOffset={2}>
+
+          <Row>
+            <Col sm={12}>
+              <h3>Item Details</h3>
+              <hr />
+            </Col>
+          </Row>
+
+          <Row>
+            <Col sm={6}>
+              <Row>
+                <Col sm={12}>
+                  { this.getItemInformation() }
+                </Col>
+              </Row>
+              <Row>
+                <Col sm={12}>
+                  { this.getAddToCartForm() }
+                </Col>
+              </Row>
+            </Col>
+            <Col sm={6}>
+              { this.getCustomFields() }
+            </Col>
+          </Row>
+
+
+          <Row>
+            <Col sm={12}>
+              { this.getTransactionList() }
+            </Col>
+          </Row>
+
+          <Row>
+            <Col sm={12}>
+              { this.getRequestList() }
+            </Col>
+          </Row>
+
+        </Col>
+
+        <ItemModificationModal showModal={this.state.showModifyModal}
+                               close={this.closeModal}
+                               item={this.state.item}
+                               deleteItem={this.deleteItem}
+                               saveChanges={this.saveChanges}
+                               is_admin={this.props.route.user.is_superuser}/>
+
       </Grid>
-    );
+    ) : null
+
   }
-}
+
+})
 export default ItemDetail

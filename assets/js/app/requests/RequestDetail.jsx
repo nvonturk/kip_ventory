@@ -158,6 +158,7 @@ const RequestDetail = React.createClass({
   render() {
     return (
       <Grid>
+
         <Row>
           <Col sm={8} smOffset={2}>
             <h3>Request Details</h3>
@@ -171,7 +172,7 @@ const RequestDetail = React.createClass({
           { this.getRequestModifyPanel() }
 
           <Col sm={8} smOffset={2}>
-            <Panel>
+            <Panel style={{fontSize: "12px"}}>
               <h4>Request Information</h4>
               <hr />
 
@@ -250,7 +251,7 @@ const RequestDetail = React.createClass({
           </Col>
 
           <Col sm={8} smOffset={2}>
-            <Panel>
+            <Panel style={{fontSize: "12px"}}>
               <h4>Request Items</h4>
               <hr />
               <Row>
