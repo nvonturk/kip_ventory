@@ -6,7 +6,7 @@ import UserPrivilegesContainer from './users/UserPrivilegesContainer'
 
 class AdminContainer extends Component {
   constructor(props) {
-    super(props); 
+    super(props);
     this.state = {
       activeKey: 0,
       headers: ['', 'Create Users', 'Manage Users'], //New User Requests
@@ -50,8 +50,7 @@ class AdminContainer extends Component {
                 </LinkContainer>
                 <LinkContainer to="/app/admin/adminpanel/">
                   <NavItem eventKey={3}>Django Admin Panel</NavItem>
-                </LinkContainer>
-                
+                </LinkContainer>                
               </Nav>
             </Row>
           </Col>

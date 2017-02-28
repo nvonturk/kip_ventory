@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button, Well } from 'react-bootstrap'
+import { Grid, Row, Col, Form, Panel, FormGroup, FormControl, ControlLabel, Button, Well, Alert } from 'react-bootstrap'
 import { getJSON, ajax, serialize } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import TagMultiSelect from '../../TagMultiSelect'
@@ -16,11 +16,13 @@ const ItemCreationForm = React.createClass({
       model_no: "",
       description: "",
       tags: [],
-      showCreatedSuccess: false
+      showCreatedSuccess: false,
+      showErrorMessage: false,
+      errorMessage: ""
     }
   },
 
-  componentDidMount() {
+  componentWillMount() {
     var url = "/api/fields/"
     var _this = this
     CUSTOM_FIELDS = []
@@ -135,10 +137,20 @@ const ItemCreationForm = React.createClass({
     var ret = this.state.showCreatedSuccess ? (
       <Row>
         <Col sm={12}>
-          <Well>Item <a href={url}>{this.state.createdName}</a> successfully created!</Well>
+          <Well bsSize="large">Item <a href={url}>{this.state.createdName}</a> successfully created!</Well>
         </Col>
       </Row>) : (null)
     return ret
+  },
+
+  getErrorMessage() {
+    return this.state.showErrorMessage ? (
+      <Row>
+        <Col sm={12}>
+          <Alert bsStyle="danger" bsSize="small">{this.state.errorMessage}</Alert>
+        </Col>
+      </Row>
+    ) : null
   },
 
   createItem() {
@@ -162,17 +174,22 @@ const ItemCreationForm = React.createClass({
         }
         _this.setState({
           showCreatedSuccess: true,
-          createdName: item_name
+          createdName: item_name,
+          showErrorMessage: false,
+          errorMessage: ""
         })
       },
       complete:function(){
 
       },
       error:function (xhr, textStatus, thrownError){
-        console.log(xhr)
-        console.log(textStatus)
-        console.log(thrownError)
-        alert("error doing something");
+        var response = xhr.responseJSON
+        _this.setState({
+          showCreatedSuccess: false,
+          createdName: "",
+          showErrorMessage: true,
+          errorMessage: "Name: " + response.name[0]
+        })
       }
     });
   },
@@ -188,8 +205,6 @@ const ItemCreationForm = React.createClass({
     return (
       <Grid fluid>
 
-        { this.getSuccessMessage() }
-
         <Row>
           <Col xs={12}>
             <h3>Item Creation</h3>
@@ -200,6 +215,9 @@ const ItemCreationForm = React.createClass({
             <br />
           </Col>
         </Row>
+
+        { this.getSuccessMessage() }
+        { this.getErrorMessage() }
 
         <Row>
           <Col sm={12}>

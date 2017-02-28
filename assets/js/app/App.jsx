@@ -10,7 +10,6 @@ import LocalUserCreationForm from './admin/usercreation/LocalUserCreationForm'
 import UserPrivilegesContainer from './admin/users/UserPrivilegesContainer'
 import AdminWelcome from './admin/welcome/AdminWelcome'
 import DjangoAdminPanelLink from './admin/DjangoAdminPanelLink'
-//import NewUserRequestsContainer from './admin/newuserrequests/NewUserRequestsContainer'
 
 
 // Manager Pages
