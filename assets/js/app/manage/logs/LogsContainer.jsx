@@ -7,6 +7,9 @@ import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import Select from 'react-select'
 import LogEntryContainer from './LogEntryContainer'
 import DateRangePicker from 'react-bootstrap-daterangepicker'
+import Paginator from '../../Paginator'
+
+const LOGS_PER_PAGE = 20;
 
 class LogsContainer extends Component {
   constructor(props) {
@@ -21,10 +24,11 @@ class LogsContainer extends Component {
       items: [],
       currentenddate: null,
       currentstartdate: null,
+      page: 1,
+      pageCount: 0,
     }
     this.getAllLogs = this.getAllLogs.bind(this)
     this.filter = this.filter.bind(this)
-    this.setLogs = this.setLogs.bind(this)
     this.getUsers = this.getUsers.bind(this)
     this.createUserlist = this.createUserlist.bind(this)
     this.changeUser = this.changeUser.bind(this)
@@ -33,16 +37,11 @@ class LogsContainer extends Component {
     this.getItems = this.getItems.bind(this)
     this.changeDate = this.changeDate.bind(this)
     this.clearSearch = this.clearSearch.bind(this)
+    this.handlePageClick = this.handlePageClick.bind(this)
 
     this.getAllLogs()
     this.getUsers()
     this.getItems()
-  }
-
-  setLogs(data){
-    this.setState({
-      logs: data,
-    })
   }
 
   getUsers(){
@@ -82,6 +81,8 @@ class LogsContainer extends Component {
       startDate: null,
       endDate: null,
       item: null,
+      page: 1,
+      itemsPerPage: LOGS_PER_PAGE,
     }
     this.getLogs(params)
   }
@@ -89,21 +90,27 @@ class LogsContainer extends Component {
   getLogs(params) {
     var thisobj = this;
     $.getJSON("/api/logs.json", params, function(data) {
-      thisobj.setLogs(data);
+      thisobj.setState({
+        logs: data.results,
+        pageCount: Math.ceil(data.num_pages),
+      });
     })
   }
 
   changeUser(event){
-    this.setState({currentuser: event}, () => {this.filter();})
+    this.setState({currentuser: event, page: 1}, () => {this.filter();})
   }
 
   changeItem(event){
-    this.setState({currentitem: event}, () => {this.filter();})
+    this.setState({currentitem: event, page: 1}, () => {this.filter();})
   }
 
   changeDate(event, picker){
-    this.setState({currentstartdate: picker.startDate.toString(),
-    currentenddate: picker.endDate.toString()}, () => {this.filter();})
+    this.setState({
+      currentstartdate: picker.startDate.toString(),
+      currentenddate: picker.endDate.toString(), 
+      page: 1
+    }, () => {this.filter();})
   }
 
   clearSearch(event){
@@ -112,6 +119,7 @@ class LogsContainer extends Component {
       currentstartdate: null,
       currentuser: null,
       currentitem: null,
+      page: 1
     }, () => {this.getAllLogs()})
   }
 
@@ -121,8 +129,20 @@ class LogsContainer extends Component {
       item: this.state.currentitem,
       startDate: this.state.currentstartdate,
       endDate: this.state.currentenddate,
+      page: this.state.page,
+      itemsPerPage: LOGS_PER_PAGE,
     }
     this.getLogs(params);
+  }
+
+  handlePageClick(data) {
+    let selected = data.selected;
+    let offset = Math.ceil(selected * LOGS_PER_PAGE);
+    let page = data.selected + 1;
+
+    this.setState({page: page}, () => {
+      this.filter();
+    });
   }
 
   render(){
@@ -162,6 +182,7 @@ class LogsContainer extends Component {
         <Row>
           <Col md={12}>
             <LogEntryContainer className="log-list" logs={this.state.logs} />
+            <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
           </Col>
         </Row>
         </Panel>

@@ -511,6 +511,10 @@ class RequestListCreate(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
+        status = request.GET.get('status')
+        #todo remove hardcoded statuses
+        if status and (status=='O' or status=='A' or status=='D'):
+            queryset = queryset.filter(status=status)
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -808,6 +812,7 @@ class TagListCreate(generics.GenericAPIView):
 
 class LogList(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Log.objects.all()
@@ -854,10 +859,12 @@ class LogList(generics.GenericAPIView):
             print(startDate, endDate)
 
             logs = logs.filter(date_created__range=[startDate, endDate])
-        serializer = self.get_serializer(instance=logs, many=True)
-        return Response(serializer.data)
 
-
+        queryset = logs
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
 class TransactionListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
