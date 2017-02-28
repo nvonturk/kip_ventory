@@ -3,7 +3,7 @@ import $ from "jquery"
 import TransactionList from './TransactionList'
 import Select from 'react-select'
 import Paginator from '../../Paginator'
-import { Grid, Row } from 'react-bootstrap'
+import { Grid, Row, Col } from 'react-bootstrap'
 
 
 const TRANSACTIONS_PER_PAGE = 2;
@@ -17,7 +17,7 @@ class TransactionsContainer extends Component {
       filter_option: 'All',
       page: 1,
       pageCount: 0,
-    
+
     };
 
     this.options = [
@@ -44,7 +44,7 @@ class TransactionsContainer extends Component {
     var thisObj = this;
     $.getJSON("/api/transactions/", params, function(data){
       thisObj.setState({
-        transactions: data.results,
+        transactions: data,
         pageCount: Math.ceil(data.num_pages),
       });
     });
@@ -71,6 +71,16 @@ class TransactionsContainer extends Component {
   render() {
     return (
       <Grid fluid>
+        <Row>
+          <Col xs={12}>
+            <h3>Transactions</h3>
+            <hr />
+            <p>
+              View Item Transcations.
+            </p>
+            <br />
+          </Col>
+        </Row>
         <Select value={this.state.filter_option} placeholder={this.placeholder} options={this.options} onChange={this.handleFilterChange} clearable={false}/>
         <TransactionList transactions={this.state.transactions} />
         <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>

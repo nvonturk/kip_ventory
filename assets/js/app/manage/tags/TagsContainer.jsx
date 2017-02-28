@@ -120,7 +120,7 @@ class TagsContainer extends Component{
         <Grid fluid>
           <Row>
             <Col xs={12}>
-              <h3>Tag Manager</h3>
+              <h3>Tags</h3>
               <hr />
               <p>
                 Create and delete tags in the system.
