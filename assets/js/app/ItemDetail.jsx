@@ -86,8 +86,7 @@ class ItemDetail extends Component {
   addToCart(){
     // todo add these checks on the backend
     if ((!Number.isInteger(parseInt(this.state.quantity, 10))) || (this.state.quantity <= 0)){
-      console.log((Number.isInteger(this.state.quantity)))
-      console.log((this.state.quantity > 0))
+
       alert("Quantity must be a positive integer")
     }
     else if(this.state.item.quantity < this.state.quantity){
@@ -181,11 +180,27 @@ class ItemDetail extends Component {
   }
 
   saveChanges(name, quantity, model_no, description, tags){
+    if ((!Number.isInteger(parseInt(quantity, 10))) || (quantity <= 0)){
+      alert("Quantity must be a positive integer " + (this.state.quantity <= 0) )
+    }
     var thisobj = this
+    console.log(tags);
+
+    if( !Object.prototype.toString.call( tags ) === '[object Array]' ) {
+      if(tags==""){
+        var tagArray = [];
+      } else{
+        var tagArray = tags.split(",");
+      }
+    } else{
+      var tagArray = tags;
+    }
+
     $.ajax({
     url:"/api/items/" + thisobj.item_name + "/",
     type: "PUT",
-    data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tags},
+    traditional: true,
+    data: {quantity:quantity, name:name, model_no:model_no, description:description, tags:tagArray},
     statusCode: {
        400: function() {
          alert("Unsuitable Data");
@@ -201,7 +216,9 @@ class ItemDetail extends Component {
     complete:function(){
         },
     error:function (xhr, textStatus, thrownError){
-
+      console.log(xhr);
+      console.log(textStatus);
+      console.log(thrownError);
     }
     });
   }
