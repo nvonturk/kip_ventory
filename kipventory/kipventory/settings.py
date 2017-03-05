@@ -46,9 +46,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_swagger',
+    'dbbackup',
     # local
     'api',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -89,6 +91,13 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+}
+
+
+DBBACKUP_STORAGE = 'storages.backends.ftp.FTPStorage'
+DBBACKUP_STORAGE_OPTIONS = {
+    # 'location': 'ftp://bitnami:pass@server:21'
+    'location': 'ftp://bitnami:submenCo1e@colab-sbx-309.oit.duke.edu:21'
 }
 
 
