@@ -70,10 +70,9 @@ class CreateTransactionsContainer extends Component {
           quantity: "",
           comment: ""
         });
+        thisObj.props.handleTransactionCreated();
       },
       complete:function() {
-        //todo success vs complete
-        thisObj.props.handleTransactionCreated();
       },
       error:function (xhr, textStatus, thrownError){
           alert(xhr.responseText);
