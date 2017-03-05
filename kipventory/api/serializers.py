@@ -87,6 +87,8 @@ class ItemSerializer(serializers.ModelSerializer):
         errors = {}
         clean_data = {}
 
+        print(data)
+
         # Validate any custom field definitions - only accept name, value pairs
         custom_field_data = data.pop('custom_fields', [])
 
@@ -123,6 +125,8 @@ class ItemSerializer(serializers.ModelSerializer):
             raise ValidationError(errors)
 
         item_dict = super(ItemSerializer, self).to_internal_value(data)
+
+        print(item_dict)
 
         clean_data.update(item_dict)
         clean_data['custom_fields'] = custom_field_list
@@ -187,6 +191,11 @@ class ItemSerializer(serializers.ModelSerializer):
         item_data = validated_data
         # Create the item instance
         item = super(ItemSerializer, self).update(instance, item_data)
+
+        if item_data.get('tags', None) is None:
+            for tag in item.tags.all():
+                item.tags.remove(tag)
+                
         # Set Custom Fields on the item
         self.modify_fields(item, custom_fields)
 
