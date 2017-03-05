@@ -93,9 +93,9 @@ class ItemSerializer(serializers.ModelSerializer):
         custom_field_list = []
         existing_fields = models.CustomField.objects.all()
 
-        for index, field_dict in enumerate(custom_field_data):
+        for index, field_dict_json in enumerate(custom_field_data):
             # convert from JSON
-            field_dict = json.loads(field_dict)
+            field_dict = json.loads(field_dict_json)
 
             name = field_dict.get('name', None)
             value = field_dict.get('value', None)
@@ -122,7 +122,6 @@ class ItemSerializer(serializers.ModelSerializer):
         if errors:
             raise ValidationError(errors)
 
-        print(data)
         item_dict = super(ItemSerializer, self).to_internal_value(data)
 
         clean_data.update(item_dict)
@@ -161,7 +160,7 @@ class ItemSerializer(serializers.ModelSerializer):
         item_values = item.values.all()
 
         # iterate through the name/value pairs we were passed in data
-        for fd in custom_fields:
+        for i, fd in enumerate(custom_fields):
             field = fd.get('field')
             value = fd.get('value')
             cv = item_values.get(field__pk=field.pk)
@@ -186,7 +185,6 @@ class ItemSerializer(serializers.ModelSerializer):
         custom_fields = validated_data.pop('custom_fields')
         # item data - everything else
         item_data = validated_data
-        print(item_data)
         # Create the item instance
         item = super(ItemSerializer, self).update(instance, item_data)
         # Set Custom Fields on the item
