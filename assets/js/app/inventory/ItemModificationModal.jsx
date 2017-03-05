@@ -4,7 +4,7 @@ import { FormGroup, Button, Modal, FormControl, ControlLabel }  from 'react-boot
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import TagMultiSelect from '../TagMultiSelect'
 
-var CUSTOM_FIELDS = []
+// var CUSTOM_FIELDS = []
 
 class ItemModificationModal extends Component{
   constructor(props) {
@@ -15,127 +15,132 @@ class ItemModificationModal extends Component{
       model_no: this.props.item.model_no,
       description: this.props.item.description,
       tags: this.props.item.tags,
-      // customform: [],
+      custom_fields: []
     };
 
-    this.handleChange = this.handleChange.bind(this);
+    this.handleItemFieldChange = this.handleItemFieldChange.bind(this);
+    this.handleCustomFieldChange = this.handleCustomFieldChange.bind(this)
     this.handleTagSelection = this.handleTagSelection.bind(this);
-    this.getCustomFieldForm = this.getCustomFieldForm.bind(this);
+    this.getCustomFieldForms = this.getCustomFieldForms.bind(this);
     this.getShortTextField = this.getShortTextField.bind(this);
     this.getLongTextField = this.getLongTextField.bind(this);
     this.getIntegerField = this.getIntegerField.bind(this);
     this.getFloatField = this.getFloatField.bind(this);
-
   }
 
   componentWillMount() {
     var url = "/api/items/" + this.props.item.name + "/fields/"
     var _this = this
-    CUSTOM_FIELDS = []
     getJSON(url, null, function(data) {
-      CUSTOM_FIELDS = data.map( (field, i) => {return field} )
       data.map( (field, i) => {
+        var custom_field_entry = {name: field.name, field_type: field.field_type, value: field.value}
         _this.setState({
-          [field.name]: field.value
+          custom_fields: _this.state.custom_fields.concat([custom_field_entry])
         })
       })
     })
   }
 
-  getShortTextField(field_name, presentation_name, is_private) {
+  getShortTextField(field_name, presentation_name, i) {
     return (
       <FormGroup key={field_name} bsSize="small">
         <ControlLabel>
           {presentation_name}
         </ControlLabel>
-
-        <FormControl type="text" value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
+        <FormControl type="text"
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
     )
   }
 
-  getLongTextField(field_name, presentation_name, is_private) {
+  getLongTextField(field_name, presentation_name, i) {
     return (
       <FormGroup key={field_name} bsSize="small">
         <ControlLabel>
           {presentation_name}
         </ControlLabel>
-
-        <FormControl type="text" style={{resize: "vertical", height:"100px"}} componentClass={"textarea"} value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
-
+        <FormControl type="text"
+                     style={{resize: "vertical", height:"100px"}}
+                     componentClass={"textarea"}
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
     )
   }
 
-  getIntegerField(field_name, presentation_name, is_private, min, step) {
+  getIntegerField(field_name, presentation_name, min, step, i) {
     return (
       <FormGroup key={field_name} bsSize="small">
         <ControlLabel>
           {presentation_name}
         </ControlLabel>
-
-        <FormControl type="number" min={min} step={step} value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
-
+        <FormControl type="number"
+                     min={min}
+                     step={step}
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
     )
   }
 
-  getFloatField(field_name, presentation_name, is_private){
+  getFloatField(field_name, presentation_name, i){
     return (
       <FormGroup key={field_name} bsSize="small">
         <ControlLabel>
           {presentation_name}
         </ControlLabel>
-
-        <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={this.handleChange.bind(this, field_name)} />
-
+        <FormControl type="number"
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
     )
   }
 
-  getCustomFieldForm() {
-    var forms = []
-    if (CUSTOM_FIELDS.length > 0) {
-      forms.push(
-        <div key={"custom_fields"}>
-          <br />
-            <h4>Custom Fields</h4>
-          <hr />
-        </div>
-      )
-      forms.push(CUSTOM_FIELDS.map( (field, i) => {
+  getCustomFieldForms() {
+    return this.state.custom_fields.map( (field, i) => {
 
-        var field_name = field.name
-        var is_private = field.private
-        var field_type = field.field_type
+      var field_name = field.name
+      var is_private = field.private
+      var field_type = field.field_type
 
-        switch(field_type) {
-          case "s":
-            return this.getShortTextField(field_name, field_name, is_private)
-            break;
-          case "m":
-            return this.getLongTextField(field_name, field_name, is_private)
-            break;
-          case "i":
-            return this.getIntegerField(field_name, field_name, is_private)
-            break;
-          case "f":
-            return this.getFloatField(field_name, field_name, is_private)
-            break
-          default:
-            return null
-            break
+      switch(field_type) {
+        case "Single":
+          return this.getShortTextField(field_name, field_name, i)
+          break;
+        case "Multi":
+          return this.getLongTextField(field_name, field_name, i)
+          break;
+        case "Int":
+          return this.getIntegerField(field_name, field_name, 0, 1, i)
+          break;
+        case "Float":
+          return this.getFloatField(field_name, field_name, i)
+          break
+        default:
+          return null
+          break
         }
-      }))
-      return forms
-    }
-    return null
+      }
+    )
   }
 
-  handleChange(name, e) {
-    var change = {};
-    change[name] = e.target.value;
-    this.setState(change);
+  handleItemFieldChange(e) {
+    this.setState({
+      [e.target.name]: e.target.value
+    })
+  }
+
+  handleCustomFieldChange(i, name, e) {
+    var custom_fields = this.state.custom_fields
+    custom_fields[i].value = e.target.value
+    this.setState(
+      custom_fields: custom_fields
+    )
   }
 
   handleTagSelection(tagsSelected) {
@@ -144,7 +149,7 @@ class ItemModificationModal extends Component{
 
   render(){
 
-    var customform = this.getCustomFieldForm();
+    var customforms = this.getCustomFieldForms();
 
     return(
       <div>
@@ -159,9 +164,9 @@ class ItemModificationModal extends Component{
               <FormControl
                 type="text"
                 name="name"
-                value={this.state.name ? this.state.name : ""}
+                value={this.state.name}
                 placeholder={this.state.name}
-                onChange={this.handleChange.bind(this, 'name')}
+                onChange={this.handleItemFieldChange}
               ></FormControl>
 
               {
@@ -172,7 +177,7 @@ class ItemModificationModal extends Component{
                     name="quantity"
                     value={this.state.quantity}
                     placeholder={this.state.quantity}
-                    onChange={this.handleChange.bind(this, 'quantity')}
+                    onChange={this.handleItemFieldChange}
                   ></FormControl></div> :null
               }
 
@@ -182,7 +187,7 @@ class ItemModificationModal extends Component{
                 name="model_no"
                 value={this.state.model_no ? this.state.model_no : ""}
                 placeholder={this.state.model_no}
-                onChange={this.handleChange.bind(this, 'model_no')}
+                onChange={this.handleItemFieldChange}
               ></FormControl>
 
               <ControlLabel>Description</ControlLabel>
@@ -191,13 +196,13 @@ class ItemModificationModal extends Component{
                 name="description"
                 value={this.state.description ? this.state.description : ""}
                 placeholder={this.state.description}
-                onChange={this.handleChange.bind(this, 'description')}
+                onChange={this.handleItemFieldChange}
               ></FormControl>
 
               <ControlLabel>Tags</ControlLabel>
               <TagMultiSelect tagsSelected={this.state.tags} tagHandler={this.handleTagSelection}/>
 
-              {customform}
+              {customforms}
 
             </FormGroup>
           </Modal.Body>

@@ -81,55 +81,43 @@ const ItemCreationForm = React.createClass({
     )
   },
 
-  getFloatField(field_name, presentation_name) {
+  getFloatField(field_name, presentation_name, handleChange) {
     return (
       <FormGroup bsSize="small" key={field_name}>
         <Col componentClass={ControlLabel} sm={2}>
           {presentation_name}
         </Col>
         <Col sm={3}>
-          <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={this.onChange} />
+          <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={handleChange} />
         </Col>
       </FormGroup>
     )
   },
 
-  getCustomFieldForm() {
-    var forms = []
+  getCustomFields() {
+    return CUSTOM_FIELDS.map( (field, i) => {
 
-    if (CUSTOM_FIELDS.length > 0) {
-      forms.push(
-        <div key={0}>
-          <br />
-          <h4>Define custom fields</h4>
-          <hr />
-        </div>
-      );
-      forms.push(CUSTOM_FIELDS.map( (field, i) => {
+      var field_name = field.name
+      var is_private = field.private
+      var field_type = field.field_type
 
-        var field_name = field.name
-        var is_private = field.private
-        var field_type = field.field_type
-
-        switch(field_type) {
-          case "s":
-            return this.getShortTextField(field_name, field_name, is_private)
-            break;
-          case "m":
-            return this.getLongTextField(field_name, field_name, is_private)
-            break;
-          case "i":
-            return this.getIntegerField(field_name, field_name, is_private)
-            break;
-          case "f":
-            return this.getFloatField(field_name, field_name, is_private)
-            break
-          default:
-            return null
-        }
-      }))
-    }
-    return forms;
+      switch(field_type) {
+        case "Single":
+          return this.getShortTextField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          break;
+        case "Multi":
+          return this.getLongTextField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          break;
+        case "Int":
+          return this.getIntegerField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          break;
+        case "Float":
+          return this.getFloatField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          break
+        default:
+          return null
+      }
+    })
   },
 
   getSuccessMessage() {
@@ -166,12 +154,14 @@ const ItemCreationForm = React.createClass({
       traditional: true,
       success:function(response){
         var data = _this.getInitialState()
+        console.log(response)
         _this.setState(data)
         for (var i=0; i<CUSTOM_FIELDS.length; i++) {
           _this.setState({
             [CUSTOM_FIELDS[i].name]: ""
           })
         }
+
         _this.setState({
           showCreatedSuccess: true,
           createdName: item_name,
@@ -184,6 +174,7 @@ const ItemCreationForm = React.createClass({
       },
       error:function (xhr, textStatus, thrownError){
         var response = xhr.responseJSON
+        console.log(xhr)
         _this.setState({
           showCreatedSuccess: false,
           createdName: "",
@@ -227,10 +218,10 @@ const ItemCreationForm = React.createClass({
                 <h4>Create an item</h4>
                 <hr />
 
-                { this.getShortTextField("name", "Name", false) }
-                { this.getShortTextField("model_no", "Model No.", false) }
-                { this.getIntegerField("quantity", "Quantity", false) }
-                { this.getLongTextField("description", "Description", false) }
+                { this.getShortTextField("name", "Name", this.onChange) }
+                { this.getShortTextField("model_no", "Model No.", this.onChange) }
+                { this.getIntegerField("quantity", "Quantity", this.onChange) }
+                { this.getLongTextField("description", "Description", this.onChange) }
 
                 <FormGroup bsSize="small">
                   <Col componentClass={ControlLabel} sm={2}>
@@ -241,7 +232,7 @@ const ItemCreationForm = React.createClass({
                   </Col>
                 </FormGroup>
 
-                { this.getCustomFieldForm() }
+                { this.getCustomFields() }
 
                 <FormGroup bsSize="small">
                   <Col smOffset={2} sm={2}>

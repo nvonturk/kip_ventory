@@ -4,17 +4,17 @@ from django.core.exceptions import ValidationError
 import copy
 
 FIELD_TYPES = (
-    ('s', 'Single-line text'),
-    ('m', 'Multi-line text'),
-    ('i', 'Integer'),
-    ('f', 'Float'),
+    ('Single', 'Single-line text'),
+    ('Multi', 'Multi-line text'),
+    ('Int', 'Integer'),
+    ('Float', 'Float'),
 )
 
 FIELD_TYPE_DICT = {
-    's': str,
-    'm': str,
-    'i': int,
-    'f': float
+    'Single': str,
+    'Multi': str,
+    'Int': int,
+    'Float': float
 }
 
 OUTSTANDING = 'O'
@@ -103,10 +103,10 @@ class CustomField(models.Model):
 class CustomValue(models.Model):
     field = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="values", to_field="name")
     item  = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="values")
-    s = models.CharField(default='', max_length=100, blank=True)
-    m = models.TextField(default='', max_length=500, blank=True)
-    i = models.IntegerField(default=0, blank=True)
-    f = models.FloatField(default=0.0, blank=True)
+    Single = models.CharField(default='', max_length=100, blank=True)
+    Multi = models.TextField(default='', max_length=500, blank=True)
+    Int = models.IntegerField(default=0, blank=True)
+    Float = models.FloatField(default=0.0, blank=True)
 
     def get_value(self):
             return getattr(self, self.field.field_type)

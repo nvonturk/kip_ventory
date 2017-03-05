@@ -9,7 +9,6 @@ import _ from 'underscore'
 import {browserHistory} from 'react-router'
 
 
-
 const ItemDetail = React.createClass({
 
   getInitialState() {
@@ -66,7 +65,6 @@ const ItemDetail = React.createClass({
   },
 
   getItemInformation() {
-
     var ModifyButton = React.createClass({
       render: function() {
         return (
@@ -179,7 +177,6 @@ const ItemDetail = React.createClass({
 
 
   getTransactionList() {
-
     var createTransactionView = "";
     if(this.props.route.user.is_staff) {
       createTransactionView =
@@ -339,8 +336,7 @@ const ItemDetail = React.createClass({
         var url = "/app/"
         browserHistory.push(url)
       },
-      complete:function(){
-          },
+      complete:function(){},
       error:function (xhr, textStatus, thrownError){
           alert("error doing something");
       }
@@ -387,6 +383,7 @@ const ItemDetail = React.createClass({
         alert("Quantity must be a positive integer " + (state.quantity <= 0) )
       }
       var thisobj = this
+      var custom_fields = state.custom_fields.map( (cf, i) => {return JSON.stringify(cf)} )
       var tags = state.tags
 
       if( Object.prototype.toString.call( tags ) !== '[object Array]' ) {
@@ -399,13 +396,19 @@ const ItemDetail = React.createClass({
         var tagArray = tags;
       }
 
-      state.tags = tagArray;
 
       ajax({
         url:"/api/items/" + thisobj.state.item.name + "/",
         type: "PUT",
         traditional: true,
-        data: state,
+        data: {
+          name: state.name,
+          model_no: state.model_no,
+          description: state.description,
+          quantity: state.quantity,
+          tags: tagArray,
+          custom_fields: custom_fields
+        },
         statusCode: {
            400: function() {
              alert("Unsuitable Data");
@@ -425,8 +428,7 @@ const ItemDetail = React.createClass({
             })
           }
         },
-        complete:function(){
-            },
+        complete:function(){},
         error:function (xhr, textStatus, thrownError){
           console.log(xhr);
           console.log(textStatus);
