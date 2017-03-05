@@ -15,6 +15,14 @@ class Profile extends React.Component {
     else return "User";
   }
 
+  getSubscribedDiv(user) {
+    if (user.is_staff){
+      var subscribed = user.profile.subscribed ? "Yes" : "No";
+      return <p>Email Subscription: {subscribed}</p> 
+    }
+    return "";
+  }
+
   render() {
   	var element = "";
   	if(this.user) {
@@ -24,6 +32,7 @@ class Profile extends React.Component {
     		<p>Last name: {this.user.last_name}</p>
     		<p>Email: {this.user.email}</p>
     		<p>Privilege: {this.getPrivilegeValue(this.user)}</p>
+        {this.getSubscribedDiv(this.user)} 
     		</div>
     	);
   	}

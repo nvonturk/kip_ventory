@@ -89,7 +89,9 @@ class UserPrivilegesContainer extends Component {
 		$.ajax({
 		    url:"/api/users/edit/" + user.username + "/",
 		    type: "PUT",
-		    data: user,
+		    data: JSON.stringify(user),
+		    contentType:"application/json; charset=utf-8",
+      		processData: false,
 		    beforeSend: function(request) {
 		      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
 		    },

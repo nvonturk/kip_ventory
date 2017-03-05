@@ -25,7 +25,6 @@ from django.http import HttpResponse
 
 import requests, csv, os, json
 
-
 class CustomPagination(pagination.PageNumberPagination):
     page_query_param = 'page'
     page_size_query_param = 'itemsPerPage'
@@ -1001,9 +1000,11 @@ class UserCreate(generics.GenericAPIView):
 class GetCurrentUser(generics.GenericAPIView):
     queryset = None
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = None
+    serializer_class = serializers.UserGETSerializer
 
     def get(self, request, format=None):
+        serializer = self.get_serializer(instance=request.user)
+        return Response(serializer.data)
         user = request.user
         return Response({
             "username": user.username,
@@ -1011,22 +1012,26 @@ class GetCurrentUser(generics.GenericAPIView):
             "last_name": user.last_name,
             "email": user.email,
             "is_staff": user.is_staff,
-            "is_superuser": user.is_superuser
+            "is_superuser": user.is_superuser,
+            "profile" : user.profile
         })
 
 @api_view(['PUT'])
 @permission_classes((permissions.IsAuthenticated,))
 def edit_user(request, username, format=None):
     if request.method == 'PUT':
-        if not request.user.is_superuser:
+        if not request.user.is_superuser and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
             return Response(status=status.HTTP_403_FORBIDDEN)
-        updatedUser = request.data
-        user = models.User.objects.get(username=updatedUser['username'])
-        serializer = serializers.UserPUTSerializer(instance=user, data=updatedUser, partial=True)
+        
+        jsonData = json.loads(request.body.decode("utf-8"))
+        user = models.User.objects.get(username=username)
+
+        serializer = serializers.UserPUTSerializer(instance=user, data=jsonData, partial=True)
         if serializer.is_valid():
+            print("saving user serializer")
             serializer.save()
             return Response(serializer.data)
-
+        print("error saving user {} ".format(serializer.errors))
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetNetIDToken(generics.GenericAPIView):
@@ -1656,3 +1661,12 @@ def transactionCreationLog(item, initiating_user_pk, category, amount):
     message = "User {} created a {} transaction on item {} of quantity {} and it now has a quantity of {}".format(initiating_user, category, item, quantity, item.quantity)
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Transaction Creation', message=message, affected_user=affected_user)
     log.save()
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def get_subscribed_managers(request):
+    if request.method == 'GET':
+        subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
+        serializer = serializers.UserGETSerializer(instance=subscribed_managers, many=True)
+        return Response(serializer.data)
+

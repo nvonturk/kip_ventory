@@ -23,6 +23,8 @@ import ManagerRequestsContainer from './manage/requests/ManagerRequestsContainer
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import LogsContainer from './manage/logs/LogsContainer'
 import TagsContainer from './manage/tags/TagsContainer'
+import EmailSubscriptionContainer from './manage/emails/EmailSubscriptionContainer'
+
 
 // MAIN APP PAGES
 import InventoryContainer from './inventory/InventoryContainer'
@@ -49,6 +51,7 @@ function getManagerPanel(userData) {
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="tags" component={TagsContainer} admin={userData} />
+      <Route path="emails" component={EmailSubscriptionContainer} admin={userData} />
     </Route>) : null
 }
 
