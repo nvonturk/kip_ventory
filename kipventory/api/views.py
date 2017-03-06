@@ -277,43 +277,43 @@ class CustomValueList(generics.GenericAPIView):
         serializer = self.get_serializer(instance=queryset, many=True)
         return Response(serializer.data)
 
-# class CustomValueDetailModify(generics.GenericAPIView):
-#     def get_instance(self, item_name, field_name):
-#         try:
-#             return self.get_queryset().get(field__name=field_name)
-#         except models.CustomValue.DoesNotExist:
-#             raise NotFound("Field '{}' not found on item '{}'.".format(field_name, item_name))
-#
-#     def get_serializer_class(self):
-#         return serializers.CustomValueSerializer
-#
-#     def get_queryset(self):
-#         queryset = models.CustomValue.objects.filter(item__name=self.kwargs['item_name'])
-#         if not (self.request.user.is_staff or self.request.user.is_superuser):
-#             queryset = queryset.filter(field__private=False)
-#         return queryset
-#
-#     def get(self, request, item_name, field_name, format=None):
-#         custom_value = self.get_instance(item_name=item_name, field_name=field_name)
-#         serializer = self.get_serializer(instance=custom_value)
-#         return Response(serializer.data)
-#
-#     # manager restricted
-#     def put(self, request, item_name, field_name, format=None):
-#         if not (request.user.is_staff or request.user.is_superuser):
-#             d = {"error": "Manager permissions required."}
-#             return Response(d, status=status.HTTP_403_FORBIDDEN)
-#
-#         data = request.data.copy()
-#
-#         custom_value = self.get_instance(item_name=item_name, field_name=field_name)
-#         # manually force the serializer data to have correct field name
-#         data.update({'name': field_name})
-#         serializer = self.get_serializer(instance=custom_value, data=data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class CustomValueDetailModify(generics.GenericAPIView):
+    def get_instance(self, item_name, field_name):
+        try:
+            return self.get_queryset().get(field__name=field_name)
+        except models.CustomValue.DoesNotExist:
+            raise NotFound("Field '{}' not found on item '{}'.".format(field_name, item_name))
+
+    def get_serializer_class(self):
+        return serializers.CustomValueSerializer
+
+    def get_queryset(self):
+        queryset = models.CustomValue.objects.filter(item__name=self.kwargs['item_name'])
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(field__private=False)
+        return queryset
+
+    def get(self, request, item_name, field_name, format=None):
+        custom_value = self.get_instance(item_name=item_name, field_name=field_name)
+        serializer = self.get_serializer(instance=custom_value)
+        return Response(serializer.data)
+
+    # manager restricted
+    def put(self, request, item_name, field_name, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+
+        custom_value = self.get_instance(item_name=item_name, field_name=field_name)
+        # manually force the serializer data to have correct field name
+        data.update({'name': field_name})
+        serializer = self.get_serializer(instance=custom_value, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CartItemList(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
