@@ -5,7 +5,7 @@ from django_cron import CronJobBase, Schedule
 
 
 class Backup(CronJobBase):
-    RUN_AT_TIMES = ['20:20']
+    RUN_AT_TIMES = ['06:00']
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'kipventory.Backup'
 
