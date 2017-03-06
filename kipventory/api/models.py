@@ -91,7 +91,7 @@ class CartItem(models.Model):
 class CustomField(models.Model):
     name        = models.CharField(max_length=100, unique=True)
     private     = models.BooleanField(default=False)
-    field_type  = models.CharField(max_length=1, choices=FIELD_TYPES, default='s')
+    field_type  = models.CharField(max_length=10, choices=FIELD_TYPES, default='Single')
 
     def save(self, *args, **kwargs):
         # Determine if this `save()` call is for creation or modification
@@ -125,7 +125,7 @@ class Request(models.Model):
     open_comment   = models.TextField(default='', max_length=500, blank=True)
     date_closed    = models.DateTimeField(blank=True, null=True)
     closed_comment = models.TextField(max_length=500, blank=True)
-    status         = models.CharField(max_length=10, choices=STATUS_CHOICES, default=OUTSTANDING)
+    status         = models.CharField(max_length=15, choices=STATUS_CHOICES, default=OUTSTANDING)
     administrator  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
 
@@ -173,9 +173,9 @@ class Transaction(models.Model):
         (ACQUISITION, ACQUISITION),
         (LOSS, LOSS),
     )
-    category      = models.CharField(max_length = 20, choices=category_choices)
+    category      = models.CharField(max_length=20, choices=category_choices)
     quantity      = models.PositiveIntegerField()
-    comment       = models.CharField(max_length = 100, blank=True, null=True)
+    comment       = models.CharField(max_length=100, blank=True, null=True)
     date          = models.DateTimeField(blank=True, auto_now_add=True)
     administrator = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -185,12 +185,12 @@ class Log(models.Model):
     initiating_user         = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='initiating_user', null=True)
     affected_user           = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='affected_user', blank=True, null=True)
     date_created            = models.DateTimeField(blank=True, auto_now_add=True)
-    message                 = models.CharField(max_length = 100, blank=True, null=True)
+    message                 = models.CharField(max_length=100, blank=True, null=True)
     request                 = models.ForeignKey(Request, on_delete=models.SET_NULL, blank=True, null=True)
     # default values for the foreignkeys in the event those items are deleted or users etc.
-    default_item            = models.CharField(max_length = 100, blank=True, null=True)
-    default_initiating_user = models.CharField(max_length = 100, blank=True, null=True)
-    default_affected_user   = models.CharField(max_length = 100, blank=True, null=True)
+    default_item            = models.CharField(max_length=100, blank=True, null=True)
+    default_initiating_user = models.CharField(max_length=100, blank=True, null=True)
+    default_affected_user   = models.CharField(max_length=100, blank=True, null=True)
 
     # The following categories detail what type of inventory change occurred
     ITEM_CREATION           = "Item Creation"
@@ -211,7 +211,7 @@ class Log(models.Model):
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),
     )
-    category            = models.CharField(max_length = 20, choices=category_choices)
+    category            = models.CharField(max_length=20, choices=category_choices)
 
     def __str__(self):
         return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)

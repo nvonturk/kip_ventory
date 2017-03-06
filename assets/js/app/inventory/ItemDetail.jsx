@@ -383,31 +383,18 @@ const ItemDetail = React.createClass({
         alert("Quantity must be a positive integer " + (state.quantity <= 0) )
       }
       var thisobj = this
-      var custom_fields = state.custom_fields.map( (cf, i) => {return JSON.stringify(cf)} )
-      var tags = state.tags
-
-      if( Object.prototype.toString.call( tags ) !== '[object Array]' ) {
-        if(tags==""){
-          var tagArray = [];
-        } else{
-          var tagArray = tags.split(",");
-        }
-      } else{
-        var tagArray = tags;
-      }
 
       ajax({
         url:"/api/items/" + thisobj.state.item.name + "/",
+        contentType: "application/json",
         type: "PUT",
-        traditional: true,
-        data: {
+        data: JSON.stringify({
           name: state.name,
           model_no: state.model_no,
           description: state.description,
           quantity: state.quantity,
-          tags: tagArray,
-          custom_fields: custom_fields
-        },
+          tags: state.tags,
+        }),
         statusCode: {
            400: function() {
              alert("Unsuitable Data");
@@ -435,6 +422,26 @@ const ItemDetail = React.createClass({
         }
       });
 
+      for (var i=0; i<state.custom_fields.length; i++) {
+        var cf = state.custom_fields[i]
+        var url = "/api/items/" + thisobj.state.item.name + "/fields/" + cf.name + "/"
+        ajax({
+          url: url,
+          contentType: "application/json",
+          type: "PUT",
+          data: JSON.stringify({value: cf.value}),
+          beforeSend: function(request) {
+            request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+          },
+          success:function(response){},
+          complete:function(){},
+          error:function (xhr, textStatus, thrownError){
+            console.log(xhr);
+            console.log(textStatus);
+            console.log(thrownError);
+          }
+        });
+      }
     } else{
 
     }

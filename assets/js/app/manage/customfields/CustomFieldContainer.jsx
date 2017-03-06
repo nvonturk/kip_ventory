@@ -62,7 +62,6 @@ const CustomFieldContainer = React.createClass({
         private: _this.state.private
       },
       success:function(response){
-        console.log(response)
         _this.getExistingFields();
         _this.setState({
           name: "",
@@ -77,8 +76,6 @@ const CustomFieldContainer = React.createClass({
       },
       error:function (xhr, textStatus, thrownError){
         var response = xhr.responseJSON
-        console.log("response was")
-        console.log(response)
         _this.setState({
           showCreatedSuccess: false,
           showErrorMessage: true,

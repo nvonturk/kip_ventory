@@ -144,7 +144,11 @@ class ItemModificationModal extends Component{
   }
 
   handleTagSelection(tagsSelected) {
-    this.setState({tags: tagsSelected});
+    if (tagsSelected.length == 0) {
+      this.setState({tags: []})
+    } else {
+      this.setState({tags: tagsSelected.split(",")});
+    }
   }
 
   render(){

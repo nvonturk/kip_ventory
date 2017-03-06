@@ -161,43 +161,56 @@ const ItemCreationForm = React.createClass({
   createItem() {
     var _this = this;
     var item_name = this.state.name;
-    var custom_fields = this.state.custom_fields.map( (cf, i) => {return JSON.stringify(cf)} )
 
     ajax({
       url:"/api/items/",
+      contentType: "application/json",
       type: "POST",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      data: {
+      data: JSON.stringify({
         name: _this.state.name,
         quantity: _this.state.quantity,
         model_no: _this.state.model_no,
         description: _this.state.description,
         tags: _this.state.tags,
-        custom_fields: custom_fields
-      },
-      traditional: true,
+      }),
       success:function(response){
-        var custom_fields = _this.state.custom_fields.slice()
-        custom_fields.forEach( (cf) => {cf.value = ""})
+        for (var i=0; i<_this.state.custom_fields.length; i++) {
+          var cf = _this.state.custom_fields[i]
+          var url = "/api/items/" + item_name + "/fields/" + cf.name + "/"
+          ajax({
+            url: url,
+            contentType: "application/json",
+            type: "PUT",
+            data: JSON.stringify({value: cf.value}),
+            beforeSend: function(request) {
+              request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            },
+            success:function(response){},
+            complete:function(){},
+            error:function (xhr, textStatus, thrownError){
+              console.log(xhr);
+              console.log(textStatus);
+              console.log(thrownError);
+            }
+          });
+        }
         _this.setState({
           name: "",
           quantity: 0,
           model_no: "",
           description: "",
           tags: [],
-          custom_fields: custom_fields,
-
+          custom_fields: [],
           showCreatedSuccess: true,
           createdName: item_name,
           showErrorMessage: false,
           errorMessage: ""
-        })
+        }, _this.getCustomFields())
       },
-      complete:function(){
-
-      },
+      complete:function(){},
       error:function (xhr, textStatus, thrownError){
         var response = xhr.responseJSON
         console.log(xhr)
