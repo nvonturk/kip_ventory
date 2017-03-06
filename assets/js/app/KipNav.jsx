@@ -43,7 +43,7 @@ const KipNav = React.createClass({
               {this.getLink("/app/cart/", "Cart")}
               {this.getLink("/app/profile/", "Profile")}
               {this.getLink("/swagger/", "API")}
-              <NavItem eventKey={7} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
+              <NavItem eventKey={INDEX} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>
