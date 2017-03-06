@@ -167,7 +167,7 @@ class ItemModificationModal extends Component{
                 value={this.state.name}
                 placeholder={this.state.name}
                 onChange={this.handleItemFieldChange}
-              ></FormControl>
+              />
 
               {
                 this.props.is_admin
