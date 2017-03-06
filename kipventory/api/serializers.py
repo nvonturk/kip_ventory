@@ -3,7 +3,8 @@ from rest_framework.exceptions import ValidationError
 from . import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-import re
+import re, json
+
 
 class CustomFieldSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True)
@@ -14,6 +15,13 @@ class CustomFieldSerializer(serializers.ModelSerializer):
         model = models.CustomField
         fields = ('name', 'private', 'field_type',)
 
+    def validate(self, data):
+        name = data.get('name')
+        field_exists = (models.CustomField.objects.filter(name=name).count() > 0)
+        if field_exists:
+            raise ValidationError({"name": ["A field with name \'{}\' already exists.".format(request.data['name'])]})
+        return data
+
 class CustomValueSerializer(serializers.ModelSerializer):
     field = serializers.SlugRelatedField(read_only=True, slug_field="name")
     value = serializers.CharField(max_length=None, min_length=None, required=True, source='*', allow_blank=True)
@@ -23,10 +31,7 @@ class CustomValueSerializer(serializers.ModelSerializer):
         fields = ('field', 'value',)
 
     def to_representation(self, cv):
-        user = self.context['request'].user
         d = {'name': cv.field.name, 'value': cv.get_value(), 'field_type': cv.field.field_type}
-        if (user.is_staff or user.is_superuser):
-            d.update({'private': cv.field.private})
         return d
 
     def to_internal_value(self, data):
@@ -40,7 +45,7 @@ class CustomValueSerializer(serializers.ModelSerializer):
             value = data.get('value')
             validated_data['value'] = models.FIELD_TYPE_DICT[ft](value)
         except:
-            errors.update({'value': 'Expected \'{}\' type, got \'{}\'.'.format(models.FIELD_TYPE_DICT[ft].__name__, type(value).__name__)})
+            errors.update({'value': ['Field \'{}\' requires values of type \'{}\'.'.format(name, type(value).__name__)]})
 
         if errors:
             raise ValidationError(errors)
@@ -54,11 +59,11 @@ class CustomValueSerializer(serializers.ModelSerializer):
         return instance
 
 class ItemSerializer(serializers.ModelSerializer):
-    name          = serializers.CharField(max_length=None, min_length=None, required=True)
-    quantity      = serializers.IntegerField(min_value=0, max_value=None, required=True)
-    model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
-    description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True, required=False)
-    tags          = serializers.SlugRelatedField(slug_field="name", read_only=False, many=True, queryset=models.Tag.objects.all(), required=False)
+    name          = serializers.CharField(max_length=None, min_length=None)
+    quantity      = serializers.IntegerField(min_value=0, max_value=None)
+    model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True)
+    description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True)
+    tags          = serializers.SlugRelatedField(slug_field="name", read_only=False, many=True, queryset=models.Tag.objects.all())
     custom_fields = serializers.SerializerMethodField(method_name="get_custom_fields_by_permission")
     in_cart       = serializers.SerializerMethodField(method_name="is_item_in_cart")
 
@@ -80,61 +85,114 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         errors = {}
-        # check standard field names as defined in the serializer
-        print(data)
-        item_data = super(ItemSerializer, self).to_internal_value(data)
-        print(item_data)
-        # check for valid CustomField names in this data.
-        field_data = {}
-        fields = models.CustomField.objects.all()
-        for field_name, value in data.items():
-            cf_exists = (fields.filter(name=field_name).count() > 0)
-            if cf_exists:
-                cf = fields.get(name=field_name)
-                print(cf)
+        clean_data = {}
+
+        # Validate any custom field definitions - only accept name, value pairs
+        custom_field_data = data.pop('custom_fields', [])
+
+        custom_field_list = []
+        existing_fields = models.CustomField.objects.all()
+
+        for index, field_dict_json in enumerate(custom_field_data):
+            # convert from JSON
+            field_dict = json.loads(field_dict_json)
+
+            name = field_dict.get('name', None)
+            value = field_dict.get('value', None)
+            index_error = {index: {}}
+
+            if name is None:
+                index_error[index].update({"name": ["This field is required."]})
+            if value is None:
+                index_error[index].update({"value": ["This field is required."]})
+            try:
+                cf = existing_fields.get(name=name)
                 try:
-                    val = models.FIELD_TYPE_DICT[cf.field_type](value)
-                    field_data.update({cf: val})
+                    value = models.FIELD_TYPE_DICT[cf.field_type](value)
+                    custom_field_list.append({"field": cf, "value": value})
                 except:
-                    errors.update({field_name: 'Expected \'{}\' type, got \'{}\'.'.format(models.FIELD_TYPE_DICT[ft].__name__, type(value).__name__)})
+                    index_error[index].update({"value": ['Field \'{}\' requires values of type \'{}\'.'.format(name, type(value).__name__)]})
+            except models.CustomField.DoesNotExist:
+                index_error[index].update({"name": ["Custom field with name '{}' does not exist.".format(name)]})
+            if (index_error[index]):
+                if 'custom_fields' not in errors.keys():
+                    errors['custom_fields'] = {}
+                errors['custom_fields'].update(index_error)
+
         if errors:
             raise ValidationError(errors)
-        validated_data = {"field_data": field_data, "item_data": item_data}
-        return validated_data
 
-    def create(self, validated_data):
-        item_data  = validated_data['item_data']
-        field_data = validated_data['field_data']
-        # create the item from the intrinsic data fields
-        item = super(ItemSerializer, self).create(item_data)
+        item_dict = super(ItemSerializer, self).to_internal_value(data)
+
+        clean_data.update(item_dict)
+        clean_data['custom_fields'] = custom_field_list
+        return clean_data
+
+    def validate(self, clean_data):
+        errors = {}
+        # Check if the item name conflicts with an existing item
+        name = clean_data.get('name', None)
+        if name is not None:
+            item_exists = (models.Item.objects.filter(name=name).count() > 0)
+            if item_exists:
+                # if we're making a PUT request, we should have an instance.
+                if self.instance:
+                    if not (self.instance.name == name):
+                        errors.update({"name": ["An item with this name already exists."]})
+                # This must be a POST request, in which case we know the operation is invalid
+                else:
+                    errors.update({"name": ["An item with this name already exists."]})
+
+        quantity = clean_data.get('quantity', None)
+        if self.instance:
+            if (quantity != self.instance.quantity) and not self.context['request'].user.is_superuser:
+                errors.update({'quantity': ['Administrator privileges required to directly modify quantity.']})
+
+        if errors:
+            raise ValidationError(errors)
+
+        return clean_data
+
+    def modify_fields(self, item, custom_fields):
         # there will be a complete set of blank CustomValues associated with this Item
         # as a result of the Item.save() method.
         item_values = item.values.all()
-        # If we have
-        for field, value in field_data.items():
-            try:
-                cv = item_values.get(field__pk=field.pk)
-                setattr(cv, field.field_type, value)
-                cv.save()
-            except:
-                print("baseee")
+
+        # iterate through the name/value pairs we were passed in data
+        for i, fd in enumerate(custom_fields):
+            field = fd.get('field')
+            value = fd.get('value')
+            cv = item_values.get(field__pk=field.pk)
+            setattr(cv, field.field_type, value)
+            cv.save()
+
+    def create(self, validated_data):
+        # custom field - list of name/value pairs (dicts)
+        custom_fields = validated_data.pop('custom_fields')
+        # item data - everything else
+        item_data = validated_data
+        # Create the item instance
+        item = super(ItemSerializer, self).create(item_data)
+        # Set Custom Fields on the item
+        self.modify_fields(item, custom_fields)
+
+        item.save()
         return item
 
     def update(self, instance, validated_data):
-        item_data = validated_data['item_data']
-        field_data = validated_data['field_data']
-
+        # custom field - list of name/value pairs (dicts)
+        custom_fields = validated_data.pop('custom_fields')
+        # item data - everything else
+        item_data = validated_data
+        # Create the item instance
         item = super(ItemSerializer, self).update(instance, item_data)
 
-        item_values = item.values.all()
-        # If we have
-        for field, value in field_data.items():
-            try:
-                cv = item_values.get(field__pk=field.pk)
-                setattr(cv, field.field_type, value)
-                cv.save()
-            except:
-                print("baseee")
+        if item_data.get('tags', None) is None:
+            for tag in item.tags.all():
+                item.tags.remove(tag)
+
+        # Set Custom Fields on the item
+        self.modify_fields(item, custom_fields)
 
         item.save()
         return item
@@ -144,40 +202,51 @@ class CartItemSerializer(serializers.ModelSerializer):
         super(CartItemSerializer, self).__init__(*args, **kwargs)
         self.fields['item'].context = self.context
 
-    item      = ItemSerializer(read_only=True, many=False)
-    quantity  = serializers.IntegerField(required=True)
+    item         = ItemSerializer(read_only=True, many=False)
+    quantity     = serializers.IntegerField(min_value=0, max_value=None, required=True)
+    request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES, default=models.DISBURSEMENT)
+    due_date     = serializers.DateTimeField(allow_null=True, required=False)
 
     class Meta:
         model = models.CartItem
-        fields = ['item', 'quantity', 'id']
+        fields = ['item', 'quantity', 'request_type', 'due_date']
+
+    def is_future_date(self, date):
+        now = timezone.now()
+        return date > now
 
     def to_internal_value(self, data):
-        quantity = data.get('quantity', None)
-        owner = data.get('owner', None)
         item = data.get('item', None)
+        owner = data.get('owner', None)
+        data = super(CartItemSerializer, self).to_internal_value(data)
+        data.update({"item": item, 'owner': owner})
+        return data
 
-        errors = {}
-        try:
-            quantity = int(quantity)
-        except:
-            errors.update({'quantity': 'Quantity must be an integer.'})
-        if not isinstance(owner, User):
-            errors.update({'owner': "Owner must be an instance of 'User' model."})
-        if not isinstance(item, models.Item):
-            errors.update({'item': "Item must be an instance of 'Item' model."})
-        if errors:
-            raise ValidationError(errors)
+    def validate(self, data):
+        request_type = data.get('request_type', None)
+        due_date = data.get('due_date', None)
+        if request_type == models.LOAN:
+            if due_date is None:
+                raise ValidationError({"due_date": ["Must provide a due date for a loan request."]})
+            else:
+                if not self.is_future_date(due_date):
+                    raise ValidationError({"due_date": ["Only future dates are allowed."]})
+        return data
 
-        return {
-            'item': item,
-            'owner': owner,
-            'quantity': quantity
-        }
+    def create(self, validated_data):
+        ci = super(CartItemSerializer, self).create(validated_data)
+        if ci.request_type == models.DISBURSEMENT:
+            ci.due_date = None
+        ci.save()
+        return ci
 
-    def update(self, instance, validated_data):
-        instance.quantity = validated_data.get('quantity', instance.quantity)
-        instance.save()
-        return instance
+    def update(self, ci, validated_data):
+        ci = super(CartItemSerializer, self).update(ci, validated_data)
+        if ci.request_type == models.DISBURSEMENT:
+            ci.due_date = None
+        ci.save()
+        return ci
+
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -198,15 +267,19 @@ class UserGETSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
-def validate_username(value):
-    reg = re.compile('[a-z]{2,3}[0-9]{1,3}')
-    print(reg.match(value))
-    print(reg.fullmatch(value))
-    if reg.fullmatch(value):
-        raise serializers.ValidationError("Username cannot be a net id.")
+def validate_username(instance, value):
+    netid_regex = re.compile(r'[a-z]{2,3}[0-9]{1,3}')
+    if netid_regex.fullmatch(value):
+        raise serializers.ValidationError("Username cannot be the same form as Duke NetID.")
     username_taken = (User.objects.filter(username=value).count() > 0)
     if username_taken:
-        raise serializers.ValidationError("Username is already taken.")
+        # POST REQUEST - We know instance is None
+        if instance is None:
+            raise ValidationError({"username": ["Username '{}' is already taken.".format(username)]})
+        # PUT REQUEST - We must check and make sure that we're not changing our username to itself (ie. Brody -> Brody)
+        else:
+            if not (instance.username == value):
+                raise ValidationError({"username": ["Username '{}' is already taken.".format(username)]})
     return value
 
 class UserPOSTSerializer(serializers.ModelSerializer):
@@ -215,7 +288,7 @@ class UserPOSTSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
 
     def validate_username(self, value):
-        return validate_username(value)
+        return validate_username(self.instance, value)
 
     # add unique email when we add user signup back in
     '''
@@ -234,77 +307,97 @@ class UserPUTSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         #todo make sure you can't change username to somebody else's.
-        #return validate_username(value)
-        return value
+        return validate_username(self.instance, value)
 
-class RequestItemSerializer(serializers.ModelSerializer):
-    item     = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    quantity = serializers.IntegerField(required=True)
+class RequestedItemSerializer(serializers.ModelSerializer):
+    item         = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    quantity     = serializers.IntegerField(required=True)
+    request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES)
+    due_date     = serializers.DateTimeField(allow_null=True, required=False)
 
     class Meta:
-        model = models.RequestItem
-        fields = ['item', 'quantity']
+        model = models.RequestedItem
+        fields = ['item', 'quantity', 'request_type', 'due_date']
+
+    def is_future_date(self, date):
+        return True
+
+    def to_representation(self, ri):
+        d = {"item": ri.item.name, "quantity": ri.quantity, "request_type": ri.request_type}
+        if ri.due_date is not None and ri.request_type == models.LOAN:
+            d.update({"due_date": ri.due_date})
+        return d
+
+    def validate(self, data):
+        request_type = data.get('request_type', None)
+        due_date = data.get('due_date', None)
+        if request_type == models.LOAN:
+            if due_date is None:
+                raise ValidationError({"due_date": ["Must provide a due date for a loan request."]})
+            else:
+                if not self.is_future_date(due_date):
+                    raise ValidationError({"due_date": ["Only future dates are allowed."]})
+        return data
+
+    def create(self, validated_data):
+        ri = super(RequestedItemSerializer, self).create(validated_data)
+        if ri.request_type == models.DISBURSEMENT:
+            ri.due_date = None
+        ri.save()
+        return ri
+
+    def update(self, ri, validated_data):
+        ri = super(RequestedItemSerializer, self).update(ri, validated_data)
+        if ri.request_type == models.DISBURSEMENT:
+            ri.due_date = None
+        ri.save()
+        return ri
 
 
 class RequestSerializer(serializers.ModelSerializer):
-    request_id     = serializers.ReadOnlyField(source='id')
-    requester      = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    request_items  = RequestItemSerializer(read_only=True, many=True)
-    date_open      = serializers.ReadOnlyField()
-    open_comment   = serializers.CharField(max_length=500, default='', allow_blank=True)
-
-    date_closed    = serializers.ReadOnlyField()
-    closed_comment = serializers.ReadOnlyField()
-    administrator  = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    status         = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
+    request_id       = serializers.ReadOnlyField(source='id')
+    requester        = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    requested_items  = RequestedItemSerializer(read_only=True, many=True)
+    date_open        = serializers.ReadOnlyField()
+    open_comment     = serializers.CharField(max_length=500, default='', allow_blank=True)
+    date_closed      = serializers.ReadOnlyField()
+    closed_comment   = serializers.ReadOnlyField()
+    administrator    = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    status           = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
 
     class Meta:
         model = models.Request
-        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
+        fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
 
     def to_internal_value(self, data):
-        validated_data = {}
-        errors = {}
-
         requester = data.get('requester', None)
-        open_comment = data.get('open_comment', None)
-
-        return {
-            'requester': requester,
-            'open_comment': open_comment
-        }
+        validated_data = super(RequestSerializer, self).to_internal_value(data)
+        validated_data.update({"requester": requester})
+        return validated_data
 
 class RequestPUTSerializer(serializers.ModelSerializer):
-    request_id    = serializers.ReadOnlyField(source='id')
-    requester     = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    request_items = RequestItemSerializer(read_only=True, many=True)
-    date_open     = serializers.DateTimeField(read_only=True)
-    open_comment  = serializers.CharField(read_only=True)
-
-    administrator  = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    date_closed    = serializers.DateTimeField(read_only=True)
-    closed_comment = serializers.CharField(max_length=500, allow_blank=True, default="")
-    status         = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
+    request_id      = serializers.ReadOnlyField(source='id')
+    requester       = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    requested_items = RequestedItemSerializer(read_only=True, many=True)
+    date_open       = serializers.DateTimeField(read_only=True)
+    open_comment    = serializers.CharField(read_only=True)
+    administrator   = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    date_closed     = serializers.DateTimeField(read_only=True)
+    closed_comment  = serializers.CharField(max_length=500, allow_blank=True, default="")
+    status          = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
 
     class Meta:
         model = models.Request
-        fields = ['request_id', 'requester', 'request_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
+        fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
 
     def to_internal_value(self, data):
-        validated_data = {}
-        errors = {}
-
         date_closed = timezone.now()
-        closed_comment = data.get('closed_comment', None)
         administrator = data.get('administrator', None)
-        status = data.get('status', None)
 
-        return {
-            "date_closed": date_closed,
-            "closed_comment": closed_comment,
-            "administrator": administrator,
-            "status": status
-        }
+        validated_data = super(RequestPUTSerializer, self).to_internal_value(data)
+
+        validated_data.update({"date_closed": date_closed, "administrator": administrator})
+        return validated_data
 
 class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)

@@ -4,10 +4,10 @@ import { getJSON, ajax } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 
 const FIELD_TYPES = {
-  "s": "Short Text",
-  "m": "Long Text",
-  "i": "Integer",
-  "f": "Float",
+  "Single": "Single-line",
+  "Multi": "Multi-line",
+  "Int": "Integer",
+  "Float": "Float",
 }
 
 const CustomFieldContainer = React.createClass({
@@ -16,7 +16,7 @@ const CustomFieldContainer = React.createClass({
     return {
       existing_fields: [],
       name: "",
-      field_type: 's',
+      field_type: 'Single',
       private: false,
       showCreatedSuccess: false,
       showErrorMessage: false,
@@ -62,10 +62,11 @@ const CustomFieldContainer = React.createClass({
         private: _this.state.private
       },
       success:function(response){
+        console.log(response)
         _this.getExistingFields();
         _this.setState({
           name: "",
-          field_type: 's',
+          field_type: 'Single',
           private: false,
           showCreatedSuccess: true,
           showErrorMessage: false
@@ -76,10 +77,12 @@ const CustomFieldContainer = React.createClass({
       },
       error:function (xhr, textStatus, thrownError){
         var response = xhr.responseJSON
+        console.log("response was")
+        console.log(response)
         _this.setState({
           showCreatedSuccess: false,
           showErrorMessage: true,
-          errorMessage: "Field name: " + response.name[0]
+          errorMessage: response.name[0]
         });
       }
     });
@@ -210,20 +213,8 @@ const CustomFieldContainer = React.createClass({
         { this.getErrorMessage() }
         { this.getSuccessMessage() }
 
-
-        <Modal show={this.state.showDeleteModal} onHide={this.closeDeleteModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Field</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Are you sure you want to delete this custom field?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button bsSize="small" onClick={this.closeDeleteModal}>Close</Button>
-          <Button bsStyle="danger" bsSize="small" onClick={this.deleteField}>Delete</Button>
-        </Modal.Footer>
-      </Modal>
-
+        <Row>
+          <Col sm={12}>
           <Panel>
             <h4>Create a custom field</h4>
             <hr />
@@ -233,7 +224,7 @@ const CustomFieldContainer = React.createClass({
                 <Col componentClass={ControlLabel} sm={2}>
                   Field Name
                 </Col>
-                <Col sm={9}>
+                <Col sm={6}>
                   <FormControl type="text" placeholder="Field name" value={this.state.name} name="name" onChange={this.onChange} />
                 </Col>
               </FormGroup>
@@ -243,10 +234,10 @@ const CustomFieldContainer = React.createClass({
                 </Col>
                 <Col sm={6}>
                   <FormControl componentClass="select" name="field_type" value={this.state.field_type} onChange={this.onChange}>
-                    <option value="s">Short Text</option>
-                    <option value="m">Long Text</option>
-                    <option value="i">Integer</option>
-                    <option value="f">Float</option>
+                    <option value="Single">Single-line text</option>
+                    <option value="Multi">Multi-line text</option>
+                    <option value="Int">Integer</option>
+                    <option value="Float">Float</option>
                   </FormControl>
                 </Col>
               </FormGroup>
@@ -268,6 +259,8 @@ const CustomFieldContainer = React.createClass({
             </Form>
 
           </Panel>
+          </Col>
+        </Row>
 
         <Row>
           <br />
@@ -302,6 +295,19 @@ const CustomFieldContainer = React.createClass({
             </Panel>
           </Col>
         </Row>
+
+        <Modal show={this.state.showDeleteModal} onHide={this.closeDeleteModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Field</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to delete this custom field?</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button bsSize="small" onClick={this.closeDeleteModal}>Close</Button>
+          <Button bsStyle="danger" bsSize="small" onClick={this.deleteField}>Delete</Button>
+        </Modal.Footer>
+      </Modal>
 
       </Grid>
     )

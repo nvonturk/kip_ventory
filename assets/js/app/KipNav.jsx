@@ -3,6 +3,8 @@ import { Link, browserHistory } from 'react-router'
 import { Grid, Row, Col, Navbar, Nav, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap';
 
+var INDEX = 0
+
 const KipNav = React.createClass({
 
   goToURL: url => event => {
@@ -10,28 +12,14 @@ const KipNav = React.createClass({
     window.location.assign(url);
   },
 
-  getManagerLink() {
-    return this.props.route.user.is_staff ? (
-      <LinkContainer to="/app/manage/">
-        <NavItem eventKey={5}>Manage</NavItem>
+  getLink(url, name) {
+    var i = INDEX
+    INDEX = INDEX + 1
+    return (
+      <LinkContainer to={url}>
+        <NavItem eventKey={i}>{name}</NavItem>
       </LinkContainer>
-    ) : null;
-  },
-
-  getAdminLink() {
-    return this.props.route.user.is_superuser ? (
-      <LinkContainer to="/app/admin/">
-        <NavItem eventKey={6}>Admin</NavItem>
-      </LinkContainer>
-    ) : null;
-  },
-
-  getSwaggerLink(){
-    return  (
-      <LinkContainer to="/admin/">
-        <NavItem onClick={this.goToURL("/swagger/")} eventKey={7}>API Test</NavItem>
-      </LinkContainer>
-    );
+    )
   },
 
   render() {
@@ -40,27 +28,22 @@ const KipNav = React.createClass({
         <Navbar staticTop collapseOnSelect inverse>
           <Navbar.Header>
             <Navbar.Brand>
-              <Link to="/app">kip-ventory</Link>
+              <Link to="/app/inventory/">kip-ventory</Link>
             </Navbar.Brand>
             <Navbar.Toggle />
           </Navbar.Header>
           <Navbar.Collapse>
             <Nav>
-              <LinkContainer to="/app/requests/">
-                <NavItem eventKey={1}>Requests</NavItem>
-              </LinkContainer>
-              {this.getManagerLink()}
-              {this.getAdminLink()}
+              {this.getLink("/app/inventory/", "Inventory")}
+              {this.getLink("/app/requests/", "Your Requests")}
+              {(this.props.route.user.is_staff)     ? this.getLink("/app/manage/", "Manage") : null}
+              {(this.props.route.user.is_superuser) ? this.getLink("/app/admin/",  "Admin") : null}
             </Nav>
             <Nav pullRight>
-              <LinkContainer to="/app/cart/">
-                <NavItem eventKey={2}>Cart</NavItem>
-              </LinkContainer>
-              <LinkContainer to="/app/profile/">
-                <NavItem eventKey={3}>Profile</NavItem>
-              </LinkContainer>
-              {this.getSwaggerLink()}
-              <NavItem eventKey={4} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
+              {this.getLink("/app/cart/", "Cart")}
+              {this.getLink("/app/profile/", "Profile")}
+              {this.getLink("/swagger/", "API")}
+              <NavItem eventKey={7} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>
