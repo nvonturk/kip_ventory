@@ -10,4 +10,5 @@ class Backup(CronJobBase):
     code = 'kipventory.Backup'
 
     def do(self):
+        print("Running cron backup")
         management.call_command('dbbackup')
