@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_swagger',
     'dbbackup',
+    'django_cron',
     # local
     'api',
 ]
@@ -93,12 +94,17 @@ DATABASES = {
     }
 }
 
-
+# Setting for DJango-DBBackup
 DBBACKUP_STORAGE = 'storages.backends.ftp.FTPStorage'
 DBBACKUP_STORAGE_OPTIONS = {
-    # 'location': 'ftp://bitnami:pass@server:21'
-    'location': 'ftp://bitnami:submenCo1e@colab-sbx-309.oit.duke.edu:21'
+    'location': 'ftp://bitnami:submenCo1e@colab-sbx-309.oit.duke.edu:21' #21 is an arbitrary port
 }
+
+# Classes working Django-Cron
+CRON_CLASSES = [
+    "kipventory.crons.Backup",
+    # ...
+]
 
 
 # Password validation
