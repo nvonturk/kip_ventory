@@ -3,6 +3,15 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import copy
 
+
+LOAN = 'loan'
+DISBURSEMENT = 'disbursement'
+# Types of item requests
+ITEM_REQUEST_TYPES = (
+    (LOAN, 'Loan'),
+    (DISBURSEMENT, 'Disbursement'),
+)
+
 FIELD_TYPES = (
     ('Single', 'Single-line text'),
     ('Multi', 'Multi-line text'),
@@ -37,11 +46,11 @@ class Tag(models.Model):
 
 
 class NewUserRequest(models.Model):
-    username = models.CharField(max_length=150, unique=True)
+    username   = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
-    email = models.CharField(max_length=150, unique=True)
-    comment = models.CharField(max_length=300, blank=True)
+    last_name  = models.CharField(max_length=30)
+    email      = models.CharField(max_length=150, unique=True)
+    comment    = models.CharField(max_length=300, blank=True)
 
 class Item(models.Model):
     name        = models.CharField(max_length=100, unique=True)
@@ -72,13 +81,12 @@ class Item(models.Model):
                 cv = CustomValue(field=cf, item=self)
                 cv.save()
 
-
 class CartItem(models.Model):
-    owner    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
-    item     = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=0)
-
-
+    owner        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
+    item         = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity     = models.PositiveIntegerField(default=0)
+    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
+    due_date     = models.DateTimeField(blank=True, null=True, default=None)
 
 class CustomField(models.Model):
     name        = models.CharField(max_length=100, unique=True)
@@ -101,12 +109,12 @@ class CustomField(models.Model):
 
 
 class CustomValue(models.Model):
-    field = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="values", to_field="name")
-    item  = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="values")
+    field  = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="values", to_field="name")
+    item   = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="values")
     Single = models.CharField(default='', max_length=100, blank=True)
-    Multi = models.TextField(default='', max_length=500, blank=True)
-    Int = models.IntegerField(default=0, blank=True)
-    Float = models.FloatField(default=0.0, blank=True)
+    Multi  = models.TextField(default='', max_length=500, blank=True)
+    Int    = models.IntegerField(default=0, blank=True)
+    Float  = models.FloatField(default=0.0, blank=True)
 
     def get_value(self):
             return getattr(self, self.field.field_type)
@@ -117,29 +125,59 @@ class Request(models.Model):
     open_comment   = models.TextField(default='', max_length=500, blank=True)
     date_closed    = models.DateTimeField(blank=True, null=True)
     closed_comment = models.TextField(max_length=500, blank=True)
-    status          = models.CharField(max_length = 10, choices=STATUS_CHOICES, default=OUTSTANDING)
+    status         = models.CharField(max_length=10, choices=STATUS_CHOICES, default=OUTSTANDING)
     administrator  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
 
-class RequestItem(models.Model):
-    request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='request_items', blank=True, null=True)
+class RequestedItem(models.Model):
+    request      = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='requested_items', blank=True, null=True)
+    item         = models.ForeignKey(Item,    on_delete=models.CASCADE)
+    quantity     = models.PositiveIntegerField(default=0)
+    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
+    due_date     = models.DateTimeField(blank=True, null=True, default=None)
+
+class Loan(models.Model):
+    request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loaned_items', blank=True, null=True)
+    item      = models.ForeignKey(Item, on_delete=models.DO_NOTHING)
+    quantity  = models.PositiveIntegerField(default=0)
+    due_date  = models.DateTimeField(blank=True, null=True)
+    return_date = models.DateTimeField(blank=True, null=True)
+
+class Disbursement(models.Model):
+    request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursed_items', blank=True, null=True)
     item      = models.ForeignKey(Item, on_delete=models.DO_NOTHING)
     quantity  = models.PositiveIntegerField(default=0)
 
 
+def createLoanFromRequestItem(ri):
+    loan = Loan.objects.create(request=ri.request,
+                               item=ri.item,
+                               quantity=ri.quantity,
+                               due_date=ri.due_date,
+                               return_date=None)
+    loan.save()
+    return loan
+
+def createDisbursementFromRequestItem(ri):
+    disbursement = Disbursement.objects.create(request=ri.request,
+                                               item=ri.item,
+                                               quantity=ri.quantity)
+    disbursement.save()
+    return disbursement
+
 class Transaction(models.Model):
-    item                = models.ForeignKey(Item, on_delete=models.CASCADE)
-    ACQUISITION = 'Acquisition'
-    LOSS = 'Loss'
-    category_choices    = (
+    item             = models.ForeignKey(Item, on_delete=models.CASCADE)
+    ACQUISITION      = 'Acquisition'
+    LOSS             = 'Loss'
+    category_choices = (
         (ACQUISITION, ACQUISITION),
         (LOSS, LOSS),
     )
-    category            = models.CharField(max_length = 20, choices=category_choices)
-    quantity            = models.PositiveIntegerField()
-    comment             = models.CharField(max_length = 100, blank=True, null=True)
-    date                = models.DateTimeField(blank=True, auto_now_add=True)
-    administrator       = models.ForeignKey(User, on_delete=models.CASCADE)
+    category      = models.CharField(max_length = 20, choices=category_choices)
+    quantity      = models.PositiveIntegerField()
+    comment       = models.CharField(max_length = 100, blank=True, null=True)
+    date          = models.DateTimeField(blank=True, auto_now_add=True)
+    administrator = models.ForeignKey(User, on_delete=models.CASCADE)
 
 class Log(models.Model):
     item                    = models.ForeignKey(Item, on_delete=models.SET_NULL, blank=True, null=True)

@@ -101,7 +101,9 @@ class ItemListCreate(generics.GenericAPIView):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = self.get_serializer(data=request.data)
+        data = request.data.copy()
+
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
             itemCreationLog(serializer.data, request.user.pk)
@@ -327,6 +329,7 @@ class CartItemList(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
+
         return Response(serializer.data)
 
 
@@ -395,9 +398,9 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
     def get(self, request, item_name, format=None):
         requests = self.get_queryset()
         if request.user.is_staff or request.user.is_superuser:
-            requests = models.Request.objects.filter(request_items__item__name=item_name)
+            requests = models.Request.objects.filter(requested_items__item__name=item_name)
         else:
-            requests = models.Request.objects.filter(request_items__item__name=item_name, requester=request.user.pk)
+            requests = models.Request.objects.filter(requested_items__item__name=item_name, requester=request.user.pk)
 
         # Return all items if query parameter "all" is set
         all_items = self.request.query_params.get("all", None)
@@ -464,7 +467,7 @@ class RequestListCreate(generics.GenericAPIView):
 
         cart_items = models.CartItem.objects.filter(owner__pk=self.request.user.pk)
         if cart_items.count() <= 0:
-            d = {"error": "There are no items in your cart. Add an item to request it."}
+            d = {"error": ["There are no items in your cart. Add an item to your cart in order to request it."]}
             return Response(d, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=data)
@@ -472,9 +475,11 @@ class RequestListCreate(generics.GenericAPIView):
             request_instance = serializer.save()
 
         for ci in cart_items:
-            item = ci.item
-            quantity = ci.quantity
-            req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
+            req_item = models.RequestedItem.objects.create(request=request_instance,
+                                                           item=ci.item,
+                                                           quantity=ci.quantity,
+                                                           request_type=ci.request_type,
+                                                           due_date=ci.due_date)
             # Insert Create Log
             # Need {serializer.data, initiating_user_pk, 'Request Created'}
             req_item.save()
@@ -530,36 +535,36 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             if data['status'] == 'D':
                 # Insert Create Log
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                for ri in instance.request_items.all():
+                for ri in instance.requested_items.all():
                     requestItemDenial(ri, request.user.pk, instance)
             elif data['status'] == 'A':
                 valid_request = True
-                new_quantities = {}
-                for ri in instance.request_items.all():
-                    item = ri.item
-                    available_quantity = item.quantity
-                    requested_quantity = ri.quantity
-                    if (requested_quantity > available_quantity):
+                for ri in instance.requested_items.all():
+                    if (ri.quantity > ri.item.quantity):
                         valid_request = False
                         break
                 # decrement quantity available on each item in the approved request
                 if valid_request:
-                    for ri in instance.request_items.all():
-                        item = ri.item
-                        available_quantity = item.quantity
-                        requested_quantity = ri.quantity
-                        item.quantity = (available_quantity - requested_quantity)
-                        item.save()
+                    for ri in instance.requested_items.all():
+                        ri.item.quantity = (ri.item.quantity - ri.quantity)
+                        ri.item.save()
+                        # create a loan or disbursement object
+                        print(ri.request_type)
+                        if ri.request_type == models.LOAN:
+                            loan = models.createLoanFromRequestItem(ri)
+                            loan.save()
+                            print(loan)
+                        elif ri.request_type == models.DISBURSEMENT:
+                            disbursement = models.createDisbursementFromRequestItem(ri)
+                            disbursement.save()
+                            print(disbursement)
+
                         # Insert Create Log
                         # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                         requestItemApproval(ri, request.user.pk, instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
-            # item = models.Item.objects.get(pk=request.data['item'])
-            # item.quantity = item.quantity - int(request.data['quantity'])
-            # item.save()
-            # createLog(request.data, request.data['administrator'], 'Request')
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -576,6 +581,42 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         instance.delete()
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RequestedItemDetailModifyDelete(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_requested_item(self, request_pk, item_name):
+        try:
+            return models.RequestedItem.objects.filter(request__pk=request_pk).get(item__name=item_name)
+        except models.RequestedItem.DoesNotExist:
+            raise NotFound("Item '{}' could not be found in Request with primary key '{}'".format(item_name, request_pk))
+
+    def get_queryset(self):
+        return models.RequestedItems.objects.filter(request__pk=request_pk)
+
+    def get_serializer_class(self):
+        return serializers.RequestedItemSerializer
+
+    def get(self, request, request_pk, item_name, format=None):
+        ri = self.get_requested_item(request_pk, item_name)
+        serializer = self.get_serializer(instance=ri)
+        return Response(serializer.data)
+
+    def put(self, request, request_pk, item_name, format=None):
+        ri = self.get_requested_item(request_pk, item_name)
+        data = request.data.copy()
+        serializer = self.get_serializer(instance=ri, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, request_pk, item_name, format=None):
+        ri = self.get_requested_item(request_pk, item_name)
+        ri.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
@@ -936,7 +977,7 @@ class DisburseCreate(generics.GenericAPIView):
         if serializer.is_valid():
             for item, quantity in zip(items, quantities):
                 # Create the request item
-                req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
+                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request=request_instance)
                 req_item.save()
 
                 # Decrement the quantity remaining on the Item
