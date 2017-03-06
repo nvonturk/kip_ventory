@@ -5,17 +5,17 @@ import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import TagMultiSelect from '../../TagMultiSelect'
 
 
-var CUSTOM_FIELDS = []
 
 const ItemCreationForm = React.createClass({
   getInitialState() {
-    CUSTOM_FIELDS = []
     return {
       name: "",
       quantity: 0,
       model_no: "",
       description: "",
       tags: [],
+      custom_fields: [],
+
       showCreatedSuccess: false,
       showErrorMessage: false,
       errorMessage: ""
@@ -23,79 +23,96 @@ const ItemCreationForm = React.createClass({
   },
 
   componentWillMount() {
+    this.getCustomFields()
+  },
+
+  getCustomFields() {
     var url = "/api/fields/"
     var _this = this
-    CUSTOM_FIELDS = []
     getJSON(url, null, function(data) {
-      CUSTOM_FIELDS = data.map( (field, i) => {return field} )
       data.map( (field, i) => {
+        var custom_field_entry = {"name": field.name, "value": "", "field_type": field.field_type}
         _this.setState({
-          [field.name]: ""
+          custom_fields: _this.state.custom_fields.concat([custom_field_entry])
         })
       })
     })
   },
 
-
   handleTagSelection(tagsSelected) {
-    console.log(tagsSelected.split(","))
     this.setState({tags: tagsSelected.split(",")});
   },
 
-  getShortTextField(field_name, presentation_name, is_private) {
+  getShortTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup bsSize="small" key={field_name}>
-        <Col componentClass={ControlLabel} sm={2}>
+      <FormGroup key={field_name} bsSize="small">
+        <Col sm={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
         <Col sm={9}>
-          <FormControl type="text" value={this.state[field_name]} name={field_name} onChange={this.onChange} />
+          <FormControl type="text"
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
         </Col>
       </FormGroup>
     )
   },
 
-  getLongTextField(field_name, presentation_name, is_private) {
+  getLongTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup bsSize="small" key={field_name}>
-        <Col componentClass={ControlLabel} sm={2}>
+      <FormGroup key={field_name} bsSize="small">
+        <Col sm={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
         <Col sm={9}>
-          <FormControl type="text" style={{resize: "vertical", height:"100px"}} componentClass={"textarea"} value={this.state[field_name]} name={field_name} onChange={this.onChange} />
+          <FormControl type="text"
+                     style={{resize: "vertical", height:"100px"}}
+                     componentClass={"textarea"}
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
         </Col>
       </FormGroup>
     )
   },
 
-  getIntegerField(field_name, presentation_name, is_private, min, step) {
+  getIntegerField(field_name, presentation_name, min, step, i) {
     return (
-      <FormGroup bsSize="small" key={field_name}>
-        <Col componentClass={ControlLabel} sm={2}>
+      <FormGroup key={field_name} bsSize="small">
+        <Col sm={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
-        <Col sm={3}>
-          <FormControl type="number" min={min} step={step} value={this.state[field_name]} name={field_name} onChange={this.onChange} />
+        <Col sm={9}>
+          <FormControl type="number"
+                     min={min}
+                     step={step}
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
         </Col>
       </FormGroup>
     )
   },
 
-  getFloatField(field_name, presentation_name, handleChange) {
+  getFloatField(field_name, presentation_name, i){
     return (
-      <FormGroup bsSize="small" key={field_name}>
-        <Col componentClass={ControlLabel} sm={2}>
+      <FormGroup key={field_name} bsSize="small">
+        <Col sm={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
-        <Col sm={3}>
-          <FormControl type="number" value={this.state[field_name]} name={field_name} onChange={handleChange} />
+        <Col sm={9}>
+          <FormControl type="number"
+                     value={this.state.custom_fields[i].value}
+                     name={field_name}
+                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
         </Col>
       </FormGroup>
     )
   },
 
-  getCustomFields() {
-    return CUSTOM_FIELDS.map( (field, i) => {
+  getCustomFieldForms() {
+    return this.state.custom_fields.map( (field, i) => {
 
       var field_name = field.name
       var is_private = field.private
@@ -103,16 +120,16 @@ const ItemCreationForm = React.createClass({
 
       switch(field_type) {
         case "Single":
-          return this.getShortTextField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          return this.getShortTextField(field_name, field_name, i)
           break;
         case "Multi":
-          return this.getLongTextField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          return this.getLongTextField(field_name, field_name, i)
           break;
         case "Int":
-          return this.getIntegerField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          return this.getIntegerField(field_name, field_name, 0, 1, i)
           break;
         case "Float":
-          return this.getFloatField(field_name, field_name, ( e => {this.setState({[custom_fields[field_name]]: e.target.value})} ))
+          return this.getFloatField(field_name, field_name, i)
           break
         default:
           return null
@@ -144,25 +161,34 @@ const ItemCreationForm = React.createClass({
   createItem() {
     var _this = this;
     var item_name = this.state.name;
+    var custom_fields = this.state.custom_fields.map( (cf, i) => {return JSON.stringify(cf)} )
+
     ajax({
       url:"/api/items/",
       type: "POST",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      data: _this.state,
+      data: {
+        name: _this.state.name,
+        quantity: _this.state.quantity,
+        model_no: _this.state.model_no,
+        description: _this.state.description,
+        tags: _this.state.tags,
+        custom_fields: custom_fields
+      },
       traditional: true,
       success:function(response){
-        var data = _this.getInitialState()
-        console.log(response)
-        _this.setState(data)
-        for (var i=0; i<CUSTOM_FIELDS.length; i++) {
-          _this.setState({
-            [CUSTOM_FIELDS[i].name]: ""
-          })
-        }
-
+        var custom_fields = _this.state.custom_fields.slice()
+        custom_fields.forEach( (cf) => {cf.value = ""})
         _this.setState({
+          name: "",
+          quantity: 0,
+          model_no: "",
+          description: "",
+          tags: [],
+          custom_fields: custom_fields,
+
           showCreatedSuccess: true,
           createdName: item_name,
           showErrorMessage: false,
@@ -179,16 +205,24 @@ const ItemCreationForm = React.createClass({
           showCreatedSuccess: false,
           createdName: "",
           showErrorMessage: true,
-          errorMessage: "Name: " + response.name[0]
+          errorMessage: "An error occurred."
         })
       }
     });
   },
 
-  onChange(e) {
+  handleItemFieldChange(e) {
     e.preventDefault()
     this.setState({
       [e.target.name]: e.target.value
+    })
+  },
+
+  handleCustomFieldChange(i, name, e) {
+    var custom_fields = this.state.custom_fields
+    custom_fields[i].value = e.target.value
+    this.setState({
+      custom_fields: custom_fields
     })
   },
 
@@ -218,10 +252,62 @@ const ItemCreationForm = React.createClass({
                 <h4>Create an item</h4>
                 <hr />
 
-                { this.getShortTextField("name", "Name", this.onChange) }
-                { this.getShortTextField("model_no", "Model No.", this.onChange) }
-                { this.getIntegerField("quantity", "Quantity", this.onChange) }
-                { this.getLongTextField("description", "Description", this.onChange) }
+                <FormGroup bsSize="small">
+                  <Col componentClass={ControlLabel} sm={2}>
+                    Name
+                  </Col>
+                  <Col sm={9} >
+                    <FormControl
+                      type="text"
+                      name="name"
+                      value={this.state.name}
+                      onChange={this.handleItemFieldChange}
+                    />
+                  </Col>
+                </FormGroup>
+
+                <FormGroup bsSize="small">
+                  <Col componentClass={ControlLabel} sm={2}>
+                    Model No.
+                  </Col>
+                  <Col sm={9} >
+                    <FormControl
+                      type="text"
+                      name="model_no"
+                      value={this.state.model_no}
+                      onChange={this.handleItemFieldChange}
+                    />
+                  </Col>
+                </FormGroup>
+
+                <FormGroup bsSize="small">
+                  <Col componentClass={ControlLabel} sm={2}>
+                    Quantity
+                  </Col>
+                  <Col sm={2} >
+                    <FormControl
+                      type="number"
+                      name="quantity"
+                      min={0} step={1}
+                      value={this.state.quantity}
+                      onChange={this.handleItemFieldChange}
+                    />
+                  </Col>
+                </FormGroup>
+
+                <FormGroup bsSize="small">
+                  <Col componentClass={ControlLabel} sm={2}>
+                    Description
+                  </Col>
+                  <Col sm={9} >
+                    <FormControl
+                      type="text"
+                      name="description"
+                      value={this.state.description}
+                      onChange={this.handleItemFieldChange}
+                    />
+                  </Col>
+                </FormGroup>
 
                 <FormGroup bsSize="small">
                   <Col componentClass={ControlLabel} sm={2}>
@@ -232,7 +318,7 @@ const ItemCreationForm = React.createClass({
                   </Col>
                 </FormGroup>
 
-                { this.getCustomFields() }
+                { this.getCustomFieldForms() }
 
                 <FormGroup bsSize="small">
                   <Col smOffset={2} sm={2}>
