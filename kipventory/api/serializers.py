@@ -16,7 +16,7 @@ class CustomFieldSerializer(serializers.ModelSerializer):
         fields = ('name', 'private', 'field_type',)
 
     def validate(self, data):
-        name = data.get('name')
+        name = data.get('name', None)
         field_exists = (models.CustomField.objects.filter(name=name).count() > 0)
         if field_exists:
             raise ValidationError({"name": ["A field with name \'{}\' already exists.".format(request.data['name'])]})
@@ -83,7 +83,7 @@ class ItemSerializer(serializers.ModelSerializer):
         is_in_cart = (models.CartItem.objects.filter(owner__pk=user.pk, item__name=item.name).count() > 0)
         return is_in_cart
 
-    
+
 
 class CartItemSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):

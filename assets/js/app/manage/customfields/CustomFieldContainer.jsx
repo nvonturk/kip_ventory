@@ -52,15 +52,16 @@ const CustomFieldContainer = React.createClass({
     var _this = this
     ajax({
       url:"/api/fields/",
+      contentType: "application/json",
       type: "POST",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      data: {
+      data: JSON.stringify({
         name: _this.state.name,
         field_type: _this.state.field_type,
         private: _this.state.private
-      },
+      }),
       success:function(response){
         _this.getExistingFields();
         _this.setState({
