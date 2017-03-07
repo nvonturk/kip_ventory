@@ -86,10 +86,18 @@ WSGI_APPLICATION = 'kipventory.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'kipventory',
+        'USER': 'kip',
+        'PASSWORD': 'kipcoonley',
+        'HOST': 'localhost',
+        'PORT': '',
+        'TEST': {
+            'NAME': 'kipventorytest',
+        },
+    },
 }
+
 
 
 # Password validation

@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^requests/?$',                        views.RequestListCreate.as_view()),
     url(r'^requests/all/?$',                    views.RequestListAll.as_view()),
     url(r'^requests/(?P<request_pk>[0-9]*)/?$', views.RequestDetailModifyDelete.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]*)/(?P<item_name>[\w\s]+)/?$', views.RequestedItemDetailModifyDelete.as_view()),
 
     url(r'^login/?$',  views.post_user_login),
     url(r'^logout/?$', auth_views.logout),
