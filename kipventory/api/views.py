@@ -365,15 +365,6 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
 
         serializer = self.get_serializer(instance=cartitem, data=data, partial=True)
         if serializer.is_valid():
-            try:
-                cart_quantity = int(request.data['quantity'])
-            except:
-                return Response({"quantity": "Quantity must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
-            if (cart_quantity < 0):
-                return Response({"quantity": "Quantity must be a positive integer."})
-            elif cart_quantity == 0:
-                cartitem.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

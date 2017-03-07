@@ -25,7 +25,6 @@ const CartItemTableRow = React.createClass({
   },
 
   handleTypeChange(e) {
-    console.log(e.target.value)
     var reqType = e.target.value
     if (reqType == "disbursement") {
       this.setState({request_type: reqType}, this.updateCartItem)
@@ -90,22 +89,20 @@ const CartItemTableRow = React.createClass({
 
   render() {
     return (
-      <tr style={{height:"100px"}}>
+      <tr style={{height:"75px"}}>
         <td data-th="Item Information">
           <Row>
             <Col sm={12}>
               <ItemTableDetail item={this.props.cartItem.item} />
             </Col>
           </Row>
-          <Row>
-            <Col sm={12}>
-              <a href="" style={{color: "#5bc0de"}} onClick={this.deleteCartItem}>Delete</a>
-            </Col>
-          </Row>
+        </td>
+        <td className="text-center">
+          <a href="" style={{color: "#5bc0de"}} onClick={this.deleteCartItem}>Delete</a>
         </td>
         <td data-th="Quantity">
           <FormGroup bsSize="small" style={{margin:"auto"}}>
-            <FormControl type="number" className="text-center" name="quantity" value={this.state.quantity} onChange={this.handleQuantityChange} />
+            <FormControl type="number" className="text-center" name="quantity" min={1} step={1} value={this.state.quantity} onChange={this.handleQuantityChange} />
           </FormGroup>
         </td>
         <td />

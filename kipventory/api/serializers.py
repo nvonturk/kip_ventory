@@ -111,6 +111,14 @@ class CartItemSerializer(serializers.ModelSerializer):
         return data
 
     def validate(self, data):
+        cart_quantity = data.get('quantity', None)
+        try:
+            cart_quantity = int(cart_quantity)
+        except:
+            raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
+        if (cart_quantity <= 0):
+            raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
+
         request_type = data.get('request_type', None)
         due_date = data.get('due_date', None)
         if request_type == models.LOAN:
@@ -119,6 +127,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             else:
                 if not self.is_future_date(due_date):
                     raise ValidationError({"due_date": ["Only future dates are allowed."]})
+
         return data
 
     def create(self, validated_data):

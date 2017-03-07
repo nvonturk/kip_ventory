@@ -43,7 +43,8 @@ const CartContainer = React.createClass({
                 <Table hover>
                   <thead>
                     <tr>
-                      <th style={{width:"50%"}} className="text-left">Item Information</th>
+                      <th style={{width:"40%"}} className="text-left">Item Information</th>
+                      <th style={{width:"10%"}} className="text-center"></th>
                       <th style={{width:"10%"}} className="text-center">Quantity</th>
                       <th style={{width:"5%"}} />
                       <th style={{width:"15%"}} className="text-center">Request Type</th>
