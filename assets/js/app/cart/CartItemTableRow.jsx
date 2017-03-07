@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Label, Button, Image, Panel, FormGroup, FormControl, Radio} from 'react-bootstrap'
+import { Grid, Row, Col, Button, Panel, FormGroup, FormControl, Tooltip, OverlayTrigger} from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import ItemTableDetail from '../inventory/ItemTableDetail'
 import DatePicker from 'react-datepicker'
@@ -25,7 +25,6 @@ const CartItemTableRow = React.createClass({
   },
 
   handleTypeChange(e) {
-    console.log(e.target.value)
     var reqType = e.target.value
     if (reqType == "disbursement") {
       this.setState({request_type: reqType}, this.updateCartItem)
@@ -46,7 +45,7 @@ const CartItemTableRow = React.createClass({
     this.setState({due_date: date}, this.updateCartItem)
   },
 
-  disableDate() {
+  disableDatePicker() {
     return (this.state.request_type == 'disbursement')
   },
 
@@ -90,22 +89,20 @@ const CartItemTableRow = React.createClass({
 
   render() {
     return (
-      <tr style={{height:"100px"}}>
+      <tr style={{height:"75px"}}>
         <td data-th="Item Information">
           <Row>
             <Col sm={12}>
               <ItemTableDetail item={this.props.cartItem.item} />
             </Col>
           </Row>
-          <Row>
-            <Col sm={12}>
-              <a href="" style={{color: "#71a4f7"}} onClick={this.deleteCartItem}>Delete</a>
-            </Col>
-          </Row>
+        </td>
+        <td className="text-center">
+          <a href="" style={{color: "#5bc0de"}} onClick={this.deleteCartItem}>Delete</a>
         </td>
         <td data-th="Quantity">
           <FormGroup bsSize="small" style={{margin:"auto"}}>
-            <FormControl type="number" className="text-center" name="quantity" value={this.state.quantity} onChange={this.handleQuantityChange} />
+            <FormControl type="number" className="text-center" name="quantity" min={1} step={1} value={this.state.quantity} onChange={this.handleQuantityChange} />
           </FormGroup>
         </td>
         <td />
@@ -119,25 +116,25 @@ const CartItemTableRow = React.createClass({
         </td>
         <td />
         <td data-th="Due Date" className="text-center">
-          <DatePicker customInput={<ExampleCustomInput displayValue={this.state.message} disableDate={this.disableDate}/>} selected={this.state.due_date} onChange={this.handleDateChange} />
+          <DatePicker customInput={<ExampleCustomInput isDisabled={this.disableDatePicker} requestType={this.state.request_type}/>}
+                      selected={this.state.due_date}
+                      onChange={this.handleDateChange} />
         </td>
       </tr>
-    )
-  }
+      )
+    }
 });
 
-
 var ExampleCustomInput = React.createClass({
-  displayName: "ExampleCustomInput" ,
-
   propTypes: {
+    isDisabled: React.PropTypes.func,
     onClick: React.PropTypes.func,
-    value: React.PropTypes.string
+    value: React.PropTypes.string,
   },
 
   render () {
     return (
-      <Button block disabled={this.props.disableDate()} bsSize="small" className="example-custom-input" onClick={this.props.onClick}>
+      <Button block disabled={this.props.isDisabled()} bsStyle="info" bsSize="small" onClick={this.props.onClick}>
         {this.props.value}
       </Button>
     )

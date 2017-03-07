@@ -211,7 +211,7 @@ class Log(models.Model):
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),
     )
-    category            = models.CharField(max_length=20, choices=category_choices)
+    category            = models.CharField(max_length=25, choices=category_choices)
 
     def __str__(self):
         return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)

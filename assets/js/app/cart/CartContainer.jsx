@@ -32,23 +32,24 @@ const CartContainer = React.createClass({
         <Row>
           <Col xs={10} xsOffset={1}>
             <Row>
-              <Col md={12}>
+              <Col xs={12}>
                 <h3>Your Cart</h3>
                 <hr />
               </Col>
             </Row>
 
             <Row>
-              <Col md={12}>
+              <Col xs={12}>
                 <Table hover>
                   <thead>
                     <tr>
-                      <th style={{width:"50%"}} className="text-left">Item Information</th>
+                      <th style={{width:"40%"}} className="text-left">Item Information</th>
+                      <th style={{width:"10%"}} className="text-center"></th>
                       <th style={{width:"10%"}} className="text-center">Quantity</th>
                       <th style={{width:"5%"}} />
                       <th style={{width:"15%"}} className="text-center">Request Type</th>
                       <th style={{width:"5%"}} />
-                      <th style={{width:"15%"}} className="text-center">Due Date</th>
+                      <th style={{width:"15%"}} className="text-center">Loan Return Date</th>
                     </tr>
                   </thead>
                   <tbody>
