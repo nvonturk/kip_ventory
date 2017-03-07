@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, browserHistory } from 'react-router'
-import { Grid, Row, Col, Navbar, Nav, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
+import { Grid, Row, Col, Navbar, Nav, NavItem, NavDropdown, MenuItem, Glyphicon } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap';
 
 var INDEX = 0
@@ -44,6 +44,7 @@ const KipNav = React.createClass({
               {this.getLink("/app/profile/", "Profile")}
               {this.getLink("/swagger/", "API")}
               <NavItem eventKey={INDEX} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
+              <NavItem eventKey={INDEX+1}><Glyphicon glyph="cog" /></NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>

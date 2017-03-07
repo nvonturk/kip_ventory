@@ -105,48 +105,50 @@ class InventoryContainer extends Component {
   render() {
     return (
       <Grid>
-        <Col sm={8} smOffset={2}>
-          <Row>
-            <Col md={12}>
-              <h3>Inventory</h3>
-              <hr />
-            </Col>
-          </Row>
+        <Row>
+          <Col xs={10} xsOffset={1}>
+            <Row>
+              <Col xs={12}>
+                <h3>Inventory</h3>
+                <hr />
+              </Col>
+            </Row>
 
-          <Row>
-            <Col sm={12}>
-              <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
-            </Col>
-          </Row>
+            <Row>
+              <Col xs={12}>
+                <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
+              </Col>
+            </Row>
 
-          <hr />
+            <hr />
 
-          <Row>
-            <Col md={12}>
-              <Table hover>
-                <thead>
-                  <tr>
-                    <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
-                    <th style={{width:"8%"}} className="text-center">Available</th>
-                    <th style={{width:"10%"}} className="text-center">Status</th>
-                    <th style={{width:"7%"}} className="text-center">Quantity</th>
-                    <th style={{width:"8%"}} className="text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {this.state.items.map( (item, i) => {
-                    return (<InventoryItem key={item.name} item={item} />)
-                  })}
-                </tbody>
-              </Table>
-            </Col>
-          </Row>
-          <Row>
-            <Col sm={4} smOffset={4}>
-              <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
-            </Col>
-          </Row>
-        </Col>
+            <Row>
+              <Col xs={12}>
+                <Table hover>
+                  <thead>
+                    <tr>
+                      <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
+                      <th style={{width:"8%"}} className="text-center">Available</th>
+                      <th style={{width:"10%"}} className="text-center">Status</th>
+                      <th style={{width:"7%"}} className="text-center">Quantity</th>
+                      <th style={{width:"8%"}} className="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.items.map( (item, i) => {
+                      return (<InventoryItem key={item.name} item={item} />)
+                    })}
+                  </tbody>
+                </Table>
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={4} xsOffset={4}>
+                <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
+              </Col>
+            </Row>
+          </Col>
+        </Row>
       </Grid>
     )
   }

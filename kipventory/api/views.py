@@ -621,8 +621,9 @@ class RequestedItemDetailModifyDelete(generics.GenericAPIView):
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
 def post_user_login(request, format=None):
-    username = request.POST['username']
-    password = request.POST['password']
+    username = request.data.get('username', None)
+    password = request.data.get('password', None)
+    next_url = request.data.get('next', None)
 
     user = authenticate(username=username, password=password)
 
@@ -633,10 +634,13 @@ def post_user_login(request, format=None):
 
     if user is not None:
         login(request, user)
-        return redirect('/app/')
+        if len(next_url) > 0:
+            return redirect(next_url)
+        return redirect('/app/inventory/')
     else:
         # Return an 'invalid login' error message.
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
+        print("ERROR")
         return redirect('/')
 
 class UserList(generics.GenericAPIView):
