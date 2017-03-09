@@ -469,8 +469,7 @@ class RequestListCreate(generics.GenericAPIView):
             req_item = models.RequestedItem.objects.create(request=request_instance,
                                                            item=ci.item,
                                                            quantity=ci.quantity,
-                                                           request_type=ci.request_type,
-                                                           due_date=ci.due_date)
+                                                           request_type=ci.request_type)
             # Insert Create Log
             # Need {serializer.data, initiating_user_pk, 'Request Created'}
             req_item.save()

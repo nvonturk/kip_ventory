@@ -15,9 +15,14 @@ const InventoryItem = React.createClass({
 
   onChange(event) {
     event.preventDefault()
-    this.setState({
-      quantity: Number(event.target.value)
-    })
+    var q = Number(event.target.value)
+    if (q > this.props.item.quantity) {
+      event.stopPropagation()
+    } else {
+      this.setState({
+        quantity: q
+      })
+    }
   },
 
   addToCart() {
@@ -64,13 +69,16 @@ const InventoryItem = React.createClass({
         <td data-th="Item Information">
           <ItemTableDetail item={this.props.item} />
         </td>
+        <td className="spacer" />
+        <td data-th="Model No." className="text-center">{this.props.item.model_no}</td>
         <td data-th="Available" className="text-center">{this.props.item.quantity}</td>
+        <td className="spacer" />
         <td data-th="Status" className="text-center">
           {this.getItemStatus(this.props.item)}
         </td>
         <td data-th="Quantity">
           <FormGroup bsSize="small" style={{margin:"auto"}}>
-            <FormControl type="number" className="form-control text-center" defaultValue={1} onChange={this.onChange} />
+            <FormControl type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onChange} />
           </FormGroup>
         </td>
         <td className="text-center" data-th="Action">

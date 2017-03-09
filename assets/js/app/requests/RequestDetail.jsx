@@ -13,7 +13,7 @@ const RequestDetail = React.createClass({
   getInitialState() {
     return {
       request_id: "",
-      request_items: [],
+      requested_items: [],
       requester: "",
       date_open: "",
       open_comment: "",
@@ -38,15 +38,15 @@ const RequestDetail = React.createClass({
     this.getRequest();
   },
 
-  getRequestItemEntry(request_item) {
-    var url = "/app/items/" + request_item.item
+  getRequestItemEntry(requested_item) {
+    var url = "/app/items/" + requested_item.item
     return (
-      <Row key={request_item.item}>
+      <Row key={requested_item.item}>
         <Col sm={6} className="text-left">
-          <a href={url}>{request_item.item}</a>
+          <a href={url}>{requested_item.item}</a>
         </Col>
         <Col sm={6} className="text-center">
-          <p>{request_item.quantity}</p>
+          <p>{requested_item.quantity}</p>
         </Col>
       </Row>
     )
@@ -252,7 +252,7 @@ const RequestDetail = React.createClass({
 
           <Col sm={8} smOffset={2}>
             <Panel style={{fontSize: "12px"}}>
-              <h4>Request Items</h4>
+              <h4>Requested Items</h4>
               <hr />
               <Row>
                 <Col sm={12}>
@@ -267,7 +267,7 @@ const RequestDetail = React.createClass({
                   <br />
                 </Col>
               </Row>
-              { this.state.request_items.map( (ri, i) => {
+              { this.state.requested_items.map( (ri, i) => {
                 return this.getRequestItemEntry(ri)
               })}
             </Panel>

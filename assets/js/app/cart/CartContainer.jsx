@@ -44,12 +44,13 @@ const CartContainer = React.createClass({
                   <thead>
                     <tr>
                       <th style={{width:"40%"}} className="text-left">Item Information</th>
-                      <th style={{width:"10%"}} className="text-center"></th>
-                      <th style={{width:"10%"}} className="text-center">Quantity</th>
-                      <th style={{width:"5%"}} />
-                      <th style={{width:"15%"}} className="text-center">Request Type</th>
-                      <th style={{width:"5%"}} />
-                      <th style={{width:"15%"}} className="text-center">Loan Return Date</th>
+                      <th style={{width:"5%" }} className="spacer"></th>
+                      <th style={{width:"10%"}} className="text-center">Model No.</th>
+                      <th style={{width:"10%"}} className="text-center">Available</th>
+                      <th style={{width:"5%" }} className="spacer"></th>
+                      <th style={{width:"10%"}} className="text-center"/>
+                      <th style={{width:"8%"}} className="text-center">Quantity</th>
+                      <th style={{width:"12%"}} className="text-center">Request Type</th>
                     </tr>
                   </thead>
                   <tbody>

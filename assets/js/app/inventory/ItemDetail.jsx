@@ -5,7 +5,6 @@ import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
 import ItemModificationModal from './ItemModificationModal'
-import _ from 'underscore'
 import {browserHistory} from 'react-router'
 
 

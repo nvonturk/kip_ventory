@@ -124,14 +124,17 @@ class InventoryContainer extends Component {
 
             <Row>
               <Col xs={12}>
-                <Table hover>
+                <Table condensed>
                   <thead>
                     <tr>
-                      <th style={{width:"65%"}} className="text-left">Item Information (click for details)</th>
-                      <th style={{width:"8%"}} className="text-center">Available</th>
+                      <th style={{width:"40%"}} className="text-left">Item Information</th>
+                      <th style={{width:"5%" }} className="spacer"></th>
+                      <th style={{width:"10%"}} className="text-center">Model No.</th>
+                      <th style={{width:"10%"}} className="text-center">Available</th>
+                      <th style={{width:"5%" }} className="spacer"></th>
                       <th style={{width:"10%"}} className="text-center">Status</th>
-                      <th style={{width:"7%"}} className="text-center">Quantity</th>
-                      <th style={{width:"8%"}} className="text-center">Action</th>
+                      <th style={{width:"8%" }} className="text-center">Quantity</th>
+                      <th style={{width:"12%"}} className="text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
