@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Label, Button, Image, Panel, FormGroup, FormControl} from 'react-bootstrap'
+import { Row, Col, Label, Button, FormGroup, FormControl, Glyphicon } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import { ajax } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
@@ -57,15 +57,20 @@ const InventoryItem = React.createClass({
   getItemStatus(item) {
     return this.state.in_cart ? (
       <div style={{display: "flex", flexDirection: "row", justifyContent: 'space-around'}}>
-        <Label className="clickable" onClick={() => browserHistory.push("/app/cart/")} bsStyle="warning">In Cart</Label>
+        <Label className="clickable" href="/app/cart/" bsStyle="warning">In Cart</Label>
       </div>
     ) : null
   },
 
+  test(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log("HERE")
+  },
 
   render() {
     return (
-      <tr>
+      <tr style={{height: "30px"}}>
         <td data-th="Item Information">
           <ItemTableDetail item={this.props.item} />
         </td>
@@ -73,7 +78,10 @@ const InventoryItem = React.createClass({
         <td data-th="Model No." className="text-center">{this.props.item.model_no}</td>
         <td data-th="Available" className="text-center">{this.props.item.quantity}</td>
         <td className="spacer" />
-        <td data-th="Status" className="text-center">
+        <td data-th="Tags" className="text-left">
+          <Glyphicon glyph="tags" />
+        </td>
+        <td className="text-center">
           {this.getItemStatus(this.props.item)}
         </td>
         <td data-th="Quantity">
@@ -81,7 +89,7 @@ const InventoryItem = React.createClass({
             <FormControl type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onChange} />
           </FormGroup>
         </td>
-        <td className="text-center" data-th="Action">
+        <td className="text-center" >
           <Button bsSize="small" bsStyle="info" onClick={this.addToCart}>Add to Cart</Button>
         </td>
       </tr>

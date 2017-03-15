@@ -48,7 +48,7 @@ const KipNav = React.createClass({
             </Nav>
           </Navbar.Collapse>
         </Navbar>
-        <Grid>
+        <Grid fluid>
           <Row>
             <Col sm={12}>
               {this.props.children}

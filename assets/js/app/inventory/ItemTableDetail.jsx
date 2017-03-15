@@ -17,7 +17,7 @@ const ItemTableDetail = React.createClass({
           <div style={{margin:"auto"}} >
             <Row>
               <Col sm={8}>
-                <h5><a style={{color: "#df691a", textDecoration:"none"}} href={"/app/items/" + this.props.item.name + "/"}>{this.props.item.name}</a></h5>
+                <h5><a style={{color: "#df691a", textDecoration:"underline"}} href={"/app/inventory/" + this.props.item.name + "/"}>{this.props.item.name}</a></h5>
                 <p>{this.props.item.description}</p>
               </Col>
             </Row>

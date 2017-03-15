@@ -33,7 +33,7 @@ const RequestsContainer = React.createClass({
   getRequests() {
     var params = {
       page: this.state.page,
-      itemsPerPage: REQUESTS_PER_PAGE, 
+      itemsPerPage: REQUESTS_PER_PAGE,
       status: this.state.filter_option,
     };
     var url = "/api/requests/";
@@ -90,8 +90,8 @@ const RequestsContainer = React.createClass({
 
   handleSelect(selectedKey) {
     this.setState({
-      activeKey: selectedKey, 
-      filter_option: STATUS[selectedKey], 
+      activeKey: selectedKey,
+      filter_option: STATUS[selectedKey],
       page: 1
     }, this.getRequests);
   },
@@ -110,7 +110,7 @@ const RequestsContainer = React.createClass({
   },
 
   getRequestView() {
-  
+
     return (
       <Row>
         <Col sm={12}>
@@ -166,52 +166,44 @@ const RequestsContainer = React.createClass({
 
   render() {
     return (
-      <Grid fluid>
+      <Grid>
 
         <Row>
-          <Col sm={2}>
-
+          <Col sm={12}>
+            <h3>Requests</h3>
+            <hr />
+            <p>
+              View, respond to, and manage inventory requests.
+            </p>
+            <br />
           </Col>
-          <Col sm={8}>
 
+          { this.getSuccessMessage() }
+
+          <Panel>
             <Row>
               <Col sm={12}>
-                <h3>Requests</h3>
-                <hr />
-                <p>
-                  View, respond to, and manage inventory requests.
-                </p>
-                <br />
+                <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
+                  <NavItem eventKey={0} title="all">All</NavItem>
+                  <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
+                  <NavItem eventKey={2} title="approved">Approved</NavItem>
+                  <NavItem eventKey={3} title="denied">Denied</NavItem>
+                </Nav>
               </Col>
             </Row>
 
-            { this.getSuccessMessage() }
+            <hr />
 
-            <Panel>
-              <Row>
-                <Col sm={12}>
-                  <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-                    <NavItem eventKey={0} title="all">All</NavItem>
-                    <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
-                    <NavItem eventKey={2} title="approved">Approved</NavItem>
-                    <NavItem eventKey={3} title="denied">Denied</NavItem>
-                  </Nav>
-                </Col>
-              </Row>
-
-              <hr />
-
-              <Row>
-                <Col sm={12}>
-                  { this.getRequestView() }
-                </Col>
-              </Row>
-            </Panel>
-
-          </Col>
+            <Row>
+              <Col sm={12}>
+                { this.getRequestView() }
+              </Col>
+            </Row>
+          </Panel>
         </Row>
+
         <Row>
-          <Col xs={12}>
+          <Col sm={4} smOffset={8}>
             <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
           </Col>
         </Row>

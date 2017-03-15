@@ -244,7 +244,7 @@ const ItemCreationForm = React.createClass({
       <Grid fluid>
 
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <h3>Item Creation</h3>
             <hr />
             <p>

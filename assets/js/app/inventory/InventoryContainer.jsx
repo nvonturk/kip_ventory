@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Table, Image, Button, Panel, Label } from 'react-bootstrap'
+import { Grid, Row, Col, Table, Image, Button, Panel, Label, Glyphicon } from 'react-bootstrap'
 import InventoryItem from './InventoryItem'
 import InventoryGridHeader from './InventoryGridHeader'
 import Paginator from '../Paginator'
@@ -106,16 +106,16 @@ class InventoryContainer extends Component {
     return (
       <Grid>
         <Row>
-          <Col xs={10} xsOffset={1}>
+          <Col sm={12} smOffset={0}>
             <Row>
-              <Col xs={12}>
+              <Col sm={12}>
                 <h3>Inventory</h3>
                 <hr />
               </Col>
             </Row>
 
             <Row>
-              <Col xs={12}>
+              <Col sm={12}>
                 <InventoryGridHeader searchHandler={this.handleSearch} tagHandler={this.handleTagSelection} tagsSelected={this.state.tagsSelected} excludeTagHandler={this.handleExcludeTagSelection} excludeTagsSelected={this.state.excludeTagsSelected}/>
               </Col>
             </Row>
@@ -123,18 +123,19 @@ class InventoryContainer extends Component {
             <hr />
 
             <Row>
-              <Col xs={12}>
+              <Col sm={12}>
                 <Table condensed>
                   <thead>
                     <tr>
-                      <th style={{width:"40%"}} className="text-left">Item Information</th>
+                      <th style={{width:"25%"}} className="text-left">Item Information</th>
                       <th style={{width:"5%" }} className="spacer"></th>
                       <th style={{width:"10%"}} className="text-center">Model No.</th>
                       <th style={{width:"10%"}} className="text-center">Available</th>
                       <th style={{width:"5%" }} className="spacer"></th>
-                      <th style={{width:"10%"}} className="text-center">Status</th>
+                      <th style={{width:"10%"}} className="text-left">Tags</th>
+                      <th style={{width:"10%"}} className="text-center"></th>
                       <th style={{width:"8%" }} className="text-center">Quantity</th>
-                      <th style={{width:"12%"}} className="text-center">Action</th>
+                      <th style={{width:"12%"}} className="text-center"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -146,7 +147,7 @@ class InventoryContainer extends Component {
               </Col>
             </Row>
             <Row>
-              <Col xs={4} xsOffset={4}>
+              <Col sm={4} smOffset={4}>
                 <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
               </Col>
             </Row>

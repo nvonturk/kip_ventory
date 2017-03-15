@@ -157,9 +157,8 @@ const CustomFieldContainer = React.createClass({
   render() {
     return (
       <Grid fluid>
-
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <h3>Custom Fields</h3>
             <hr />
             <p>
@@ -173,7 +172,7 @@ const CustomFieldContainer = React.createClass({
         </Row>
 
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <Panel>
               <div>
                 <h4>Existing custom fields</h4>

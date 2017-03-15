@@ -389,9 +389,9 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
     def get(self, request, item_name, format=None):
         requests = self.get_queryset()
         if request.user.is_staff or request.user.is_superuser:
-            requests = models.Request.objects.filter(requested_items__item__name=item_name)
+            requests = self.get_queryset().filter(requested_items__item__name=item_name)
         else:
-            requests = models.Request.objects.filter(requested_items__item__name=item_name, requester=request.user.pk)
+            requests = self.get_queryset().filter(requested_items__item__name=item_name, requester=request.user.pk)
 
         # Return all items if query parameter "all" is set
         all_items = self.request.query_params.get("all", None)
@@ -443,9 +443,14 @@ class RequestListCreate(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
+
+        item = request.query_params.get('item', None)
+        all_requests = request.query_params.get('all', None)
         status = request.GET.get('status')
+
         if not (status is None or status=="All"):
             queryset = models.Request.objects.filter(status=status)
+
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)

@@ -16,16 +16,12 @@ class MultiSelect extends Component {
   }
 
   handleSelectChange (value) {
-    console.log('You\'ve selected:', value);
     this.setState({ value });
-    console.log(this.state);
   }
 
   render () {
     return (
-      <div>
-        <Select style={{fontSize:"12px"}} multi simpleValue value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
-      </div>
+      <Select style={{fontSize:"12px"}} multi simpleValue value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
     );
   }
 }

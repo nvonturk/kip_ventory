@@ -5,11 +5,11 @@ import ReactPaginate from 'react-paginate'
 function Paginator(props) {
 
   return (
-    <Grid>
-      <Row className="show-grid relative-container">
-        <Col xs={12}>
-           <ReactPaginate previousLabel={"previous"}
-                   nextLabel={"next"}
+    <Grid fluid>
+      <Row>
+        <Col sm={12}>
+           <ReactPaginate previousLabel={"<"}
+                   nextLabel={">"}
                    breakLabel={<a href="">...</a>}
                    breakClassName={"break-me"}
                    pageCount={props.pageCount}
