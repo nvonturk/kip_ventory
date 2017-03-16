@@ -92,10 +92,11 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     item         = ItemSerializer(read_only=True, many=False)
     quantity     = serializers.IntegerField(min_value=0, max_value=None, required=True)
+    request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES, default=models.LOAN)
 
     class Meta:
         model = models.CartItem
-        fields = ['item', 'quantity']
+        fields = ['item', 'quantity', 'request_type']
 
 
     def is_future_date(self, date):
@@ -199,19 +200,15 @@ class UserPUTSerializer(serializers.ModelSerializer):
 class RequestedItemSerializer(serializers.ModelSerializer):
     item         = serializers.SlugRelatedField(read_only=True, slug_field="name")
     quantity     = serializers.IntegerField(required=True)
-    # request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES)
+    request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES)
     # due_date     = serializers.DateTimeField(allow_null=True, required=False)
 
     class Meta:
         model = models.RequestedItem
-        fields = ['item', 'quantity']
+        fields = ['item', 'quantity', 'request_type']
 
     def is_future_date(self, date):
         return True
-
-    def to_representation(self, ri):
-        d = {"item": ri.item.name, "quantity": ri.quantity}
-        return d
 
     def validate(self, data):
         # request_type = data.get('request_type', None)
@@ -285,7 +282,6 @@ class RequestPUTSerializer(serializers.ModelSerializer):
         return validated_data
 
     def update(self, instance, data):
-        print(data)
         instance = super(RequestPUTSerializer, self).update(instance, data)
         return instance
 

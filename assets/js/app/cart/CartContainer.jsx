@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Table, FormGroup, FormControl, ControlLabel, Form, Panel, Button, Well } from 'react-bootstrap'
+import { Grid, Row, Col, Table, FormGroup, FormControl, HelpBlock, ControlLabel, Form, Panel, Button, Well } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import CartItemTableRow from './CartItemTableRow'
 import { getJSON, ajax } from 'jquery'
@@ -11,7 +11,9 @@ const CartContainer = React.createClass({
     return {
       cartItems: [],
       requestType: "disbursement",
-      openReason: ""
+      openReason: "",
+      showSuccessNode: false,
+      successNode: null
     }
   },
 
@@ -29,7 +31,8 @@ const CartContainer = React.createClass({
     })
   },
 
-  createRequest() {
+  createRequest(e) {
+    e.preventDefault()
     var _this = this
     var url = "/api/requests/"
     var data = {
@@ -47,16 +50,8 @@ const CartContainer = React.createClass({
       success:function(response){
         _this.setState({
           cartItems: [],
-          showSuccessNode: true,
-          successNode: (
-            <div>
-              <br />
-              <br />
-              <Well>
-                <p>Successfully generated request with ID # {response.request_id}</p>
-                <p><a href={"/app/requests/" + response.request_id + "/"}>Click here to view your request.</a></p>
-              </Well>
-            </div>)
+          showConfirmationNode: true,
+          confirmationNode: _this.getRequestConfirmationNode(response)
         })
       },
       complete:function(){},
@@ -71,103 +66,82 @@ const CartContainer = React.createClass({
     })
   },
 
-  getSuccessNode() {
-    return this.state.showSuccessNode ? this.state.successNode : null
+  getRequestConfirmationNode(request) {
+    return (
+      <Well style={{marginBottom: "0px"}} bsSize="small" className="text-center">
+        <p style={{margin:"5px 0px"}}>Successfully generated request with ID # {request.request_id}</p>
+        <p style={{margin:"5px 0px"}}><a href={"/app/requests/" + request.request_id + "/"}>Click here to view your request.</a></p>
+      </Well>)
+  },
+
+  getPanelContent() {
+    return this.state.showConfirmationNode ? (
+      this.state.confirmationNode
+    ) : (
+      <Table hover condensed style={{marginBottom: "0px"}}>
+        <thead>
+          <tr>
+            <th style={{width:"35%"}} className="text-left">Item Information</th>
+            <th style={{width:"10%"}} className="text-center">Model No.</th>
+            <th style={{width:"10%"}} className="text-center">Available</th>
+            <th style={{width:"5%" }} className="text-left">Tags</th>
+            <th style={{width:"10%"}} className="text-center"></th>
+            <th style={{width:"17%"}} className="text-center">Request Type</th>
+            <th style={{width:"5%" }} className="spacer"/>
+            <th style={{width:"8%" }} className="text-center">Quantity</th>
+          </tr>
+          <tr>
+            <th colSpan={9}>
+              <hr style={{margin: "auto"}} />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.state.cartItems.map( (ci, i) => {
+            return (<CartItemTableRow key={ci.item.name} cartItem={ci} />)
+          })}
+        </tbody>
+      </Table>
+    )
   },
 
   getCartView() {
-    return ((this.state.cartItems.length > 0) || this.state.showSuccessNode) ? (
+    return ((this.state.cartItems.length > 0) || this.state.showConfirmationNode) ? (
       <Row>
-        <Col sm={7}>
+        <Col sm={12}>
           <Row>
-            <Col sm={12}>
-              <Table hover>
-                <thead>
-                  <tr>
-                    <th style={{width:"40%"}} className="text-left">Item Information</th>
-                    <th style={{width:"10%"}} className="text-center">Model No.</th>
-                    <th style={{width:"10%"}} className="text-center">Available</th>
-                    <th style={{width:"10%" }} className="spacer"></th>
-                    <th style={{width:"10%"}} className="text-center"/>
-                    <th style={{width:"5%" }} className="spacer"></th>
-                    <th style={{width:"10%"}}  className="text-center">Quantity</th>
-                    <th style={{width:"5%" }} className="spacer"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {this.state.cartItems.map( (ci, i) => {
-                    return (<CartItemTableRow key={ci.item.name} cartItem={ci} />)
-                  })}
-                </tbody>
-              </Table>
+            <Col sm={8}>
+              <Panel>
+                { this.getPanelContent() }
+              </Panel>
             </Col>
-          </Row>
 
-          <Row>
-            <Col sm={8} smOffset={2} className="text-center">
-              { this.getSuccessNode() }
-            </Col>
-          </Row>
-        </Col>
-
-        <Col sm={5}>
-          <Panel>
-            <Row>
-              <Col sm={12}>
+            <Col sm={4}>
+              <Panel>
                 <h4>Checkout</h4>
                 <hr />
-              </Col>
-            </Row>
-            <Row>
-              <Col sm={12}>
-
-                <Form horizontal>
-
+                <Form onSubmit={this.createRequest}>
                   <FormGroup bsSize="small">
-                    <Col sm={3} componentClass={ControlLabel}>
-                      Request Type
-                    </Col>
-                    <Col sm={8}>
-                      <FormControl className="text-center"
-                                   style={{fontSize:"10px"}}
-                                   componentClass="select"
-                                   name="requestType"
-                                   value={this.state.requestType}
-                                   onChange={this.handleChange}>
-                        <option value="disbursement">Disbursement</option>
-                        <option value="loan">Loan</option>
-                      </FormControl>
-                    </Col>
-                  </FormGroup>
-
-                  <FormGroup bsSize="small">
-                    <Col sm={3} componentClass={ControlLabel}>
-                      Reason
-                    </Col>
-                    <Col sm={8}>
-                      <FormControl type="text"
-                                 style={{resize: "vertical", height:"75px"}}
-                                 componentClass={"textarea"}
-                                 value={this.state.openReason}
+                    <ControlLabel>Justification</ControlLabel>
+                    <FormControl type="text"
+                                 style={{resize: "vertical", height:"100px"}}
+                                 componentClass="textarea"
                                  name="openReason"
+                                 value={this.state.openReason}
                                  onChange={this.handleChange} />
-                    </Col>
+                    <HelpBlock>Enter a brief justification for this request.</HelpBlock>
                   </FormGroup>
-
-                  <FormGroup bsSize="small">
-                    <Col smOffset={3} sm={4}>
-                      <Button disabled={this.state.openReason.length <= 0} bsSize="small" type="button" bsStyle="info" onClick={this.createRequest}>
-                        Request Items
-                      </Button>
-                    </Col>
+                  <FormGroup>
+                    <Button disabled={this.state.showSuccessNode} bsSize="small" bsStyle="info" type="submit">Generate request</Button>
                   </FormGroup>
-
                 </Form>
+              </Panel>
+            </Col>
 
-              </Col>
-            </Row>
-          </Panel>
+          </Row>
+
         </Col>
+
       </Row>
     ) : (
       <Row>
@@ -188,13 +162,12 @@ const CartContainer = React.createClass({
 
         <Row>
           <Col sm={12}>
-            <h3>Shopping Cart</h3>
+            <h3>Your Cart</h3>
             <hr />
           </Col>
         </Row>
 
         { this.getCartView() }
-
 
       </Grid>
     )

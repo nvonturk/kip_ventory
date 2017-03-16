@@ -41,7 +41,7 @@ const RequestDetail = React.createClass({
       <Grid>
         <Row>
           <Col sm={12}>
-            <h3>Request  &nbsp; <span style={{color: "#bf5a16"}}>{this.state.request_id}</span></h3>
+            <h3>Request {this.state.request_id}</h3>
             <hr />
           </Col>
         </Row>

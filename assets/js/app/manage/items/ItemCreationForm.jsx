@@ -138,7 +138,7 @@ const ItemCreationForm = React.createClass({
   },
 
   getSuccessMessage() {
-    var url = "/app/items/" + this.state.createdName
+    var url = "/app/inventory/" + this.state.createdName + "/"
     var ret = this.state.showCreatedSuccess ? (
       <Row>
         <Col sm={12}>
@@ -183,8 +183,10 @@ const ItemCreationForm = React.createClass({
           ajax({
             url: url,
             contentType: "application/json",
-            type: "PUT",
-            data: JSON.stringify({value: cf.value}),
+            type: "POST",
+            data: JSON.stringify({
+              value: cf.value
+            }),
             beforeSend: function(request) {
               request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
             },
@@ -315,6 +317,8 @@ const ItemCreationForm = React.createClass({
                   <Col sm={9} >
                     <FormControl
                       type="text"
+                      style={{resize: "vertical", height:"100px"}}
+                      componentClass={"textarea"}
                       name="description"
                       value={this.state.description}
                       onChange={this.handleItemFieldChange}

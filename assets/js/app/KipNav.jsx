@@ -40,7 +40,7 @@ const KipNav = React.createClass({
               {(this.props.route.user.is_superuser) ? this.getLink("/app/admin/",  "Admin") : null}
             </Nav>
             <Nav pullRight>
-              {this.getLink("/app/cart/", "Cart")}
+              {this.getLink("/app/cart/", <Glyphicon glyph="shopping-cart" />)}
               {this.getLink("/app/profile/", "Profile")}
               {this.getLink("/swagger/", "API")}
               <NavItem eventKey={INDEX} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>

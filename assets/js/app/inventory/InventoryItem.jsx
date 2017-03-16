@@ -1,15 +1,17 @@
 import React from 'react'
-import { Row, Col, Label, Button, FormGroup, FormControl, Glyphicon } from 'react-bootstrap'
+import { Row, Col, Label, Button, FormGroup, FormControl, Glyphicon, OverlayTrigger, Popover } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import { ajax } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import ItemTableDetail from './ItemTableDetail'
 
+
 const InventoryItem = React.createClass({
   getInitialState() {
     return {
       quantity: 1,
-      in_cart: this.props.item.in_cart
+      in_cart: this.props.item.in_cart,
+      showTags: false
     }
   },
 
@@ -30,7 +32,6 @@ const InventoryItem = React.createClass({
     var data = {
       quantity: this.state.quantity,
     }
-
     var _this = this;
     ajax({
       type: "POST",
@@ -62,24 +63,30 @@ const InventoryItem = React.createClass({
     ) : null
   },
 
-  test(e) {
-    e.preventDefault()
-    e.stopPropagation()
-    console.log("HERE")
+  getPopover() {
+    return (
+      <Popover style={{maxWidth:"200px"}} id="tag-popover" >
+        <Col sm={12}>
+          <div style={{fontSize:"10px"}}>
+            <p>{this.props.item.tags.join(', ')}</p>
+          </div>
+        </Col>
+      </Popover>
+    )
   },
 
   render() {
     return (
-      <tr style={{height: "30px"}}>
+      <tr>
         <td data-th="Item Information">
           <ItemTableDetail item={this.props.item} />
         </td>
-        <td className="spacer" />
         <td data-th="Model No." className="text-center">{this.props.item.model_no}</td>
         <td data-th="Available" className="text-center">{this.props.item.quantity}</td>
-        <td className="spacer" />
         <td data-th="Tags" className="text-left">
-          <Glyphicon glyph="tags" />
+          <OverlayTrigger rootClose trigger="click" placement="right" overlay={this.getPopover()}>
+            <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>
+          </OverlayTrigger>
         </td>
         <td className="text-center">
           {this.getItemStatus(this.props.item)}

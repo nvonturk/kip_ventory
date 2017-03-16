@@ -68,8 +68,10 @@ function initialize(userData) {
           <IndexRoute component={InventoryContainer} user={userData} />
           <Route path=":item_name" component={ItemDetail} user={userData} />
         </Route>
-        <Route path="requests" component={RequestsContainer} user={userData}/>
-        <Route path="requests/:request_id" component={RequestDetail} user={userData} />
+        <Route path="requests" user={userData} >
+          <IndexRoute component={RequestsContainer} />
+          <Route path=":request_id" component={RequestDetail} user={userData} />
+        </Route>
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
         {getManagerPanel(userData)}

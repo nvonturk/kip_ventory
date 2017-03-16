@@ -150,7 +150,6 @@ class RequestedItem(models.Model):
     item         = models.ForeignKey(Item,    on_delete=models.CASCADE)
     quantity     = models.PositiveIntegerField(default=0)
     request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
-    # due_date     = models.DateTimeField(blank=True, null=True, default=None)
 
     class Meta:
         ordering = ('item__name',)
