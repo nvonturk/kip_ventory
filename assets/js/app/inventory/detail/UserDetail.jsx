@@ -49,11 +49,23 @@ const UserDetail = React.createClass({
   getItem() {
     var url = "/api/items/" + this.props.params.item_name + "/";
     var _this = this;
-    getJSON(url, function(data) {
-      _this.setState({
-        item: data
-      })
-    })
+    ajax({
+      url: url,
+      contentType: "application/json",
+      type: "GET",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          item: response
+        })
+      },
+      complete:function(){},
+      error:function (xhr, textStatus, thrownError){
+        browserHistory.push("/404/")
+      }
+    });
   },
 
   getOutstandingRequests() {
@@ -68,7 +80,7 @@ const UserDetail = React.createClass({
   },
 
   getTransactions() {
-    var url = "/api/transactions/"
+    var url = "/api/transactions/" + this.props.params.item_name + '/'
     var params = {all: true}
     var _this = this;
     getJSON(url, params, function(data) {

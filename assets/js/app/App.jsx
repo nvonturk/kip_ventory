@@ -1,6 +1,7 @@
 import React from 'react'
+import { Grid, Row, Col } from 'react-bootstrap'
 import { render } from 'react-dom'
-import { Router, Route, browserHistory, IndexRoute } from 'react-router'
+import { Router, Redirect, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
 // import Home from './Home'
 
@@ -68,6 +69,23 @@ function getItemDetailRoute(userData) {
   )
 }
 
+const My404Component = React.createClass({
+  getInitialState() {
+    return {}
+  },
+
+  render() {
+    return (
+      <Grid>
+        <Col sm={12}>
+          <h3>404 - not found</h3>
+          <hr />
+        </Col>
+      </Grid>
+    )
+  }
+})
+
 function initialize(userData) {
   render((
     <Router history={browserHistory}>
@@ -84,7 +102,9 @@ function initialize(userData) {
         <Route path="profile" component={Profile} user={userData} />
         { getManagerPanel(userData) }
         { getAdminPanel(userData) }
+        <Route path='404' component={My404Component} />
       </Route>
+      <Redirect from='*' to='/app/404/' />
     </Router>),
     document.getElementById('root'));
 }

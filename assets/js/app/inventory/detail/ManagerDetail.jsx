@@ -54,11 +54,23 @@ const ManagerDetail = React.createClass({
   getItem() {
     var url = "/api/items/" + this.props.params.item_name + "/";
     var _this = this;
-    getJSON(url, function(data) {
-      _this.setState({
-        item: data
-      })
-    })
+    ajax({
+      url: url,
+      contentType: "application/json",
+      type: "GET",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          item: response
+        })
+      },
+      complete:function(){},
+      error:function (xhr, textStatus, thrownError){
+        browserHistory.push("/404/")
+      }
+    });
   },
 
   getOutstandingRequests() {
@@ -664,7 +676,7 @@ const ManagerDetail = React.createClass({
 
           <Row>
             <Col xs={12}>
-              <Form horizontal onSubmit={this.addToCart}>
+              <Form horizontal onSubmit={this.addToCart} style={{marginBottom: "0px"}}>
                 <FormGroup bsSize="small">
                   <Col sm={3} componentClass={ControlLabel}>
                     Quantity:
@@ -692,10 +704,6 @@ const ManagerDetail = React.createClass({
       <Panel header={"Item Tracking"}>
         <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
           <tbody>
-            <tr>
-              <th className="text-center" style={{paddingRight:"15px", verticalAlign: "middle"}}>Status</th>
-              <th className="text-center">Quantity</th>
-            </tr>
 
             <tr>
               <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Requested</th>
@@ -727,21 +735,18 @@ const ManagerDetail = React.createClass({
       <Grid>
         <Row>
           <Col sm={12}>
-            <Row>
-              <Col sm={12}>
-                <h3>{this.props.params.item_name}</h3>
-                <hr />
-              </Col>
-            </Row>
+
+            <br />
+            <br />
 
             <Row>
-              <Col sm={5}>
+              <Col sm={4}>
                 { this.getItemInfoPanel() }
               </Col>
               <Col sm={4}>
                 { this.getAddToCartForm() }
               </Col>
-              <Col sm={3}>
+              <Col sm={4}>
                 { this.getItemStacksPanel() }
               </Col>
             </Row>
