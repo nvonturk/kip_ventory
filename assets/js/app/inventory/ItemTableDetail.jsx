@@ -12,11 +12,10 @@ const ItemTableDetail = React.createClass({
 
   render() {
     return (
-      <Row >
+      <Row>
         <Col sm={12}>
-          <div style={{margin:"auto"}} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + this.props.item.name + "/")}} >
+          <div style={{margin:"auto", maxHeight:"70px"}} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + this.props.item.name + "/")}} >
             <h5 style={{color: "#df691a"}}>{this.props.item.name}</h5>
-            <p>{this.props.item.description}</p>
           </div>
         </Col>
       </Row>

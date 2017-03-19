@@ -30,7 +30,8 @@ import RequestsContainer from './requests/RequestsContainer'
 import Profile from './Profile'
 import {getJSON} from 'jquery'
 
-import ItemDetail from './inventory/ItemDetail'
+import UserDetail from './inventory/detail/UserDetail'
+import ManagerDetail from './inventory/detail/ManagerDetail'
 import RequestDetail from './requests/RequestDetail'
 
 function getManagerPanel(userData) {
@@ -59,14 +60,21 @@ function getAdminPanel(userData) {
     </Route>) : null
 }
 
-function initialize(userData) {
+function getItemDetailRoute(userData) {
+  return (userData.is_staff || userData.is_superuser) ? (
+    <Route path=":item_name" component={ManagerDetail} user={userData} />
+  ) : (
+    <Route path=":item_name" component={UserDetail} user={userData} />
+  )
+}
 
+function initialize(userData) {
   render((
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
         <Route path="inventory" user={userData}>
           <IndexRoute component={InventoryContainer} user={userData} />
-          <Route path=":item_name" component={ItemDetail} user={userData} />
+          { getItemDetailRoute(userData) }
         </Route>
         <Route path="requests" user={userData} >
           <IndexRoute component={RequestsContainer} />
@@ -74,8 +82,8 @@ function initialize(userData) {
         </Route>
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
-        {getManagerPanel(userData)}
-        {getAdminPanel(userData)}
+        { getManagerPanel(userData) }
+        { getAdminPanel(userData) }
       </Route>
     </Router>),
     document.getElementById('root'));

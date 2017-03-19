@@ -58,17 +58,23 @@ const InventoryItem = React.createClass({
   getItemStatus(item) {
     return this.state.in_cart ? (
       <div style={{display: "flex", flexDirection: "row", justifyContent: 'space-around'}}>
-        <Label className="clickable" href="/app/cart/" bsStyle="warning">In Cart</Label>
+        <Label onClick={() => {browserHistory.push("/app/cart/")}} className="clickable" href="/app/cart/" bsStyle="warning">In Cart</Label>
       </div>
     ) : null
   },
 
   getPopover() {
+    var content = null
+    if (this.props.item.tags.length > 0) {
+      content = this.props.item.tags.join(", ")
+    } else {
+      content = "This item has no tags."
+    }
     return (
       <Popover style={{maxWidth:"200px"}} id="tag-popover" >
         <Col sm={12}>
           <div style={{fontSize:"10px"}}>
-            <p>{this.props.item.tags.join(', ')}</p>
+            <p>{content}</p>
           </div>
         </Col>
       </Popover>
@@ -78,24 +84,26 @@ const InventoryItem = React.createClass({
   render() {
     return (
       <tr>
-        <td data-th="Item Information">
+        <td data-th="Item">
           <ItemTableDetail item={this.props.item} />
         </td>
         <td data-th="Model No." className="text-center">{this.props.item.model_no}</td>
         <td data-th="Available" className="text-center">{this.props.item.quantity}</td>
-        <td data-th="Tags" className="text-left">
-          <OverlayTrigger rootClose trigger="click" placement="right" overlay={this.getPopover()}>
+        <td data-th="Tags" className="text-center">
+          <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getPopover()}>
             <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>
           </OverlayTrigger>
         </td>
+        <td className="spacer" />
         <td className="text-center">
           {this.getItemStatus(this.props.item)}
         </td>
         <td data-th="Quantity">
           <FormGroup bsSize="small" style={{margin:"auto"}}>
-            <FormControl type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onChange} />
+            <FormControl style={{fontSize: "10px"}} type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onChange} />
           </FormGroup>
         </td>
+        <td className="spacer" />
         <td className="text-center" >
           <Button bsSize="small" bsStyle="info" onClick={this.addToCart}>Add to Cart</Button>
         </td>

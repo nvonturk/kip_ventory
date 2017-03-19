@@ -12,8 +12,8 @@ const CartContainer = React.createClass({
       cartItems: [],
       requestType: "disbursement",
       openReason: "",
-      showSuccessNode: false,
-      successNode: null
+      showConfirmationNode: false,
+      confirmationNode: null
     }
   },
 
@@ -81,13 +81,14 @@ const CartContainer = React.createClass({
       <Table hover condensed style={{marginBottom: "0px"}}>
         <thead>
           <tr>
-            <th style={{width:"35%"}} className="text-left">Item Information</th>
+            <th style={{width:"20%"}} className="text-left">Item</th>
+            <th style={{width:"10%"}} className="spacer" />
             <th style={{width:"10%"}} className="text-center">Model No.</th>
             <th style={{width:"10%"}} className="text-center">Available</th>
-            <th style={{width:"5%" }} className="text-left">Tags</th>
+            <th style={{width:"10%" }} className="text-left">Tags</th>
             <th style={{width:"10%"}} className="text-center"></th>
             <th style={{width:"17%"}} className="text-center">Request Type</th>
-            <th style={{width:"5%" }} className="spacer"/>
+            <th style={{width:"5%" }} className="spacer" />
             <th style={{width:"8%" }} className="text-center">Quantity</th>
           </tr>
           <tr>
@@ -129,10 +130,10 @@ const CartContainer = React.createClass({
                                  name="openReason"
                                  value={this.state.openReason}
                                  onChange={this.handleChange} />
-                    <HelpBlock>Enter a brief justification for this request.</HelpBlock>
+                    <HelpBlock>Enter a brief justification for requesting these items.</HelpBlock>
                   </FormGroup>
                   <FormGroup>
-                    <Button disabled={this.state.showSuccessNode} bsSize="small" bsStyle="info" type="submit">Generate request</Button>
+                    <Button disabled={this.state.showConfirmationNode} bsSize="small" bsStyle="info" type="submit">Generate request</Button>
                   </FormGroup>
                 </Form>
               </Panel>

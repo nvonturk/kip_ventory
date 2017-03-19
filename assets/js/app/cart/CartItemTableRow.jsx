@@ -71,11 +71,17 @@ const CartItemTableRow = React.createClass({
   },
 
   getPopover() {
+    var content = null
+    if (this.state.item.tags.length > 0) {
+      content = this.state.item.tags.join(", ")
+    } else {
+      content = "This item has no tags."
+    }
     return (
       <Popover style={{maxWidth:"200px"}} id="tag-popover">
         <Col sm={12}>
           <div style={{fontSize:"10px"}}>
-            <p>{this.state.item.tags.join(', ')}</p>
+            <p>{content}</p>
           </div>
         </Col>
       </Popover>
@@ -85,13 +91,14 @@ const CartItemTableRow = React.createClass({
   render() {
     return (
       <tr>
-        <td data-th="Item Information">
+        <td data-th="Item">
           <ItemTableDetail item={this.state.item} />
         </td>
+        <td />
         <td data-th="Model No." className="text-center">{this.state.item.model_no}</td>
         <td data-th="Available" className="text-center">{this.state.item.quantity}</td>
         <td data-th="Tags" className="text-left">
-          <OverlayTrigger rootClose trigger="click" placement="right" overlay={this.getPopover()}>
+          <OverlayTrigger trigger={["hover", "focus"]} placement="right" overlay={this.getPopover()}>
             <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>
           </OverlayTrigger>
         </td>

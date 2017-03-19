@@ -156,21 +156,22 @@ class RequestedItem(models.Model):
 
 class Loan(models.Model):
     request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loaned_items', blank=True, null=True)
-    item      = models.ForeignKey(Item, on_delete=models.DO_NOTHING)
-    quantity  = models.PositiveIntegerField(default=0)
-    return_date = models.DateTimeField(blank=True, null=True)
+    item      = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity_loaned  = models.PositiveIntegerField(default=0)
+    quantity_returned = models.PositiveIntegerField(default=0)
+
 
 class Disbursement(models.Model):
     request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursed_items', blank=True, null=True)
-    item      = models.ForeignKey(Item, on_delete=models.DO_NOTHING)
+    item      = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity  = models.PositiveIntegerField(default=0)
 
 
 def createLoanFromRequestItem(ri):
     loan = Loan.objects.create(request=ri.request,
                                item=ri.item,
-                               quantity=ri.quantity,
-                               return_date=None)
+                               quantity_loaned=ri.quantity,
+                               quantity_returned=0)
     loan.save()
     return loan
 

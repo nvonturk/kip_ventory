@@ -137,13 +137,7 @@ class InventoryContainer extends Component {
 
             <Row>
               <Col sm={3}>
-                <Panel>
-                  <Row>
-                    <Col sm={12}>
-                      <h4>Refine Results</h4>
-                      <hr />
-                    </Col>
-                  </Row>
+                <Panel header={"Refine Results"}>
                   <Row>
                     <Col sm={12}>
                       <FormGroup>
@@ -187,16 +181,18 @@ class InventoryContainer extends Component {
               </Col>
 
               <Col sm={9}>
-                <Panel>
+                <Panel header={"Current Inventory"}>
                   <Table condensed hover style={{marginBottom: "0px"}}>
                     <thead>
                       <tr>
-                        <th style={{width:"40%"}} className="text-left">Item Information</th>
+                        <th style={{width:"30%"}} className="text-left">Item</th>
                         <th style={{width:"10%"}} className="text-center">Model No.</th>
                         <th style={{width:"10%"}} className="text-center">Available</th>
-                        <th style={{width:"10%"}} className="text-left">Tags</th>
+                        <th style={{width:"10%"}} className="text-center">Tags</th>
+                        <th style={{width:"5%"}} className="spacer" />
                         <th style={{width:"10%"}} className="text-center"></th>
                         <th style={{width:"8%" }} className="text-center">Quantity</th>
+                        <th style={{width:"5%"}} className="spacer" />
                         <th style={{width:"12%"}} className="text-center"></th>
                       </tr>
                       <tr>

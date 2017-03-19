@@ -98,7 +98,6 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = models.CartItem
         fields = ['item', 'quantity', 'request_type']
 
-
     def is_future_date(self, date):
         now = timezone.now()
         return date > now
@@ -119,9 +118,9 @@ class CartItemSerializer(serializers.ModelSerializer):
         if (cart_quantity <= 0):
             raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
 
-        # request_type = data.get('request_type', None)
-        # if (request_type != "disbursement") and (request_type != "loan"):
-        #     raise ValidationError({"request_type": ["Request type must be one of 'disbursement', 'loan'."]})
+        request_type = data.get('request_type', None)
+        if (request_type != "disbursement") and (request_type != "loan"):
+            raise ValidationError({"request_type": ["Request type must be one of 'disbursement', 'loan'."]})
 
         return data
 
@@ -134,7 +133,6 @@ class CartItemSerializer(serializers.ModelSerializer):
         ci = super(CartItemSerializer, self).update(ci, validated_data)
         ci.save()
         return ci
-
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -201,7 +199,6 @@ class RequestedItemSerializer(serializers.ModelSerializer):
     item         = serializers.SlugRelatedField(read_only=True, slug_field="name")
     quantity     = serializers.IntegerField(required=True)
     request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES)
-    # due_date     = serializers.DateTimeField(allow_null=True, required=False)
 
     class Meta:
         model = models.RequestedItem
@@ -275,15 +272,32 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         date_closed = timezone.now()
         administrator = data.get('administrator', None)
-
         validated_data = super(RequestPUTSerializer, self).to_internal_value(data)
-
         validated_data.update({"date_closed": date_closed, "administrator": administrator})
         return validated_data
 
     def update(self, instance, data):
         instance = super(RequestPUTSerializer, self).update(instance, data)
         return instance
+
+class DisbursementSerializer(serializers.ModelSerializer):
+    request = RequestSerializer(read_only=True)
+    item    = ItemSerializer(read_only=True)
+
+    class Meta:
+        model = models.Disbursement
+        fields = ['id', 'request', 'item', 'quantity']
+        read_only_fields = ['id', 'request', 'item', 'quantity']
+
+class LoanSerializer(serializers.ModelSerializer):
+    request = RequestSerializer(read_only=True)
+    item    = ItemSerializer(read_only=True)
+
+    class Meta:
+        model = models.Loan
+        fields = ['id', 'request', 'item', 'quantity_loaned', 'quantity_returned']
+        read_only_fields = ['id', 'request', 'item', 'quantity_loaned']
+
 
 class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)
