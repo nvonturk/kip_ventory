@@ -109,7 +109,7 @@ SFTP_STORAGE_PARAMS = {
     'allow_agent': False,
     'look_for_keys': False,
 }
-SFTP_KNOWN_HOST_FILE = '../../known_hosts'
+SFTP_KNOWN_HOST_FILE = '~/.ssh/known_hosts'
 SFTP_STORAGE_INTERACTIVE = False
 
 
