@@ -5,9 +5,6 @@ import ReactPaginate from 'react-paginate'
 function Paginator(props) {
 
   return (
-    <Grid fluid>
-      <Row>
-        <Col sm={12}>
            <ReactPaginate previousLabel={"<"}
                    nextLabel={">"}
                    breakLabel={<a href="">...</a>}
@@ -20,9 +17,6 @@ function Paginator(props) {
                    containerClassName={"pagination"}
                    subContainerClassName={"pages pagination"}
                    activeClassName={"active"} />
-        </Col>
-      </Row>
-    </Grid>
   )
 }
 

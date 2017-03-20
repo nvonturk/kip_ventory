@@ -5,15 +5,14 @@ from rest_framework import authentication, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotFound
 from rest_framework.authtoken.models import Token
-
-
+from rest_framework.views import APIView
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
+from django.db.models import Q, F
 
 from . import models, serializers
 from rest_framework import pagination
@@ -22,8 +21,9 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.views import password_reset, password_reset_confirm
+from django.http import HttpResponse
 
-import requests
+import requests, csv, os
 
 
 class CustomPagination(pagination.PageNumberPagination):
@@ -302,10 +302,10 @@ class GetItemStacks(generics.GenericAPIView):
                 if (ri.item.name == item_name):
                     rq += ri.quantity
 
-        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name)
+        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, returned=False)
         lq = 0
         for l in loans.all():
-            lq += (l.quantity_loaned - l.quantity_returned)
+            lq += (l.quantity)
 
         disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
         dq = 0
@@ -324,6 +324,26 @@ class GetItemStacks(generics.GenericAPIView):
             "in_cart": cq,
         }
         return Response(data)
+
+class DownloadCSVTemplate(APIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+        schema = ["name", "model_no", "quantity", "description", "tags"]
+        for cf in models.CustomField.objects.all():
+            schema.append(cf.name)
+
+        # construct a blank csv file template
+        with open('template.csv', 'w') as template:
+            wr = csv.writer(template)
+            wr.writerow(schema)
+
+        template = open('template.csv', 'rb')
+        response = HttpResponse(content=template)
+        response['Content-Type'] = 'text/csv'
+        response['Content-Disposition'] = 'attachment; filename="import_template.csv"'
+        os.remove('template.csv')
+        return response
 
 
 
@@ -624,6 +644,10 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         data = request.data.copy()
         data.update({'administrator': request.user})
         instance = self.get_instance(request_pk)
+
+        if not (instance.status == 'O'):
+            return Response({"error": "Only outstanding requests may be modified."})
+
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
@@ -633,33 +657,51 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                 for ri in instance.requested_items.all():
                     requestItemDenial(ri, request.user.pk, instance)
+            # need to check that we're not giving out more instances than currently exist
             elif data['status'] == 'A':
                 valid_request = True
-                for ri in instance.requested_items.all():
-                    if (ri.quantity > ri.item.quantity):
+                ri_data = data.get('requested_items', [])
+                ri_instances = []
+                for ri_instance, ri_dict in zip(instance.requested_items.all(), ri_data):
+                    # ri_instance = instance.requested_items.all().get(item__name=ri_data.get('item'))
+                    ri_instances.append(ri_instance)
+                    if (ri_instance.item.quantity < int(ri_dict.get('quantity'))):
                         valid_request = False
-                        break
-                # decrement quantity available on each item in the approved request
                 if valid_request:
-                    for ri in instance.requested_items.all():
-                        ri.item.quantity = (ri.item.quantity - ri.quantity)
-                        ri.item.save()
-                        # create a loan or disbursement object
-                        print(ri.request_type)
-                        if ri.request_type == models.LOAN:
-                            loan = models.createLoanFromRequestItem(ri)
-                            loan.save()
+                    for ri_instance, ri_dict in zip(ri_instances, ri_data):
+                        new_quantity = int(ri_dict.get('quantity'))
+                        new_type = ri_dict.get('request_type')
+                        ri_instance.request_type = new_type
+                        ri_instance.quantity = new_quantity
+                        ri_instance.save()
+                        if ri_instance.request_type == models.LOAN:
+                            loan = models.createLoanFromRequestItem(ri_instance)
                             print(loan)
-                        elif ri.request_type == models.DISBURSEMENT:
-                            disbursement = models.createDisbursementFromRequestItem(ri)
-                            disbursement.save()
+                        elif ri_instance.request_type == models.DISBURSEMENT:
+                            disbursement = models.createDisbursementFromRequestItem(ri_instance)
                             print(disbursement)
+                else:
+                    return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
+                # # decrement quantity available on each item in the approved request
+                # if valid_request:
+                #     for ri in instance.requested_items.all():
+                #         ri.item.quantity = (ri.item.quantity - ri.quantity)
+                #         ri.item.save()
+                #         # create a loan or disbursement object
+                #         if ri.request_type == models.LOAN:
+                #             loan = models.createLoanFromRequestItem(ri)
+                #             loan.save()
+                #             print(loan)
+                #         elif ri.request_type == models.DISBURSEMENT:
+                #             disbursement = models.createDisbursementFromRequestItem(ri)
+                #             disbursement.save()
+                #             print(disbursement)
 
                         # Insert Create Log
                         # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                        requestItemApproval(ri, request.user.pk, instance)
-                else:
-                    return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
+                        # requestItemApproval(ri, request.user.pk, instance)
+                # else:
+                #     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -678,41 +720,41 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-class RequestedItemDetailModifyDelete(generics.GenericAPIView):
-    authentication_classes = (authentication.SessionAuthentication,)
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def get_requested_item(self, request_pk, item_name):
-        try:
-            return models.RequestedItem.objects.filter(request__pk=request_pk).get(item__name=item_name)
-        except models.RequestedItem.DoesNotExist:
-            raise NotFound("Item '{}' could not be found in Request with primary key '{}'".format(item_name, request_pk))
-
-    def get_queryset(self):
-        return models.RequestedItems.objects.filter(request__pk=request_pk)
-
-    def get_serializer_class(self):
-        return serializers.RequestedItemSerializer
-
-    def get(self, request, request_pk, item_name, format=None):
-        ri = self.get_requested_item(request_pk, item_name)
-        serializer = self.get_serializer(instance=ri)
-        return Response(serializer.data)
-
-    def put(self, request, request_pk, item_name, format=None):
-        ri = self.get_requested_item(request_pk, item_name)
-        data = request.data.copy()
-        serializer = self.get_serializer(instance=ri, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, request_pk, item_name, format=None):
-        ri = self.get_requested_item(request_pk, item_name)
-        ri.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+#
+# class RequestedItemDetailModifyDelete(generics.GenericAPIView):
+#     authentication_classes = (authentication.SessionAuthentication,)
+#     permission_classes = (permissions.IsAuthenticated,)
+#
+#     def get_requested_item(self, request_pk, item_name):
+#         try:
+#             return models.RequestedItem.objects.filter(request__pk=request_pk).get(item__name=item_name)
+#         except models.RequestedItem.DoesNotExist:
+#             raise NotFound("Item '{}' could not be found in Request with primary key '{}'".format(item_name, request_pk))
+#
+#     def get_queryset(self):
+#         return models.RequestedItems.objects.filter(request__pk=request_pk)
+#
+#     def get_serializer_class(self):
+#         return serializers.RequestedItemSerializer
+#
+#     def get(self, request, request_pk, item_name, format=None):
+#         ri = self.get_requested_item(request_pk, item_name)
+#         serializer = self.get_serializer(instance=ri)
+#         return Response(serializer.data)
+#
+#     def put(self, request, request_pk, item_name, format=None):
+#         ri = self.get_requested_item(request_pk, item_name)
+#         data = request.data.copy()
+#         serializer = self.get_serializer(instance=ri, data=data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#     def delete(self, request, request_pk, item_name, format=None):
+#         ri = self.get_requested_item(request_pk, item_name)
+#         ri.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LoanList(generics.GenericAPIView):
@@ -731,6 +773,13 @@ class LoanList(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
+
+        status = request.query_params.get('status', None)
+        if status == "outstanding":
+            queryset = queryset.filter(quantity_loaned__gt=F('quantity_returned'))
+        elif status == "returned":
+            queryset = queryset.filter(quantity_loaned=F('quantity_returned'))
+
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -763,11 +812,42 @@ class LoanDetailModify(generics.GenericAPIView):
     def put(self, request, pk, format=None):
         loan = self.get_instance(pk=pk)
         data = request.data.copy()
+        data.update({"loan": loan})
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ConvertLoanToDisbursement(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = models.Loan.objects.all()
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(request__requester=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        return serializers.ConversionSerializer
+
+    def get_instance(self, pk):
+        try:
+            return models.Loan.objects.get(pk=pk)
+        except models.Loan.DoesNotExist:
+            raise NotFound('Loan {} not found.'.format(pk))
+
+    def post(self, request, pk, format=None):
+        loan = self.get_instance(pk=pk)
+        data = request.data.copy()
+        data.update({"loan": loan})
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DisbursementList(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
@@ -790,7 +870,7 @@ class DisbursementList(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
-class DisbursementDetailModify(generics.GenericAPIView):
+class DisbursementDetail(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -813,15 +893,6 @@ class DisbursementDetailModify(generics.GenericAPIView):
         disbursement = self.get_instance(pk=pk)
         serializer = self.get_serializer(instance=disbursement)
         return Response(serializer.data)
-
-    def put(self, request, pk, format=None):
-        disbursement = self.get_instance(pk=pk)
-        data = request.data.copy()
-        serializer = self.get_serializer(instance=disbursement, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

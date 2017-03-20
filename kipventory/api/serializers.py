@@ -216,6 +216,7 @@ class RequestedItemSerializer(serializers.ModelSerializer):
         #     else:
         #         if not self.is_future_date(due_date):
         #             raise ValidationError({"due_date": ["Only future dates are allowed."]})
+        data = super(RequestedItemSerializer, self).validate(data)
         return data
 
     def create(self, validated_data):
@@ -286,8 +287,8 @@ class DisbursementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Disbursement
-        fields = ['id', 'request', 'item', 'quantity']
-        read_only_fields = ['id', 'request', 'item', 'quantity']
+        fields = ['id', 'request', 'item', 'quantity', 'date']
+        read_only_fields = ['id', 'request', 'item', 'quantity', 'date']
 
 class LoanSerializer(serializers.ModelSerializer):
     request = RequestSerializer(read_only=True)
@@ -295,9 +296,44 @@ class LoanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Loan
-        fields = ['id', 'request', 'item', 'quantity_loaned', 'quantity_returned']
-        read_only_fields = ['id', 'request', 'item', 'quantity_loaned']
+        fields = ['id', 'request', 'item', 'quantity', 'returned', 'date_loaned', 'date_returned']
+        read_only_fields = ['id', 'request', 'item', 'quantity', 'date_loaned']
 
+    def update(self, instance, data):
+        is_returned = data.get('returned', False)
+        instance.is_returned = is_returned
+        if (instance.is_returned):
+            instance.date_returned = timezone.now()
+        instance.save()
+        return instance
+
+class ConversionSerializer(serializers.Serializer):
+    quantity = serializers.IntegerField(required=True)
+
+    def to_internal_value(self, data):
+        quantity = data.get('quantity', None)
+        loan = data.get('loan', None)
+        try:
+            quantity = int(quantity)
+        except:
+            raise serializers.ValidationError({"quantity": ["Quantity must be a positive integer."]})
+        if quantity <= 0:
+            raise serializers.ValidationError({"quantity": ["Quantity must be a positive integer."]})
+        if quantity > loan.quantity:
+            raise serializers.ValidationError({"quantity": ["Quantity must not be greater than the number of instances in this loan ({})".format(loan.quantity)]})
+
+        return {"quantity": quantity, "loan": loan}
+
+    def create(self, validated_data):
+        loan = validated_data.get('loan')
+        quantity = validated_data.get('quantity')
+        d = models.Disbursement.objects.create(request=loan.request, item=loan.item, quantity=quantity)
+        loan.quantity -= quantity
+        loan.save()
+        if (loan.quantity == 0):
+            loan.delete()
+        d.save()
+        return d
 
 class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)

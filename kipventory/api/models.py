@@ -149,20 +149,23 @@ class RequestedItem(models.Model):
     request      = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='requested_items', blank=True, null=True)
     item         = models.ForeignKey(Item,    on_delete=models.CASCADE)
     quantity     = models.PositiveIntegerField(default=0)
-    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
+    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=LOAN)
 
     class Meta:
         ordering = ('item__name',)
 
 class Loan(models.Model):
     request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loaned_items', blank=True, null=True)
+    date_loaned = models.DateTimeField(blank=True, auto_now_add=True)
     item      = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity_loaned  = models.PositiveIntegerField(default=0)
-    quantity_returned = models.PositiveIntegerField(default=0)
+    quantity  = models.PositiveIntegerField(default=0)
+    returned  = models.BooleanField(default=False)
+    date_returned = models.DateTimeField(blank=True, null=True)
 
 
 class Disbursement(models.Model):
     request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursed_items', blank=True, null=True)
+    date      = models.DateTimeField(blank=True, auto_now_add=True)
     item      = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity  = models.PositiveIntegerField(default=0)
 
@@ -170,8 +173,10 @@ class Disbursement(models.Model):
 def createLoanFromRequestItem(ri):
     loan = Loan.objects.create(request=ri.request,
                                item=ri.item,
-                               quantity_loaned=ri.quantity,
-                               quantity_returned=0)
+                               quantity=ri.quantity,
+                               returned=False)
+    ri.item.quantity -= ri.quantity
+    ri.item.save()
     loan.save()
     return loan
 
@@ -179,6 +184,8 @@ def createDisbursementFromRequestItem(ri):
     disbursement = Disbursement.objects.create(request=ri.request,
                                                item=ri.item,
                                                quantity=ri.quantity)
+    ri.item.quantity -= ri.quantity
+    ri.item.save()
     disbursement.save()
     return disbursement
 

@@ -1,12 +1,12 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Nav, NavItem, Table, Panel, Label, Well } from 'react-bootstrap'
+import { Grid, Row, Col, Button, Nav, NavItem, Table, Panel, Label, Well, Pagination } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import $ from "jquery"
 import Paginator from '../Paginator'
 import { ajax, getJSON } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 
-const REQUESTS_PER_PAGE = 5;
+const REQUESTS_PER_PAGE = 10;
 
 const STATUS = ["All", "O", "A", "D"];
 
@@ -46,12 +46,8 @@ const RequestsContainer = React.createClass({
     })
   },
 
-  handlePageClick(data) {
-    let selected = data.selected;
-    let offset = Math.ceil(selected * REQUESTS_PER_PAGE);
-    let page = data.selected + 1;
-
-    this.setState({page: page}, () => {
+  handlePageSelect(activeKey) {
+    this.setState({page: activeKey}, () => {
       this.getRequests();
     });
   },
@@ -112,24 +108,41 @@ const RequestsContainer = React.createClass({
   getRequestView() {
 
     return (
-      <Row>
-        <Col sm={12}>
-          <Table condensed hover >
+
+      <div className="panel panel-default">
+
+        <div className="panel-heading">
+          <Row>
+            <Col xs={12}>
+              <span className="panel-title">Request Listing</span>
+            </Col>
+          </Row>
+        </div>
+
+        <div className="panel-body" style={{minHeight: "480px", maxHeight: "500px"}}>
+          <Table condensed hover style={{marginBottom:"0px"}}>
             <thead>
               <tr>
+                <th style={{width: " 5%"}} className="text-center">ID</th>
                 <th style={{width: "15%"}} className="text-left">Requester</th>
                 <th style={{width: "20%"}} className="text-left">Date Open</th>
                 <th style={{width: "25%"}} className="text-left">Comment</th>
                 <th style={{width: "15%"}} className="text-center">Status</th>
-                <th style={{width: "12%"}} className="text-center"></th>
-                <th style={{width: "13%"}} className="text-center"></th>
+                <th style={{width: "10%"}} className="text-center"></th>
+                <th style={{width: "10%"}} className="text-center"></th>
+              </tr>
+              <tr>
+                <th colSpan={6}>
+                  <hr style={{margin: "auto"}} />
+                </th>
               </tr>
             </thead>
             <tbody>
               {this.state.requests.map( (request, i) => {
                 var d = new Date(request.date_open)
                 return (
-                  <tr key={request.request_id} style={{height: '50px'}}>
+                  <tr key={request.request_id} style={{height: "41px"}}>
+                    <td data-th="ID" className="text-center">{request.request_id}</td>
                     <td data-th="Requester" className="text-left">{request.requester}</td>
                     <td data-th="Date Open" className="text-left">{d.toLocaleString()}</td>
                     <td data-th="Comment" className="text-left">
@@ -138,10 +151,10 @@ const RequestsContainer = React.createClass({
                       </div>
                     </td>
                     <td data-th="Status" className="text-center">{this.getStatusLabel(request.status)}</td>
-                    <td style={{width: "12%"}} className="text-center">
+                    <td className="text-center">
                       <Button block bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
                     </td>
-                    <td style={{width: "13%"}} className="text-center">
+                    <td className="text-center">
                       <Button block bsSize="small" bsStyle="danger" onClick={e => this.deleteRequest(request)} disabled={request.status != 'O'}>Cancel</Button>
                     </td>
                   </tr>
@@ -149,8 +162,17 @@ const RequestsContainer = React.createClass({
               })}
             </tbody>
           </Table>
-        </Col>
-      </Row>
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks ellipsis style={{float:"right", margin: "0px"}} bsSize="small" items={this.state.pageCount} activePage={this.state.page} onSelect={this.handlePageSelect} />
+            </Col>
+          </Row>
+        </div>
+
+      </div>
     )
   },
 
@@ -170,44 +192,38 @@ const RequestsContainer = React.createClass({
 
         <Row>
           <Col sm={12}>
-            <h3>Requests</h3>
-            <hr />
-            <p>
-              View, respond to, and manage inventory requests.
-            </p>
-            <br />
-          </Col>
-
-          { this.getSuccessMessage() }
-
-          <Panel>
             <Row>
               <Col sm={12}>
-                <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-                  <NavItem eventKey={0} title="all">All</NavItem>
-                  <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
-                  <NavItem eventKey={2} title="approved">Approved</NavItem>
-                  <NavItem eventKey={3} title="denied">Denied</NavItem>
-                </Nav>
+                <h3>Your Requests</h3>
+                <hr />
               </Col>
             </Row>
 
-            <hr />
+            { this.getSuccessMessage() }
 
             <Row>
-              <Col sm={12}>
+              <Col sm={3}>
+                <Panel header={<span>Filter Request Type</span>}>
+                  <Row>
+                    <Col sm={12}>
+                      <Nav bsStyle="pills" stacked activeKey={this.state.activeKey} onSelect={this.handleSelect}>
+                        <NavItem eventKey={0} title="all">All</NavItem>
+                        <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
+                        <NavItem eventKey={2} title="approved">Approved</NavItem>
+                        <NavItem eventKey={3} title="denied">Denied</NavItem>
+                      </Nav>
+                    </Col>
+                  </Row>
+                </Panel>
+              </Col>
+
+              <Col sm={9}>
                 { this.getRequestView() }
               </Col>
             </Row>
-          </Panel>
-        </Row>
 
-        <Row>
-          <Col sm={4} smOffset={8}>
-            <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
           </Col>
         </Row>
-
       </Grid>
     )
   }

@@ -118,7 +118,8 @@ const CartContainer = React.createClass({
             </Col>
 
             <Col sm={4}>
-              <Panel>
+              <Well>
+
                 <h4>Checkout</h4>
                 <hr />
                 <Form onSubmit={this.createRequest}>
@@ -128,6 +129,7 @@ const CartContainer = React.createClass({
                                  style={{resize: "vertical", height:"100px"}}
                                  componentClass="textarea"
                                  name="openReason"
+                                 disabled={this.state.showConfirmationNode}
                                  value={this.state.openReason}
                                  onChange={this.handleChange} />
                     <HelpBlock>Enter a brief justification for requesting these items.</HelpBlock>
@@ -136,7 +138,7 @@ const CartContainer = React.createClass({
                     <Button disabled={this.state.showConfirmationNode} bsSize="small" bsStyle="info" type="submit">Generate request</Button>
                   </FormGroup>
                 </Form>
-              </Panel>
+              </Well>
             </Col>
 
           </Row>

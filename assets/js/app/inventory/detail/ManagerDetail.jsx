@@ -10,6 +10,7 @@ import TagMultiSelect from '../../TagMultiSelect'
 const ManagerDetail = React.createClass({
   getInitialState() {
     return {
+      itemExists: true,
       requests: [],
       transactions: [],
       loans: [],
@@ -68,7 +69,11 @@ const ManagerDetail = React.createClass({
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
-        browserHistory.push("/404/")
+        if (xhr.status == 404) {
+          _this.setState({
+            itemExists: false
+          })
+        }
       }
     });
   },
@@ -242,7 +247,7 @@ const ManagerDetail = React.createClass({
   getQuantityAndModelNoForm() {
     return (
       <Row>
-        <Col sm={8} xs={12}>
+        <Col xs={8} xs={12}>
           <FormGroup bsSize="small" controlId="model_no">
             <ControlLabel>Model No.</ControlLabel>
             <FormControl disabled={!this.props.route.user.is_superuser && !this.props.route.user.is_staff}
@@ -252,7 +257,7 @@ const ManagerDetail = React.createClass({
                          onChange={this.handleItemFormChange}/>
           </FormGroup>
         </Col>
-        <Col sm={4} xs={12}>
+        <Col xs={4} xs={12}>
           <FormGroup bsSize="small" controlId="quantity" >
             <ControlLabel>Quantity<span style={{color:"red"}}>*</span></ControlLabel>
             <FormControl disabled={!this.props.route.user.is_superuser}
@@ -349,7 +354,7 @@ const ManagerDetail = React.createClass({
 
   deleteItem(e) {
     e.preventDefault()
-    var url = "/api/items/" + this.state.item.name + "/"
+    var url = "/api/items/" + this.props.params.item_name + "/"
     ajax({
       url: url,
       type: "DELETE",
@@ -385,7 +390,7 @@ const ManagerDetail = React.createClass({
         </div>} >
         <Form onSubmit={this.handleSubmit}>
           <Row>
-            <Col sm={12} xs={12}>
+            <Col xs={12}>
               <FormGroup bsSize="small" controlId="name">
                 <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
                 <FormControl type="text" name="name" value={this.state.item.name} onChange={this.handleItemFormChange}/>
@@ -396,7 +401,7 @@ const ManagerDetail = React.createClass({
           {this.getQuantityAndModelNoForm()}
 
           <Row>
-            <Col sm={12} xs={12}>
+            <Col xs={12}>
               <FormGroup bsSize="small" controlId="description">
                 <ControlLabel>Description</ControlLabel>
                 <FormControl type="text"
@@ -410,7 +415,7 @@ const ManagerDetail = React.createClass({
           </Row>
 
           <Row>
-            <Col sm={12} xs={12}>
+            <Col xs={12}>
               <FormGroup bsSize="small" controlId="tags">
                 <ControlLabel>Tags</ControlLabel>
                 <TagMultiSelect tagsSelected={this.state.item.tags} tagHandler={this.handleTagSelection}/>
@@ -421,7 +426,7 @@ const ManagerDetail = React.createClass({
           {this.getCustomFieldForms()}
 
           <Row>
-            <Col sm={6} smOffset={0} xs={4} xsOffset={4}>
+            <Col xs={6} smOffset={0}>
               <Button bsSize="small" bsStyle="info" type="submit">Save</Button>
             </Col>
           </Row>
@@ -439,7 +444,7 @@ const ManagerDetail = React.createClass({
     return (
       <Panel header={
         <div>
-          <span>Product Information</span>
+          <span>Item Details</span>
           <span className="clickable" style={{float: "right"}}>
             <Glyphicon glyph="pencil" onClick={this.toggleEdit}/>
             { deleteIcon }
@@ -518,38 +523,47 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-              <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">#</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Opened</th>
+              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Opened</th>
               <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
               <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Type</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
             </tr>
           </thead>
           <tbody>
 
             { this.state.requests.map( (request, i) => {
-              var request_item = request.requested_items.filter( (ri) => {return (ri.item == this.state.item.name)})[0]
-              return (
-                <tr key={request.request_id}>
-                  <td data-th="#" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {request.request_id}
-                  </td>
-                  <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    <a style={{color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
-                  </td>
-                  <td data-th="Date Opened" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {new Date(request.date_open).toLocaleDateString()}
-                  </td>
-                  <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {request_item.quantity}
-                  </td>
-                  <td data-th="Type" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    <Label bsSize="small" bsStyle={(request_item.request_type == "loan") ? ("info") : ("warning")}>
-                      {request_item.request_type}
-                    </Label>
-                  </td>
-                </tr>
-              )
+              var request_items = request.requested_items.filter( (ri) => {return (ri.item == this.state.item.name)})
+              if (request_items.length == 1) {
+                var request_item = request_items[0]
+                var label = null
+                if (request_item.request_type == 'loan') {
+                  label = <Label bsStyle="primary">Loan</Label>
+                } else if (request_item.request_type == 'disbursement') {
+                  label = <Label bsStyle="info">Disbursement</Label>
+                }
+                return (
+                  <tr key={request.request_id}>
+                    <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      {request.request_id}
+                    </td>
+                    <td data-th="Date Opened" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      {new Date(request.date_open).toLocaleDateString()}
+                    </td>
+                    <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      {request_item.quantity}
+                    </td>
+                    <td data-th="Type" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      { label }
+                    </td>
+                    <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      <a style={{color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
+                    </td>
+                  </tr>
+                )
+              } else {
+                return null
+              }
             })}
           </tbody>
         </Table>
@@ -567,7 +581,7 @@ const ManagerDetail = React.createClass({
     if (this.state.loans.length == 0) {
       loanTable = (
         <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}}>
-          This item has not been loaned to you.
+          You have no outstanding loans for this item.
         </Well>
       )
     } else {
@@ -575,31 +589,27 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-            <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">#</th>
-            <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
-            <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Approved</th>
-            <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
-            <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
+            <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+            <th style={{width: "40%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Date</th>
+            <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+            <th style={{width: "35%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
             </tr>
           </thead>
           <tbody>
             { this.state.loans.map( (loan, i) => {
               return (
                 <tr key={loan.id}>
-                  <td data-th="#" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
                     {loan.id}
+                  </td>
+                  <td data-th="Loan Date" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {new Date(loan.request.date_closed).toLocaleDateString()}
+                  </td>
+                  <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {loan.quantity}
                   </td>
                   <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
                     <a style={{color: "#5bc0de"}} href={"/app/loans/" + loan.id + "/"}>Click to view</a>
-                  </td>
-                  <td data-th="Date Approved" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {new Date(loan.request.date_closed).toLocaleDateString()}
-                  </td>
-                  <td data-th="Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {loan.quantity_loaned}
-                  </td>
-                  <td data-th="Returned" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {loan.quantity_returned}
                   </td>
                 </tr>
               )
@@ -609,7 +619,7 @@ const ManagerDetail = React.createClass({
       )
     }
     return (
-      <Panel header={"Approved Loans"}>
+      <Panel header={"Outstanding Loans"}>
         { loanTable }
       </Panel>
     )
@@ -658,7 +668,7 @@ const ManagerDetail = React.createClass({
       )
     }
     return (
-      <Panel header={"Approved Disbursements"}>
+      <Panel header={"Disbursements"}>
         {disbursementTable}
       </Panel>
     )
@@ -669,7 +679,7 @@ const ManagerDetail = React.createClass({
         <Grid fluid>
           <Row>
             <Col xs={12}>
-              <h4><a href={"/app/inventory/" + this.state.item.name + "/"}>{this.props.params.item_name}</a></h4>
+              <h3 style={{marginTop: "0px"}}><a href={"/app/inventory/" + this.state.item.name + "/"}>{this.props.params.item_name}</a></h3>
               <hr />
             </Col>
           </Row>
@@ -678,17 +688,17 @@ const ManagerDetail = React.createClass({
             <Col xs={12}>
               <Form horizontal onSubmit={this.addToCart} style={{marginBottom: "0px"}}>
                 <FormGroup bsSize="small">
-                  <Col sm={3} componentClass={ControlLabel}>
+                  <Col xs={3} componentClass={ControlLabel}>
                     Quantity:
                   </Col>
-                  <Col sm={4}>
+                  <Col xs={4}>
                     <FormControl type="number"
                                  min={1} max={this.state.item.quantity} step={1}
                                  name="addToCartQuantity"
                                  value={this.state.addToCartQuantity}
                                  onChange={this.handleCartQuantityChange} />
                   </Col>
-                  <Col sm={4}>
+                  <Col xs={4}>
                     <Button bsStyle="info" bsSize="small" type="submit">Add to cart</Button>
                   </Col>
                 </FormGroup>
@@ -704,7 +714,6 @@ const ManagerDetail = React.createClass({
       <Panel header={"Item Tracking"}>
         <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
           <tbody>
-
             <tr>
               <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Requested</th>
               <td style={{border: "1px solid #596a7b"}} className="text-center">{this.state.stacks.requested}</td>
@@ -731,65 +740,69 @@ const ManagerDetail = React.createClass({
   },
 
   render() {
-    return (
-      <Grid>
-        <Row>
-          <Col sm={12}>
+    if (this.state.itemExists) {
+      return (
+        <Grid>
+          <Row>
+            <Col xs={12}>
 
-            <br />
-            <br />
+              <br />
+              <br />
 
-            <Row>
-              <Col sm={4}>
-                { this.getItemInfoPanel() }
-              </Col>
-              <Col sm={4}>
-                { this.getAddToCartForm() }
-              </Col>
-              <Col sm={4}>
-                { this.getItemStacksPanel() }
-              </Col>
-            </Row>
+              <Row>
+                <Col xs={4}>
+                  { this.getAddToCartForm() }
+                </Col>
+                <Col xs={4}>
+                  { this.getItemInfoPanel() }
+                </Col>
+                <Col xs={4}>
+                  { this.getItemStacksPanel() }
+                </Col>
+              </Row>
 
-            <hr />
-            <br />
+              <hr />
+              <br />
 
-            <Row>
-              <Col sm={6}>
-                { this.getRequestsPanel() }
-              </Col>
-              <Col sm={6}>
-                <Row>
-                  <Col sm={12}>
-                    { this.getLoanPanel() }
-                  </Col>
-                </Row>
-                <Row>
-                  <Col sm={12}>
-                    { this.getDisbursementPanel() }
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
+              <Row>
+                <Col xs={6}>
+                  { this.getRequestsPanel() }
+                </Col>
+                <Col xs={6}>
+                  { this.getLoanPanel() }
+                </Col>
+              </Row>
 
-          </Col>
-        </Row>
+            </Col>
+          </Row>
 
-        <Modal show={this.state.deleteItem} onHide={this.toggleDeleteConfirmation}>
-          <Modal.Header closeButton>
-            <Modal.Title>Delete Item</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p style={{fontSize: "14px"}}>Are you sure you want to delete this item?</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button bsSize="small" onClick={this.toggleDeleteConfirmation}>Cancel</Button>
-            <Button bsStyle="danger" bsSize="small" onClick={this.deleteItem}>Delete</Button>
-          </Modal.Footer>
-        </Modal>
+          <Modal show={this.state.deleteItem} onHide={this.toggleDeleteConfirmation}>
+            <Modal.Header closeButton>
+              <Modal.Title>Delete Item</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p style={{fontSize: "14px"}}>Are you sure you want to delete this item?</p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button bsSize="small" onClick={this.toggleDeleteConfirmation}>Cancel</Button>
+              <Button bsStyle="danger" bsSize="small" onClick={this.deleteItem}>Delete</Button>
+            </Modal.Footer>
+          </Modal>
 
-      </Grid>
-    )
+        </Grid>
+      )
+    } else {
+      return (
+        <Grid>
+          <Row>
+            <Col>
+              <h3>404 - Item '{this.props.params.item_name}' not found.</h3>
+              <hr />
+            </Col>
+          </Row>
+        </Grid>
+      )
+    }
   }
 
 })

@@ -18,6 +18,8 @@ urlpatterns = [
     url(r'^items/(?P<item_name>.+?)/addtocart/$',                   views.AddItemToCart.as_view()),
     url(r'^items/(?P<item_name>.+?)/$',                             views.ItemDetailModifyDelete.as_view()),
 
+    url(r'^import/template/?$', views.DownloadCSVTemplate.as_view()),
+
     url(r'^tags/?$', views.TagListCreate.as_view()),
 
     url(r'^fields/?$',                     views.CustomFieldListCreate.as_view()),
@@ -29,9 +31,10 @@ urlpatterns = [
 
     url(r'^loans/?$',               views.LoanList.as_view()),
     url(r'^loans/(?P<pk>[\d]+?)/?$', views.LoanDetailModify.as_view()),
+    url(r'^loans/(?P<pk>[\d]+?)/convert/?$', views.ConvertLoanToDisbursement.as_view()),
 
     url(r'^disbursements/?$', views.DisbursementList.as_view()),
-    url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetailModify.as_view()),
+    url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 
@@ -40,7 +43,7 @@ urlpatterns = [
     url(r'^requests/?$',                        views.RequestListCreate.as_view()),
     url(r'^requests/all/?$',                    views.RequestListAll.as_view()),
     url(r'^requests/(?P<request_pk>[0-9]+?)/?$', views.RequestDetailModifyDelete.as_view()),
-    url(r'^requests/(?P<request_pk>[0-9]+?)/(?P<item_name>.+?)/?$', views.RequestedItemDetailModifyDelete.as_view()),
+    # url(r'^requests/(?P<request_pk>[0-9]+?)/(?P<item_name>.+?)/?$', views.RequestedItemDetailModifyDelete.as_view()),
 
     url(r'^login/?$',  views.post_user_login),
     url(r'^logout/?$', auth_views.logout),

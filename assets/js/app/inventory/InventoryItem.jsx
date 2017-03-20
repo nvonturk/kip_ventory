@@ -81,30 +81,34 @@ const InventoryItem = React.createClass({
     )
   },
 
+  viewItemDetail(e) {
+    browserHistory.push("/app/inventory/" + this.props.item.name + "/")
+  },
+
   render() {
     return (
-      <tr>
-        <td data-th="Item">
-          <ItemTableDetail item={this.props.item} />
+      <tr style={{height: "40px"}}>
+        <td data-th="Item" className="clickable" onClick={this.viewItemDetail}>
+          <h5 style={{color: "#df691a"}}>{this.props.item.name}</h5>
         </td>
         <td data-th="Model No." className="text-center">{this.props.item.model_no}</td>
-        <td data-th="Available" className="text-center">{this.props.item.quantity}</td>
-        <td data-th="Tags" className="text-center">
+        <td data-th="In Stock" className="text-center">{this.props.item.quantity}</td>
+        <td data-th="Tags" className="text-center" style={{zIndex:"9999"}}>
           <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getPopover()}>
             <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>
           </OverlayTrigger>
         </td>
         <td className="spacer" />
-        <td className="text-center">
+        <td data-th="Status" className="text-center">
           {this.getItemStatus(this.props.item)}
         </td>
-        <td data-th="Quantity">
+        <td data-th="Quantity" style={{zIndex:"9999"}}>
           <FormGroup bsSize="small" style={{margin:"auto"}}>
             <FormControl style={{fontSize: "10px"}} type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onChange} />
           </FormGroup>
         </td>
         <td className="spacer" />
-        <td className="text-center" >
+        <td className="text-center" style={{zIndex:"9999"}}>
           <Button bsSize="small" bsStyle="info" onClick={this.addToCart}>Add to Cart</Button>
         </td>
       </tr>
