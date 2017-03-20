@@ -106,6 +106,13 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='LoanReminderEmail',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('body', models.TextField()),
+            ],
+        ),
+        migrations.CreateModel(
             name='Log',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -136,7 +143,7 @@ class Migration(migrations.Migration):
             name='Profile',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('subscribed', models.BooleanField()),
+                ('subscribed', models.BooleanField(default=False)),
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
@@ -168,6 +175,13 @@ class Migration(migrations.Migration):
             options={
                 'ordering': ('item__name',),
             },
+        ),
+        migrations.CreateModel(
+            name='SubjectTag',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('text', models.CharField(max_length=100, unique=True)),
+            ],
         ),
         migrations.CreateModel(
             name='Tag',

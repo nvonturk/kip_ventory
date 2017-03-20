@@ -304,3 +304,11 @@ def delete_profile_for_user(sender, instance=None, **kwargs):
     if instance:
         profile = Profile.objects.get(user=instance)
         profile.delete()
+
+class LoanReminderEmail(models.Model):
+    #date = models.DateTimeField()
+    body = models.TextField()
+
+# Todo only allow one object
+class SubjectTag(models.Model):
+    text = models.CharField(max_length=100, unique=True)

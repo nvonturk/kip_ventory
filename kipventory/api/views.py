@@ -598,6 +598,9 @@ class RequestListCreate(generics.GenericAPIView):
             requestItemCreation(req_item, request.user.pk, request_instance)
             ci.delete()
 
+        #todo maybe combine this with the requsetItemCreationLog method (involves refactoring of logs)
+        sendEmailForNewRequest(request_instance)
+
         serializer = self.get_serializer(instance=request_instance)
         return Response(serializer.data)
 
@@ -1572,6 +1575,21 @@ def requestItemCreation(request_item, initiating_user_pk, requestObj):
     message = 'Request Item for item {} created by {}'.format(request_item.item.name, initiating_user)
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
     log.save()
+
+def sendEmailForNewRequest(request):
+    user = request.requester
+    request_items = models.RequestItem.objects.filter(request=request)
+    subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
+    subject = "subject"
+    text_content = "text_content"
+    html_content = "<p>This is an <strong>important</strong> message.</p>"
+    from_email = "kipventory@gmail.com"
+    to_emails = []
+    bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
+    from django.core.mail import EmailMultiAlternatives
+    msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails, bcc_emails)
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
 
 def requestItemDenial(request_item, initiating_user_pk, requestObj):
     item = request_item.item

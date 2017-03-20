@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_swagger',
+    'django_cron',
     # local
     'api',
 ]
@@ -58,6 +59,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CRON_CLASSES = [
+    "api.crons.SendEmail",
+    # ...
 ]
 
 ROOT_URLCONF = 'kipventory.urls'
@@ -153,10 +159,13 @@ EMAIL_HOST_USER = "kipventory@gmail.com"
 
 EMAIL_HOST_PASSWORD = "ece458kipventory"
 
-EMAIL_PORT = 465 #587 for TLS
+EMAIL_PORT = 465 #465 for SSL, #587 for TLS
 
 EMAIL_USE_SSL = True
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SERVER_EMAIL = EMAIL_HOST_USER
+
+# for development only
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
