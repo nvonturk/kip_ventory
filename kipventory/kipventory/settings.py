@@ -95,10 +95,25 @@ DATABASES = {
 }
 
 # Setting for DJango-DBBackup
-DBBACKUP_STORAGE = 'storages.backends.ftp.FTPStorage'
-DBBACKUP_STORAGE_OPTIONS = {
-    'location': 'ftp://bitnami:submenCo1e@colab-sbx-309.oit.duke.edu:21' #21 is an arbitrary port
+# DBBACKUP_STORAGE = 'storages.backends.ftp.FTPStorage'
+# DBBACKUP_STORAGE_OPTIONS = {
+#     'location': 'ftp://bitnami:submenCo1e@colab-sbx-309.oit.duke.edu:21' #21 is an arbitrary port
+# }
+DBBACKUP_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
+# DBBACKUP_STORAGE_OPTIONS = {'host': 'https://colab-sbx-309.oit.duke.edu:21'}
+SFTP_STORAGE_HOST = 'colab-sbx-309.oit.duke.edu'
+# SFTP_STORAGE_ROOT = '/var/www/media/'
+SFTP_STORAGE_PARAMS = {
+    'username': 'bitnami',
+    'password': 'submenCo1e',
+    'allow_agent': False,
+    'look_for_keys': False,
 }
+SFTP_KNOWN_HOST_FILE = '../../known_hosts'
+SFTP_STORAGE_INTERACTIVE = False
+
+
+
 
 # Classes working Django-Cron
 CRON_CLASSES = [
