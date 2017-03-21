@@ -343,3 +343,14 @@ class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Log
         fields = ['id', "item", "request", "quantity", "date_created", "initiating_user", 'message', 'affected_user', "category", "default_item", "default_affected_user", "default_initiating_user"]
+
+class BulkImportSerializer(serializers.ModelSerializer):
+    administrator = serializers.SlugRelatedField(
+        slug_field='username',
+        queryset=models.User.objects.filter(is_superuser=True),
+    )
+    data = serializers.FileField()
+
+    class Meta:
+        model = models.BulkImport
+        fields = ['id', 'data', 'administrator']

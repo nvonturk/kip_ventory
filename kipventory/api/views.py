@@ -1183,6 +1183,247 @@ class TokenPoint(generics.GenericAPIView):
             print(token.key)
             return Response({"token": token.key})
 
+class BulkImport(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, format=None):
+        if not request.user.is_superuser:
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+        else:
+            data = request.data.copy()
+            data.update({"administrator": request.user})
+            serializer = self.get_serializer(data=data)
+            if serializer.is_valid():
+                inputfile = request.FILES['data']
+                fout = open(inputfile.name, 'wb')
+                for chunk in inputfile.chunks():
+                    fout.write(chunk)
+                fout.close()
+                f = open('./' + inputfile.name, 'r')
+                reader = csv.reader(f)
+                # Create a list for each column
+                columns = []
+                counter = 0
+                for row in reader:
+                    if counter == 0:
+                        for i in range(len(row)):
+                            columns.append([row[i]])
+                        counter = 1
+                    else:
+                        for i in range(len(row)):
+                            columns[i].append(row[i])
+                # Check each column to make sure type is correct
+                # name, quantity, model_no, description, tags, ... custom fields
+                # top row will be those headers
+                col_no = 1
+                for col in columns:
+                    header = col[0]
+                    row_no = 2
+                    for entry in col[1:]:
+                        validation = self.checkEntry(header, entry)
+                        if validation[0] == 'error':
+                            message = validation[1] + " in table location: " + str(row_no) + ", " + str(col_no)
+                            return Response({"error": message})
+                        row_no = row_no + 1
+                    col_no = col_no + 1
+                # All data is now validated
+                # Ready to build items
+
+                for i in range(1, len(columns[0])):
+
+                    name_index = None
+                    name = None
+                    quantity_index = None
+                    quantity = None
+                    model_no_index = None
+                    model_no = None
+                    model_no_flag = True
+                    description_index = None
+                    description = None
+                    description_flag = True
+                    tags_index = None
+                    tags = None
+                    tags_flag = True
+
+                    try:
+                        name_index          = self.findIndex(columns, 'name')
+                        name=columns[name_index][i]
+                    except:
+                        return Response({"error": 'No column specifying item names'})
+                    try:
+                        quantity_index      = self.findIndex(columns, 'quantity')
+                        quantity=int(columns[quantity_index][i])
+                    except:
+                        return Response({"error": 'No column specifying item quantities'})
+                    try:
+                        model_no_index      = self.findIndex(columns, 'model_no')
+                        model_no=columns[model_no_index][i]
+                    except:
+                        model_no_flag = False
+                    try:
+                        description_index   = self.findIndex(columns, 'description')
+                        description=columns[description_index][i]
+                    except:
+                        description_flag = False
+                    try:
+                        tags_index = self.findIndex(columns, 'tags')
+                        split_tags = [tag.strip() for tag in columns[tags_index][i].split(',')]
+                    except:
+                        tags_flag = False
+
+                    curr_item = models.Item.objects.create(name=name, quantity=quantity)
+
+                    if model_no_flag:
+                        setattr(curr_item, 'model_no', model_no)
+                    if description_flag:
+                        setattr(curr_item, 'description', description)
+                    if tags_flag:
+                        all_tags = models.Tag.objects.all()
+                        for tag_name in split_tags:
+                            try:
+                                curr_tag = all_tags.get(name=tag_name)
+                            except:
+                                curr_tag = models.Tag.objects.create(name=tag_name)
+                            curr_item.tags.add(curr_tag)
+
+                    # Need to find the columns that dont have stock headers
+                    # In order to generate custom values
+
+                    cfs = self.returnCustomFields(columns)
+                    if len(cfs) > 0:
+                        # Generate custom values with the custom fields in csv
+                        cvs = curr_item.values.all()
+                        for cf in cfs:
+                            # First get the type of the custom field from the cf first entry
+                            cv = cvs.get(field__name=cf[0])
+                            setattr(cv, cv.field.field_type, models.FIELD_TYPE_DICT[cv.field.field_type](columns[cf[1]][i]))
+                            cv.save()
+                    curr_item.save()
+
+                serializer.save()
+                os.remove('./' + inputfile.name)
+                return Response({"success": "upload successful"})
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def findIndex(self, columns, header):
+        for i in range(len(columns)):
+            if columns[i][0] == header:
+                return i
+        else:
+            return None
+
+    def isFloat(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def isInt(self, value):
+        try:
+            int(value)
+            return True
+        except ValueError:
+            return False
+
+    def returnCustomFields(self, columns):
+        stock_headers = ['name', 'quantity', 'model_no', 'description', 'tags']
+        custom_fields = []
+        for i in range(len(columns)):
+            if columns[i][0] not in stock_headers:
+                custom_fields.append((columns[i][0], i))
+        return custom_fields
+
+
+
+
+    def checkEntry(self, header, entry):
+        # respond with 1. success or error 2. message
+        error = 'error'
+        success = 'success'
+        if (header == 'name'):
+            # Need to check if unique
+            if len(models.Item.objects.filter(name=entry)) > 0:
+                return (error, 'Item name not unique')
+            # Check if name length exceeded
+            elif len(entry) > 100:
+                return (error, 'Item name exceeded max length of 100')
+            elif len(entry) == 0:
+                return (error, 'Item name cannot be blank')
+            else:
+                return (success, 'Item name is valid')
+        elif (header == 'quantity'):
+            # Check if quantity entry is a digit
+            if len(entry) == 0:
+                return (error, 'Item quantity cannot be blank')
+            elif not entry.isdigit():
+                return (error, 'Item quantity not positive integer')
+            else:
+                return (success, 'Item quantity is valid')
+        elif (header == 'model_no'):
+            # Check for length
+            if len(entry) > 100:
+                return (error, 'Item model_no exceeded max length of 100')
+            else:
+                return (success, 'Item model_no is valid')
+        elif (header == 'description'):
+            # Check for length
+            if len(entry) > 500:
+                return (error, 'Item description exceeded max length of 500')
+            else:
+                return (success, 'Item description is valid')
+        elif (header == 'tags'):
+            tags = [tag.strip() for tag in entry.split(',')]
+            for tag in tags:
+                if len(tag) > 100:
+                    return (error, 'Item tag exceeded max length of 100')
+            return (success, 'Item tags are valid')
+        else:
+            # Custom field
+            if len(models.CustomField.objects.filter(name=header)) == 0:
+                return (error, 'Unrecognized custom field')
+            else:
+                # Check to make sure that for each custom field, the entry is correct
+                # Get the type of the custom field from header
+                cf = models.CustomField.objects.get(name=header)
+                field_type = getattr(cf, 'field_type')
+                # FIELD_TYPES = (
+                #     ('Single', 'Single-line text'),
+                #     ('Multi', 'Multi-line text'),
+                #     ('Int', 'Integer'),
+                #     ('Float', 'Float'),
+                # )
+                if field_type == 'Single':
+                    if isinstance(entry, str):
+                        return (success, 'Item custom field is a string')
+                    else:
+                        return (error, 'Item custom field not a string')
+                elif field_type == 'Multi':
+                    if isinstance(entry, str):
+                        return (success, 'Item custom field is a string')
+                    else:
+                        return (error, 'Item custom field not a string')
+                elif field_type == 'Int':
+                    if self.isInt(entry):
+                        return (success, 'Item custom field is an Integer')
+                    else:
+                        return (error, 'Item custom field not an Integer')
+                elif field_type == 'Float':
+                    if self.isFloat(entry):
+                        return (success, 'Item custom field is a Float')
+                    else:
+                        return (error, 'Item custom field not a Float')
+                else:
+                    return (error, 'Unrecognized field type')
+
+    def get_serializer_class(self):
+        return serializers.BulkImportSerializer
+
+    def get_queryset(self):
+        return models.BulkImport.Objects.all()
+
 
 class DisburseCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)

@@ -117,6 +117,9 @@ class CustomField(models.Model):
                 if self.name not in satisfied_fields:
                     cv = CustomValue(field=self, item=item)
                     cv.save()
+    def __str__(self):
+        return "{}".format(self.name)
+
 
 
 class CustomValue(models.Model):
@@ -131,7 +134,10 @@ class CustomValue(models.Model):
         ordering = ('field__name',)
 
     def get_value(self):
-            return getattr(self, self.field.field_type)
+        return getattr(self, self.field.field_type)
+
+    def __str__(self):
+        return "{}, {}, {}".format(self.item, self.field, self.get_value())
 
 class Request(models.Model):
     requester      = models.ForeignKey(User, on_delete=models.CASCADE, related_name="requests")
@@ -202,6 +208,11 @@ class Transaction(models.Model):
     comment       = models.CharField(max_length=100, blank=True, null=True)
     date          = models.DateTimeField(blank=True, auto_now_add=True)
     administrator = models.ForeignKey(User, on_delete=models.CASCADE)
+
+class BulkImport(models.Model):
+    administrator   = models.ForeignKey(User, on_delete=models.CASCADE)
+    data            = models.FileField()
+    date_created    = models.DateTimeField(blank=True, auto_now_add=True)
 
 class Log(models.Model):
     item                    = models.ForeignKey(Item, on_delete=models.SET_NULL, blank=True, null=True)

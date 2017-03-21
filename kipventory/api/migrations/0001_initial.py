@@ -17,6 +17,15 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name='BulkImport',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('data', models.FileField(upload_to='')),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('administrator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
             name='CartItem',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
