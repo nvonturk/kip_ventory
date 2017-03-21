@@ -8,8 +8,9 @@ import Paginator from '../Paginator'
 import { ajax, getJSON } from 'jquery'
 import { browserHistory } from 'react-router';
 import TagMultiSelect from '../TagMultiSelect'
-import { getCookie } from '../../csrf/DjangoCSRFToken'
+import { getCookie, CSRFToken } from '../../csrf/DjangoCSRFToken'
 
+import FileInput from 'react-file-input'
 import Select from 'react-select';
 import 'react-select/dist/react-select.css';
 
@@ -37,7 +38,8 @@ const InventoryContainer = React.createClass({
         custom_fields: []
       },
       nameErrorNode: null,
-      quantityErrorNode: null
+      quantityErrorNode: null,
+      importFile: null,
     }
   },
 
@@ -50,12 +52,14 @@ const InventoryContainer = React.createClass({
     var url = "/api/items/";
     var thisobj = this;
     getJSON(url, params, function(data) {
-      var cf = data.results[0].custom_fields
       var item = thisobj.state.item
-      item.custom_fields = cf.map((c, i) => {
-        c.value = ""
-        return c
-      })
+      if (data.results.length > 0) {
+        var cf = data.results[0].custom_fields
+        item.custom_fields = cf.map((c, i) => {
+          c.value = ""
+          return c
+        })
+      }
       thisobj.setState({
         item: item,
         items: data.results,
@@ -413,8 +417,51 @@ const InventoryContainer = React.createClass({
     })
   },
 
+  handleImportSubmit(e) {
+    e.preventDefault()
+    e.stopPropagation()
+
+    var fd = new FormData();
+    fd.append('data', this.state.importFile)
+    var _this = this
+    ajax({
+      url: "/api/import/",
+      type: "POST",
+      data: fd,
+      processData: false,
+      contentType: false,
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.getAllItems()
+        _this.setState({
+          importFile: null
+        })
+      },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr);
+        console.log(textStatus);
+        console.log(thrownError);
+      }
+    })
+  },
+
+  handleFileChange(e) {
+    e.preventDefault();
+    let reader = new FileReader();
+    let file = e.target.files[0];
+    reader.onloadend = () => {
+      this.setState({
+        importFile: file,
+      }, () => {console.log(this.state.importFile)});
+    }
+
+    reader.readAsDataURL(file)
+  },
+
   render() {
-    var bulkImportPanel = (this.props.route.user.is_staff || this.props.route.user.is_superuser) ? (
+    var bulkImportPanel = (this.props.route.user.is_superuser) ? (
       <Panel header={<span>Import Items</span>}>
         <Row>
           <Col md={12}>
@@ -426,10 +473,10 @@ const InventoryContainer = React.createClass({
             </p>
           </Col>
           <Col md={12}>
-            <Form >
+            <Form onSubmit={this.handleImportSubmit}>
               <FormGroup bsSize="small">
               <Col md={12} sm={6} xs={6}>
-                <FormControl bsSize="small" style={{fontSize:"12px", color:"white"}} type="file" accept="csv"/>
+                <input type="file" onChange={this.handleFileChange} />
               </Col>
               </FormGroup>
 

@@ -18,6 +18,7 @@ urlpatterns = [
     url(r'^items/(?P<item_name>.+?)/addtocart/$',                   views.AddItemToCart.as_view()),
     url(r'^items/(?P<item_name>.+?)/$',                             views.ItemDetailModifyDelete.as_view()),
 
+    url(r'^import/?$', views.BulkImport.as_view()),
     url(r'^import/template/?$', views.DownloadCSVTemplate.as_view()),
 
     url(r'^tags/?$', views.TagListCreate.as_view()),
@@ -55,8 +56,6 @@ urlpatterns = [
     url(r'^users/current/?$', views.GetCurrentUser.as_view()),
     url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.edit_user),
     url(r'^users/create/?$',         views.UserCreate.as_view()),
-
-    url(r'^import/?$', views.BulkImport.as_view()),
 
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 ]
