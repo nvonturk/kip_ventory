@@ -179,6 +179,11 @@ class Transaction(models.Model):
     date          = models.DateTimeField(blank=True, auto_now_add=True)
     administrator = models.ForeignKey(User, on_delete=models.CASCADE)
 
+class BulkImport(models.Model):
+    administrator   = models.ForeignKey(User, on_delete=models.CASCADE)
+    data            = models.FileField()
+    date_created    = models.DateTimeField(blank=True, auto_now_add=True)
+
 class Log(models.Model):
     item                    = models.ForeignKey(Item, on_delete=models.SET_NULL, blank=True, null=True)
     quantity                = models.PositiveIntegerField(blank=True, null=True)

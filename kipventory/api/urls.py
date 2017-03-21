@@ -43,6 +43,8 @@ urlpatterns = [
     url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.edit_user),
     url(r'^users/create/?$',         views.UserCreate.as_view()),
 
+    url(r'^import/?$', views.BulkImport.as_view()),
+
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 ]
 
