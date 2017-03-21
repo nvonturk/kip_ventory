@@ -1216,6 +1216,15 @@ class BulkImport(generics.GenericAPIView):
                 # Check each column to make sure type is correct
                 # name, quantity, model_no, description, tags, ... custom fields
                 # top row will be those headers
+
+                # Check first to make sure no duplicated names in file
+                name_col_index = self.findIndex(columns, 'name')
+                name_col = columns[name_col_index][:]
+                print(name_col_index)
+                print(name_col)
+                if len(name_col) != len(set(name_col)):
+                    return Response({"error": "duplicate items in file. all names must be unique"})
+
                 col_no = 1
                 for col in columns:
                     header = col[0]
