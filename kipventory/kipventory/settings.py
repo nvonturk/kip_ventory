@@ -46,9 +46,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_swagger',
+    'dbbackup',
+    'django_cron',
     # local
     'api',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -97,6 +100,24 @@ DATABASES = {
         },
     },
 }
+
+# Setting for Django-DBBackup
+DBDBBACKUP_SEND_EMAIL = True
+#DBBACKUP_HOSTNAME = "smtp.gmail.com" #should work for email stuff
+DBBACKUP_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
+
+SFTP_STORAGE_HOST = 'colab-sbx-309.oit.duke.edu'
+SFTP_STORAGE_ROOT = '/home/bitnami'
+SFTP_STORAGE_PARAMS = {
+    'username': 'bitnami',
+    'password': 'submenCo1e',
+}
+
+# Classes working Django-Cron
+CRON_CLASSES = [
+    "kipventory.crons.Backup",
+    # ...
+]
 
 
 
