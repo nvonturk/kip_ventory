@@ -96,7 +96,7 @@ DATABASES = {
 
 # Setting for Django-DBBackup
 DBDBBACKUP_SEND_EMAIL = True
-DBBACKUP_HOSTNAME = "smtp.gmail.com" #should work for email stuff
+#DBBACKUP_HOSTNAME = "smtp.gmail.com" #should work for email stuff
 DBBACKUP_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
 
 SFTP_STORAGE_HOST = 'colab-sbx-309.oit.duke.edu'
