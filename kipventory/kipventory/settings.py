@@ -94,42 +94,17 @@ DATABASES = {
     }
 }
 
-# Setting for DJango-DBBackup
-# DBBACKUP_STORAGE = 'storages.backends.ftp.FTPStorage'
-# DBBACKUP_STORAGE_OPTIONS = {
-#     'location': 'ftp://bitnami:submenCo1e@colab-sbx-309.oit.duke.edu:21' #21 is an arbitrary port
-# }
+# Setting for Django-DBBackup
+DBDBBACKUP_SEND_EMAIL = True
+DBBACKUP_HOSTNAME = "smtp.gmail.com" #should work for email stuff
 DBBACKUP_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
-#DBBACKUP_STORAGE_OPTIONS = {
- #   'host': 'colab-sbx-309.oit.duke.edu',
-  #  'params': {
-        # 'hostname': '___hostname___',
-   #     'username': 'bitnami',
-   #     'password': 'submenCo1e',
-   # },
-   # 'known_host_file': './home/bitnami/.ssh/known_hosts',
-   # 'root_path': './',
-#}
-# DBBACKUP_STORAGE_OPTIONS = {'host': 'https://colab-sbx-309.oit.duke.edu:21'}
+
 SFTP_STORAGE_HOST = 'colab-sbx-309.oit.duke.edu'
 SFTP_STORAGE_ROOT = '/home/bitnami'
 SFTP_STORAGE_PARAMS = {
     'username': 'bitnami',
     'password': 'submenCo1e',
-#    'allow_agent': False,
-#    'look_for_keys': False,
 }
-#SFTP_KNOWN_HOST_FILE = './home/bitnami/.ssh/known_hosts'
-#SFTP_STORAGE_INTERACTIVE = False
-
-# DBBACKUP_CONNECTORS = {
-#     'default': {
-#         'USER': 'bitnami',
-#         'PASSWORD': 'submenCo1e',
-#         'HOST': 'colab-sbx-309.oit.duke.edu'
-#     }
-# }
-
 
 # Classes working Django-Cron
 CRON_CLASSES = [
