@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Table, Image, Button, Panel, Label, Modal, Glyphicon, Form, Pagination, FormGroup, FieldGroup, FormControl, ControlLabel, InputGroup } from 'react-bootstrap'
+import { Grid, Row, Col, Table, Image, Button, Panel, Label, Modal, HelpBlock,
+         Glyphicon, Form, Pagination, FormGroup, FieldGroup, FormControl,
+        ControlLabel, InputGroup } from 'react-bootstrap'
 import InventoryItem from './InventoryItem'
 import InventoryGridHeader from './InventoryGridHeader'
 import Paginator from '../Paginator'
@@ -33,7 +35,9 @@ const InventoryContainer = React.createClass({
         tags: [],
         description: "",
         custom_fields: []
-      }
+      },
+      nameErrorNode: null,
+      quantityErrorNode: null
     }
   },
 
@@ -133,15 +137,40 @@ const InventoryContainer = React.createClass({
           });
         }
         _this.setState({
-          showItemCreationModal: false
-        })
+          item: {
+            name: "",
+            model_no: "",
+            quantity: 0,
+            tags: [],
+            description: "",
+            custom_fields: []
+          },
+          showItemCreationModal: false,
+          nameErrorNode: null,
+          quantityErrorNode: null
+        }, _this.getAllItems)
       },
       // TODO : BETTER ERROR HANDLING. PARSE THE RESULT, AND ASSOCIATE WITH THE CORRECT FORM FIELD
       // USE THE <HelpBlock /> component to add subtext to the forms that failed the test.
       error:function (xhr, textStatus, thrownError){
-        console.log(xhr);
-        console.log(textStatus);
-        console.log(thrownError);
+        if (xhr.status == 400) {
+          var nameNode = null
+          var quantityNode = null
+          var response = xhr.responseJSON
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              if (key == "name") {
+                nameNode = <HelpBlock>{response[key][0]}</HelpBlock>
+              } else if (key == "quantity") {
+                quantityNode = <HelpBlock>{response[key][0]}</HelpBlock>
+              }
+            }
+          }
+          _this.setState({
+            nameErrorNode: nameNode,
+            quantityErrorNode: quantityNode
+          })
+        }
       }
     })
   },
@@ -262,6 +291,14 @@ const InventoryContainer = React.createClass({
     }, () => {console.log(item)})
   },
 
+  getQuantityValidationState() {
+    return (this.state.quantityErrorNode == null) ? null : "error"
+  },
+
+  getNameValidationState() {
+    return (this.state.nameErrorNode == null) ? null : "error"
+  },
+
   getQuantityAndModelNoForm() {
     return (
       <Row>
@@ -278,16 +315,17 @@ const InventoryContainer = React.createClass({
             </Col>
           </FormGroup>
         </Col>
-        <Col xs={4} xs={12}>
-          <FormGroup bsSize="small" controlId="quantity" >
+        <Col xs={12}>
+          <FormGroup bsSize="small" controlId="quantity" validationState={this.getQuantityValidationState()}>
             <Col xs={2} componentClass={ControlLabel}>
               Quantity <span style={{color: "red"}}>*</span>
             </Col>
             <Col xs={8}>
-              <FormControl type="number"
+              <FormControl type="number" min={0} step={1}
                            name="quantity"
                            value={this.state.item.quantity}
                            onChange={this.handleItemFormChange}/>
+              { this.state.quantityErrorNode }
             </Col>
           </FormGroup>
         </Col>
@@ -321,11 +359,11 @@ const InventoryContainer = React.createClass({
     })
   },
 
-  getItemModificationForm() {
+  getItemCreationForm() {
     return (
       <Form horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation()}}>
 
-        <FormGroup bsSize="small" controlId="name">
+        <FormGroup bsSize="small" controlId="name" validationState={this.getNameValidationState()}>
           <Col xs={2} componentClass={ControlLabel}>
             Name <span style={{color:"red"}}>*</span>
           </Col>
@@ -334,6 +372,7 @@ const InventoryContainer = React.createClass({
                          name="name"
                          value={this.state.item.name}
                          onChange={this.handleItemFormChange}/>
+            { this.state.nameErrorNode }
           </Col>
         </FormGroup>
 
@@ -409,7 +448,7 @@ const InventoryContainer = React.createClass({
       <Row>
         <Col md={12}>
           <span className="panel-title">Current Inventory</span>
-          <Button bsSize="small" bsStyle="default" style={{border: "1px solid rgb(223, 105, 26)", padding:"7px", fontSize:"12px", float: "right", marginRight:"10px", verticalAlign:"middle"}} onClick={this.showCreateItemForm}>
+          <Button bsSize="small" bsStyle="primary" style={{padding:"7px", fontSize:"12px", float: "right", marginRight:"10px", verticalAlign:"middle"}} onClick={this.showCreateItemForm}>
             Add Item &nbsp; <Glyphicon glyph="plus" />
           </Button>
         </Col>
@@ -531,7 +570,7 @@ const InventoryContainer = React.createClass({
             <Modal.Title>Add Item to Inventory</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            { this.getItemModificationForm() }
+            { this.getItemCreationForm() }
           </Modal.Body>
           <Modal.Footer>
             <Button bsSize="small" onClick={e => {this.setState({showItemCreationModal: false})}}>Cancel</Button>

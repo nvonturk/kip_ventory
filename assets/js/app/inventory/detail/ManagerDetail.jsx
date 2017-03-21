@@ -1,21 +1,45 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Modal, Table, Form, FormGroup, FormControl, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
+import { Grid, Row, Col, Button, Modal, Table, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from '../CreateTransactionsContainer'
 import {browserHistory} from 'react-router'
 import TagMultiSelect from '../../TagMultiSelect'
+import Select from 'react-select'
 
+const ITEMS_PER_PAGE = 5;
 
 const ManagerDetail = React.createClass({
   getInitialState() {
     return {
-      itemExists: true,
       requests: [],
+      requestsPage: 1,
+      requestsPageCount: 1,
+      requestsFilterUser: "",
+      requestsFilterType: "",
+
       transactions: [],
+      transactionsPage: 1,
+      transactionsPageCount: 1,
+      transactionsFilterAdmin: "",
+      transactionsFilterCategory: "",
+
       loans: [],
-      disbursements: [],
+      loansPage: 1,
+      loansPageCount: 1,
+      loansFilterUser: "",
+
+      users: [],
+      admins: [],
+
       addToCartQuantity: 1,
+
+      transactionQuantity: 0,
+      transactionCategory: "Acquisition",
+      transactionComment: "",
+
+      stacks: {},
+
       item: {
         name: "",
         model_no: "",
@@ -24,9 +48,11 @@ const ManagerDetail = React.createClass({
         description: "",
         custom_fields: []
       },
-      stacks: {},
+
+      itemExists: true,
       modifyItem: false,
-      deleteItem: false
+      showDeleteModal: false,
+      showCreateTransactionModal: false
     }
   },
 
@@ -39,7 +65,7 @@ const ManagerDetail = React.createClass({
     }
     this.getStacks();
     this.getLoans();
-    this.getDisbursements();
+    this.getUsers();
   },
 
   getStacks() {
@@ -48,6 +74,31 @@ const ManagerDetail = React.createClass({
     getJSON(url, function(data) {
       _this.setState({
         stacks: data
+      })
+    })
+  },
+
+  getUsers() {
+    var url = "/api/users/"
+    var _this = this;
+    getJSON(url, function(data) {
+      var users = data.map((user, i) => {
+        return {
+          label: user.username,
+          value: user.username
+        }
+      })
+      var admins = data.filter( (user) => {
+        return (user.is_staff || user.is_superuser)
+      }).map( (user, i) => {
+        return {
+          label: user.username,
+          value: user.username
+        }
+      })
+      _this.setState({
+        users: users,
+        admins: admins
       })
     })
   },
@@ -80,45 +131,54 @@ const ManagerDetail = React.createClass({
 
   getOutstandingRequests() {
     var url = "/api/items/" + this.props.params.item_name + "/requests/";
-    var params = {status: "O", all: true}
+    var params = {
+      page: this.state.requestsPage,
+      itemsPerPage: ITEMS_PER_PAGE,
+      user: this.state.requestsFilterUser,
+      type: this.state.requestsFilterType
+    }
     var _this = this;
     getJSON(url, params, function(data) {
       _this.setState({
-        requests: data.results
+        requests: data.results,
+        requestsPageCount: Number(data.num_pages)
       })
     })
   },
 
   getTransactions() {
-    var url = "/api/transactions/"
-    var params = {all: true}
+    var url = "/api/items/" + this.props.params.item_name + "/transactions/";
+    var params = {
+      page: this.state.transactionsPage,
+      itemsPerPage: ITEMS_PER_PAGE,
+      administrator: this.state.transactionsFilterAdmin,
+      category: this.state.transactionsFilterCategory
+    }
     var _this = this;
     getJSON(url, params, function(data) {
       _this.setState({
-        transactions: data.results
+        transactions: data.results,
+        transactionsPageCount: Number(data.num_pages)
       })
     })
   },
 
   getLoans() {
     var url = "/api/items/" + this.props.params.item_name + "/loans/"
+    var params = {
+      page: this.state.loansPage,
+      itemsPerPage: ITEMS_PER_PAGE,
+      user: this.state.loansFilterUser
+    }
     var _this = this;
-    getJSON(url, function(data) {
+    getJSON(url, params, function(data) {
       _this.setState({
-        loans: data.results
+        loans: data.results,
+        loansPageCount: Number(data.num_pages)
       })
     })
   },
 
-  getDisbursements() {
-    var url = "/api/items/" + this.props.params.item_name + "/disbursements/"
-    var _this = this;
-    getJSON(url, function(data) {
-      _this.setState({
-        disbursements: data.results
-      })
-    })
-  },
 
   handleItemFormChange(e) {
     e.preventDefault()
@@ -241,7 +301,7 @@ const ManagerDetail = React.createClass({
     item.custom_fields[i].value = e.target.value
     this.setState({
       item: item
-    }, () => {console.log(item)})
+    })
   },
 
   getQuantityAndModelNoForm() {
@@ -344,14 +404,6 @@ const ManagerDetail = React.createClass({
     })
   },
 
-  toggleDeleteConfirmation(e) {
-    e.preventDefault()
-    var cur = this.state.deleteItem
-    this.setState({
-      deleteItem: !cur
-    })
-  },
-
   deleteItem(e) {
     e.preventDefault()
     var url = "/api/items/" + this.props.params.item_name + "/"
@@ -377,10 +429,10 @@ const ManagerDetail = React.createClass({
   getItemModificationForm() {
     var deleteIcon = null
     if (this.props.route.user.is_superuser) {
-      deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={this.toggleDeleteConfirmation}/>
+      deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={e => {this.setState({showDeleteModal: true})}}/>
     }
     return (
-      <Panel header={
+      <Panel style={{marginBottom: "0px"}}  header={
         <div>
           <span>Product Information</span>
           <span className="clickable" style={{float: "right"}}>
@@ -439,12 +491,12 @@ const ManagerDetail = React.createClass({
   getReadOnlyItemInfo() {
     var deleteIcon = null
     if (this.props.route.user.is_superuser) {
-      deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={this.toggleDeleteConfirmation}/>
+      deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={e => {this.setState({showDeleteModal: true})}}/>
     }
     return (
-      <Panel header={
+      <Panel style={{marginBottom: "0px"}} header={
         <div>
-          <span>Item Details</span>
+          <span style={{fontSize:"15px"}}>Item Details</span>
           <span className="clickable" style={{float: "right"}}>
             <Glyphicon glyph="pencil" onClick={this.toggleEdit}/>
             { deleteIcon }
@@ -510,12 +562,88 @@ const ManagerDetail = React.createClass({
     }
   },
 
+  handleRequestUserSelection(selectedUser) {
+    if (selectedUser == null) {
+      this.setState({
+        requestsFilterUser: "",
+      }, this.getOutstandingRequests)
+    } else {
+      this.setState({
+        requestsFilterUser: selectedUser.value
+      }, this.getOutstandingRequests)
+    }
+  },
+
+  handleRequestTypeSelection(selectedType) {
+    if (selectedType == null) {
+      this.setState({
+        requestsFilterType: "",
+      }, this.getOutstandingRequests)
+    } else {
+      this.setState({
+        requestsFilterType: selectedType.value
+      }, this.getOutstandingRequests)
+    }
+  },
+
+  getRequestFilterPanel() {
+    return (
+      <Panel style={{marginBottom: "0px"}} header={"Filter Outstanding Requests"}>
+        <FormGroup>
+          <ControlLabel>User</ControlLabel>
+          <Select style={{fontSize:"12px"}} name="requests-user-filter"
+                  multi={false}
+                  placeholder="Filter by user"
+                  value={this.state.requestsFilterUser}
+                  options={this.state.users}
+                  onChange={this.handleRequestUserSelection} />
+        </FormGroup>
+        <FormGroup>
+          <ControlLabel>Type of Request</ControlLabel>
+          <Select style={{fontSize:"12px"}} name="requests-type-filter"
+                  multi={false}
+                  placeholder="Filter by request type"
+                  value={this.state.requestsFilterType}
+                  options={[
+                    {
+                      label: "Loan",
+                      value: "loan",
+                    },
+                    {
+                      label: "Disbursement",
+                      value: "disbursement"
+                    }
+                  ]}
+                  onChange={this.handleRequestTypeSelection} />
+        </FormGroup>
+      </Panel>
+    )
+  },
+
   getRequestsPanel() {
     var requestsTable = null
+    var message = (
+      <span>
+        There are no outstanding requests for this item.
+      </span>
+    )
+    var user = this.state.requestsFilterUser
+    var type = this.state.requestsFilterType
+    if (user.length == 0) {
+      if (type.length > 0) {
+        message = <span>There are no outstanding requests for {type}.</span>
+      }
+    } else {
+      if (type.length == 0) {
+        message = <span><span style={{color: "#df691a"}}>{user}</span> has no outstanding requests for this item.</span>
+      } else {
+        message = <span><span style={{color: "#df691a"}}>{user}</span> has no outstanding requests for {type}.</span>
+      }
+    }
     if (this.state.requests.length == 0) {
       requestsTable = (
-        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}}>
-          You have no outstanding requests for this item.
+        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
+          { message }
         </Well>
       )
     } else {
@@ -524,10 +652,12 @@ const ManagerDetail = React.createClass({
           <thead>
             <tr>
               <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Opened</th>
-              <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Type</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requester</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Requested</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requested For</th>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Justification</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
             </tr>
           </thead>
           <tbody>
@@ -547,14 +677,20 @@ const ManagerDetail = React.createClass({
                     <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
                       {request.request_id}
                     </td>
+                    <td data-th="Requester" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      <span style={{color: "#df691a"}}>{request.requester}</span>
+                    </td>
                     <td data-th="Date Opened" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      {new Date(request.date_open).toLocaleDateString()}
+                      {new Date(request.date_open).toLocaleString()}
+                    </td>
+                    <td data-th="Requested For" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      { label }
                     </td>
                     <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
                       {request_item.quantity}
                     </td>
-                    <td data-th="Type" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      { label }
+                    <td data-th="Justification" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      { request.open_comment }
                     </td>
                     <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
                       <a style={{color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
@@ -570,18 +706,81 @@ const ManagerDetail = React.createClass({
       )
     }
     return (
-      <Panel style={{marginBottom:"0px"}} header={"Outstanding Requests"}>
-        { requestsTable }
+
+
+      <div className="panel panel-default" style={{marginBottom: "0px"}}>
+
+        <div className="panel-heading">
+          Outstanding Requests
+        </div>
+
+        <div className="panel-body">
+          { requestsTable }
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks
+                          ellipsis style={{float:"right", margin: "0px"}}
+                          bsSize="small" items={this.state.requestsPageCount}
+                          activePage={this.state.requestsPage}
+                          onSelect={activeKey => {this.setState({requestsPage: activeKey}, this.getOutstandingRequests)}}/>
+            </Col>
+          </Row>
+        </div>
+
+      </div>
+
+    )
+  },
+
+  handleLoanUserSelection(selectedUser) {
+    if (selectedUser == null) {
+      this.setState({
+        loansFilterUser: "",
+      }, this.getLoans)
+    } else {
+      this.setState({
+        loansFilterUser: selectedUser.value
+      }, this.getLoans)
+    }
+  },
+
+  getLoanFilterPanel() {
+    return (
+      <Panel style={{marginBottom: "0px"}} header={"Filter Loans"}>
+        <FormGroup>
+          <ControlLabel>User</ControlLabel>
+          <Select style={{fontSize:"12px"}} name="loans-user-filter"
+                  multi={false}
+                  placeholder="Filter by user"
+                  value={this.state.loansFilterUser}
+                  options={this.state.users}
+                  onChange={this.handleLoanUserSelection} />
+        </FormGroup>
       </Panel>
     )
   },
 
   getLoanPanel() {
     var loanTable = null;
+    var message = (
+      <span>
+        There are no outstanding loans for this item.
+      </span>
+    )
+    if (this.state.loansFilterUser.length > 0) {
+      message = (
+        <span>
+          <span><span style={{color: "#df691a"}}>{this.state.loansFilterUser}</span> has no outstanding loans for this item.</span>
+        </span>
+      )
+    }
     if (this.state.loans.length == 0) {
       loanTable = (
-        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}}>
-          You have no outstanding loans for this item.
+        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
+          { message }
         </Well>
       )
     } else {
@@ -589,10 +788,13 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-            <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-            <th style={{width: "40%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Date</th>
-            <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-            <th style={{width: "35%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Approved by</th>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Admin Comment</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
             </tr>
           </thead>
           <tbody>
@@ -602,11 +804,20 @@ const ManagerDetail = React.createClass({
                   <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
                     {loan.id}
                   </td>
-                  <td data-th="Loan Date" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {new Date(loan.request.date_closed).toLocaleDateString()}
+                  <td data-th="User" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span style={{color: "#df691a"}}>{loan.request.requester}</span>
+                  </td>
+                  <td data-th="Date Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {new Date(loan.date_loaned).toLocaleString()}
+                  </td>
+                  <td data-th="Approved by" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span style={{color: "#df691a"}}>{loan.request.administrator}</span>
                   </td>
                   <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
                     {loan.quantity}
+                  </td>
+                  <td data-th="Admin Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {loan.request.closed_comment}
                   </td>
                   <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
                     <a style={{color: "#5bc0de"}} href={"/app/loans/" + loan.id + "/"}>Click to view</a>
@@ -619,71 +830,34 @@ const ManagerDetail = React.createClass({
       )
     }
     return (
-      <Panel header={"Outstanding Loans"}>
-        { loanTable }
-      </Panel>
-    )
-  },
+      <div className="panel panel-default" style={{marginBottom: "0px"}}>
 
-  getDisbursementPanel() {
-    var disbursementTable = null
-    if (this.state.disbursements.length == 0) {
-      disbursementTable = (
-        <Well bsSize="small" style={{marginBottom: "0px", fontSize: "12px"}}>
-          This item has not been disbursed to you.
-        </Well>
-      )
-    } else {
-      disbursementTable = (
-        <Table style={{marginBottom:"0px"}}>
-          <thead>
-            <tr>
-            <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">#</th>
-            <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
-            <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Approved</th>
-            <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity Disbursed</th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.state.disbursements.map( (disbursement, i) => {
-              return (
-                <tr key={disbursement.id}>
-                  <td data-th="#" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {disbursement.id}
-                  </td>
-                  <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    <a style={{color: "#5bc0de"}} href={"/app/disbursements/" + disbursement.id + "/"}>Click to view</a>
-                  </td>
-                  <td data-th="Date Approved" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {new Date(disbursement.request.date_closed).toLocaleDateString()}
-                  </td>
-                  <td data-th="Quantity Disbursed" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {disbursement.quantity}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </Table>
-      )
-    }
-    return (
-      <Panel header={"Disbursements"}>
-        {disbursementTable}
-      </Panel>
+        <div className="panel-heading">
+          Outstanding Loans
+        </div>
+
+        <div className="panel-body">
+          { loanTable }
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks
+                          ellipsis style={{float:"right", margin: "0px"}}
+                          bsSize="small" items={this.state.loansPageCount}
+                          activePage={this.state.loansPage}
+                          onSelect={activeKey => {this.setState({loansPage: activeKey}, this.getLoans)}}/>
+            </Col>
+          </Row>
+        </div>
+
+      </div>
     )
   },
 
   getAddToCartForm() {
     return (
-        <Grid fluid>
-          <Row>
-            <Col xs={12}>
-              <h3 style={{marginTop: "0px"}}><a href={"/app/inventory/" + this.state.item.name + "/"}>{this.props.params.item_name}</a></h3>
-              <hr />
-            </Col>
-          </Row>
-
           <Row>
             <Col xs={12}>
               <Form horizontal onSubmit={this.addToCart} style={{marginBottom: "0px"}}>
@@ -705,7 +879,253 @@ const ManagerDetail = React.createClass({
               </Form>
             </Col>
           </Row>
-        </Grid>
+    )
+  },
+
+  handleTransactionQuantityChange(e) {
+    var q = Number(e.target.value)
+    if (q < 0) {
+      event.stopPropagation()
+    } else {
+      this.setState({
+        transactionQuantity: q
+      })
+    }
+  },
+
+  createTransaction(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var _this = this
+    var data = {
+      item: this.state.item.name,
+      quantity: this.state.transactionQuantity,
+      category: this.state.transactionCategory,
+      comment: this.state.transactionComment
+    }
+    ajax({
+      url: "/api/transactions/",
+      contentType: "application/json",
+      type: "POST",
+      data: JSON.stringify(data),
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          transactionComment: "",
+          transactionQuantity: 0,
+          transactionCategory: "Acquisition",
+          showCreateTransactionModal: false
+        }, function() {
+          _this.getItem();
+          _this.getTransactions();
+        });
+      },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr);
+        console.log(textStatus);
+        console.log(thrownError);
+      }
+    });
+  },
+
+  getCreateTransactionForm() {
+    return (
+      <Form style={{marginBottom: "0px"}} horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation();}}>
+        <FormGroup bsSize="small">
+          <Col xs={2} componentClass={ControlLabel}>
+            Quantity:
+          </Col>
+          <Col xs={3}>
+            <FormControl style={{fontSize:"10px"}} bsSize="small"
+                         type="number"
+                         min={0} step={1}
+                         name="transactionQuantity"
+                         value={this.state.transactionQuantity}
+                         onChange={this.handleTransactionQuantityChange} />
+          </Col>
+        </FormGroup>
+        <FormGroup bsSize="small">
+          <Col xs={2} componentClass={ControlLabel}>
+            Category:
+          </Col>
+          <Col xs={4}>
+            <FormControl style={{fontSize:"10px"}} bsSize="small"
+                         componentClass="select"
+                         name="transactionCategory"
+                         value={this.state.transactionCategory}
+                         onChange={e => this.setState({transactionCategory: e.target.value})}>
+              <option value="Acquisition">Acquisition</option>
+              <option value="Loss">Loss</option>
+            </FormControl>
+          </Col>
+        </FormGroup>
+        <FormGroup bsSize="small">
+          <Col xs={2} componentClass={ControlLabel}>
+            Description:
+          </Col>
+          <Col xs={8}>
+            <FormControl type="text"
+                         style={{resize: "vertical", height:"100px"}}
+                         componentClass={"textarea"}
+                         value={this.state.transactionComment}
+                         name="transactionComment"
+                         onChange={e => {this.setState({transactionComment: e.target.value})}} />
+            <HelpBlock>Enter a description of this acquisition or loss.</HelpBlock>
+          </Col>
+        </FormGroup>
+      </Form>
+    )
+  },
+
+  handleTransactionAdminSelection(selectedUser) {
+    if (selectedUser == null) {
+      this.setState({
+        transactionsFilterAdmin: "",
+      }, this.getTransactions)
+    } else {
+      this.setState({
+        transactionsFilterAdmin: selectedUser.value
+      }, this.getTransactions)
+    }
+  },
+
+  handleTransactionCategorySelection(selectedCategory) {
+    if (selectedCategory == null) {
+      this.setState({
+        transactionsFilterCategory: "",
+      }, this.getTransactions)
+    } else {
+      this.setState({
+        transactionsFilterCategory: selectedCategory.value
+      }, this.getTransactions)
+    }
+  },
+
+  getTransactionFilterPanel() {
+    return (
+      <Panel style={{marginBottom: "0px"}} header={"Filter Acquisitions and Losses"}>
+        <FormGroup>
+          <ControlLabel>Administrator</ControlLabel>
+          <Select style={{fontSize:"12px"}} name="transactions-admin-filter"
+                  multi={false}
+                  placeholder="Filter by administrator"
+                  value={this.state.transactionsFilterAdmin}
+                  options={this.state.admins}
+                  onChange={this.handleTransactionAdminSelection} />
+        </FormGroup>
+        <FormGroup>
+          <ControlLabel>Type of Request</ControlLabel>
+          <Select style={{fontSize:"12px"}} name="transactions-category-filter"
+                  multi={false}
+                  placeholder="Filter by type"
+                  value={this.state.transactionsFilterCategory}
+                  options={[
+                    {
+                      label: "Acquisition",
+                      value: "Acquisition",
+                    },
+                    {
+                      label: "Loss",
+                      value: "Loss"
+                    }
+                  ]}
+                  onChange={this.handleTransactionCategorySelection} />
+        </FormGroup>
+      </Panel>
+    )
+  },
+
+  getTransactionPanel() {
+    var transactionsTable = null
+    if (this.state.transactions.length > 0) {
+      transactionsTable = (
+        <Table style={{marginBottom:"0px"}}>
+          <thead>
+            <tr>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">#</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Administrator</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Category</th>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              <th style={{width: "40%", borderBottom: "1px solid #596a7b"}} className="text-center">Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            { this.state.transactions.map( (transaction, i) => {
+              var label = (transaction.category == "Acquisition") ? (
+                <Label bsSize="small" bsStyle="success">Acquisition</Label>
+              ) : (
+                <Label bsSize="small" bsStyle="danger">Loss</Label>
+              )
+              return (
+                <tr key={transaction.id}>
+                  <td data-th="#" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {transaction.id}
+                  </td>
+                  <td data-th="Administrator" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span style={{color: "#df691a"}}>{transaction.administrator}</span>
+                  </td>
+                  <td data-th="Date" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {new Date(transaction.date).toLocaleString()}
+                  </td>
+                  <td data-th="Category" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    { label }
+                  </td>
+                  <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {transaction.quantity}
+                  </td>
+                  <td data-th="Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {transaction.comment}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </Table>
+      )
+    } else {
+      transactionsTable = (
+        <Well bsSize="small" style={{marginBottom: "0px", fontSize: "12px"}} className="text-center">
+          There have not been any acquisitions or losses of this item.
+        </Well>
+      )
+    }
+    return (
+      <div className="panel panel-default" style={{marginBottom: "0px"}}>
+
+        <div className="panel-heading">
+          <Row>
+            <Col xs={12}>
+              <span style={{fontSize:"15px"}}>Acquisitions and Losses</span>
+              <Button bsSize="small" bsStyle="primary"
+                      style={{fontSize:"12px", float: "right",
+                              verticalAlign:"middle"}}
+                      onClick={e => {this.setState({showCreateTransactionModal: true})}}>
+                Create
+              </Button>
+            </Col>
+          </Row>
+        </div>
+
+        <div className="panel-body">
+          { transactionsTable }
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks
+                          ellipsis style={{float:"right", margin: "0px"}}
+                          bsSize="small" items={this.state.transactionsPageCount}
+                          activePage={this.state.transactionsPage}
+                          onSelect={activeKey => {this.setState({transactionsPage: activeKey}, this.getTransactions)}}/>
+            </Col>
+          </Row>
+        </div>
+
+      </div>
     )
   },
 
@@ -745,15 +1165,18 @@ const ManagerDetail = React.createClass({
         <Grid>
           <Row>
             <Col xs={12}>
-
-              <br />
-              <br />
+              <Row>
+                <Col xs={12}>
+                  <h3>{this.props.params.item_name}</h3>
+                  <hr />
+                </Col>
+              </Row>
 
               <Row>
-                <Col xs={4}>
+                <Col xs={3}>
                   { this.getAddToCartForm() }
                 </Col>
-                <Col xs={4}>
+                <Col xs={5}>
                   { this.getItemInfoPanel() }
                 </Col>
                 <Col xs={4}>
@@ -762,21 +1185,44 @@ const ManagerDetail = React.createClass({
               </Row>
 
               <hr />
-              <br />
 
               <Row>
-                <Col xs={6}>
+                <Col xs={3}>
+                  { this.getRequestFilterPanel() }
+                </Col>
+                <Col xs={9}>
                   { this.getRequestsPanel() }
                 </Col>
-                <Col xs={6}>
+              </Row>
+
+              <hr />
+
+              <Row>
+                <Col xs={3}>
+                  { this.getLoanFilterPanel() }
+                </Col>
+                <Col xs={9}>
                   { this.getLoanPanel() }
                 </Col>
               </Row>
 
+              <hr />
+
+              <Row>
+                <Col xs={3}>
+                  { this.getTransactionFilterPanel() }
+                </Col>
+                <Col xs={9}>
+                  { this.getTransactionPanel() }
+                </Col>
+              </Row>
+
+              <hr />
+
             </Col>
           </Row>
 
-          <Modal show={this.state.deleteItem} onHide={this.toggleDeleteConfirmation}>
+          <Modal show={this.state.showDeleteModal} onHide={e => this.setState({showDeleteModal: false})}>
             <Modal.Header closeButton>
               <Modal.Title>Delete Item</Modal.Title>
             </Modal.Header>
@@ -784,10 +1230,24 @@ const ManagerDetail = React.createClass({
               <p style={{fontSize: "14px"}}>Are you sure you want to delete this item?</p>
             </Modal.Body>
             <Modal.Footer>
-              <Button bsSize="small" onClick={this.toggleDeleteConfirmation}>Cancel</Button>
+              <Button bsSize="small" onClick={e => this.setState({showDeleteModal: false})}>Cancel</Button>
               <Button bsStyle="danger" bsSize="small" onClick={this.deleteItem}>Delete</Button>
             </Modal.Footer>
           </Modal>
+
+          <Modal show={this.state.showCreateTransactionModal} onHide={e => this.setState({showCreateTransactionModal: true})}>
+            <Modal.Header closeButton>
+              <Modal.Title>Log an Acquisition or Loss of Instances</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              { this.getCreateTransactionForm() }
+            </Modal.Body>
+            <Modal.Footer>
+              <Button bsStyle="default" bsSize="small" onClick={e => this.setState({showCreateTransactionModal: true})}>Cancel</Button>
+              <Button bsStyle="info"    bsSize="small" onClick={this.createTransaction}>Create</Button>
+            </Modal.Footer>
+          </Modal>
+
 
         </Grid>
       )

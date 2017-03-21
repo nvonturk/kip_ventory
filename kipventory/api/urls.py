@@ -14,7 +14,7 @@ urlpatterns = [
     url(r'^items/(?P<item_name>.+?)/requests/?$',                   views.GetOutstandingRequestsByItem.as_view()),
     url(r'^items/(?P<item_name>.+?)/stacks/$',                      views.GetItemStacks.as_view()),
     url(r'^items/(?P<item_name>.+?)/loans/$',                       views.GetLoansByItem.as_view()),
-    url(r'^items/(?P<item_name>.+?)/disbursements/$',               views.GetDisbursementsByItem.as_view()),
+    url(r'^items/(?P<item_name>.+?)/transactions/$',                views.GetTransactionsByItem.as_view()),
     url(r'^items/(?P<item_name>.+?)/addtocart/$',                   views.AddItemToCart.as_view()),
     url(r'^items/(?P<item_name>.+?)/$',                             views.ItemDetailModifyDelete.as_view()),
 

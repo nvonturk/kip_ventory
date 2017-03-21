@@ -209,7 +209,7 @@ class Log(models.Model):
     initiating_user         = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='initiating_user', null=True)
     affected_user           = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='affected_user', blank=True, null=True)
     date_created            = models.DateTimeField(blank=True, auto_now_add=True)
-    message                 = models.CharField(max_length=100, blank=True, null=True)
+    message                 = models.CharField(max_length=500, blank=True, null=True)
     request                 = models.ForeignKey(Request, on_delete=models.SET_NULL, blank=True, null=True)
     # default values for the foreignkeys in the event those items are deleted or users etc.
     default_item            = models.CharField(max_length=100, blank=True, null=True)

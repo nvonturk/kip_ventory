@@ -214,11 +214,15 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
         else:
             requests = self.get_queryset().filter(requested_items__item__name=item_name, requester=request.user.pk)
 
-        # Return all items if query parameter "all" is set
-        all_items = self.request.query_params.get("all", None)
-        if all_items:
-            serializer = self.get_serializer(instance=requests, many=True)
-            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+        # Filter by requester
+        user = self.request.query_params.get("user", None)
+        if user != None and user != "":
+            requests = requests.filter(requester__username=user)
+
+        # Filter by request type
+        request_type = self.request.query_params.get("type", None)
+        if request_type != None and request_type != "":
+            requests = requests.filter(requested_items__request_type=request_type)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(requests)
@@ -243,11 +247,10 @@ class GetLoansByItem(generics.GenericAPIView):
         else:
             loans = loans.filter(request__requested_items__item__name=item_name, request__requester=request.user.pk)
 
-        # Return all items if query parameter "all" is set
-        all_items = self.request.query_params.get("all", None)
-        if all_items:
-            serializer = self.get_serializer(instance=loans, many=True)
-            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+        # Filter by loan owner
+        user = self.request.query_params.get("user", None)
+        if user != None and user != "":
+            loans = loans.filter(request__requester__username=user)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(loans)
@@ -255,31 +258,41 @@ class GetLoansByItem(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
-class GetDisbursementsByItem(generics.GenericAPIView):
+class GetTransactionsByItem(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return models.Disbursement.objects.all()
+        return models.Transaction.objects.filter()
 
     def get_serializer_class(self):
-        return serializers.DisbursementSerializer
+        return serializers.TransactionSerializer
 
     def get(self, request, item_name, format=None):
-        disbursements = self.get_queryset()
-        if request.user.is_staff or request.user.is_superuser:
-            disbursements = disbursements.filter(request__requested_items__item__name=item_name)
-        else:
-            disbursements = disbursements.filter(request__requested_items__item__name=item_name, request__requester=request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        # Return all items if query parameter "all" is set
-        all_items = self.request.query_params.get("all", None)
-        if all_items:
-            serializer = self.get_serializer(instance=disbursements, many=True)
-            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+        transactions = self.get_queryset()
+        transactions = transactions.filter(item__name=item_name)
+
+        # Filter by category (acquisition, loss)
+        category = request.query_params.get('category', None)
+        if category != None and category != "":
+            if category in set(['Acquisition', 'Loss']):
+                transactions = transactions.filter(category=category)
+
+        administrator = request.query_params.get('administrator', None)
+        if administrator != None and administrator != "":
+            try:
+                administrator = User.objects.get(username=administrator)
+                transactions = transactions.filter(administrator=administrator)
+            except User.DoesNotExist:
+                pass
+
 
         # Pagination
-        paginated_queryset = self.paginate_queryset(disbursements)
+        paginated_queryset = self.paginate_queryset(transactions)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
         return response
@@ -676,32 +689,10 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         ri_instance.save()
                         if ri_instance.request_type == models.LOAN:
                             loan = models.createLoanFromRequestItem(ri_instance)
-                            print(loan)
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
-                            print(disbursement)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
-                # # decrement quantity available on each item in the approved request
-                # if valid_request:
-                #     for ri in instance.requested_items.all():
-                #         ri.item.quantity = (ri.item.quantity - ri.quantity)
-                #         ri.item.save()
-                #         # create a loan or disbursement object
-                #         if ri.request_type == models.LOAN:
-                #             loan = models.createLoanFromRequestItem(ri)
-                #             loan.save()
-                #             print(loan)
-                #         elif ri.request_type == models.DISBURSEMENT:
-                #             disbursement = models.createDisbursementFromRequestItem(ri)
-                #             disbursement.save()
-                #             print(disbursement)
-
-                        # Insert Create Log
-                        # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                        # requestItemApproval(ri, request.user.pk, instance)
-                # else:
-                #     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -917,7 +908,6 @@ def post_user_login(request, format=None):
     else:
         # Return an 'invalid login' error message.
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
-        print("ERROR")
         return redirect('/')
 
 class UserList(generics.GenericAPIView):
@@ -1094,8 +1084,7 @@ class LogList(generics.GenericAPIView):
         item = request.query_params.get("item")
         endDate = request.query_params.get("endDate")
         startDate = request.query_params.get("startDate")
-        # print("StartDate:" + startDate)
-        # print("EndDate:", endDate)
+
         # Create Datetimes from strings
         logs = self.get_queryset()
         q_objs = Q()
@@ -1112,16 +1101,12 @@ class LogList(generics.GenericAPIView):
             startDate, endDate = " ".join(startDate), " ".join(endDate)
             startDate, endDate = startDate + " " + stimeZone[0], endDate + " " + etimeZone[0]
 
-            print(startDate, endDate)
-
             startDate = datetime.strptime(startDate, "%a %b %d %Y %H:%M:%S %Z").date()
             endDate = datetime.strptime(endDate, "%a %b %d %Y %H:%M:%S %Z").date()
             startDate = datetime.combine(startDate, datetime.min.time())
             endDate = datetime.combine(endDate, datetime.max.time())
             startDate = timezone.make_aware(startDate, timezone.get_current_timezone())
             endDate = timezone.make_aware(endDate, timezone.get_current_timezone())
-
-            print(startDate, endDate)
 
             logs = logs.filter(date_created__range=[startDate, endDate])
 
@@ -1145,21 +1130,15 @@ class TransactionListCreate(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
-        category = request.GET.get('category')
-        if not (category is None or category=="All"):
-            queryset = models.Transaction.objects.filter(category=category)
 
-        # Return all items if query parameter "all" is set
-        all_items = self.request.query_params.get("all", None)
-        if all_items:
-            serializer = self.get_serializer(instance=queryset, many=True)
-            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+        category = request.GET.get('category')
+        if not (category is None or category==""):
+            queryset = models.Transaction.objects.filter(category=category)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
-        print(serializer.data)
         return response
 
 
