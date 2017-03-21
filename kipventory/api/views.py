@@ -957,7 +957,6 @@ class BulkImport(generics.GenericAPIView):
                     col_no = col_no + 1
                 # All data is now validated
                 # Ready to build items
-                print(columns)
 
                 for i in range(1, len(columns[0])):
 
@@ -1016,6 +1015,36 @@ class BulkImport(generics.GenericAPIView):
                                 curr_tag = models.Tag.objects.create(name=tag_name)
                             curr_item.tags.add(curr_tag)
 
+                    # Need to find the columns that dont have stock headers
+                    # In order to generate custom values
+
+                    cfs = self.returnCustomFields(columns)
+                    print("Custom field columns are:", cfs)
+                    if len(cfs) > 0:
+                        # Generate custom values with the custom fields in csv
+                        for cf in cfs:
+                            # First get the type of the custom field from the cf first entry
+                            cf_obj = models.CustomField.objects.get(name=cf[0])
+                            field_type = getattr(cf_obj, 'field_type')
+                            # Based on the field type, need to create Custom Value for
+                            # each Item row with values
+
+                            # i is the row index, cf[1] is col index of entry
+
+                            cv_obj = models.CustomValue.objects.create(field=cf_obj, item=curr_item)
+                            if field_type == 'Single':
+                                print("in assigning Single")
+                                print(columns[cf[1]][i])
+                                setattr(cv_obj, 'Single', columns[cf[1]][i])
+                            elif field_type == 'Multi':
+                                setattr(cv_obj, 'Multi', columns[cf[1]][i])
+                            elif field_type == 'Int':
+                                setattr(cv_obj, 'Int', int(columns[cf[1]][i]))
+                            elif field_type == 'Float':
+                                setattr(cv_obj, 'Int', float(columns[cf[1]][i]))
+                            else:
+                                print("Weird Field Type")
+                            cv_obj.save()
 
                     curr_item.save()
 
@@ -1031,6 +1060,31 @@ class BulkImport(generics.GenericAPIView):
                 return i
         else:
             return None
+
+    def isFloat(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def isInt(self, value):
+        try:
+            int(value)
+            return True
+        except ValueError:
+            return False
+
+    def returnCustomFields(self, columns):
+        stock_headers = ['name', 'quantity', 'model_no', 'description', 'tags']
+        custom_fields = []
+        for i in range(len(columns)):
+            if columns[i][0] not in stock_headers:
+                custom_fields.append((columns[i][0], i))
+        return custom_fields
+
+
+
 
     def checkEntry(self, header, entry):
         # respond with 1. success or error 2. message
@@ -1079,8 +1133,37 @@ class BulkImport(generics.GenericAPIView):
                 return (error, 'Unrecognized custom field')
             else:
                 # Check to make sure that for each custom field, the entry is correct
-                
-                return (success, 'Custom field exists')
+                # Get the type of the custom field from header
+                cf = models.CustomField.objects.get(name=header)
+                field_type = getattr(cf, 'field_type')
+                # FIELD_TYPES = (
+                #     ('Single', 'Single-line text'),
+                #     ('Multi', 'Multi-line text'),
+                #     ('Int', 'Integer'),
+                #     ('Float', 'Float'),
+                # )
+                if field_type == 'Single':
+                    if isinstance(entry, str):
+                        return (success, 'Item custom field is a string')
+                    else:
+                        return (error, 'Item custom field not a string')
+                elif field_type == 'Multi':
+                    if isinstance(entry, str):
+                        return (success, 'Item custom field is a string')
+                    else:
+                        return (error, 'Item custom field not a string')
+                elif field_type == 'Int':
+                    if self.isInt(entry):
+                        return (success, 'Item custom field is an Integer')
+                    else:
+                        return (error, 'Item custom field not an Integer')
+                elif field_type == 'Float':
+                    if self.isFloat(entry):
+                        return (success, 'Item custom field is a Float')
+                    else:
+                        return (error, 'Item custom field not a Float')
+                else:
+                    return (error, 'Unrecognized field type')
 
     def get_serializer_class(self):
         return serializers.BulkImportSerializer
