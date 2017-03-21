@@ -1019,33 +1019,14 @@ class BulkImport(generics.GenericAPIView):
                     # In order to generate custom values
 
                     cfs = self.returnCustomFields(columns)
-                    print("Custom field columns are:", cfs)
                     if len(cfs) > 0:
                         # Generate custom values with the custom fields in csv
+                        cvs = curr_item.values.all()
                         for cf in cfs:
                             # First get the type of the custom field from the cf first entry
-                            cf_obj = models.CustomField.objects.get(name=cf[0])
-                            field_type = getattr(cf_obj, 'field_type')
-                            # Based on the field type, need to create Custom Value for
-                            # each Item row with values
-
-                            # i is the row index, cf[1] is col index of entry
-
-                            cv_obj = models.CustomValue.objects.create(field=cf_obj, item=curr_item)
-                            if field_type == 'Single':
-                                print("in assigning Single")
-                                print(columns[cf[1]][i])
-                                setattr(cv_obj, 'Single', columns[cf[1]][i])
-                            elif field_type == 'Multi':
-                                setattr(cv_obj, 'Multi', columns[cf[1]][i])
-                            elif field_type == 'Int':
-                                setattr(cv_obj, 'Int', int(columns[cf[1]][i]))
-                            elif field_type == 'Float':
-                                setattr(cv_obj, 'Int', float(columns[cf[1]][i]))
-                            else:
-                                print("Weird Field Type")
-                            cv_obj.save()
-
+                            cv = cvs.get(field__name=cf[0])
+                            setattr(cv, cv.field.field_type, models.FIELD_TYPE_DICT[cv.field.field_type](columns[cf[1]][i]))
+                            cv.save()
                     curr_item.save()
 
                 serializer.save()

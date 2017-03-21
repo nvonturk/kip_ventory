@@ -106,6 +106,9 @@ class CustomField(models.Model):
                 if self.name not in satisfied_fields:
                     cv = CustomValue(field=self, item=item)
                     cv.save()
+    def __str__(self):
+        return "{}".format(self.name)
+
 
 
 class CustomValue(models.Model):
@@ -117,7 +120,10 @@ class CustomValue(models.Model):
     Float  = models.FloatField(default=0.0, blank=True)
 
     def get_value(self):
-            return getattr(self, self.field.field_type)
+        return getattr(self, self.field.field_type)
+
+    def __str__(self):
+        return "{}, {}, {}".format(self.item, self.field, self.get_value())
 
 class Request(models.Model):
     requester      = models.ForeignKey(User, on_delete=models.CASCADE, related_name="requests")
