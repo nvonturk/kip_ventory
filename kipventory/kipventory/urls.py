@@ -21,14 +21,7 @@ from django.views import static
 from . import views
 from rest_framework_swagger.views import get_swagger_view
 
-
-schema_view = get_swagger_view(title='Pastebin API')
-
-from rest_framework_swagger.views import get_swagger_view
-
-
 schema_view = get_swagger_view(title='Kipventory API')
-
 
 urlpatterns = [
     # admin site for quick dev testing

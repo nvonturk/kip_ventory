@@ -92,12 +92,11 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     item         = ItemSerializer(read_only=True, many=False)
     quantity     = serializers.IntegerField(min_value=0, max_value=None, required=True)
-    request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES, default=models.DISBURSEMENT)
-    due_date     = serializers.DateTimeField(allow_null=True, required=False)
+    request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES, default=models.LOAN)
 
     class Meta:
         model = models.CartItem
-        fields = ['item', 'quantity', 'request_type', 'due_date']
+        fields = ['item', 'quantity', 'request_type']
 
     def is_future_date(self, date):
         now = timezone.now()
@@ -120,30 +119,20 @@ class CartItemSerializer(serializers.ModelSerializer):
             raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
 
         request_type = data.get('request_type', None)
-        due_date = data.get('due_date', None)
-        if request_type == models.LOAN:
-            if due_date is None:
-                raise ValidationError({"due_date": ["Must provide a due date for a loan request."]})
-            else:
-                if not self.is_future_date(due_date):
-                    raise ValidationError({"due_date": ["Only future dates are allowed."]})
+        if (request_type != "disbursement") and (request_type != "loan"):
+            raise ValidationError({"request_type": ["Request type must be one of 'disbursement', 'loan'."]})
 
         return data
 
     def create(self, validated_data):
         ci = super(CartItemSerializer, self).create(validated_data)
-        if ci.request_type == models.DISBURSEMENT:
-            ci.due_date = None
         ci.save()
         return ci
 
     def update(self, ci, validated_data):
         ci = super(CartItemSerializer, self).update(ci, validated_data)
-        if ci.request_type == models.DISBURSEMENT:
-            ci.due_date = None
         ci.save()
         return ci
-
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -210,43 +199,37 @@ class RequestedItemSerializer(serializers.ModelSerializer):
     item         = serializers.SlugRelatedField(read_only=True, slug_field="name")
     quantity     = serializers.IntegerField(required=True)
     request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES)
-    due_date     = serializers.DateTimeField(allow_null=True, required=False)
 
     class Meta:
         model = models.RequestedItem
-        fields = ['item', 'quantity', 'request_type', 'due_date']
+        fields = ['item', 'quantity', 'request_type']
 
     def is_future_date(self, date):
         return True
 
-    def to_representation(self, ri):
-        d = {"item": ri.item.name, "quantity": ri.quantity, "request_type": ri.request_type}
-        if ri.due_date is not None and ri.request_type == models.LOAN:
-            d.update({"due_date": ri.due_date})
-        return d
-
     def validate(self, data):
-        request_type = data.get('request_type', None)
-        due_date = data.get('due_date', None)
-        if request_type == models.LOAN:
-            if due_date is None:
-                raise ValidationError({"due_date": ["Must provide a due date for a loan request."]})
-            else:
-                if not self.is_future_date(due_date):
-                    raise ValidationError({"due_date": ["Only future dates are allowed."]})
+        # request_type = data.get('request_type', None)
+        # due_date = data.get('due_date', None)
+        # if request_type == models.LOAN:
+        #     if due_date is None:
+        #         raise ValidationError({"due_date": ["Must provide a due date for a loan request."]})
+        #     else:
+        #         if not self.is_future_date(due_date):
+        #             raise ValidationError({"due_date": ["Only future dates are allowed."]})
+        data = super(RequestedItemSerializer, self).validate(data)
         return data
 
     def create(self, validated_data):
         ri = super(RequestedItemSerializer, self).create(validated_data)
-        if ri.request_type == models.DISBURSEMENT:
-            ri.due_date = None
+        # if ri.request_type == models.DISBURSEMENT:
+        #     ri.due_date = None
         ri.save()
         return ri
 
     def update(self, ri, validated_data):
         ri = super(RequestedItemSerializer, self).update(ri, validated_data)
-        if ri.request_type == models.DISBURSEMENT:
-            ri.due_date = None
+        # if ri.request_type == models.DISBURSEMENT:
+        #     ri.due_date = None
         ri.save()
         return ri
 
@@ -290,11 +273,67 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         date_closed = timezone.now()
         administrator = data.get('administrator', None)
-
         validated_data = super(RequestPUTSerializer, self).to_internal_value(data)
-
         validated_data.update({"date_closed": date_closed, "administrator": administrator})
         return validated_data
+
+    def update(self, instance, data):
+        instance = super(RequestPUTSerializer, self).update(instance, data)
+        return instance
+
+class DisbursementSerializer(serializers.ModelSerializer):
+    request = RequestSerializer(read_only=True)
+    item    = ItemSerializer(read_only=True)
+
+    class Meta:
+        model = models.Disbursement
+        fields = ['id', 'request', 'item', 'quantity', 'date']
+        read_only_fields = ['id', 'request', 'item', 'quantity', 'date']
+
+class LoanSerializer(serializers.ModelSerializer):
+    request = RequestSerializer(read_only=True)
+    item    = ItemSerializer(read_only=True)
+
+    class Meta:
+        model = models.Loan
+        fields = ['id', 'request', 'item', 'quantity', 'returned', 'date_loaned', 'date_returned']
+        read_only_fields = ['id', 'request', 'item', 'quantity', 'date_loaned']
+
+    def update(self, instance, data):
+        is_returned = data.get('returned', False)
+        instance.is_returned = is_returned
+        if (instance.is_returned):
+            instance.date_returned = timezone.now()
+        instance.save()
+        return instance
+
+class ConversionSerializer(serializers.Serializer):
+    quantity = serializers.IntegerField(required=True)
+
+    def to_internal_value(self, data):
+        quantity = data.get('quantity', None)
+        loan = data.get('loan', None)
+        try:
+            quantity = int(quantity)
+        except:
+            raise serializers.ValidationError({"quantity": ["Quantity must be a positive integer."]})
+        if quantity <= 0:
+            raise serializers.ValidationError({"quantity": ["Quantity must be a positive integer."]})
+        if quantity > loan.quantity:
+            raise serializers.ValidationError({"quantity": ["Quantity must not be greater than the number of instances in this loan ({})".format(loan.quantity)]})
+
+        return {"quantity": quantity, "loan": loan}
+
+    def create(self, validated_data):
+        loan = validated_data.get('loan')
+        quantity = validated_data.get('quantity')
+        d = models.Disbursement.objects.create(request=loan.request, item=loan.item, quantity=quantity)
+        loan.quantity -= quantity
+        loan.save()
+        if (loan.quantity == 0):
+            loan.delete()
+        d.save()
+        return d
 
 class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)

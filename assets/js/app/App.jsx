@@ -1,6 +1,7 @@
 import React from 'react'
+import { Grid, Row, Col } from 'react-bootstrap'
 import { render } from 'react-dom'
-import { Router, Route, browserHistory, IndexRoute } from 'react-router'
+import { Router, Redirect, Route, browserHistory, IndexRoute } from 'react-router'
 import KipNav from './KipNav'
 // import Home from './Home'
 
@@ -30,7 +31,8 @@ import RequestsContainer from './requests/RequestsContainer'
 import Profile from './Profile'
 import {getJSON} from 'jquery'
 
-import ItemDetail from './inventory/ItemDetail'
+import UserDetail from './inventory/detail/UserDetail'
+import ManagerDetail from './inventory/detail/ManagerDetail'
 import RequestDetail from './requests/RequestDetail'
 
 function getManagerPanel(userData) {
@@ -59,20 +61,50 @@ function getAdminPanel(userData) {
     </Route>) : null
 }
 
-function initialize(userData) {
+function getItemDetailRoute(userData) {
+  return (userData.is_staff || userData.is_superuser) ? (
+    <Route path=":item_name" component={ManagerDetail} user={userData} />
+  ) : (
+    <Route path=":item_name" component={UserDetail} user={userData} />
+  )
+}
 
+const My404Component = React.createClass({
+  getInitialState() {
+    return {}
+  },
+
+  render() {
+    return (
+      <Grid>
+        <Col sm={12}>
+          <h3>404 - not found</h3>
+          <hr />
+        </Col>
+      </Grid>
+    )
+  }
+})
+
+function initialize(userData) {
   render((
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
-        <Route path="inventory" component={InventoryContainer} user={userData} />
-        <Route path="items/:item_name" component={ItemDetail} user={userData} />
-        <Route path="requests" component={RequestsContainer} user={userData}/>
-        <Route path="requests/:request_id" component={RequestDetail} user={userData} />
+        <Route path="inventory" user={userData}>
+          <IndexRoute component={InventoryContainer} user={userData} />
+          { getItemDetailRoute(userData) }
+        </Route>
+        <Route path="requests" user={userData} >
+          <IndexRoute component={RequestsContainer} />
+          <Route path=":request_id" component={RequestDetail} user={userData} />
+        </Route>
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
-        {getManagerPanel(userData)}
-        {getAdminPanel(userData)}
+        { getManagerPanel(userData) }
+        { getAdminPanel(userData) }
+        <Route path='404' component={My404Component} />
       </Route>
+      <Redirect from='*' to='/app/404/' />
     </Router>),
     document.getElementById('root'));
 }

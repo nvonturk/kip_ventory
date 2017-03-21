@@ -40,9 +40,11 @@ STATUS_CHOICES = (
 class Tag(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
+    class Meta:
+        ordering = ('name',)
+
     def __str__(self):
         return self.name
-
 
 
 class NewUserRequest(models.Model):
@@ -58,6 +60,9 @@ class Item(models.Model):
     model_no    = models.CharField(default='', max_length=100, blank=True)
     description = models.TextField(default='', max_length=500, blank=True)
     tags        = models.ManyToManyField(Tag, blank=True)
+
+    class Meta:
+        ordering = ('name',)
 
     def __str__(self):
         return "{}".format(self.name)
@@ -88,10 +93,16 @@ class CartItem(models.Model):
     request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
     due_date     = models.DateTimeField(blank=True, null=True, default=None)
 
+    class Meta:
+        ordering = ('item__name',)
+
 class CustomField(models.Model):
     name        = models.CharField(max_length=100, unique=True)
     private     = models.BooleanField(default=False)
     field_type  = models.CharField(max_length=10, choices=FIELD_TYPES, default='Single')
+
+    class Meta:
+        ordering = ('name',)
 
     def save(self, *args, **kwargs):
         # Determine if this `save()` call is for creation or modification
@@ -116,6 +127,9 @@ class CustomValue(models.Model):
     Int    = models.IntegerField(default=0, blank=True)
     Float  = models.FloatField(default=0.0, blank=True)
 
+    class Meta:
+        ordering = ('field__name',)
+
     def get_value(self):
             return getattr(self, self.field.field_type)
 
@@ -128,24 +142,31 @@ class Request(models.Model):
     status         = models.CharField(max_length=15, choices=STATUS_CHOICES, default=OUTSTANDING)
     administrator  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
+    class Meta:
+        ordering = ('date_open',)
 
 class RequestedItem(models.Model):
     request      = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='requested_items', blank=True, null=True)
     item         = models.ForeignKey(Item,    on_delete=models.CASCADE)
     quantity     = models.PositiveIntegerField(default=0)
-    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
-    due_date     = models.DateTimeField(blank=True, null=True, default=None)
+    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=LOAN)
+
+    class Meta:
+        ordering = ('item__name',)
 
 class Loan(models.Model):
     request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loaned_items', blank=True, null=True)
-    item      = models.ForeignKey(Item, on_delete=models.DO_NOTHING)
+    date_loaned = models.DateTimeField(blank=True, auto_now_add=True)
+    item      = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity  = models.PositiveIntegerField(default=0)
-    due_date  = models.DateTimeField(blank=True, null=True)
-    return_date = models.DateTimeField(blank=True, null=True)
+    returned  = models.BooleanField(default=False)
+    date_returned = models.DateTimeField(blank=True, null=True)
+
 
 class Disbursement(models.Model):
     request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursed_items', blank=True, null=True)
-    item      = models.ForeignKey(Item, on_delete=models.DO_NOTHING)
+    date      = models.DateTimeField(blank=True, auto_now_add=True)
+    item      = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity  = models.PositiveIntegerField(default=0)
 
 
@@ -153,8 +174,9 @@ def createLoanFromRequestItem(ri):
     loan = Loan.objects.create(request=ri.request,
                                item=ri.item,
                                quantity=ri.quantity,
-                               due_date=ri.due_date,
-                               return_date=None)
+                               returned=False)
+    ri.item.quantity -= ri.quantity
+    ri.item.save()
     loan.save()
     return loan
 
@@ -162,6 +184,8 @@ def createDisbursementFromRequestItem(ri):
     disbursement = Disbursement.objects.create(request=ri.request,
                                                item=ri.item,
                                                quantity=ri.quantity)
+    ri.item.quantity -= ri.quantity
+    ri.item.save()
     disbursement.save()
     return disbursement
 
@@ -185,7 +209,7 @@ class Log(models.Model):
     initiating_user         = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='initiating_user', null=True)
     affected_user           = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='affected_user', blank=True, null=True)
     date_created            = models.DateTimeField(blank=True, auto_now_add=True)
-    message                 = models.CharField(max_length=100, blank=True, null=True)
+    message                 = models.CharField(max_length=500, blank=True, null=True)
     request                 = models.ForeignKey(Request, on_delete=models.SET_NULL, blank=True, null=True)
     # default values for the foreignkeys in the event those items are deleted or users etc.
     default_item            = models.CharField(max_length=100, blank=True, null=True)

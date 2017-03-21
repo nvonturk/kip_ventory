@@ -21,6 +21,3 @@ def app(request):
         messages.add_message(request, messages.ERROR, 'not-authenticated')
         return redirect('/?next=' + request.path)
     return render(request, 'kipventory/app.html')
-
-# def swagger(request):
-#     return render(request, schema_view)

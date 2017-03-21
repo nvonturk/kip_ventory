@@ -35,19 +35,17 @@ const LoginForm = React.createClass({
       <div>
         <form method="post" action="/api/login/">
           <CSRFToken />
-          <FormGroup controlId="username">
-            <ControlLabel>Username</ControlLabel>
+          <FormGroup bsSize="small" controlId="username">
             <FormControl type="text" value={this.state.username} name="username" placeholder="Username" onChange={this.handleChange} />
           </FormGroup>
 
-          <FormGroup controlId="password">
-            <ControlLabel>Password</ControlLabel>
+          <FormGroup bsSize="small" controlId="password">
             <FormControl type="password" value={this.state.password} name="password" placeholder="Password" onChange={this.handleChange} />
           </FormGroup>
 
           <input type="hidden" name="next" value={this.props.next} />
 
-          <FormGroup>
+          <FormGroup bsSize="small">
             <Button block type="submit">
               Sign in
             </Button>
