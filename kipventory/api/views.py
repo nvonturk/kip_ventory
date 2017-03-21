@@ -57,16 +57,7 @@ class ItemListCreate(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.ItemSerializer
 
-    def get(self, request, format=None):
-        # CHECK PERMISSION
-        queryset = self.get_queryset()
-
-        # Return all items if query parameter "all" is set
-        all_items = self.request.query_params.get("all", None)
-        if all_items:
-            serializer = self.get_serializer(instance=queryset, many=True)
-            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
-
+    def filter_queryset(self, queryset, request):
         # Search and Tag Filtering
         search = self.request.query_params.get("search")
         tags = self.request.query_params.get("tags")
@@ -77,7 +68,7 @@ class ItemListCreate(generics.GenericAPIView):
         if search is not None and search!='':
             q_objs &= (Q(name__icontains=search) | Q(model_no__icontains=search))
 
-        queryset = models.Item.objects.filter(q_objs).distinct()
+        queryset = queryset.filter(q_objs).distinct()
 
         # Tags filter
         if tags is not None and tags != '':
@@ -91,7 +82,12 @@ class ItemListCreate(generics.GenericAPIView):
             for tag in excludeTagsArray:
                 queryset = queryset.exclude(tags__name=tag)
 
+        return queryset
 
+    def get(self, request, format=None):
+        # CHECK PERMISSION
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset, request)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
@@ -105,26 +101,11 @@ class ItemListCreate(generics.GenericAPIView):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        # check if we're trying to make a duplicate item
-        existing_item = models.Item.objects.filter(name=request.data['name']).count() > 0
-        if existing_item:
-            return Response({"error": "An item with this name already exists."})
+        data = request.data.copy()
 
-        # check that the starting quantity is non-negative
-        quantity = None
-        try:
-            quantity = int(request.data.get('quantity', None))
-        except:
-            return Response({'quantity': 'Ensure this value is an integer.'})
-        if quantity < 0:
-            return Response({'quantity': 'Ensure this value is greater than or equal to 0.'})
-
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            # Insert Create Log
-            # Need {serializer.data, initiating_user_pk, 'Item Creation'}
-            print("About to Create a Log")
             itemCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -146,7 +127,6 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         return models.Item.objects.all()
 
     def get(self, request, item_name, format=None):
-        print("YO")
         item = self.get_instance(item_name=item_name)
         serializer = self.get_serializer(instance=item)
         return Response(serializer.data)
@@ -157,48 +137,12 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        item = self.get_instance(item_name=item_name)
-
-        # check if we're trying to modify quantity
-        quantity = request.data.get('quantity', None)
-        try:
-            int(quantity)
-            print(quantity)
-        except ValueError:
-            return Response({"error": "Not Integer"}, status=status.HTTP_400_BAD_REQUEST)
-        quantity = int(quantity)
-        if not ((quantity is None) or (quantity < 0)):
-            if (quantity != item.quantity):
-                if not (request.user.is_superuser):
-                    return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
-        else:
-            return Response({"error": "Null or Negative Quantity"}, status=status.HTTP_400_BAD_REQUEST)
-        # check for other modifications
-        new_name = request.data.get('name', None)
-        if not (new_name == item_name):
-            if not ((new_name is None) or (new_name == "")):
-                items_with_name = models.Item.objects.filter(name=new_name).count()
-                if (items_with_name == 0):
-                    if not (request.user.is_superuser):
-                        return Response({"error": "Admin permissions required."}, status=status.HTTP_403_FORBIDDEN)
-                else:
-                    return Response({"error": "Item Name Already Taken"}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                    return Response({"error": "Item needs non null name"}, status=status.HTTP_400_BAD_REQUEST)
-
         data = request.data.copy()
-
-        tags = data.get('tags', None)
-        if tags is None:
-            for tag in item.tags.all():
-                item.tags.remove(tag)
-
+        item = self.get_instance(item_name=item_name)
 
         serializer = self.get_serializer(instance=item, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            # Insert Create Log
-            # Need {serializer.data, initiating_user_pk, 'Item Changed'}
             itemModificationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -248,9 +192,6 @@ class AddItemToCart(generics.GenericAPIView):
             serializer = self.get_serializer(data=data)
 
         if serializer.is_valid():
-            cart_quantity      = int(data['quantity'])
-            if (cart_quantity <= 0):
-                return Response({"quantity": "Quantity must be a positive integer."})
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -278,10 +219,6 @@ class CustomFieldListCreate(generics.GenericAPIView):
         if not (request.user.is_staff or request.user.is_superuser):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
-
-        existing_field = self.get_queryset().filter(name=request.data['name']).count() > 0
-        if existing_field:
-            return Response({"error": "A field with this name already exists."})
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -367,10 +304,12 @@ class CustomValueDetailModify(generics.GenericAPIView):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
+        data = request.data.copy()
+
         custom_value = self.get_instance(item_name=item_name, field_name=field_name)
         # manually force the serializer data to have correct field name
-        request.data.update({'name': field_name})
-        serializer = self.get_serializer(instance=custom_value, data=request.data, partial=True)
+        data.update({'name': field_name})
+        serializer = self.get_serializer(instance=custom_value, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -390,6 +329,7 @@ class CartItemList(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
+
         return Response(serializer.data)
 
 
@@ -425,15 +365,6 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
 
         serializer = self.get_serializer(instance=cartitem, data=data, partial=True)
         if serializer.is_valid():
-            try:
-                cart_quantity = int(request.data['quantity'])
-            except:
-                return Response({"quantity": "Quantity must be a positive integer."}, status=status.HTTP_400_BAD_REQUEST)
-            if (cart_quantity < 0):
-                return Response({"quantity": "Quantity must be a positive integer."})
-            elif cart_quantity == 0:
-                cartitem.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -458,9 +389,9 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
     def get(self, request, item_name, format=None):
         requests = self.get_queryset()
         if request.user.is_staff or request.user.is_superuser:
-            requests = models.Request.objects.filter(request_items__item__name=item_name)
+            requests = models.Request.objects.filter(requested_items__item__name=item_name)
         else:
-            requests = models.Request.objects.filter(request_items__item__name=item_name, requester=request.user.pk)
+            requests = models.Request.objects.filter(requested_items__item__name=item_name, requester=request.user.pk)
 
         # Return all items if query parameter "all" is set
         all_items = self.request.query_params.get("all", None)
@@ -512,6 +443,9 @@ class RequestListCreate(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
+        status = request.GET.get('status')
+        if not (status is None or status=="All"):
+            queryset = models.Request.objects.filter(status=status)
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -524,7 +458,7 @@ class RequestListCreate(generics.GenericAPIView):
 
         cart_items = models.CartItem.objects.filter(owner__pk=self.request.user.pk)
         if cart_items.count() <= 0:
-            d = {"error": "There are no items in your cart. Add an item to request it."}
+            d = {"error": ["There are no items in your cart. Add an item to your cart in order to request it."]}
             return Response(d, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=data)
@@ -532,9 +466,11 @@ class RequestListCreate(generics.GenericAPIView):
             request_instance = serializer.save()
 
         for ci in cart_items:
-            item = ci.item
-            quantity = ci.quantity
-            req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
+            req_item = models.RequestedItem.objects.create(request=request_instance,
+                                                           item=ci.item,
+                                                           quantity=ci.quantity,
+                                                           request_type=ci.request_type,
+                                                           due_date=ci.due_date)
             # Insert Create Log
             # Need {serializer.data, initiating_user_pk, 'Request Created'}
             req_item.save()
@@ -590,36 +526,36 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             if data['status'] == 'D':
                 # Insert Create Log
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                for ri in instance.request_items.all():
+                for ri in instance.requested_items.all():
                     requestItemDenial(ri, request.user.pk, instance)
             elif data['status'] == 'A':
                 valid_request = True
-                new_quantities = {}
-                for ri in instance.request_items.all():
-                    item = ri.item
-                    available_quantity = item.quantity
-                    requested_quantity = ri.quantity
-                    if (requested_quantity > available_quantity):
+                for ri in instance.requested_items.all():
+                    if (ri.quantity > ri.item.quantity):
                         valid_request = False
                         break
                 # decrement quantity available on each item in the approved request
                 if valid_request:
-                    for ri in instance.request_items.all():
-                        item = ri.item
-                        available_quantity = item.quantity
-                        requested_quantity = ri.quantity
-                        item.quantity = (available_quantity - requested_quantity)
-                        item.save()
+                    for ri in instance.requested_items.all():
+                        ri.item.quantity = (ri.item.quantity - ri.quantity)
+                        ri.item.save()
+                        # create a loan or disbursement object
+                        print(ri.request_type)
+                        if ri.request_type == models.LOAN:
+                            loan = models.createLoanFromRequestItem(ri)
+                            loan.save()
+                            print(loan)
+                        elif ri.request_type == models.DISBURSEMENT:
+                            disbursement = models.createDisbursementFromRequestItem(ri)
+                            disbursement.save()
+                            print(disbursement)
+
                         # Insert Create Log
                         # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                         requestItemApproval(ri, request.user.pk, instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
-            # item = models.Item.objects.get(pk=request.data['item'])
-            # item.quantity = item.quantity - int(request.data['quantity'])
-            # item.save()
-            # createLog(request.data, request.data['administrator'], 'Request')
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -637,11 +573,48 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class RequestedItemDetailModifyDelete(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_requested_item(self, request_pk, item_name):
+        try:
+            return models.RequestedItem.objects.filter(request__pk=request_pk).get(item__name=item_name)
+        except models.RequestedItem.DoesNotExist:
+            raise NotFound("Item '{}' could not be found in Request with primary key '{}'".format(item_name, request_pk))
+
+    def get_queryset(self):
+        return models.RequestedItems.objects.filter(request__pk=request_pk)
+
+    def get_serializer_class(self):
+        return serializers.RequestedItemSerializer
+
+    def get(self, request, request_pk, item_name, format=None):
+        ri = self.get_requested_item(request_pk, item_name)
+        serializer = self.get_serializer(instance=ri)
+        return Response(serializer.data)
+
+    def put(self, request, request_pk, item_name, format=None):
+        ri = self.get_requested_item(request_pk, item_name)
+        data = request.data.copy()
+        serializer = self.get_serializer(instance=ri, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, request_pk, item_name, format=None):
+        ri = self.get_requested_item(request_pk, item_name)
+        ri.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
 def post_user_login(request, format=None):
-    username = request.POST['username']
-    password = request.POST['password']
+    username = request.data.get('username', None)
+    password = request.data.get('password', None)
+    next_url = request.data.get('next', None)
 
     user = authenticate(username=username, password=password)
 
@@ -652,10 +625,13 @@ def post_user_login(request, format=None):
 
     if user is not None:
         login(request, user)
-        return redirect('/app/')
+        if len(next_url) > 0:
+            return redirect(next_url)
+        return redirect('/app/inventory/')
     else:
         # Return an 'invalid login' error message.
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
+        print("ERROR")
         return redirect('/')
 
 class UserList(generics.GenericAPIView):
@@ -808,6 +784,7 @@ class TagListCreate(generics.GenericAPIView):
 
 class LogList(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Log.objects.all()
@@ -854,13 +831,18 @@ class LogList(generics.GenericAPIView):
             print(startDate, endDate)
 
             logs = logs.filter(date_created__range=[startDate, endDate])
-        serializer = self.get_serializer(instance=logs, many=True)
-        return Response(serializer.data)
+
+        queryset = logs
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
 
 
 class TransactionListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return models.Transaction.objects.all()
@@ -990,7 +972,7 @@ class DisburseCreate(generics.GenericAPIView):
         if serializer.is_valid():
             for item, quantity in zip(items, quantities):
                 # Create the request item
-                req_item = models.RequestItem.objects.create(item=item, quantity=quantity, request=request_instance)
+                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request=request_instance)
                 req_item.save()
 
                 # Decrement the quantity remaining on the Item

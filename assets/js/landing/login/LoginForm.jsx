@@ -1,9 +1,8 @@
 import React from 'react'
 import {Form, FormGroup, Col, FormControl, Checkbox, Button, ControlLabel, } from 'react-bootstrap'
-// import { Router, Route, browserHistory, IndexRoute } from 'react-router'
+import {ajax} from 'jquery'
 
-
-import { CSRFToken } from '../../csrf/DjangoCSRFToken'
+import { CSRFToken, getCookie } from '../../csrf/DjangoCSRFToken'
 
 const LoginForm = React.createClass({
 
@@ -22,7 +21,6 @@ const LoginForm = React.createClass({
       [name]: value
     });
   },
-
 
   render() {
     var scope = "scope=basic%20identity:netid:read";
@@ -46,6 +44,8 @@ const LoginForm = React.createClass({
             <ControlLabel>Password</ControlLabel>
             <FormControl type="password" value={this.state.password} name="password" placeholder="Password" onChange={this.handleChange} />
           </FormGroup>
+
+          <input type="hidden" name="next" value={this.props.next} />
 
           <FormGroup>
             <Button block type="submit">

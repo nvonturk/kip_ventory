@@ -9,7 +9,7 @@ import LogEntryContainer from './LogEntryContainer'
 import DateRangePicker from 'react-bootstrap-daterangepicker'
 import Paginator from '../../Paginator'
 
-const LOGS_PER_PAGE = 20;
+const LOGS_PER_PAGE = 10;
 
 class LogsContainer extends Component {
   constructor(props) {

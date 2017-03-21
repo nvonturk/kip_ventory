@@ -24,24 +24,24 @@ var LandingPage = React.createClass({
 
   render() {
     return (
-      <div>
+      <Grid>
         <Row>
           <Col xs={12}>
-            <Well>
+            <Jumbotron>
               <Row>
                 <h1>kip-ventory</h1>
               </Row>
               <Row>
                 <p>Your one-stop-shop for any hardware-related needs!</p>
               </Row>
-            </Well>
+            </Jumbotron>
           </Col>
         </Row>
         {this.getLoginRedirectMessage()}
           <Col xs={8} xsOffset={2} md={4} mdOffset={4}>
-            <LoginSignupContainer />
+            <LoginSignupContainer next={this.props.location.query.next}/>
           </Col>
-      </div>
+      </Grid>
     );
   }
 });

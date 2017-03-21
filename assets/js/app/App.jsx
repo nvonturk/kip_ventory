@@ -64,7 +64,7 @@ function initialize(userData) {
   render((
     <Router history={browserHistory}>
       <Route path="app" component={KipNav} user={userData}>
-        <IndexRoute component={InventoryContainer} user={userData} />
+        <Route path="inventory" component={InventoryContainer} user={userData} />
         <Route path="items/:item_name" component={ItemDetail} user={userData} />
         <Route path="requests" component={RequestsContainer} user={userData}/>
         <Route path="requests/:request_id" component={RequestDetail} user={userData} />
