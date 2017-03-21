@@ -122,7 +122,13 @@ SFTP_STORAGE_PARAMS = {
 #SFTP_KNOWN_HOST_FILE = './home/bitnami/.ssh/known_hosts'
 #SFTP_STORAGE_INTERACTIVE = False
 
-
+# DBBACKUP_CONNECTORS = {
+#     'default': {
+#         'USER': 'bitnami',
+#         'PASSWORD': 'submenCo1e',
+#         'HOST': 'colab-sbx-309.oit.duke.edu'
+#     }
+# }
 
 
 # Classes working Django-Cron
