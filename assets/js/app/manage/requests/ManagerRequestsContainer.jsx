@@ -29,7 +29,7 @@ const ManagerRequestsContainer = React.createClass({
   getRequests() {
     var params = {
       page: this.state.page,
-      itemsPerPage: REQUESTS_PER_PAGE, 
+      itemsPerPage: REQUESTS_PER_PAGE,
       status: this.state.filter_option,
     };
     var url = "/api/requests/all/";
@@ -55,7 +55,7 @@ const ManagerRequestsContainer = React.createClass({
   handleSelect(selectedKey) {
     this.setState({
       activeKey: selectedKey,
-      filter_option: STATUS[selectedKey], 
+      filter_option: STATUS[selectedKey],
       page: 1
     }, this.getRequests);
   },

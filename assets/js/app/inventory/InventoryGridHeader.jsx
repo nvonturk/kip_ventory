@@ -14,9 +14,9 @@ function InventoryGridHeader(props) {
 	return (
 		<Grid fluid className="search-tag-container">
 		    <Row className="relative-container">
-		      <Col xs={4} className="relative-container">{columnContents[0]}</Col>
-		      <Col xs={4} className="relative-container">{columnContents[1]}</Col>
-		      <Col xs={4} className="relative-container">{columnContents[2]}</Col>
+		      <Col sm={4} className="relative-container">{columnContents[0]}</Col>
+		      <Col sm={4} className="relative-container">{columnContents[1]}</Col>
+		      <Col sm={4} className="relative-container">{columnContents[2]}</Col>
 		    </Row>
     	</Grid>
 	)

@@ -1,51 +1,44 @@
 import React from 'react';
 import LoginForm from './LoginForm';
-import SignupForm from './SignupForm';
 
-import {Button, Panel, Well, Nav, NavItem} from 'react-bootstrap';
-
-
+import {Grid, Row, Col, Button, Panel, Well, Nav, NavItem} from 'react-bootstrap';
 
 const LoginSignupContainer = React.createClass({
   getInitialState() {
-    return {
-      activeKey: 1
-    }
+    return {}
   },
 
-  handleSelect(selectedKey) {
-    this.setState({
-      activeKey: selectedKey
-    })
+  getLoginRedirectMessage() {
+    var node = document.getElementById('not-authenticated')
+    return (node != null) ? (
+      <Well bsSize="small" className="text-center" style={{fontSize:"12px"}}>
+        You must log in to see that page.
+      </Well>
+    ): null
   },
 
-  getPanelHeader() {
-    return (
-      <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-          <NavItem eventKey={1} title="login">Login</NavItem>
-        </Nav>
-    )
-  },
-
-  getPanelContent() {
-    var showLogin = (this.state.activeKey == 1);
-    var elems = []
+  getInvalidLoginMessage() {
     var node = document.getElementById('invalid-login-credentials')
-    if (node != null && showLogin) {
-      elems.push(<Well id="login-error-message" key={1}>Your username or password was incorrect - try again.</Well>)
-    }
-
-    elems.push(<LoginForm key={2} next={this.props.next}/>)
-    return (<div>{elems}</div>)
+    return (node != null) ? (
+      <Well bsSize="small" className="text-center" style={{fontSize:"12px"}}>
+        Your username or password was incorrect.
+      </Well>
+    ): null
   },
 
   render() {
     return (
-      <div id="login-signup">
-        <Panel header={this.getPanelHeader()}>
-          {this.getPanelContent()}
-        </Panel>
-      </div>
+      <Grid fluid>
+        <Row>
+          <Col md={8} mdOffset={2} xs={10} xsOffset={1}>
+            <Col md={4} mdOffset={4} xs={12}>
+              { this.getLoginRedirectMessage() }
+              { this.getInvalidLoginMessage() }
+              <LoginForm next={this.props.next}/>
+            </Col>
+          </Col>
+        </Row>
+      </Grid>
     );
   }
 });

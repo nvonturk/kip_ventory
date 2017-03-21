@@ -161,7 +161,7 @@ class TagsContainer extends Component{
         <Grid fluid>
           <Row>
 
-            <Col xs={12}>
+            <Col sm={12}>
               <h3>Tags</h3>
               <hr />
               <p>
@@ -175,7 +175,7 @@ class TagsContainer extends Component{
           { this.showSuccessMessage() }
 
           <Row>
-            <Col xs={12} style={{maxHeight: '500px', overflow: 'auto'}}>
+            <Col sm={12} style={{maxHeight: '500px', overflow: 'auto'}}>
               {finalList}
             </Col>
           </Row>
@@ -201,7 +201,7 @@ class TagsContainer extends Component{
               </FormGroup>
             </Form>
           </Row>
-          
+
         </Grid>
     );
   }

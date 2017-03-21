@@ -138,7 +138,7 @@ const ItemCreationForm = React.createClass({
   },
 
   getSuccessMessage() {
-    var url = "/app/items/" + this.state.createdName
+    var url = "/app/inventory/" + this.state.createdName + "/"
     var ret = this.state.showCreatedSuccess ? (
       <Row>
         <Col sm={12}>
@@ -158,70 +158,100 @@ const ItemCreationForm = React.createClass({
     ) : null
   },
 
+  validateData(data) {
+    console.log(data)
+    if (data.name.length < 1) {
+      return false
+    }
+    if (Number(data.quantity) < 0) {
+      return false
+    }
+    return true
+  },
+
   createItem() {
     var _this = this;
     var item_name = this.state.name;
-
-    ajax({
-      url:"/api/items/",
-      contentType: "application/json",
-      type: "POST",
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      data: JSON.stringify({
+    var data = {
         name: _this.state.name,
         quantity: _this.state.quantity,
         model_no: _this.state.model_no,
         description: _this.state.description,
         tags: _this.state.tags,
-      }),
-      success:function(response){
-        for (var i=0; i<_this.state.custom_fields.length; i++) {
-          var cf = _this.state.custom_fields[i]
-          var url = "/api/items/" + item_name + "/fields/" + cf.name + "/"
-          ajax({
-            url: url,
-            contentType: "application/json",
-            type: "PUT",
-            data: JSON.stringify({value: cf.value}),
-            beforeSend: function(request) {
-              request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-            },
-            success:function(response){},
-            complete:function(){},
-            error:function (xhr, textStatus, thrownError){
-              console.log(xhr);
-              console.log(textStatus);
-              console.log(thrownError);
-            }
-          });
-        }
-        _this.setState({
-          name: "",
-          quantity: 0,
-          model_no: "",
-          description: "",
-          tags: [],
-          custom_fields: [],
-          showCreatedSuccess: true,
-          createdName: item_name,
-          showErrorMessage: false,
-          errorMessage: ""
-        }, _this.getCustomFields())
-      },
-      complete:function(){},
-      error:function (xhr, textStatus, thrownError){
-        var response = xhr.responseJSON
-        console.log(xhr)
-        _this.setState({
-          showCreatedSuccess: false,
-          createdName: "",
-          showErrorMessage: true,
-          errorMessage: "An error occurred."
-        })
       }
-    });
+    var valid = this.validateData(data)
+    console.log(valid)
+    if (valid) {
+      ajax({
+        url:"/api/items/",
+        contentType: "application/json",
+        type: "POST",
+        beforeSend: function(request) {
+          request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        },
+        data: JSON.stringify({
+          name: _this.state.name,
+          quantity: _this.state.quantity,
+          model_no: _this.state.model_no,
+          description: _this.state.description,
+          tags: _this.state.tags,
+        }),
+        success:function(response){
+          for (var i=0; i<_this.state.custom_fields.length; i++) {
+            var cf = _this.state.custom_fields[i]
+            var url = "/api/items/" + item_name + "/fields/" + cf.name + "/"
+            ajax({
+              url: url,
+              contentType: "application/json",
+              type: "PUT",
+              data: JSON.stringify({
+                value: cf.value
+              }),
+              beforeSend: function(request) {
+                request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+              },
+              success:function(response){},
+              complete:function(){},
+              error:function (xhr, textStatus, thrownError){
+                console.log(xhr);
+                console.log(textStatus);
+                console.log(thrownError);
+              }
+            });
+          }
+          _this.setState({
+            name: "",
+            quantity: 0,
+            model_no: "",
+            description: "",
+            tags: [],
+            custom_fields: [],
+            showCreatedSuccess: true,
+            createdName: item_name,
+            showErrorMessage: false,
+            errorMessage: ""
+          }, _this.getCustomFields())
+        },
+        complete:function(){},
+        error:function (xhr, textStatus, thrownError){
+          var response = xhr.responseJSON
+          console.log(xhr)
+          _this.setState({
+            showCreatedSuccess: false,
+            createdName: "",
+            showErrorMessage: true,
+            errorMessage: "An error occurred."
+          })
+        }
+      });
+    } else {
+      this.setState({
+        showCreatedSuccess: false,
+        createdName: "",
+        showErrorMessage: true,
+        errorMessage: "Ensure that name is not blank and quantity is a positive integer."
+      })
+    }
   },
 
   handleItemFieldChange(e) {
@@ -244,7 +274,7 @@ const ItemCreationForm = React.createClass({
       <Grid fluid>
 
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <h3>Item Creation</h3>
             <hr />
             <p>
@@ -315,6 +345,8 @@ const ItemCreationForm = React.createClass({
                   <Col sm={9} >
                     <FormControl
                       type="text"
+                      style={{resize: "vertical", height:"100px"}}
+                      componentClass={"textarea"}
                       name="description"
                       value={this.state.description}
                       onChange={this.handleItemFieldChange}

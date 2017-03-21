@@ -108,7 +108,7 @@ class LogsContainer extends Component {
   changeDate(event, picker){
     this.setState({
       currentstartdate: picker.startDate.toString(),
-      currentenddate: picker.endDate.toString(), 
+      currentenddate: picker.endDate.toString(),
       page: 1
     }, () => {this.filter();})
   }
@@ -151,7 +151,7 @@ class LogsContainer extends Component {
       <Grid fluid>
 
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <h3>Logs</h3>
             <hr />
             <p>
@@ -163,16 +163,16 @@ class LogsContainer extends Component {
 
         <Panel>
         <Row>
-          <Col md={4}>
+          <Col sm={4}>
             <Select ref="userSelect" autofocus options={this.state.userlist} simpleValue clearable={true} placeholder="Select User" name="selected-user" value={this.state.currentuser} onChange={this.changeUser} searchable={true}/>
           </Col>
-          <Col md={4}>
+          <Col sm={4}>
             <Select ref="itemSelect" autofocus options={this.state.itemlist} simpleValue clearable={true} placeholder="Select Item" name="selected-item" value={this.state.currentitem} onChange={this.changeItem} searchable={true}/>
           </Col>
-          <Col md={2}>
+          <Col sm={2}>
               <DateRangePicker showDropdowns onApply={this.changeDate}><Button bsStyle="info">Pick Date</Button></DateRangePicker>
           </Col>
-          <Col md={2}>
+          <Col sm={2}>
             <Button onClick={this.clearSearch} bsStyle="danger">Clear</Button>
           </Col>
         </Row>
@@ -180,7 +180,7 @@ class LogsContainer extends Component {
         <hr />
 
         <Row>
-          <Col md={12}>
+          <Col sm={12}>
             <LogEntryContainer className="log-list" logs={this.state.logs} />
             <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
           </Col>

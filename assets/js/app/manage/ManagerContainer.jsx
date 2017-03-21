@@ -28,36 +28,33 @@ const ManagerContainer = React.createClass({
   render() {
     return (
       <Grid>
-
         <Row>
-          <Col md={2}>
-            <Row>
-              <Nav bsStyle="pills" stacked activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-                <LinkContainer to="/app/manage/create-item">
-                  <NavItem eventKey={1}>Create Items</NavItem>
-                </LinkContainer>
+          <Col sm={2}>
+            <Nav bsStyle="pills" stacked activeKey={this.state.activeKey} onSelect={this.handleSelect}>
+              <LinkContainer to="/app/manage/create-item">
+                <NavItem eventKey={1}>Create Items</NavItem>
+              </LinkContainer>
 
-                { this.getCustomFieldsLink(this.props.route.admin.is_superuser) }
+              { this.getCustomFieldsLink(this.props.route.admin.is_superuser) }
 
-                <LinkContainer to="/app/manage/disburse">
-                  <NavItem eventKey={3}>Disbursement</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/app/manage/requests">
-                  <NavItem eventKey={4}>Requests</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/app/manage/transactions">
-                  <NavItem eventKey={5}>Transactions</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/app/manage/logs">
-                  <NavItem eventKey={6}>Logs</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/app/manage/tags">
-                  <NavItem eventKey={7}>Tags</NavItem>
-                </LinkContainer>
-              </Nav>
-            </Row>
+              <LinkContainer to="/app/manage/disburse">
+                <NavItem eventKey={3}>Disbursement</NavItem>
+              </LinkContainer>
+              <LinkContainer to="/app/manage/requests">
+                <NavItem eventKey={4}>Requests</NavItem>
+              </LinkContainer>
+              <LinkContainer to="/app/manage/transactions">
+                <NavItem eventKey={5}>Transactions</NavItem>
+              </LinkContainer>
+              <LinkContainer to="/app/manage/logs">
+                <NavItem eventKey={6}>Logs</NavItem>
+              </LinkContainer>
+              <LinkContainer to="/app/manage/tags">
+                <NavItem eventKey={7}>Tags</NavItem>
+              </LinkContainer>
+            </Nav>
           </Col>
-          <Col md={8} >
+          <Col sm={10} >
             { this.props.children }
           </Col>
         </Row>

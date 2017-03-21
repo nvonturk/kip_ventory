@@ -72,7 +72,7 @@ class TransactionsContainer extends Component {
     return (
       <Grid fluid>
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <h3>Transactions</h3>
             <hr />
             <p>

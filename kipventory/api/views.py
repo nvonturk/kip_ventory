@@ -5,15 +5,14 @@ from rest_framework import authentication, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotFound
 from rest_framework.authtoken.models import Token
-
-
+from rest_framework.views import APIView
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
+from django.db.models import Q, F
 
 from . import models, serializers
 from rest_framework import pagination
@@ -22,6 +21,7 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.views import password_reset, password_reset_confirm
+from django.http import HttpResponse
 
 import requests, csv, os
 
@@ -66,7 +66,7 @@ class ItemListCreate(generics.GenericAPIView):
 
         # Search filter
         if search is not None and search!='':
-            q_objs &= (Q(name__icontains=search) | Q(model_no__icontains=search))
+            q_objs &= (Q(name__icontains=search) | Q(model_no__icontains=search) | Q(description__icontains=search) | Q(tags__name__icontains=search))
 
         queryset = queryset.filter(q_objs).distinct()
 
@@ -155,8 +155,9 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
 
         item = self.get_instance(item_name=item_name)
         item.delete()
-        # Insert Create Log
-        # Need {serializer.data, initiating_user_pk, 'Item Changed'}
+        for r in models.Request.objects.all():
+            if (r.requested_items.count() == 0):
+                r.delete()
         itemDeletionLog(item_name, request.user.pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -195,6 +196,168 @@ class AddItemToCart(generics.GenericAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GetOutstandingRequestsByItem(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return models.Request.objects.filter(status='O')
+
+    def get_serializer_class(self):
+        return serializers.RequestSerializer
+
+    def get(self, request, item_name, format=None):
+        requests = self.get_queryset()
+        if request.user.is_staff or request.user.is_superuser:
+            requests = self.get_queryset().filter(requested_items__item__name=item_name)
+        else:
+            requests = self.get_queryset().filter(requested_items__item__name=item_name, requester=request.user.pk)
+
+        # Filter by requester
+        user = self.request.query_params.get("user", None)
+        if user != None and user != "":
+            requests = requests.filter(requester__username=user)
+
+        # Filter by request type
+        request_type = self.request.query_params.get("type", None)
+        if request_type != None and request_type != "":
+            requests = requests.filter(requested_items__request_type=request_type)
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(requests)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetLoansByItem(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return models.Loan.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.LoanSerializer
+
+    def get(self, request, item_name, format=None):
+        loans = self.get_queryset()
+        if request.user.is_staff or request.user.is_superuser:
+            loans = loans.filter(request__requested_items__item__name=item_name)
+        else:
+            loans = loans.filter(request__requested_items__item__name=item_name, request__requester=request.user.pk)
+
+        # Filter by loan owner
+        user = self.request.query_params.get("user", None)
+        if user != None and user != "":
+            loans = loans.filter(request__requester__username=user)
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(loans)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetTransactionsByItem(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return models.Transaction.objects.filter()
+
+    def get_serializer_class(self):
+        return serializers.TransactionSerializer
+
+    def get(self, request, item_name, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        transactions = self.get_queryset()
+        transactions = transactions.filter(item__name=item_name)
+
+        # Filter by category (acquisition, loss)
+        category = request.query_params.get('category', None)
+        if category != None and category != "":
+            if category in set(['Acquisition', 'Loss']):
+                transactions = transactions.filter(category=category)
+
+        administrator = request.query_params.get('administrator', None)
+        if administrator != None and administrator != "":
+            try:
+                administrator = User.objects.get(username=administrator)
+                transactions = transactions.filter(administrator=administrator)
+            except User.DoesNotExist:
+                pass
+
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(transactions)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetItemStacks(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return models.Request.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.RequestSerializer
+
+    def get(self, request, item_name, format=None):
+        requests = models.Request.objects.filter(requester=request.user.pk, status='O', requested_items__item__name=item_name)
+        rq = 0
+        for r in requests.all():
+            for ri in r.requested_items.all():
+                if (ri.item.name == item_name):
+                    rq += ri.quantity
+
+        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, returned=False)
+        lq = 0
+        for l in loans.all():
+            lq += (l.quantity)
+
+        disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
+        dq = 0
+        for d in disbursements.all():
+            dq += d.quantity
+
+        cart = models.CartItem.objects.filter(owner__pk=request.user.pk, item__name=item_name)
+        cq = 0
+        for c in cart.all():
+            cq += c.quantity
+
+        data = {
+            "requested": rq,
+            "loaned": lq,
+            "disbursed": dq,
+            "in_cart": cq,
+        }
+        return Response(data)
+
+class DownloadCSVTemplate(APIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+        schema = ["name", "model_no", "quantity", "description", "tags"]
+        for cf in models.CustomField.objects.all():
+            schema.append(cf.name)
+
+        # construct a blank csv file template
+        with open('template.csv', 'w') as template:
+            wr = csv.writer(template)
+            wr.writerow(schema)
+
+        template = open('template.csv', 'rb')
+        response = HttpResponse(content=template)
+        response['Content-Type'] = 'text/csv'
+        response['Content-Disposition'] = 'attachment; filename="import_template.csv"'
+        os.remove('template.csv')
+        return response
+
 
 
 class CustomFieldListCreate(generics.GenericAPIView):
@@ -376,38 +539,11 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class GetOutstandingRequestsByItem(generics.GenericAPIView):
+class RequestListAll(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permissions = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
 
-    def get_queryset(self):
-        return models.Request.objects.all()
-
-    def get_serializer_class(self):
-        return serializers.RequestSerializer
-
-    def get(self, request, item_name, format=None):
-        requests = self.get_queryset()
-        if request.user.is_staff or request.user.is_superuser:
-            requests = models.Request.objects.filter(requested_items__item__name=item_name)
-        else:
-            requests = models.Request.objects.filter(requested_items__item__name=item_name, requester=request.user.pk)
-
-        # Return all items if query parameter "all" is set
-        all_items = self.request.query_params.get("all", None)
-        if all_items:
-            serializer = self.get_serializer(instance=requests, many=True)
-            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
-
-        # Pagination
-        paginated_queryset = self.paginate_queryset(requests)
-        serializer = self.get_serializer(instance=paginated_queryset, many=True)
-        response = self.get_paginated_response(serializer.data)
-        return response
-
-
-class RequestListAll(generics.GenericAPIView):
-    pagination_class = CustomPagination
     def get_queryset(self):
         return models.Request.objects.all()
 
@@ -443,9 +579,11 @@ class RequestListCreate(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
+
         status = request.GET.get('status')
         if not (status is None or status=="All"):
-            queryset = models.Request.objects.filter(status=status)
+            queryset = queryset.filter(status=status)
+
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -469,8 +607,7 @@ class RequestListCreate(generics.GenericAPIView):
             req_item = models.RequestedItem.objects.create(request=request_instance,
                                                            item=ci.item,
                                                            quantity=ci.quantity,
-                                                           request_type=ci.request_type,
-                                                           due_date=ci.due_date)
+                                                           request_type=ci.request_type)
             # Insert Create Log
             # Need {serializer.data, initiating_user_pk, 'Request Created'}
             req_item.save()
@@ -481,6 +618,7 @@ class RequestListCreate(generics.GenericAPIView):
         return Response(serializer.data)
 
 class RequestDetailModifyDelete(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_instance(self, request_pk):
@@ -519,6 +657,10 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         data = request.data.copy()
         data.update({'administrator': request.user})
         instance = self.get_instance(request_pk)
+
+        if not (instance.status == 'O'):
+            return Response({"error": "Only outstanding requests may be modified."})
+
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
@@ -528,31 +670,27 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                 for ri in instance.requested_items.all():
                     requestItemDenial(ri, request.user.pk, instance)
+            # need to check that we're not giving out more instances than currently exist
             elif data['status'] == 'A':
                 valid_request = True
-                for ri in instance.requested_items.all():
-                    if (ri.quantity > ri.item.quantity):
+                ri_data = data.get('requested_items', [])
+                ri_instances = []
+                for ri_instance, ri_dict in zip(instance.requested_items.all(), ri_data):
+                    # ri_instance = instance.requested_items.all().get(item__name=ri_data.get('item'))
+                    ri_instances.append(ri_instance)
+                    if (ri_instance.item.quantity < int(ri_dict.get('quantity'))):
                         valid_request = False
-                        break
-                # decrement quantity available on each item in the approved request
                 if valid_request:
-                    for ri in instance.requested_items.all():
-                        ri.item.quantity = (ri.item.quantity - ri.quantity)
-                        ri.item.save()
-                        # create a loan or disbursement object
-                        print(ri.request_type)
-                        if ri.request_type == models.LOAN:
-                            loan = models.createLoanFromRequestItem(ri)
-                            loan.save()
-                            print(loan)
-                        elif ri.request_type == models.DISBURSEMENT:
-                            disbursement = models.createDisbursementFromRequestItem(ri)
-                            disbursement.save()
-                            print(disbursement)
-
-                        # Insert Create Log
-                        # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                        requestItemApproval(ri, request.user.pk, instance)
+                    for ri_instance, ri_dict in zip(ri_instances, ri_data):
+                        new_quantity = int(ri_dict.get('quantity'))
+                        new_type = ri_dict.get('request_type')
+                        ri_instance.request_type = new_type
+                        ri_instance.quantity = new_quantity
+                        ri_instance.save()
+                        if ri_instance.request_type == models.LOAN:
+                            loan = models.createLoanFromRequestItem(ri_instance)
+                        elif ri_instance.request_type == models.DISBURSEMENT:
+                            disbursement = models.createDisbursementFromRequestItem(ri_instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
@@ -573,40 +711,179 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+#
+# class RequestedItemDetailModifyDelete(generics.GenericAPIView):
+#     authentication_classes = (authentication.SessionAuthentication,)
+#     permission_classes = (permissions.IsAuthenticated,)
+#
+#     def get_requested_item(self, request_pk, item_name):
+#         try:
+#             return models.RequestedItem.objects.filter(request__pk=request_pk).get(item__name=item_name)
+#         except models.RequestedItem.DoesNotExist:
+#             raise NotFound("Item '{}' could not be found in Request with primary key '{}'".format(item_name, request_pk))
+#
+#     def get_queryset(self):
+#         return models.RequestedItems.objects.filter(request__pk=request_pk)
+#
+#     def get_serializer_class(self):
+#         return serializers.RequestedItemSerializer
+#
+#     def get(self, request, request_pk, item_name, format=None):
+#         ri = self.get_requested_item(request_pk, item_name)
+#         serializer = self.get_serializer(instance=ri)
+#         return Response(serializer.data)
+#
+#     def put(self, request, request_pk, item_name, format=None):
+#         ri = self.get_requested_item(request_pk, item_name)
+#         data = request.data.copy()
+#         serializer = self.get_serializer(instance=ri, data=data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#     def delete(self, request, request_pk, item_name, format=None):
+#         ri = self.get_requested_item(request_pk, item_name)
+#         ri.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class RequestedItemDetailModifyDelete(generics.GenericAPIView):
+
+class LoanList(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
-
-    def get_requested_item(self, request_pk, item_name):
-        try:
-            return models.RequestedItem.objects.filter(request__pk=request_pk).get(item__name=item_name)
-        except models.RequestedItem.DoesNotExist:
-            raise NotFound("Item '{}' could not be found in Request with primary key '{}'".format(item_name, request_pk))
+    pagination_class = CustomPagination
 
     def get_queryset(self):
-        return models.RequestedItems.objects.filter(request__pk=request_pk)
+        queryset = models.Loan.objects.all();
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(request__requester=self.request.user)
+        return queryset
 
     def get_serializer_class(self):
-        return serializers.RequestedItemSerializer
+        return serializers.LoanSerializer
 
-    def get(self, request, request_pk, item_name, format=None):
-        ri = self.get_requested_item(request_pk, item_name)
-        serializer = self.get_serializer(instance=ri)
+    def get(self, request, format=None):
+        queryset = self.get_queryset()
+
+        status = request.query_params.get('status', None)
+        if status == "outstanding":
+            queryset = queryset.filter(quantity_loaned__gt=F('quantity_returned'))
+        elif status == "returned":
+            queryset = queryset.filter(quantity_loaned=F('quantity_returned'))
+
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class LoanDetailModify(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = models.Loan.objects.all()
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(request__requester=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        return serializers.LoanSerializer
+
+    def get_instance(self, pk):
+        try:
+            return models.Loan.objects.get(pk=pk)
+        except models.Loan.DoesNotExist:
+            raise NotFound('Loan {} not found.'.format(pk))
+
+    def get(self, request, pk, format=None):
+        loan = self.get_instance(pk=pk)
+        serializer = self.get_serializer(instance=loan)
         return Response(serializer.data)
 
-    def put(self, request, request_pk, item_name, format=None):
-        ri = self.get_requested_item(request_pk, item_name)
+    def put(self, request, pk, format=None):
+        loan = self.get_instance(pk=pk)
         data = request.data.copy()
-        serializer = self.get_serializer(instance=ri, data=data, partial=True)
+        data.update({"loan": loan})
+        serializer = self.get_serializer(instance=loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, request_pk, item_name, format=None):
-        ri = self.get_requested_item(request_pk, item_name)
-        ri.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class ConvertLoanToDisbursement(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = models.Loan.objects.all()
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(request__requester=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        return serializers.ConversionSerializer
+
+    def get_instance(self, pk):
+        try:
+            return models.Loan.objects.get(pk=pk)
+        except models.Loan.DoesNotExist:
+            raise NotFound('Loan {} not found.'.format(pk))
+
+    def post(self, request, pk, format=None):
+        loan = self.get_instance(pk=pk)
+        data = request.data.copy()
+        data.update({"loan": loan})
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DisbursementList(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        queryset = models.Disbursement.objects.filter(request__requester=self.request.user)
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(request__requester=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        return serializers.DisbursementSerializer
+
+    def get(self, request, format=None):
+        queryset = self.get_queryset()
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class DisbursementDetail(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = models.Disbursement.objects.all()
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            queryset = queryset.filter(request__requester=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        return serializers.DisbursementSerializer
+
+    def get_instance(self, pk):
+        try:
+            return models.Disbursement.objects.get(pk=pk)
+        except models.Disbursement.DoesNotExist:
+            raise NotFound('Disbursement {} not found.'.format(pk))
+
+    def get(self, request, pk, format=None):
+        disbursement = self.get_instance(pk=pk)
+        serializer = self.get_serializer(instance=disbursement)
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
@@ -631,10 +908,12 @@ def post_user_login(request, format=None):
     else:
         # Return an 'invalid login' error message.
         messages.add_message(request._request, messages.ERROR, 'invalid-login-credentials')
-        print("ERROR")
         return redirect('/')
 
 class UserList(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get_queryset(self):
         return User.objects.all()
 
@@ -647,6 +926,10 @@ class UserList(generics.GenericAPIView):
         return Response(serializer.data)
 
 class UserCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
     def get_queryset(self):
         return User.objects.all()
 
@@ -801,8 +1084,7 @@ class LogList(generics.GenericAPIView):
         item = request.query_params.get("item")
         endDate = request.query_params.get("endDate")
         startDate = request.query_params.get("startDate")
-        # print("StartDate:" + startDate)
-        # print("EndDate:", endDate)
+
         # Create Datetimes from strings
         logs = self.get_queryset()
         q_objs = Q()
@@ -819,16 +1101,12 @@ class LogList(generics.GenericAPIView):
             startDate, endDate = " ".join(startDate), " ".join(endDate)
             startDate, endDate = startDate + " " + stimeZone[0], endDate + " " + etimeZone[0]
 
-            print(startDate, endDate)
-
             startDate = datetime.strptime(startDate, "%a %b %d %Y %H:%M:%S %Z").date()
             endDate = datetime.strptime(endDate, "%a %b %d %Y %H:%M:%S %Z").date()
             startDate = datetime.combine(startDate, datetime.min.time())
             endDate = datetime.combine(endDate, datetime.max.time())
             startDate = timezone.make_aware(startDate, timezone.get_current_timezone())
             endDate = timezone.make_aware(endDate, timezone.get_current_timezone())
-
-            print(startDate, endDate)
 
             logs = logs.filter(date_created__range=[startDate, endDate])
 
@@ -852,21 +1130,15 @@ class TransactionListCreate(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
-        category = request.GET.get('category')
-        if not (category is None or category=="All"):
-            queryset = models.Transaction.objects.filter(category=category)
 
-        # Return all items if query parameter "all" is set
-        all_items = self.request.query_params.get("all", None)
-        if all_items:
-            serializer = self.get_serializer(instance=queryset, many=True)
-            return Response({"results": serializer.data, "count" : 1, "num_pages": 1})
+        category = request.GET.get('category')
+        if not (category is None or category==""):
+            queryset = models.Transaction.objects.filter(category=category)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
-        print(serializer.data)
         return response
 
 
@@ -1311,7 +1583,6 @@ def requestItemApproval(request_item, initiating_user_pk, requestObj):
     item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
-    print(request_item.request.requester)
     affected_user = request_item.request.requester
     request = requestObj
     try:

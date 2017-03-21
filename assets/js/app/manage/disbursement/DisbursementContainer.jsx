@@ -230,7 +230,7 @@ const DisbursementContainer = React.createClass({
         { this.getErrorMessage() }
 
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <Panel>
               <div>
                 <h4>Select a user</h4>

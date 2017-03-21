@@ -157,9 +157,8 @@ const CustomFieldContainer = React.createClass({
   render() {
     return (
       <Grid fluid>
-
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <h3>Custom Fields</h3>
             <hr />
             <p>
@@ -173,7 +172,7 @@ const CustomFieldContainer = React.createClass({
         </Row>
 
         <Row>
-          <Col xs={12}>
+          <Col sm={12}>
             <Panel>
               <div>
                 <h4>Existing custom fields</h4>
@@ -295,17 +294,17 @@ const CustomFieldContainer = React.createClass({
         </Row>
 
         <Modal show={this.state.showDeleteModal} onHide={this.closeDeleteModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Field</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Are you sure you want to delete this custom field?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button bsSize="small" onClick={this.closeDeleteModal}>Close</Button>
-          <Button bsStyle="danger" bsSize="small" onClick={this.deleteField}>Delete</Button>
-        </Modal.Footer>
-      </Modal>
+          <Modal.Header closeButton>
+            <Modal.Title>Delete Field</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>Are you sure you want to delete this custom field?</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button bsSize="small" onClick={this.closeDeleteModal}>Close</Button>
+            <Button bsStyle="danger" bsSize="small" onClick={this.deleteField}>Delete</Button>
+          </Modal.Footer>
+        </Modal>
 
       </Grid>
     )
