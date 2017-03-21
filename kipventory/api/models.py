@@ -305,10 +305,10 @@ def delete_profile_for_user(sender, instance=None, **kwargs):
         profile = Profile.objects.get(user=instance)
         profile.delete()
 
-class LoanReminderEmail(models.Model):
-    #date = models.DateTimeField()
+class LoanReminder(models.Model):
+    date = models.DateTimeField()
     body = models.TextField()
 
-# Todo only allow one object
+# Todo only allow one object. maybe use django-solo
 class SubjectTag(models.Model):
     text = models.CharField(max_length=100, unique=True)

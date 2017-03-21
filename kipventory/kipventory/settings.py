@@ -62,7 +62,7 @@ MIDDLEWARE = [
 ]
 
 CRON_CLASSES = [
-    "api.crons.SendEmail",
+    "api.crons.SendLoanReminderEmail",
     # ...
 ]
 
