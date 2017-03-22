@@ -25,7 +25,7 @@ const InventoryContainer = React.createClass({
       excludeTagsSelected: [],
       searchText: "",
       page: 1,
-      pageCount: 0,
+      pageCount: 1,
       tags: [],
       showItemCreationModal: false,
       custom_fields: [],
@@ -37,8 +37,9 @@ const InventoryContainer = React.createClass({
         description: "",
         custom_fields: []
       },
-      nameErrorNode: null,
-      quantityErrorNode: null,
+
+      errorNodes: {},
+
       importFile: null,
     }
   },
@@ -70,7 +71,7 @@ const InventoryContainer = React.createClass({
 
   getAllItems() {
     var params = {
-      page: 1,
+      page: this.state.page,
       itemsPerPage: ITEMS_PER_PAGE
     }
     this.getItems(params);
@@ -158,21 +159,16 @@ const InventoryContainer = React.createClass({
       // USE THE <HelpBlock /> component to add subtext to the forms that failed the test.
       error:function (xhr, textStatus, thrownError){
         if (xhr.status == 400) {
-          var nameNode = null
-          var quantityNode = null
           var response = xhr.responseJSON
+          var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
           for (var key in response) {
             if (response.hasOwnProperty(key)) {
-              if (key == "name") {
-                nameNode = <HelpBlock>{response[key][0]}</HelpBlock>
-              } else if (key == "quantity") {
-                quantityNode = <HelpBlock>{response[key][0]}</HelpBlock>
-              }
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
             }
           }
           _this.setState({
-            nameErrorNode: nameNode,
-            quantityErrorNode: quantityNode
+            errorNodes: errNodes
           })
         }
       }
@@ -213,15 +209,18 @@ const InventoryContainer = React.createClass({
   handleItemFormChange(e) {
     e.preventDefault()
     var item = this.state.item
+    var errNodes = this.state.errorNodes
+    errNodes[e.target.name] = null
     item[e.target.name] = e.target.value
     this.setState({
-      item: item
+      item: item,
+      errorNodes: errNodes
     })
   },
 
   getShortTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -230,6 +229,7 @@ const InventoryContainer = React.createClass({
                        value={this.state.item.custom_fields[i].value}
                        name={field_name}
                        onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+          { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
     )
@@ -237,7 +237,7 @@ const InventoryContainer = React.createClass({
 
   getLongTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -248,6 +248,7 @@ const InventoryContainer = React.createClass({
                        value={this.state.item.custom_fields[i].value}
                        name={field_name}
                        onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+          { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
     )
@@ -255,7 +256,7 @@ const InventoryContainer = React.createClass({
 
   getIntegerField(field_name, presentation_name, min, step, i) {
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -266,6 +267,7 @@ const InventoryContainer = React.createClass({
                        value={this.state.item.custom_fields[i].value}
                        name={field_name}
                        onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+          { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
     )
@@ -273,7 +275,7 @@ const InventoryContainer = React.createClass({
 
   getFloatField(field_name, presentation_name, i){
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -282,6 +284,7 @@ const InventoryContainer = React.createClass({
                        value={this.state.item.custom_fields[i].value}
                        name={field_name}
                        onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+          { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
     )
@@ -290,17 +293,16 @@ const InventoryContainer = React.createClass({
   handleCustomFieldChange(i, name, e) {
     var item = this.state.item
     item.custom_fields[i].value = e.target.value
+    var errNodes = this.state.errorNodes
+    errNodes[name] = null
     this.setState({
-      item: item
-    }, () => {console.log(item)})
+      item: item,
+      errorNodes: errNodes
+    })
   },
 
-  getQuantityValidationState() {
-    return (this.state.quantityErrorNode == null) ? null : "error"
-  },
-
-  getNameValidationState() {
-    return (this.state.nameErrorNode == null) ? null : "error"
+  getFormValidationState(field_name) {
+    return (this.state.errorNodes[field_name] == null) ? null : "error"
   },
 
   getQuantityAndModelNoForm() {
@@ -316,11 +318,12 @@ const InventoryContainer = React.createClass({
                            name="model_no"
                            value={this.state.item.model_no}
                            onChange={this.handleItemFormChange}/>
+              { this.state.errorNodes["model_no"] }
             </Col>
           </FormGroup>
         </Col>
         <Col xs={12}>
-          <FormGroup bsSize="small" controlId="quantity" validationState={this.getQuantityValidationState()}>
+          <FormGroup bsSize="small" controlId="quantity" validationState={this.getFormValidationState("quantity")}>
             <Col xs={2} componentClass={ControlLabel}>
               Quantity <span style={{color: "red"}}>*</span>
             </Col>
@@ -329,7 +332,7 @@ const InventoryContainer = React.createClass({
                            name="quantity"
                            value={this.state.item.quantity}
                            onChange={this.handleItemFormChange}/>
-              { this.state.quantityErrorNode }
+              { this.state.errorNodes["quantity"] }
             </Col>
           </FormGroup>
         </Col>
@@ -367,7 +370,7 @@ const InventoryContainer = React.createClass({
     return (
       <Form horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation()}}>
 
-        <FormGroup bsSize="small" controlId="name" validationState={this.getNameValidationState()}>
+        <FormGroup bsSize="small" controlId="name" validationState={this.getFormValidationState("name")}>
           <Col xs={2} componentClass={ControlLabel}>
             Name <span style={{color:"red"}}>*</span>
           </Col>
@@ -376,7 +379,7 @@ const InventoryContainer = React.createClass({
                          name="name"
                          value={this.state.item.name}
                          onChange={this.handleItemFormChange}/>
-            { this.state.nameErrorNode }
+            { this.state.errorNodes["name"] }
           </Col>
         </FormGroup>
 
@@ -393,15 +396,17 @@ const InventoryContainer = React.createClass({
                          name="description"
                          value={this.state.item.description}
                          onChange={this.handleItemFormChange}/>
+            { this.state.errorNodes["description"] }
           </Col>
         </FormGroup>
 
-        <FormGroup bsSize="small" controlId="tags">
+        <FormGroup bsSize="small" controlId="tags" validationState={this.getFormValidationState("tags")}>
           <Col xs={2} componentClass={ControlLabel}>
             Tags
           </Col>
           <Col xs={8}>
             <TagMultiSelect tagsSelected={this.state.item.tags} tagHandler={this.handleTagSelection}/>
+            { this.state.errorNodes["tags"] }
           </Col>
         </FormGroup>
 
@@ -455,7 +460,7 @@ const InventoryContainer = React.createClass({
     reader.onloadend = () => {
       this.setState({
         importFile: file,
-      }, () => {console.log(this.state.importFile)});
+      });
     }
 
     reader.readAsDataURL(file)

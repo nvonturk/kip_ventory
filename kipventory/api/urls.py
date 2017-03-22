@@ -18,8 +18,8 @@ urlpatterns = [
     url(r'^items/(?P<item_name>.+?)/addtocart/$',                   views.AddItemToCart.as_view()),
     url(r'^items/(?P<item_name>.+?)/$',                             views.ItemDetailModifyDelete.as_view()),
 
-    url(r'^import/?$', views.BulkImport.as_view()),
-    url(r'^import/template/?$', views.DownloadCSVTemplate.as_view()),
+    url(r'^import/?$',          views.BulkImport.as_view()),
+    url(r'^import/template/?$', views.BulkImportTemplate.as_view()),
 
     url(r'^tags/?$', views.TagListCreate.as_view()),
 
@@ -30,19 +30,20 @@ urlpatterns = [
     url(r'^cart/?(?P<item_name>.+?)/?$', views.CartItemDetailModifyDelete.as_view()),
 
 
-    url(r'^loans/?$',               views.LoanList.as_view()),
-    url(r'^loans/(?P<pk>[\d]+?)/?$', views.LoanDetailModify.as_view()),
+    url(r'^loans/?$',                        views.LoanList.as_view()),
+    url(r'^loans/all/?$',                    views.LoanListAll.as_view()),
+    url(r'^loans/(?P<pk>[\d]+?)/?$',         views.LoanDetailModify.as_view()),
     url(r'^loans/(?P<pk>[\d]+?)/convert/?$', views.ConvertLoanToDisbursement.as_view()),
 
-    url(r'^disbursements/?$', views.DisbursementList.as_view()),
+    url(r'^disbursements/?$',                views.DisbursementList.as_view()),
     url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 
     url(r'^disburse/?$', views.DisburseCreate.as_view()),
 
-    url(r'^requests/?$',                        views.RequestListCreate.as_view()),
-    url(r'^requests/all/?$',                    views.RequestListAll.as_view()),
+    url(r'^requests/?$',                         views.RequestListCreate.as_view()),
+    url(r'^requests/all/?$',                     views.RequestListAll.as_view()),
     url(r'^requests/(?P<request_pk>[0-9]+?)/?$', views.RequestDetailModifyDelete.as_view()),
     # url(r'^requests/(?P<request_pk>[0-9]+?)/(?P<item_name>.+?)/?$', views.RequestedItemDetailModifyDelete.as_view()),
 

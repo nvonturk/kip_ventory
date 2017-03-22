@@ -28,6 +28,7 @@ import TagsContainer from './manage/tags/TagsContainer'
 import InventoryContainer from './inventory/InventoryContainer'
 import CartContainer from './cart/CartContainer'
 import RequestsContainer from './requests/RequestsContainer'
+import LoansContainer from './loans/LoansContainer'
 import Profile from './Profile'
 import {getJSON} from 'jquery'
 
@@ -98,6 +99,7 @@ function initialize(userData) {
           <IndexRoute component={RequestsContainer} />
           <Route path=":request_id" component={RequestDetail} user={userData} />
         </Route>
+        <Route path="loans" component={LoansContainer} user={userData} />
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="profile" component={Profile} user={userData} />
         { getManagerPanel(userData) }

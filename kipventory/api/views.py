@@ -87,6 +87,9 @@ class ItemListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         # CHECK PERMISSION
         queryset = self.get_queryset()
+
+        all_items = request.query_params.get('all', False)
+
         queryset = self.filter_queryset(queryset, request)
 
         # Pagination
@@ -337,27 +340,6 @@ class GetItemStacks(generics.GenericAPIView):
             "in_cart": cq,
         }
         return Response(data)
-
-class DownloadCSVTemplate(APIView):
-    permissions = (permissions.IsAuthenticated,)
-
-    def get(self, request, format=None):
-        schema = ["name", "model_no", "quantity", "description", "tags"]
-        for cf in models.CustomField.objects.all():
-            schema.append(cf.name)
-
-        # construct a blank csv file template
-        with open('template.csv', 'w') as template:
-            wr = csv.writer(template)
-            wr.writerow(schema)
-
-        template = open('template.csv', 'rb')
-        response = HttpResponse(content=template)
-        response['Content-Type'] = 'text/csv'
-        response['Content-Disposition'] = 'attachment; filename="import_template.csv"'
-        os.remove('template.csv')
-        return response
-
 
 
 class CustomFieldListCreate(generics.GenericAPIView):
@@ -711,42 +693,42 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-#
-# class RequestedItemDetailModifyDelete(generics.GenericAPIView):
-#     authentication_classes = (authentication.SessionAuthentication,)
-#     permission_classes = (permissions.IsAuthenticated,)
-#
-#     def get_requested_item(self, request_pk, item_name):
-#         try:
-#             return models.RequestedItem.objects.filter(request__pk=request_pk).get(item__name=item_name)
-#         except models.RequestedItem.DoesNotExist:
-#             raise NotFound("Item '{}' could not be found in Request with primary key '{}'".format(item_name, request_pk))
-#
-#     def get_queryset(self):
-#         return models.RequestedItems.objects.filter(request__pk=request_pk)
-#
-#     def get_serializer_class(self):
-#         return serializers.RequestedItemSerializer
-#
-#     def get(self, request, request_pk, item_name, format=None):
-#         ri = self.get_requested_item(request_pk, item_name)
-#         serializer = self.get_serializer(instance=ri)
-#         return Response(serializer.data)
-#
-#     def put(self, request, request_pk, item_name, format=None):
-#         ri = self.get_requested_item(request_pk, item_name)
-#         data = request.data.copy()
-#         serializer = self.get_serializer(instance=ri, data=data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#
-#     def delete(self, request, request_pk, item_name, format=None):
-#         ri = self.get_requested_item(request_pk, item_name)
-#         ri.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
+class LoanListAll(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
+    def get_queryset(self):
+        return models.Loan.objects.all();
+
+    def get_serializer_class(self):
+        return serializers.LoanSerializer
+
+    def filter_queryset(self, queryset, request):
+        status = request.query_params.get('status', None)
+        if status == "outstanding":
+            queryset = queryset.filter(quantity_loaned__gt=F('quantity_returned'))
+        elif status == "returned":
+            queryset = queryset.filter(quantity_loaned=F('quantity_returned'))
+
+        item = request.query_params.get('item', None)
+        if item != None and item != "":
+            queryset = queryset.filter(item__name=item)
+
+        return queryset
+
+    def get(self, request, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset, request)
+
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
 class LoanList(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
@@ -770,6 +752,10 @@ class LoanList(generics.GenericAPIView):
             queryset = queryset.filter(quantity_loaned__gt=F('quantity_returned'))
         elif status == "returned":
             queryset = queryset.filter(quantity_loaned=F('quantity_returned'))
+
+        item = request.query_params.get('item', None)
+        if item != None and item != "":
+            queryset = queryset.filter(item__name=item)
 
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
@@ -1183,6 +1169,27 @@ class TokenPoint(generics.GenericAPIView):
             print(token.key)
             return Response({"token": token.key})
 
+
+class BulkImportTemplate(APIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+        schema = ["name", "model_no", "quantity", "description", "tags"]
+        for cf in models.CustomField.objects.all():
+            schema.append(cf.name)
+
+        # construct a blank csv file template
+        with open('template.csv', 'w') as template:
+            wr = csv.writer(template)
+            wr.writerow(schema)
+
+        template = open('template.csv', 'rb')
+        response = HttpResponse(content=template)
+        response['Content-Type'] = 'text/csv'
+        response['Content-Disposition'] = 'attachment; filename="import_template.csv"'
+        os.remove('template.csv')
+        return response
+
 class BulkImport(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -1348,118 +1355,6 @@ class BulkImport(generics.GenericAPIView):
                 }
 
             return Response(d)
-
-
-    def findIndex(self, columns, header):
-        for i in range(len(columns)):
-            if columns[i][0] == header:
-                return i
-        else:
-            return None
-
-    def isFloat(self, value):
-        try:
-            float(value)
-            return True
-        except ValueError:
-            return False
-
-    def isInt(self, value):
-        try:
-            int(value)
-            return True
-        except ValueError:
-            return False
-
-    def returnCustomFields(self, columns):
-        stock_headers = ['name', 'quantity', 'model_no', 'description', 'tags']
-        custom_fields = []
-        for i in range(len(columns)):
-            if columns[i][0] not in stock_headers:
-                custom_fields.append((columns[i][0], i))
-        return custom_fields
-
-
-
-
-    def checkEntry(self, header, entry):
-        # respond with 1. success or error 2. message
-        error = 'error'
-        success = 'success'
-        if (header == 'name'):
-            # Need to check if unique
-            if len(models.Item.objects.filter(name=entry)) > 0:
-                return (error, 'Item name not unique')
-            # Check if name length exceeded
-            elif len(entry) > 100:
-                return (error, 'Item name exceeded max length of 100')
-            elif len(entry) == 0:
-                return (error, 'Item name cannot be blank')
-            else:
-                return (success, 'Item name is valid')
-        elif (header == 'quantity'):
-            # Check if quantity entry is a digit
-            if len(entry) == 0:
-                return (error, 'Item quantity cannot be blank')
-            elif not entry.isdigit():
-                return (error, 'Item quantity not positive integer')
-            else:
-                return (success, 'Item quantity is valid')
-        elif (header == 'model_no'):
-            # Check for length
-            if len(entry) > 100:
-                return (error, 'Item model_no exceeded max length of 100')
-            else:
-                return (success, 'Item model_no is valid')
-        elif (header == 'description'):
-            # Check for length
-            if len(entry) > 500:
-                return (error, 'Item description exceeded max length of 500')
-            else:
-                return (success, 'Item description is valid')
-        elif (header == 'tags'):
-            tags = [tag.strip() for tag in entry.split(',')]
-            for tag in tags:
-                if len(tag) > 100:
-                    return (error, 'Item tag exceeded max length of 100')
-            return (success, 'Item tags are valid')
-        else:
-            # Custom field
-            if len(models.CustomField.objects.filter(name=header)) == 0:
-                return (error, 'Unrecognized custom field')
-            else:
-                # Check to make sure that for each custom field, the entry is correct
-                # Get the type of the custom field from header
-                cf = models.CustomField.objects.get(name=header)
-                field_type = getattr(cf, 'field_type')
-                # FIELD_TYPES = (
-                #     ('Single', 'Single-line text'),
-                #     ('Multi', 'Multi-line text'),
-                #     ('Int', 'Integer'),
-                #     ('Float', 'Float'),
-                # )
-                if field_type == 'Single':
-                    if isinstance(entry, str):
-                        return (success, 'Item custom field is a string')
-                    else:
-                        return (error, 'Item custom field not a string')
-                elif field_type == 'Multi':
-                    if isinstance(entry, str):
-                        return (success, 'Item custom field is a string')
-                    else:
-                        return (error, 'Item custom field not a string')
-                elif field_type == 'Int':
-                    if self.isInt(entry):
-                        return (success, 'Item custom field is an Integer')
-                    else:
-                        return (error, 'Item custom field not an Integer')
-                elif field_type == 'Float':
-                    if self.isFloat(entry):
-                        return (success, 'Item custom field is a Float')
-                    else:
-                        return (error, 'Item custom field not a Float')
-                else:
-                    return (error, 'Unrecognized field type')
 
     def get_serializer_class(self):
         return serializers.BulkImportSerializer
