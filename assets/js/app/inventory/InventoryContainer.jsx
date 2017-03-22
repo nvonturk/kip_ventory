@@ -436,7 +436,8 @@ const InventoryContainer = React.createClass({
       success:function(response){
         _this.getAllItems()
         _this.setState({
-          importFile: null
+          importFile: null,
+          importResults: response
         })
       },
       error:function (xhr, textStatus, thrownError){
@@ -474,18 +475,12 @@ const InventoryContainer = React.createClass({
           </Col>
           <Col md={12}>
             <Form onSubmit={this.handleImportSubmit}>
+
               <FormGroup bsSize="small">
-              <Col md={12} sm={6} xs={6}>
-                <input type="file" onChange={this.handleFileChange} />
-              </Col>
+                  <FormControl type="file" label="Choose file" bsSize="small" bsStyle="default" onChange={this.handleFileChange} />
               </FormGroup>
 
-              <Col md={12} smHidden xsHidden>
-                <br />
-              </Col>
-              <Col md={4} sm={6} xs={6}>
-                <Button type="submit" bsSize="small" bsStyle="info">Import</Button>
-              </Col>
+              <Button type="submit" bsSize="small" bsStyle="info">Import</Button>
             </Form>
           </Col>
         </Row>

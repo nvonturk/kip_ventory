@@ -19,7 +19,7 @@ class CustomFieldSerializer(serializers.ModelSerializer):
         name = data.get('name', None)
         field_exists = (models.CustomField.objects.filter(name=name).count() > 0)
         if field_exists:
-            raise ValidationError({"name": ["A field with name \'{}\' already exists.".format(request.data['name'])]})
+            raise ValidationError({"name": ["A field with name \'{}\' already exists.".format(name)]})
         return data
 
 class CustomValueSerializer(serializers.ModelSerializer):
@@ -82,6 +82,37 @@ class ItemSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         is_in_cart = (models.CartItem.objects.filter(owner__pk=user.pk, item__name=item.name).count() > 0)
         return is_in_cart
+
+    def to_internal_value(self, data):
+        errors = {}
+
+        name = data.get('name', None)
+        if name is None or name == "":
+            errors.update({"name": ["This field is required."]})
+        else:
+            try:
+                other_item = models.Item.objects.get(name=name)
+                errors.update({"name": ["An object with this name already exists."]})
+            except models.Item.DoesNotExist:
+                # We know this a new item name, and is therefore valid
+                pass
+        quantity = data.get('quantity', None)
+        if quantity is None:
+            errors.update({"quantity": ["This field is required."]})
+        else:
+            try:
+                quantity = int(quantity)
+                if quantity < 0:
+                    errors.update({"quantity": ["This value must be greater than or equal to 0."]})
+            except:
+                errors.update({"quantity": ["This value must be a positive integer."]})
+
+        if errors:
+            raise ValidationError(errors)
+
+        data.update({"quantity": quantity})
+        return data
+
 
 
 

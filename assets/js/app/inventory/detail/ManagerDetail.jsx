@@ -49,6 +49,15 @@ const ManagerDetail = React.createClass({
         custom_fields: []
       },
 
+      modifiedItem: {
+        name: "",
+        model_no: "",
+        quantity: 0,
+        tags: [],
+        description: "",
+        custom_fields: []
+      },
+
       itemExists: true,
       modifyItem: false,
       showDeleteModal: false,
@@ -114,8 +123,10 @@ const ManagerDetail = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
+        var responseCopy = JSON.parse(JSON.stringify(response))
         _this.setState({
-          item: response
+          item: response,
+          modifiedItem: responseCopy
         })
       },
       complete:function(){},
@@ -179,13 +190,12 @@ const ManagerDetail = React.createClass({
     })
   },
 
-
   handleItemFormChange(e) {
     e.preventDefault()
-    var item = this.state.item
+    var item = this.state.modifiedItem
     item[e.target.name] = e.target.value
     this.setState({
-      item: item
+      modifiedItem: item
     })
   },
 
@@ -193,7 +203,7 @@ const ManagerDetail = React.createClass({
     e.preventDefault()
     e.stopPropagation()
     var url = "/api/items/" + this.props.params.item_name + "/"
-    var data = this.state.item
+    var data = this.state.modifiedItem
     var _this = this
     ajax({
       url: url,
@@ -204,9 +214,9 @@ const ManagerDetail = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response) {
-        for (var i=0; i<_this.state.item.custom_fields.length; i++) {
-          var cf = _this.state.item.custom_fields[i]
-          var url = "/api/items/" + _this.state.item.name + "/fields/" + cf.name + "/"
+        for (var i=0; i<_this.state.modifiedItem.custom_fields.length; i++) {
+          var cf = _this.state.modifiedItem.custom_fields[i]
+          var url = "/api/items/" + response.name + "/fields/" + cf.name + "/"
           ajax({
             url: url,
             contentType: "application/json",
@@ -233,7 +243,7 @@ const ManagerDetail = React.createClass({
   },
 
   handleTagSelection(tagsSelected) {
-    var item = this.state.item
+    var item = this.state.modifiedItem
     var tags = tagsSelected.split(",")
     if (tags.length == 1) {
       if (tags[0] == "") {
@@ -241,7 +251,7 @@ const ManagerDetail = React.createClass({
       }
     }
     item.tags = tags
-    this.setState({item: item});
+    this.setState({modifiedItem: item});
   },
 
   getShortTextField(field_name, presentation_name, i) {
@@ -249,7 +259,7 @@ const ManagerDetail = React.createClass({
       <FormGroup key={field_name} bsSize="small">
         <ControlLabel>{presentation_name}</ControlLabel>
         <FormControl type="text"
-                     value={this.state.item.custom_fields[i].value}
+                     value={this.state.modifiedItem.custom_fields[i].value}
                      name={field_name}
                      onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
@@ -263,7 +273,7 @@ const ManagerDetail = React.createClass({
           <FormControl type="text"
                        style={{resize: "vertical", height:"100px"}}
                        componentClass={"textarea"}
-                       value={this.state.item.custom_fields[i].value}
+                       value={this.state.modifiedItem.custom_fields[i].value}
                        name={field_name}
                        onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
@@ -277,7 +287,7 @@ const ManagerDetail = React.createClass({
         <FormControl type="number"
                      min={min}
                      step={step}
-                     value={this.state.item.custom_fields[i].value}
+                     value={this.state.modifiedItem.custom_fields[i].value}
                      name={field_name}
                      onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
@@ -289,7 +299,7 @@ const ManagerDetail = React.createClass({
       <FormGroup key={field_name} bsSize="small">
         <ControlLabel>{presentation_name} </ControlLabel>
         <FormControl type="number"
-                   value={this.state.item.custom_fields[i].value}
+                   value={this.state.modifiedItem.custom_fields[i].value}
                    name={field_name}
                    onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
       </FormGroup>
@@ -297,10 +307,10 @@ const ManagerDetail = React.createClass({
   },
 
   handleCustomFieldChange(i, name, e) {
-    var item = this.state.item
+    var item = this.state.modifiedItem
     item.custom_fields[i].value = e.target.value
     this.setState({
-      item: item
+      modifiedItem: item
     })
   },
 
@@ -313,7 +323,7 @@ const ManagerDetail = React.createClass({
             <FormControl disabled={!this.props.route.user.is_superuser && !this.props.route.user.is_staff}
                          type="text"
                          name="model_no"
-                         value={this.state.item.model_no}
+                         value={this.state.modifiedItem.model_no}
                          onChange={this.handleItemFormChange}/>
           </FormGroup>
         </Col>
@@ -323,7 +333,7 @@ const ManagerDetail = React.createClass({
             <FormControl disabled={!this.props.route.user.is_superuser}
                          type="number"
                          name="quantity"
-                         value={this.state.item.quantity}
+                         value={this.state.modifiedItem.quantity}
                          onChange={this.handleItemFormChange}/>
           </FormGroup>
         </Col>
@@ -332,7 +342,7 @@ const ManagerDetail = React.createClass({
   },
 
   getCustomFieldForms() {
-    return this.state.item.custom_fields.map( (field, i) => {
+    return this.state.modifiedItem.custom_fields.map( (field, i) => {
 
       var field_name = field.name
       var is_private = field.private
@@ -399,9 +409,17 @@ const ManagerDetail = React.createClass({
   toggleEdit(e) {
     e.preventDefault()
     var cur = this.state.modifyItem
-    this.setState({
-      modifyItem: !cur
-    })
+    if (cur) {
+      var itemCopy = JSON.parse(JSON.stringify(this.state.item))
+      this.setState({
+        modifiedItem: itemCopy,
+        modifyItem: false
+      })
+    } else {
+      this.setState({
+        modifyItem: true
+      })
+    }
   },
 
   deleteItem(e) {
@@ -445,7 +463,7 @@ const ManagerDetail = React.createClass({
             <Col xs={12}>
               <FormGroup bsSize="small" controlId="name">
                 <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
-                <FormControl type="text" name="name" value={this.state.item.name} onChange={this.handleItemFormChange}/>
+                <FormControl type="text" name="name" value={this.state.modifiedItem.name} onChange={this.handleItemFormChange}/>
               </FormGroup>
             </Col>
           </Row>
@@ -460,7 +478,7 @@ const ManagerDetail = React.createClass({
                              style={{resize: "vertical", height:"100px"}}
                              componentClass={"textarea"}
                              name="description"
-                             value={this.state.item.description}
+                             value={this.state.modifiedItem.description}
                              onChange={this.handleItemFormChange}/>
               </FormGroup>
             </Col>
@@ -470,7 +488,7 @@ const ManagerDetail = React.createClass({
             <Col xs={12}>
               <FormGroup bsSize="small" controlId="tags">
                 <ControlLabel>Tags</ControlLabel>
-                <TagMultiSelect tagsSelected={this.state.item.tags} tagHandler={this.handleTagSelection}/>
+                <TagMultiSelect tagsSelected={this.state.modifiedItem.tags} tagHandler={this.handleTagSelection}/>
               </FormGroup>
             </Col>
           </Row>

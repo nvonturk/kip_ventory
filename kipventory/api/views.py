@@ -1186,135 +1186,169 @@ class TokenPoint(generics.GenericAPIView):
 class BulkImport(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
+
     def post(self, request, format=None):
         if not request.user.is_superuser:
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
-        else:
-            data = request.data.copy()
-            data.update({"administrator": request.user})
-            serializer = self.get_serializer(data=data)
-            if serializer.is_valid():
-                inputfile = request.FILES['data']
-                fout = open(inputfile.name, 'wb')
-                for chunk in inputfile.chunks():
-                    fout.write(chunk)
-                fout.close()
-                f = open('./' + inputfile.name, 'r')
+
+        data = request.data.copy()
+        data.update({"administrator": request.user})
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            inputfile = request.FILES['data']
+            fout = open('importtempfile.csv', 'wb')
+            for chunk in inputfile.chunks():
+                fout.write(chunk)
+            fout.close()
+
+            header = []
+            contents = []
+            firstRow = True
+            numRows = 0
+            errors = {}
+
+            with open('importtempfile.csv', 'r') as f:
                 reader = csv.reader(f)
-                # Create a list for each column
-                columns = []
-                counter = 0
                 for row in reader:
-                    if counter == 0:
-                        for i in range(len(row)):
-                            columns.append([row[i]])
-                        counter = 1
+                    if len("".join(row)) == 0:
+                        continue
                     else:
-                        for i in range(len(row)):
-                            columns[i].append(row[i])
-                # Check each column to make sure type is correct
-                # name, quantity, model_no, description, tags, ... custom fields
-                # top row will be those headers
+                        if firstRow:
+                            header = [x for x in row]
+                            firstRow = False
+                        else:
+                            contents.append([x for x in row])
+                            numRows += 1
 
-                # Check first to make sure no duplicated names in file
-                name_col_index = self.findIndex(columns, 'name')
-                name_col = columns[name_col_index][:]
-                print(name_col_index)
-                print(name_col)
-                if len(name_col) != len(set(name_col)):
-                    return Response({"error": "duplicate items in file. all names must be unique"})
+            os.remove('importtempfile.csv')
+            indices = {}
+            name_index = 0
+            model_no_index = 0
+            quantity_index = 0
+            description_index = 0
+            tags_index = 0
+            for (i, column_name) in enumerate(header):
+                indices[column_name] = i
 
-                col_no = 1
-                for col in columns:
-                    header = col[0]
-                    row_no = 2
-                    for entry in col[1:]:
-                        validation = self.checkEntry(header, entry)
-                        if validation[0] == 'error':
-                            message = validation[1] + " in table location: " + str(row_no) + ", " + str(col_no)
-                            return Response({"error": message})
-                        row_no = row_no + 1
-                    col_no = col_no + 1
-                # All data is now validated
-                # Ready to build items
+            # Parse all known item fields (intrinsic)
+            name_index = indices['name']
+            names = [row[name_index] for row in contents]
+            indices.pop('name')
 
-                for i in range(1, len(columns[0])):
+            model_no_index = indices['model_no']
+            model_nos = [row[model_no_index] for row in contents]
+            indices.pop('model_no')
 
-                    name_index = None
-                    name = None
-                    quantity_index = None
-                    quantity = None
-                    model_no_index = None
-                    model_no = None
-                    model_no_flag = True
-                    description_index = None
-                    description = None
-                    description_flag = True
-                    tags_index = None
-                    tags = None
-                    tags_flag = True
+            quantity_index = indices['quantity']
+            quantities = [row[quantity_index] for row in contents]
+            indices.pop('quantity')
 
+            description_index = indices['description']
+            descriptions = [row[description_index] for row in contents]
+            indices.pop('description')
+
+            tags_index = indices['tags']
+            tags = [row[tags_index] for row in contents]
+            indices.pop('tags')
+
+            # Now, indices contains only custom field headers
+
+            custom_field_errors = []
+            for field_name, index in indices.items():
+                try:
+                    cf = models.CustomField.objects.get(name=field_name)
+                    values = [row[index] for row in contents]
+                    cf_errors = []
+                    for i, val in enumerate(values):
+                        try:
+                            val = models.FIELD_TYPE_DICT[cf.field_type](val)
+                            contents[i][index] = val
+                        except:
+                            cf_errors.append("Value '{}' is not of type '{}' (row {}).".format(val, models.FIELD_TYPE_DICT[cf.field_type].__name__, i))
+
+                    if cf_errors:
+                        custom_field_errors.append({field_name: cf_errors})
+
+                except models.CustomField.DoesNotExist:
+                    custom_field_errors.append({field_name: ["Custom field '{}' does not exist (column {}).".format(field_name, i)]})
+
+            # check unique names
+            nameset = set()
+            name_errors = []
+            for i, name in enumerate(names):
+                if name == "" or name == None:
+                    name_errors.append("Name must not be blank (row {}).".format(i))
+                if name in nameset:
+                    name_errors.append("Name '{}' appears multiple times.".format(name))
+                try:
+                    other_item = models.Item.objects.get(name=name)
+                    name_errors.append("An item with name '{}' (row {}) already exists.".format(name, i))
+                except models.Item.DoesNotExist:
+                    pass
+
+            # check valid (positive) integer quantities
+            quantity_errors = []
+            for i, q in enumerate(quantities):
+                if q == None or q == "":
+                    quantity_errors.append("Quantity must not be blank (row {}).".format(i))
+                else:
                     try:
-                        name_index          = self.findIndex(columns, 'name')
-                        name=columns[name_index][i]
+                        q = int(q)
+                        quantities[i] = q
+                        if q < 0:
+                            quantity_errors.append("Negative quantity {} (row {}).".format(q, i))
                     except:
-                        return Response({"error": 'No column specifying item names'})
+                            quantity_errors.append("Value '{}' is not an integer (row {}).".format(q, i))
+
+            if name_errors:
+                errors.update({"name": name_errors})
+            if quantity_errors:
+                errors.update({"quantity": quantity_errors})
+            if custom_field_errors:
+                for e in custom_field_errors:
+                    errors.update(e)
+
+            if errors:
+                return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # we know we've passed the validation check - go ahead and make all the items
+            created_items = []
+            created_tags  = []
+            for i in range(numRows):
+                # create the base item
+                item = models.Item(name=names[i], model_no=model_nos[i], quantity=quantities[i], description=descriptions[i])
+                item.save()
+
+                # parse and create tags
+                tag_string = tags[i]
+                # remove empty tags (ie. a blank cell)
+                tag_list = [x.strip() for x in tag_string.split(",") if len(x) > 0]
+                for tag in tag_list:
                     try:
-                        quantity_index      = self.findIndex(columns, 'quantity')
-                        quantity=int(columns[quantity_index][i])
-                    except:
-                        return Response({"error": 'No column specifying item quantities'})
-                    try:
-                        model_no_index      = self.findIndex(columns, 'model_no')
-                        model_no=columns[model_no_index][i]
-                    except:
-                        model_no_flag = False
-                    try:
-                        description_index   = self.findIndex(columns, 'description')
-                        description=columns[description_index][i]
-                    except:
-                        description_flag = False
-                    try:
-                        tags_index = self.findIndex(columns, 'tags')
-                        split_tags = [tag.strip() for tag in columns[tags_index][i].split(',')]
-                    except:
-                        tags_flag = False
+                        tag = models.Tag.objects.get(name=tag)
+                    except models.Tag.DoesNotExist:
+                        tag = models.Tag.objects.create(name=tag)
+                        created_tags.append(tag.name)
+                    item.tags.add(tag)
+                item.save()
 
-                    curr_item = models.Item.objects.create(name=name, quantity=quantity)
+                # set custom field values on created item
+                for custom_value in item.values.all():
+                    field_index = indices[custom_value.field.name]
+                    val = contents[i][field_index]
+                    setattr(custom_value, custom_value.field.field_type, val)
+                    custom_value.save()
+                item.save()
+                created_items.append(item.name)
 
-                    if model_no_flag:
-                        setattr(curr_item, 'model_no', model_no)
-                    if description_flag:
-                        setattr(curr_item, 'description', description)
-                    if tags_flag:
-                        all_tags = models.Tag.objects.all()
-                        for tag_name in split_tags:
-                            try:
-                                curr_tag = all_tags.get(name=tag_name)
-                            except:
-                                curr_tag = models.Tag.objects.create(name=tag_name)
-                            curr_item.tags.add(curr_tag)
+            d = {
+                    "items" : [name for name in created_items],
+                    "tags"  : [tag  for tag  in created_tags]
+                }
 
-                    # Need to find the columns that dont have stock headers
-                    # In order to generate custom values
+            return Response(d)
 
-                    cfs = self.returnCustomFields(columns)
-                    if len(cfs) > 0:
-                        # Generate custom values with the custom fields in csv
-                        cvs = curr_item.values.all()
-                        for cf in cfs:
-                            # First get the type of the custom field from the cf first entry
-                            cv = cvs.get(field__name=cf[0])
-                            setattr(cv, cv.field.field_type, models.FIELD_TYPE_DICT[cv.field.field_type](columns[cf[1]][i]))
-                            cv.save()
-                    curr_item.save()
-
-                serializer.save()
-                os.remove('./' + inputfile.name)
-                return Response({"success": "upload successful"})
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def findIndex(self, columns, header):
         for i in range(len(columns)):
