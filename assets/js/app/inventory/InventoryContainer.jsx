@@ -39,6 +39,7 @@ const InventoryContainer = React.createClass({
       },
 
       errorNodes: {},
+      bulkImportErrorNodes: {},
 
       importFile: null,
     }
@@ -423,6 +424,19 @@ const InventoryContainer = React.createClass({
     })
   },
 
+  displayBulkImportErrors(){
+    var message = ""
+    for (var key in this.state.bulkImportErrorNodes){
+      message = message.concat("Errors in column: " + key + "\n\n")
+      message = message.concat(this.state.bulkImportErrorNodes[key])
+    }
+
+    return(
+      <pre style={{maxHeight:"300px", overflow:"auto"}}>
+        {message}
+      </pre>)
+  },
+
   handleImportSubmit(e) {
     e.preventDefault()
     e.stopPropagation()
@@ -447,9 +461,30 @@ const InventoryContainer = React.createClass({
         })
       },
       error:function (xhr, textStatus, thrownError){
-        console.log(xhr);
+        console.log(xhr.responseJSON);
         console.log(textStatus);
         console.log(thrownError);
+        // Logic to parse error
+        var response = xhr.responseJSON
+        var errNodes = JSON.parse(JSON.stringify(_this.state.bulkImportErrorNodes))
+        for (var key in response) {
+          if (response.hasOwnProperty(key)) {
+            var message = ""
+            for (var mess in response[key]){
+              message = message.concat(response[key][mess])
+              message = message.concat("\n")
+              console.log("Response[key][mess]:", response[key][mess])
+            }
+            console.log("Message", message)
+            errNodes[key] = message
+          }
+        }
+        _this.setState({
+          bulkImportErrorNodes: errNodes
+        })
+
+
+
       }
     })
   },
@@ -486,6 +521,7 @@ const InventoryContainer = React.createClass({
               </FormGroup>
               <Button style={{fontSize:"10px"}} type="submit" bsSize="small" bsStyle="info">Import</Button>
             </Form>
+            {this.displayBulkImportErrors()}
           </Col>
         </Row>
       </Panel>
