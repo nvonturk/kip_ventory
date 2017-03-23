@@ -1196,12 +1196,13 @@ class BulkImport(generics.GenericAPIView):
 
     def post(self, request, format=None):
         if not request.user.is_superuser:
-            d = {"error": "Manager permissions required."}
+            d = {"error": "Administrator permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
         data.update({"administrator": request.user})
         serializer = self.get_serializer(data=data)
+
         if serializer.is_valid():
             inputfile = request.FILES['data']
             fout = open('importtempfile.csv', 'wb')
@@ -1326,7 +1327,7 @@ class BulkImport(generics.GenericAPIView):
                 # create the base item
                 item = models.Item(name=names[i], model_no=model_nos[i], quantity=quantities[i], description=descriptions[i])
                 item.save()
-
+                itemCreationBILog(item, request.user)
                 # parse and create tags
                 tag_string = tags[i]
                 # remove empty tags (ie. a blank cell)
@@ -1456,6 +1457,11 @@ def itemCreationLog(data, initiating_user_pk):
     quantity = data['quantity']
     message = 'Item {} created by {}'.format(data['name'], initiating_user)
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Creation', message=message, affected_user=affected_user)
+    log.save()
+
+def itemCreationBILog(item, initiating_user):
+    message = 'Item {} created by {}'.format(item.name, initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=item.quantity, category='Item Creation', message=message, affected_user=None)
     log.save()
 
 def itemModificationLog(data, initiating_user_pk):
