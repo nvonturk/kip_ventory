@@ -65,10 +65,9 @@ class ItemListCreate(generics.GenericAPIView):
         q_objs = Q()
 
         # Search filter
-        if search is not None and search!='':
+        if search is not None and search != '':
             q_objs &= (Q(name__icontains=search) | Q(model_no__icontains=search) | Q(description__icontains=search) | Q(tags__name__icontains=search))
-
-        queryset = queryset.filter(q_objs).distinct()
+            queryset = queryset.filter(q_objs).order_by('name')
 
         # Tags filter
         if tags is not None and tags != '':
@@ -89,6 +88,10 @@ class ItemListCreate(generics.GenericAPIView):
         queryset = self.get_queryset()
 
         all_items = request.query_params.get('all', False)
+        if all_items:
+            serializer = self.get_serializer(instance=queryset, many=True)
+            d = {"count": 1, 'num_pages': 1, "results": serializer.data}
+            return Response(d)
 
         queryset = self.filter_queryset(queryset, request)
 
@@ -246,9 +249,9 @@ class GetLoansByItem(generics.GenericAPIView):
     def get(self, request, item_name, format=None):
         loans = self.get_queryset()
         if request.user.is_staff or request.user.is_superuser:
-            loans = loans.filter(request__requested_items__item__name=item_name)
+            loans = loans.filter(item__name=item_name)
         else:
-            loans = loans.filter(request__requested_items__item__name=item_name, request__requester=request.user.pk)
+            loans = loans.filter(item__name=item_name, request__requester=request.user.pk)
 
         # Filter by loan owner
         user = self.request.query_params.get("user", None)
@@ -318,10 +321,10 @@ class GetItemStacks(generics.GenericAPIView):
                 if (ri.item.name == item_name):
                     rq += ri.quantity
 
-        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, returned=False)
+        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
         lq = 0
         for l in loans.all():
-            lq += (l.quantity)
+            lq += (l.quantity_loaned - l.quantity_returned)
 
         disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
         dq = 0
@@ -747,10 +750,16 @@ class LoanList(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
 
+        # Search filter
+        search = request.query_params.get('search', None)
+        if search is not None and search != '':
+            q_objs = (Q(item__name__icontains=search))
+            queryset = queryset.filter(q_objs).order_by('pk')
+
         status = request.query_params.get('status', None)
-        if status == "outstanding":
+        if status.lower() == "outstanding":
             queryset = queryset.filter(quantity_loaned__gt=F('quantity_returned'))
-        elif status == "returned":
+        elif status.lower() == "returned":
             queryset = queryset.filter(quantity_loaned=F('quantity_returned'))
 
         item = request.query_params.get('item', None)

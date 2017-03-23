@@ -357,8 +357,8 @@ class LoanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Loan
-        fields = ['id', 'request', 'item', 'quantity', 'returned', 'date_loaned', 'date_returned']
-        read_only_fields = ['id', 'request', 'item', 'quantity', 'date_loaned']
+        fields = ['id', 'request', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
+        read_only_fields = ['id', 'request', 'item', 'quantity_loaned', 'date_loaned']
 
     def update(self, instance, data):
         is_returned = data.get('returned', False)

@@ -140,7 +140,9 @@ const RequestDetail = React.createClass({
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
-        if (xhr.status == 404) {
+        if (xhr.status == 400) {
+          console.log(xhr)
+        } else if (xhr.status == 404) {
           _this.setState({
             requestExists: false
           })

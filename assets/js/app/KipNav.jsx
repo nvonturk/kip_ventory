@@ -43,9 +43,9 @@ const KipNav = React.createClass({
             <Nav pullRight>
               {this.getLink("/app/cart/", <Glyphicon glyph="shopping-cart" />)}
               {this.getLink("/app/profile/", "Profile")}
-              {this.getLink("/swagger/", "API")}
-              <NavItem eventKey={INDEX} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
-              <NavItem eventKey={INDEX+1}><Glyphicon glyph="cog" /></NavItem>
+              <NavItem eventKey={INDEX}   onClick={this.goToURL("/swagger/")}>API</NavItem>
+              <NavItem eventKey={INDEX+1} onClick={this.goToURL("/api/logout/")}>Logout</NavItem>
+              <NavItem eventKey={INDEX+2}><Glyphicon glyph="cog" /></NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>
