@@ -4,7 +4,7 @@ import {Link, browserHistory} from 'react-router'
 
 function LogEntry(props){
   var affectedUser = "N/A"
-  var requester_url = "/app/items/" + props.log.default_item + "/"
+  var item_url = "/app/inventory/" + props.log.default_item + "/"
 
   var request_url = null;
   console.log(props.log.request);
@@ -23,7 +23,7 @@ function LogEntry(props){
       <td data-th="Affected User" className="text-left">{affectedUser}</td>
       <td data-th="Date" className="text-left">{dateString}</td>
       <td data-th="Category" className="text-left">{props.log.category}</td>
-      <td data-th="Item" className="text-left"> <a href={requester_url}>{props.log.default_item}</a></td>
+      <td data-th="Item" className="text-left"> <a href={item_url}>{props.log.default_item}</a></td>
       <td data-th="Request" className="text-left"> { props.log.request != null ? <a href={request_url}>Request</a> : null } </td>
       <td data-th="Quantity" className="text-left">{props.log.quantity}</td>
       <td data-th="Message" className="text-left">{props.log.message}</td>
