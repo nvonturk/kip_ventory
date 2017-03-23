@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Modal, Table, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
+import { Grid, Row, Col, Tabs, Tab, Nav, NavItem, Button, Modal, Table, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from '../CreateTransactionsContainer'
@@ -528,23 +528,23 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
           <tbody>
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Name</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.name}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Name</th>
+              <td >{this.state.item.name}</td>
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Model No.</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.model_no}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Model No.</th>
+              <td >{this.state.item.model_no}</td>
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Quantity</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.quantity}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Quantity</th>
+              <td >{this.state.item.quantity}</td>
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Description</th>
-              <td style={{border: "1px solid #596a7b"}}>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Description</th>
+              <td >
                 <pre style={{fontFamily: '"Lato","Helvetica Neue",Helvetica,Arial,sans-serif',
                              color:"white",
                              fontSize:"12px",
@@ -558,15 +558,15 @@ const ManagerDetail = React.createClass({
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Tags</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.tags.join(", ")}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Tags</th>
+              <td >{this.state.item.tags.join(", ")}</td>
             </tr>
 
             {this.state.item.custom_fields.map( (cf, i) => {
               return (
                 <tr key={i}>
-                  <th style={{paddingRight:"10px", border: "1px solid #596a7b"}}>{cf.name}</th>
-                  <td style={{border: "1px solid #596a7b"}}>{cf.value}</td>
+                  <th style={{paddingRight:"10px", }}>{cf.name}</th>
+                  <td >{cf.value}</td>
                 </tr>
               )
             })}
@@ -611,7 +611,7 @@ const ManagerDetail = React.createClass({
 
   getRequestFilterPanel() {
     return (
-      <Panel style={{marginBottom: "0px"}} header={"Filter Outstanding Requests"}>
+      <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
         <FormGroup>
           <ControlLabel>User</ControlLabel>
           <Select style={{fontSize:"12px"}} name="requests-user-filter"
@@ -679,7 +679,7 @@ const ManagerDetail = React.createClass({
               <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Requested</th>
               <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requested For</th>
               <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Justification</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Justification</th>
               <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Request Details</th>
             </tr>
           </thead>
@@ -697,25 +697,25 @@ const ManagerDetail = React.createClass({
                 }
                 return (
                   <tr key={request.request_id}>
-                    <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="ID" className="text-center" >
                       <span style={{fontSize:"11px"}}>{request.request_id}</span>
                     </td>
-                    <td data-th="Requester" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="Requester" className="text-center" >
                       <span style={{fontSize:"11px", color: "#df691a"}}>{request.requester}</span>
                     </td>
-                    <td data-th="Date Opened" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="Date Opened" className="text-center" >
                       <span style={{fontSize:"11px"}}>{new Date(request.date_open).toLocaleString()}</span>
                     </td>
-                    <td data-th="Requested For" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="Requested For" className="text-center" >
                       { label }
                     </td>
-                    <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="Quantity" className="text-center" >
                       <span style={{fontSize:"11px"}}>{request_item.quantity}</span>
                     </td>
-                    <td data-th="Justification" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="Justification" className="text-left" >
                       <span style={{fontSize:"11px"}}>{ request.open_comment }</span>
                     </td>
-                    <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="Link" className="text-center" >
                       <a style={{fontSize:"11px", color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
                     </td>
                   </tr>
@@ -731,17 +731,14 @@ const ManagerDetail = React.createClass({
     return (
 
 
-      <div className="panel panel-default" style={{marginBottom: "0px"}}>
+      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
-        <div className="panel-heading">
-          Outstanding Requests
-        </div>
 
-        <div className="panel-body">
+        <div className="panel-body" >
           { requestsTable }
         </div>
 
-        <div className="panel-footer">
+        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
           <Row>
             <Col md={12}>
               <Pagination next prev maxButtons={10} boundaryLinks
@@ -772,7 +769,7 @@ const ManagerDetail = React.createClass({
 
   getLoanFilterPanel() {
     return (
-      <Panel style={{marginBottom: "0px"}} header={"Filter Loans"}>
+      <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
         <FormGroup>
           <ControlLabel>User</ControlLabel>
           <Select style={{fontSize:"12px"}} name="loans-user-filter"
@@ -815,7 +812,7 @@ const ManagerDetail = React.createClass({
               <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
               <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
               <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Request</th>
-              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-center">Admin Comment</th>
+              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-left">Admin Comment</th>
               <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
               <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Details</th>
@@ -825,28 +822,28 @@ const ManagerDetail = React.createClass({
             { this.state.loans.map( (loan, i) => {
               return (
                 <tr key={loan.id}>
-                  <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="ID" className="text-center" >
                     <span style={{fontSize: "12px"}}>{loan.id}</span>
                   </td>
-                  <td data-th="User" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="User" className="text-center" >
                     <span style={{fontSize: "11px", color: "#df691a"}}>{loan.request.requester}</span>
                   </td>
-                  <td data-th="Date Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Date Loaned" className="text-center" >
                     <span style={{fontSize: "11px"}}>{new Date(loan.date_loaned).toLocaleString()}</span>
                   </td>
-                  <td data-th="Request" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Request" className="text-center" >
                     <a style={{fontSize: "12px", textDecoration: "none", color: "#5bc0de"}} href={"/app/requests/" + loan.request.request_id + "/"}>{loan.request.request_id}</a>
                   </td>
-                  <td data-th="Admin Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
+                <td data-th="Admin Comment" className="text-left" >
                     <span style={{fontSize: "11px"}}>{loan.request.closed_comment}</span>
                   </td>
-                  <td data-th="Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Loaned" className="text-center" >
                     <span style={{fontSize: "12px"}}>{loan.quantity_loaned}</span>
                   </td>
-                  <td data-th="Returned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Returned" className="text-center" >
                     <span style={{fontSize: "12px"}}>{loan.quantity_returned}</span>
                   </td>
-                  <td data-th="" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="" className="text-center" >
                     <span className="clickable"
                           style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
                           onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}}>
@@ -861,17 +858,13 @@ const ManagerDetail = React.createClass({
       )
     }
     return (
-      <div className="panel panel-default" style={{marginBottom: "0px"}}>
+      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
-        <div className="panel-heading">
-          Outstanding Loans
-        </div>
-
-        <div className="panel-body">
+        <div className="panel-body" >
           { loanTable }
         </div>
 
-        <div className="panel-footer">
+        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
           <Row>
             <Col md={12}>
               <Pagination next prev maxButtons={10} boundaryLinks
@@ -968,7 +961,7 @@ const ManagerDetail = React.createClass({
           <Col xs={2} componentClass={ControlLabel}>
             Quantity:
           </Col>
-          <Col xs={3}>
+          <Col xs={2}>
             <FormControl style={{fontSize:"10px"}} bsSize="small"
                          type="number"
                          min={0} step={1}
@@ -976,8 +969,6 @@ const ManagerDetail = React.createClass({
                          value={this.state.transactionQuantity}
                          onChange={this.handleTransactionQuantityChange} />
           </Col>
-        </FormGroup>
-        <FormGroup bsSize="small">
           <Col xs={2} componentClass={ControlLabel}>
             Category:
           </Col>
@@ -1036,7 +1027,7 @@ const ManagerDetail = React.createClass({
 
   getTransactionFilterPanel() {
     return (
-      <Panel style={{marginBottom: "0px"}} header={"Filter Acquisitions and Losses"}>
+      <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
         <FormGroup>
           <ControlLabel>Administrator</ControlLabel>
           <Select style={{fontSize:"12px"}} name="transactions-admin-filter"
@@ -1092,22 +1083,22 @@ const ManagerDetail = React.createClass({
               )
               return (
                 <tr key={transaction.id}>
-                  <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="ID" className="text-center" >
                     <span style={{fontSize:"11px"}}>{transaction.id}</span>
                   </td>
-                  <td data-th="Administrator" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Administrator" className="text-center" >
                     <span style={{color: "#df691a"}}>{transaction.administrator}</span>
                   </td>
-                  <td data-th="Date" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Date" className="text-center" >
                     <span style={{fontSize:"11px"}}>{new Date(transaction.date).toLocaleString()}</span>
                   </td>
-                  <td data-th="Category" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Category" className="text-center" >
                     { label }
                   </td>
-                  <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Quantity" className="text-center" >
                     <span style={{fontSize:"11px"}}>{transaction.quantity}</span>
                   </td>
-                  <td data-th="Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Comment" className="text-left" >
                     <span style={{fontSize:"11px"}}>{transaction.comment}</span>
                   </td>
                 </tr>
@@ -1124,29 +1115,20 @@ const ManagerDetail = React.createClass({
       )
     }
     return (
-      <div className="panel panel-default" style={{marginBottom: "0px"}}>
+      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
-        <div className="panel-heading">
-          <Row>
-            <Col xs={12}>
-              <span style={{fontSize:"15px"}}>Acquisitions and Losses</span>
-              <Button bsSize="small" bsStyle="primary"
-                      style={{fontSize:"10px", float: "right",
-                              verticalAlign:"middle"}}
-                      onClick={e => {this.setState({showCreateTransactionModal: true})}}>
-                Create
-              </Button>
-            </Col>
-          </Row>
-        </div>
-
-        <div className="panel-body">
+        <div className="panel-body" >
           { transactionsTable }
         </div>
 
-        <div className="panel-footer">
+        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
           <Row>
             <Col md={12}>
+            <Button bsSize="small" bsStyle="primary"
+                    style={{float: "left", verticalAlign:"middle"}}
+                    onClick={e => {this.setState({showCreateTransactionModal: true})}}>
+              Create
+            </Button>
               <Pagination next prev maxButtons={10} boundaryLinks
                           ellipsis style={{float:"right", margin: "0px"}}
                           bsSize="small" items={this.state.transactionsPageCount}
@@ -1204,51 +1186,77 @@ const ManagerDetail = React.createClass({
               </Row>
 
               <Row>
-                <Col xs={3}>
-                  { this.getAddToCartForm() }
-                </Col>
-                <Col xs={5}>
+                <Col md={6} xs={12}>
                   { this.getItemInfoPanel() }
                 </Col>
-                <Col xs={4}>
+                <Col md={4} xs={12}>
                   { this.getItemStacksPanel() }
+
+                    <hr className="xs-hidden" style={{margin: "40px 0px"}} />
+
+                  { this.getAddToCartForm() }
                 </Col>
               </Row>
 
-              <hr />
+              <br />
+              <br />
 
-              <Row>
-                <Col xs={3}>
-                  { this.getRequestFilterPanel() }
-                </Col>
-                <Col xs={9}>
-                  { this.getRequestsPanel() }
-                </Col>
-              </Row>
+              <Panel>
+                <Tab.Container id="tabs-with-dropdown" defaultActiveKey={1} >
+                  <Row className="clearfix">
+                    <Col sm={12}>
+                      <Nav bsStyle="tabs" animation style={{borderBottom: "1px solid #596a7b"}}>
+                        <NavItem eventKey={1}>
+                          Outstanding Requests
+                        </NavItem>
+                        <NavItem eventKey={2}>
+                          Outstanding Loans
+                        </NavItem>
+                        <NavItem eventKey={3}>
+                          Acquisitions and Losses
+                        </NavItem>
+                      </Nav>
+                    </Col>
+                    <Col sm={12}>
+                      <Tab.Content animation>
 
-              <hr />
+                        <Tab.Pane eventKey={1} style={{padding: "15px"}}>
+                          <Row>
+                            <Col xs={3} style={{paddingLeft: "0px"}}>
+                              { this.getRequestFilterPanel() }
+                            </Col>
+                            <Col xs={9} style={{paddingRight: "0px"}}>
+                              { this.getRequestsPanel() }
+                            </Col>
+                          </Row>
+                        </Tab.Pane>
 
-              <Row>
-                <Col xs={3}>
-                  { this.getLoanFilterPanel() }
-                </Col>
-                <Col xs={9}>
-                  { this.getLoanPanel() }
-                </Col>
-              </Row>
+                        <Tab.Pane eventKey={2} style={{padding: "15px"}}>
+                          <Row>
+                            <Col xs={3} style={{paddingLeft: "0px"}}>
+                              { this.getLoanFilterPanel() }
+                            </Col>
+                            <Col xs={9} style={{paddingRight: "0px"}}>
+                              { this.getLoanPanel() }
+                            </Col>
+                          </Row>
+                        </Tab.Pane>
 
-              <hr />
-
-              <Row>
-                <Col xs={3}>
-                  { this.getTransactionFilterPanel() }
-                </Col>
-                <Col xs={9}>
-                  { this.getTransactionPanel() }
-                </Col>
-              </Row>
-
-              <hr />
+                        <Tab.Pane eventKey={3} style={{padding: "15px"}}>
+                          <Row>
+                          <Col xs={3} style={{paddingLeft: "0px"}}>
+                            { this.getTransactionFilterPanel() }
+                          </Col>
+                            <Col xs={9} style={{paddingRight: "0px"}}>
+                              { this.getTransactionPanel() }
+                            </Col>
+                          </Row>
+                        </Tab.Pane>
+                      </Tab.Content>
+                    </Col>
+                  </Row>
+                </Tab.Container>
+              </Panel>
 
             </Col>
           </Row>
