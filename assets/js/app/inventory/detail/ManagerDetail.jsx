@@ -834,7 +834,7 @@ const ManagerDetail = React.createClass({
                   <td data-th="Request" className="text-center" >
                     <a style={{fontSize: "12px", textDecoration: "none", color: "#5bc0de"}} href={"/app/requests/" + loan.request.request_id + "/"}>{loan.request.request_id}</a>
                   </td>
-                <td data-th="Admin Comment" className="text-left" >
+                  <td data-th="Admin Comment" className="text-left" >
                     <span style={{fontSize: "11px"}}>{loan.request.closed_comment}</span>
                   </td>
                   <td data-th="Loaned" className="text-center" >
@@ -1205,7 +1205,7 @@ const ManagerDetail = React.createClass({
                 <Tab.Container id="tabs-with-dropdown" defaultActiveKey={1} >
                   <Row className="clearfix">
                     <Col sm={12}>
-                      <Nav bsStyle="tabs" animation style={{borderBottom: "1px solid #596a7b"}}>
+                      <Nav bsStyle="tabs" style={{borderBottom: "1px solid #596a7b"}}>
                         <NavItem eventKey={1}>
                           Outstanding Requests
                         </NavItem>
