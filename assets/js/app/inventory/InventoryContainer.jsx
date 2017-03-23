@@ -177,6 +177,7 @@ const InventoryContainer = React.createClass({
 
   handleIncludeTagSelection(tagsSelected) {
     tagsSelected = tagsSelected.map((tag, i) => {return tag.value}).join(",")
+    console.log(tagsSelected)
     this.setState({tagsSelected: tagsSelected, page: 1}, this.filterItems);
   },
 
@@ -468,9 +469,9 @@ const InventoryContainer = React.createClass({
 
   render() {
     var bulkImportPanel = (this.props.route.user.is_superuser) ? (
-      <Panel header={<span>Import Items</span>}>
+      <Panel header={"Bulk Import Items"}>
         <Row>
-          <Col md={12}>
+          <Col md={12} xs={6}>
             <p style={{fontSize:"12px"}}>
               Choose a .csv file from which to import items.
             </p>
@@ -478,14 +479,12 @@ const InventoryContainer = React.createClass({
               Click <a href="/api/import/template/">here</a> to download a .csv file template.
             </p>
           </Col>
-          <Col md={12}>
+          <Col md={12} xs={6}>
             <Form onSubmit={this.handleImportSubmit}>
-
               <FormGroup bsSize="small">
-                  <FormControl type="file" label="Choose file" bsSize="small" bsStyle="default" onChange={this.handleFileChange} />
+                  <FormControl type="file" label="Choose file" style={{fontSize:"10px"}} bsStyle="default" onChange={this.handleFileChange} />
               </FormGroup>
-
-              <Button type="submit" bsSize="small" bsStyle="info">Import</Button>
+              <Button style={{fontSize:"10px"}} type="submit" bsSize="small" bsStyle="info">Import</Button>
             </Form>
           </Col>
         </Row>
@@ -493,9 +492,9 @@ const InventoryContainer = React.createClass({
     ) : null
     var inventoryPanelHeader = (this.props.route.user.is_staff || this.props.route.user.is_superuser) ? (
       <Row>
-        <Col md={12}>
-          <span className="panel-title">Current Inventory</span>
-          <Button bsSize="small" bsStyle="primary" style={{padding:"7px", fontSize:"12px", float: "right", marginRight:"10px", verticalAlign:"middle"}} onClick={this.showCreateItemForm}>
+        <Col xs={12} >
+          <span className="panel-title" style={{fontSize:"15px"}}>Current Inventory</span>
+          <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showCreateItemForm}>
             Add Item &nbsp; <Glyphicon glyph="plus" />
           </Button>
         </Col>
@@ -516,7 +515,7 @@ const InventoryContainer = React.createClass({
               <Col md={3} sm={12}>
                 <Row>
                   <Col md={12} sm={6}>
-                    <Panel header={<span>Refine Results</span>}>
+                    <Panel header={"Refine Results"}>
                       <Row>
                         <Col md={12}>
                           <FormGroup>
@@ -540,7 +539,7 @@ const InventoryContainer = React.createClass({
                                     placeholder="Tags to include"
                                     value={this.state.tagsSelected}
                                     options={this.state.tags}
-                                    onChange={this.handleInputTagSelection}
+                                    onChange={this.handleIncludeTagSelection}
                             />
                           </FormGroup>
 
@@ -570,7 +569,7 @@ const InventoryContainer = React.createClass({
                     { inventoryPanelHeader }
                   </div>
 
-                  <div className="panel-body" style={{minHeight: "480px", maxHeight: "500px"}}>
+                  <div className="panel-body">
                     <Table condensed hover style={{marginBottom: "0px"}}>
                       <thead>
                         <tr>

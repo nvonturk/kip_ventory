@@ -3,8 +3,6 @@ import { Row, Col, Label, Button, FormGroup, FormControl, Glyphicon, OverlayTrig
 import { browserHistory } from 'react-router'
 import { ajax } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
-import ItemTableDetail from './ItemTableDetail'
-
 
 const InventoryItem = React.createClass({
   getInitialState() {
@@ -89,11 +87,11 @@ const InventoryItem = React.createClass({
     return (
       <tr style={{height: "40px"}}>
         <td data-th="Item" className="clickable" onClick={this.viewItemDetail}>
-          <h5 style={{color: "#df691a"}}>{this.props.item.name}</h5>
+          <h6 style={{color: "#df691a"}}>{this.props.item.name}</h6>
         </td>
-        <td data-th="Model No." className="text-center">{this.props.item.model_no}</td>
-        <td data-th="In Stock" className="text-center">{this.props.item.quantity}</td>
-        <td data-th="Tags" className="text-center" style={{zIndex:"9999"}}>
+        <td data-th="Model No." style={{fontSize:"10px"}} className="text-center">{this.props.item.model_no}</td>
+        <td data-th="In Stock" style={{fontSize:"10px"}} className="text-center">{this.props.item.quantity}</td>
+        <td data-th="Tags" className="text-center" style={{fontSize:"10px", zIndex:"9999"}}>
           <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getPopover()}>
             <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>
           </OverlayTrigger>
@@ -102,14 +100,16 @@ const InventoryItem = React.createClass({
         <td data-th="Status" className="text-center">
           {this.getItemStatus(this.props.item)}
         </td>
-        <td data-th="Quantity" style={{zIndex:"9999"}}>
+        <td data-th="Quantity" style={{fontSize:"10px", zIndex:"9999"}}>
           <FormGroup bsSize="small" style={{margin:"auto"}}>
             <FormControl style={{fontSize: "10px"}} type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onChange} />
           </FormGroup>
         </td>
         <td className="spacer" />
         <td className="text-center" style={{zIndex:"9999"}}>
-          <Button bsSize="small" bsStyle="info" onClick={this.addToCart}>Add to Cart</Button>
+          <Button bsSize="small" bsStyle="info" style={{fontSize:"10px"}} onClick={this.addToCart}>
+            <span>Add to Cart</span>
+          </Button>
         </td>
       </tr>
     )

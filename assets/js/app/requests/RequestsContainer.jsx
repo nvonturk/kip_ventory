@@ -114,7 +114,7 @@ const RequestsContainer = React.createClass({
         <div className="panel-heading">
           <Row>
             <Col xs={12}>
-              <span className="panel-title">Request Listing</span>
+              <span style={{fontSize:"15px"}} className="panel-title">Request Listing</span>
             </Col>
           </Row>
         </div>
@@ -203,7 +203,7 @@ const RequestsContainer = React.createClass({
 
             <Row>
               <Col sm={3}>
-                <Panel header={<span>Filter Request Type</span>}>
+                <Panel header={<span style={{fontSize:"15px"}}>Filter Request Type</span>}>
                   <Row>
                     <Col sm={12}>
                       <Nav bsStyle="pills" stacked activeKey={this.state.activeKey} onSelect={this.handleSelect}>

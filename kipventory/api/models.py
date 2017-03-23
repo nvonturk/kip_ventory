@@ -161,12 +161,12 @@ class RequestedItem(models.Model):
         ordering = ('item__name',)
 
 class Loan(models.Model):
-    request   = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loaned_items', blank=True, null=True)
-    date_loaned = models.DateTimeField(blank=True, auto_now_add=True)
-    item      = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity  = models.PositiveIntegerField(default=0)
-    returned  = models.BooleanField(default=False)
-    date_returned = models.DateTimeField(blank=True, null=True)
+    request           = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loaned_items', blank=True, null=True)
+    date_loaned       = models.DateTimeField(blank=True, auto_now_add=True)
+    item              = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity_loaned   = models.PositiveIntegerField(default=0)
+    quantity_returned = models.PositiveIntegerField(default=0)
+    date_returned     = models.DateTimeField(blank=True, null=True)
 
 
 class Disbursement(models.Model):
@@ -179,8 +179,8 @@ class Disbursement(models.Model):
 def createLoanFromRequestItem(ri):
     loan = Loan.objects.create(request=ri.request,
                                item=ri.item,
-                               quantity=ri.quantity,
-                               returned=False)
+                               quantity_loaned=ri.quantity,
+                               quantity_returned=0)
     ri.item.quantity -= ri.quantity
     ri.item.save()
     loan.save()
