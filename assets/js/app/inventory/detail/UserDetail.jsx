@@ -6,6 +6,7 @@ import CreateTransactionsContainer from '../CreateTransactionsContainer'
 import {browserHistory} from 'react-router'
 import TagMultiSelect from '../../TagMultiSelect'
 import Select from 'react-select'
+import LoanModal from '../../loans/LoanModal'
 
 const ITEMS_PER_PAGE = 5;
 
@@ -35,6 +36,9 @@ const ManagerDetail = React.createClass({
       },
 
       itemExists: true,
+
+      showLoanModal: false,
+      loanToShow: null
     }
   },
 
@@ -266,13 +270,14 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requester</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Requested</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requested For</th>
-              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Justification</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Request</th>
+              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-center">Admin Comment</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Details</th>
             </tr>
           </thead>
           <tbody>
@@ -390,25 +395,32 @@ const ManagerDetail = React.createClass({
               return (
                 <tr key={loan.id}>
                   <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {loan.id}
+                    <span style={{fontSize: "12px"}}>{loan.id}</span>
                   </td>
                   <td data-th="User" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    <span style={{color: "#df691a"}}>{loan.request.requester}</span>
+                    <span style={{fontSize: "11px", color: "#df691a"}}>{loan.request.requester}</span>
                   </td>
                   <td data-th="Date Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {new Date(loan.date_loaned).toLocaleString()}
+                    <span style={{fontSize: "11px"}}>{new Date(loan.date_loaned).toLocaleString()}</span>
                   </td>
-                  <td data-th="Approved by" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    <span style={{color: "#df691a"}}>{loan.request.administrator}</span>
-                  </td>
-                  <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {loan.quantity}
+                  <td data-th="Request" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <a style={{fontSize: "12px", textDecoration: "none", color: "#5bc0de"}} href={"/app/requests/" + loan.request.request_id + "/"}>{loan.request.request_id}</a>
                   </td>
                   <td data-th="Admin Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {loan.request.closed_comment}
+                    <span style={{fontSize: "11px"}}>{loan.request.closed_comment}</span>
                   </td>
-                  <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    <a style={{color: "#5bc0de"}} href={"/app/loans/" + loan.id + "/"}>Click to view</a>
+                  <td data-th="Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span style={{fontSize: "12px"}}>{loan.quantity_loaned}</span>
+                  </td>
+                  <td data-th="Returned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span style={{fontSize: "12px"}}>{loan.quantity_returned}</span>
+                  </td>
+                  <td data-th="" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span className="clickable"
+                          style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
+                          onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}}>
+                        Click to view
+                    </span>
                   </td>
                 </tr>
               )
@@ -551,6 +563,10 @@ const ManagerDetail = React.createClass({
 
             </Col>
           </Row>
+
+          <LoanModal show={this.state.showLoanModal}
+                     onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
+                     loan={this.state.loanToShow} />
 
         </Grid>
       )

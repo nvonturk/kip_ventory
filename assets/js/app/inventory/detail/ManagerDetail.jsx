@@ -1279,7 +1279,9 @@ const ManagerDetail = React.createClass({
             </Modal.Footer>
           </Modal>
 
-          <LoanModal show={this.state.showLoanModal} onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}} loan={this.state.loanToShow} />
+          <LoanModal show={this.state.showLoanModal}
+                     onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
+                     loan={this.state.loanToShow} />
 
 
 
