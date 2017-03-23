@@ -19,7 +19,7 @@ class CustomFieldSerializer(serializers.ModelSerializer):
         name = data.get('name', None)
         field_exists = (models.CustomField.objects.filter(name=name).count() > 0)
         if field_exists:
-            raise ValidationError({"name": ["A field with name \'{}\' already exists.".format(request.data['name'])]})
+            raise ValidationError({"name": ["A field with name \'{}\' already exists.".format(name)]})
         return data
 
 class CustomValueSerializer(serializers.ModelSerializer):
@@ -37,15 +37,25 @@ class CustomValueSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         validated_data = {}
         errors = {}
+        print(data)
         # get value type specified in CustomField
         name = data.get('name')
         ft = models.CustomField.objects.get(name=name).field_type
-        # convert value to correct type
-        try:
-            value = data.get('value')
-            validated_data['value'] = models.FIELD_TYPE_DICT[ft](value)
-        except:
-            errors.update({'value': ['Field \'{}\' requires values of type \'{}\'.'.format(name, type(value).__name__)]})
+        value = data.get('value')
+        if value == None or value == "":
+            if ft == "Integer":
+                value = 0
+            elif ft == "Float":
+                value = 0.0
+            else:
+                value = ""
+        else:
+            # convert value to correct type
+            try:
+                value = models.FIELD_TYPE_DICT[ft](value)
+                validated_data['value'] = value
+            except:
+                errors.update({'value': ['Field \'{}\' requires values of type \'{}\'.'.format(name, models.FIELD_TYPE_DICT[ft].__name__)]})
 
         if errors:
             raise ValidationError(errors)
@@ -82,6 +92,57 @@ class ItemSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         is_in_cart = (models.CartItem.objects.filter(owner__pk=user.pk, item__name=item.name).count() > 0)
         return is_in_cart
+
+    def to_internal_value(self, data):
+        errors = {}
+
+        name = data.get('name', None)
+        if name is None or name == "":
+            errors.update({"name": ["This field is required."]})
+        else:
+            try:
+                other_item = models.Item.objects.get(name=name)
+                errors.update({"name": ["An object with this name already exists."]})
+            except models.Item.DoesNotExist:
+                # We know this a new item name, and is therefore valid
+                pass
+        quantity = data.get('quantity', None)
+        if quantity is None:
+            errors.update({"quantity": ["This field is required."]})
+        else:
+            try:
+                quantity = int(quantity)
+                if quantity < 0:
+                    errors.update({"quantity": ["This value must be greater than or equal to 0."]})
+            except:
+                errors.update({"quantity": ["This value must be a positive integer."]})
+
+        data.update({"quantity": quantity})
+
+        # validate custom fields
+        custom_field_objs = []
+        custom_fields = data.get('custom_fields', None)
+        if custom_fields is not None:
+            for cf in custom_fields:
+                name = cf['name']
+                ft = cf['field_type']
+                val = cf['value']
+                try:
+                    cf = models.CustomField.objects.get(name=name)
+                    if val != None and val != "":
+                        try:
+                            val = models.FIELD_TYPE_DICT[ft](val)
+                        except:
+                            errors.update({name: ["Value '{}' is not of type '{}'.".format(val, models.FIELD_TYPE_DICT[ft].__name__)]})
+                except:
+                    errors.update({name: ["Custom field with name '{}' does not exist.".format(cf['name'])]})
+
+        if errors:
+            raise ValidationError(errors)
+
+        data.pop('custom_fields')
+        return data
+
 
 
 

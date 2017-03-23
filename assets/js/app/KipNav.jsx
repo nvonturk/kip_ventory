@@ -36,6 +36,7 @@ const KipNav = React.createClass({
             <Nav>
               {this.getLink("/app/inventory/", "Inventory")}
               {this.getLink("/app/requests/", "Your Requests")}
+              {this.getLink("/app/loans/", "Your Loans")}
               {(this.props.route.user.is_staff)     ? this.getLink("/app/manage/", "Manage") : null}
               {(this.props.route.user.is_superuser) ? this.getLink("/app/admin/",  "Admin") : null}
             </Nav>

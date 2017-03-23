@@ -1,20 +1,30 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Modal, Table, Form, Glyphicon, FormGroup, FormControl, ControlLabel, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
+import { Grid, Row, Col, Button, Modal, Table, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from '../CreateTransactionsContainer'
 import {browserHistory} from 'react-router'
 import TagMultiSelect from '../../TagMultiSelect'
+import Select from 'react-select'
 
+const ITEMS_PER_PAGE = 5;
 
-const UserDetail = React.createClass({
+const ManagerDetail = React.createClass({
   getInitialState() {
     return {
       requests: [],
-      transactions: [],
+      requestsPage: 1,
+      requestsPageCount: 1,
+      requestsFilterType: "",
+
       loans: [],
-      disbursements: [],
+      loansPage: 1,
+      loansPageCount: 1,
+
       addToCartQuantity: 1,
+
+      stacks: {},
+
       item: {
         name: "",
         model_no: "",
@@ -23,8 +33,8 @@ const UserDetail = React.createClass({
         description: "",
         custom_fields: []
       },
-      stacks: {},
-      itemExists: true
+
+      itemExists: true,
     }
   },
 
@@ -34,7 +44,6 @@ const UserDetail = React.createClass({
     this.getOutstandingRequests();
     this.getStacks();
     this.getLoans();
-    this.getDisbursements();
   },
 
   getStacks() {
@@ -59,7 +68,7 @@ const UserDetail = React.createClass({
       },
       success:function(response){
         _this.setState({
-          item: response
+          item: response,
         })
       },
       complete:function(){},
@@ -75,42 +84,31 @@ const UserDetail = React.createClass({
 
   getOutstandingRequests() {
     var url = "/api/items/" + this.props.params.item_name + "/requests/";
-    var params = {status: "O", all: true}
+    var params = {
+      page: this.state.requestsPage,
+      itemsPerPage: ITEMS_PER_PAGE,
+      type: this.state.requestsFilterType
+    }
     var _this = this;
     getJSON(url, params, function(data) {
       _this.setState({
-        requests: data.results
-      })
-    })
-  },
-
-  getTransactions() {
-    var url = "/api/transactions/" + this.props.params.item_name + '/'
-    var params = {all: true}
-    var _this = this;
-    getJSON(url, params, function(data) {
-      _this.setState({
-        transactions: data.results
+        requests: data.results,
+        requestsPageCount: Number(data.num_pages)
       })
     })
   },
 
   getLoans() {
     var url = "/api/items/" + this.props.params.item_name + "/loans/"
+    var params = {
+      page: this.state.loansPage,
+      itemsPerPage: ITEMS_PER_PAGE
+    }
     var _this = this;
-    getJSON(url, function(data) {
+    getJSON(url, params, function(data) {
       _this.setState({
-        loans: data.results
-      })
-    })
-  },
-
-  getDisbursements() {
-    var url = "/api/items/" + this.props.params.item_name + "/disbursements/"
-    var _this = this;
-    getJSON(url, function(data) {
-      _this.setState({
-        disbursements: data.results
+        loans: data.results,
+        loansPageCount: Number(data.num_pages)
       })
     })
   },
@@ -154,9 +152,9 @@ const UserDetail = React.createClass({
     });
   },
 
-  getUserItemInfoPanel() {
+  getItemInfoPanel() {
     return (
-      <Panel header={"Product Details"}>
+      <Panel style={{marginBottom: "0px"}} header={"Item Details"}>
         <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
           <tbody>
 
@@ -209,59 +207,108 @@ const UserDetail = React.createClass({
     )
   },
 
-  getUserRequestsPanel() {
+  handleRequestTypeSelection(selectedType) {
+    if (selectedType == null) {
+      this.setState({
+        requestsFilterType: "",
+      }, this.getOutstandingRequests)
+    } else {
+      this.setState({
+        requestsFilterType: selectedType.value
+      }, this.getOutstandingRequests)
+    }
+  },
+
+  getRequestFilterPanel() {
+    return (
+      <Panel style={{marginBottom: "0px"}} header={"Filter Outstanding Requests"}>
+        <FormGroup>
+          <ControlLabel>Type of Request</ControlLabel>
+          <Select style={{fontSize:"12px"}} name="requests-type-filter"
+                  multi={false}
+                  placeholder="Filter by request type"
+                  value={this.state.requestsFilterType}
+                  options={[
+                    {
+                      label: "Loan",
+                      value: "loan",
+                    },
+                    {
+                      label: "Disbursement",
+                      value: "disbursement"
+                    }
+                  ]}
+                  onChange={this.handleRequestTypeSelection} />
+        </FormGroup>
+      </Panel>
+    )
+  },
+
+  getRequestsPanel() {
     var requestsTable = null
+    var message = (
+      <span>
+        You have no outstanding requests for this item.
+      </span>
+    )
+    var type = this.state.requestsFilterType
+    if (type.length > 0) {
+      message = <span>You have no outstanding requests for {type}.</span>
+    }
     if (this.state.requests.length == 0) {
       requestsTable = (
-        <p style={{marginBottom:"0px", fontSize: "12px"}}>
-          You have no outstanding requests for this item.
-        </p>
+        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
+          { message }
+        </Well>
       )
     } else {
       requestsTable = (
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-              <th style={{width: "7%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Opened</th>
-              <th style={{width: "8%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Type</th>
-              <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Justification</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
+              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requester</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Requested</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requested For</th>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Justification</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
             </tr>
           </thead>
           <tbody>
 
             { this.state.requests.map( (request, i) => {
-              var request_item = request.requested_items.filter( (ri) => {return (ri.item == this.state.item.name)})[0]
-              var label = null
-              if (request_item != null) {
-                label = (request_item.request_type == "loan") ? (
-                  <Label bsStyle="primary">Loan</Label>
-                ) : (
-                  <Label bsStyle="info">Disbursement</Label>
-                )
+              var request_items = request.requested_items.filter( (ri) => {return (ri.item == this.state.item.name)})
+              if (request_items.length == 1) {
+                var request_item = request_items[0]
+                var label = null
+                if (request_item.request_type == 'loan') {
+                  label = <Label bsStyle="primary">Loan</Label>
+                } else if (request_item.request_type == 'disbursement') {
+                  label = <Label bsStyle="info">Disbursement</Label>
+                }
                 return (
                   <tr key={request.request_id}>
                     <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
                       {request.request_id}
                     </td>
+                    <td data-th="Requester" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      <span style={{color: "#df691a"}}>{request.requester}</span>
+                    </td>
                     <td data-th="Date Opened" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      {new Date(request.date_open).toLocaleDateString()}
+                      {new Date(request.date_open).toLocaleString()}
+                    </td>
+                    <td data-th="Requested For" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      { label }
                     </td>
                     <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
                       {request_item.quantity}
                     </td>
-                    <td data-th="Type" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      { label }
-                    </td>
-                    <td data-th="Justification" className="text-left" style={{border: "1px solid #596a7b"}}>
-                      {request.open_comment}
+                    <td data-th="Justification" className="text-center" style={{border: "1px solid #596a7b"}}>
+                      { request.open_comment }
                     </td>
                     <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      <div className="clickable" style={{color: "#5bc0de"}} onClick={e => browserHistory.push("/app/requests/" + request.request_id + "/")}>
-                        Request &nbsp; <Glyphicon glyph="new-window" />
-                      </div>
+                      <a style={{color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
                     </td>
                   </tr>
                 )
@@ -274,51 +321,91 @@ const UserDetail = React.createClass({
       )
     }
     return (
-      <Panel header={"Your Outstanding Requests"}>
-        { requestsTable }
+
+
+      <div className="panel panel-default" style={{marginBottom: "0px"}}>
+
+        <div className="panel-heading">
+          Outstanding Requests
+        </div>
+
+        <div className="panel-body">
+          { requestsTable }
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks
+                          ellipsis style={{float:"right", margin: "0px"}}
+                          bsSize="small" items={this.state.requestsPageCount}
+                          activePage={this.state.requestsPage}
+                          onSelect={activeKey => {this.setState({requestsPage: activeKey}, this.getOutstandingRequests)}}/>
+            </Col>
+          </Row>
+        </div>
+
+      </div>
+
+    )
+  },
+
+  getLoanFilterPanel() {
+    return (
+      <Panel style={{marginBottom: "0px"}} header={"Filter Loans"}>
+        <p style={{fontSize:"12px"}}>View all of your current outstanding loans in the panel to the right.</p>
       </Panel>
     )
   },
 
-  getUserLoanPanel() {
+  getLoanPanel() {
     var loanTable = null;
+    var message = (
+      <span>
+        You have no outstanding loans for this item.
+      </span>
+    )
     if (this.state.loans.length == 0) {
       loanTable = (
-        <p style={{marginBottom:"0px", fontSize: "12px"}}>
-          You have no outstanding loans for this item.
-        </p>
+        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
+          { message }
+        </Well>
       )
     } else {
       loanTable = (
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-            <th style={{width: "7%", borderBottom: "1px solid #596a7b"}} className="text-center">#</th>
-            <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Date</th>
-            <th style={{width: "8%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-            <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-left">Justification</th>
-            <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Approved by</th>
-            <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Approved by</th>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Admin Comment</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
             </tr>
           </thead>
           <tbody>
             { this.state.loans.map( (loan, i) => {
               return (
                 <tr key={loan.id}>
-                  <td data-th="#" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
                     {loan.id}
                   </td>
-                  <td data-th="Loan Date" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {new Date(loan.request.date_closed).toLocaleDateString()}
+                  <td data-th="User" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span style={{color: "#df691a"}}>{loan.request.requester}</span>
+                  </td>
+                  <td data-th="Date Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {new Date(loan.date_loaned).toLocaleString()}
+                  </td>
+                  <td data-th="Approved by" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <span style={{color: "#df691a"}}>{loan.request.administrator}</span>
                   </td>
                   <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
                     {loan.quantity}
                   </td>
-                  <td data-th="Justification" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {loan.request.open_comment}
-                  </td>
-                  <td data-th="Approved by" className="text-center" style={{border: "1px solid #596a7b"}}>
-                    {loan.request.administrator}
+                  <td data-th="Admin Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    {loan.request.closed_comment}
                   </td>
                   <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
                     <a style={{color: "#5bc0de"}} href={"/app/loans/" + loan.id + "/"}>Click to view</a>
@@ -331,115 +418,61 @@ const UserDetail = React.createClass({
       )
     }
     return (
-      <Panel header={"Your Approved Loans"}>
-        { loanTable }
-      </Panel>
+      <div className="panel panel-default" style={{marginBottom: "0px"}}>
+
+        <div className="panel-heading">
+          Your Outstanding Loans
+        </div>
+
+        <div className="panel-body">
+          { loanTable }
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks
+                          ellipsis style={{float:"right", margin: "0px"}}
+                          bsSize="small" items={this.state.loansPageCount}
+                          activePage={this.state.loansPage}
+                          onSelect={activeKey => {this.setState({loansPage: activeKey}, this.getLoans)}}/>
+            </Col>
+          </Row>
+        </div>
+
+      </div>
     )
   },
 
-  // getUserDisbursementPanel() {
-  //   var disbursementTable = null
-  //   if (this.state.disbursements.length == 0) {
-  //     disbursementTable = (
-  //       <Well bsSize="small" style={{marginBottom: "0px", fontSize: "12px"}}>
-  //         This item has not been disbursed to you.
-  //       </Well>
-  //     )
-  //   } else {
-  //     disbursementTable = (
-  //       <Table style={{marginBottom:"0px"}}>
-  //         <thead>
-  //           <tr>
-  //           <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">#</th>
-  //           <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
-  //           <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Approved</th>
-  //           <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity Disbursed</th>
-  //           </tr>
-  //         </thead>
-  //         <tbody>
-  //           { this.state.disbursements.map( (disbursement, i) => {
-  //             return (
-  //               <tr key={disbursement.id}>
-  //                 <td data-th="#" className="text-center" style={{border: "1px solid #596a7b"}}>
-  //                   {disbursement.id}
-  //                 </td>
-  //                 <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
-  //                   <a style={{color: "#5bc0de"}} href={"/app/disbursements/" + disbursement.id + "/"}>Click to view</a>
-  //                 </td>
-  //                 <td data-th="Date Approved" className="text-center" style={{border: "1px solid #596a7b"}}>
-  //                   {new Date(disbursement.request.date_closed).toLocaleDateString()}
-  //                 </td>
-  //                 <td data-th="Quantity Disbursed" className="text-center" style={{border: "1px solid #596a7b"}}>
-  //                   {disbursement.quantity}
-  //                 </td>
-  //               </tr>
-  //             )
-  //           })}
-  //         </tbody>
-  //       </Table>
-  //     )
-  //   }
-  //   return (
-  //     <Panel header={"Approved Disbursements"}>
-  //       {disbursementTable}
-  //     </Panel>
-  //   )
-  // },
-
   getAddToCartForm() {
-    var cartMessage = null
-    if (this.state.item.in_cart) {
-      cartMessage = (
-        <p style={{fontSize: "12px"}}>
-          This item is currently in <a href="/app/cart/">your cart.</a>
-        </p>
-      )
-    }
     return (
-        <Grid fluid>
           <Row>
-            <Col md={12}>
-              <h3 style={{marginTop: "0px"}}><a href={"/app/inventory/" + this.state.item.name + "/"}>{this.props.params.item_name}</a></h3>
-              <hr />
-            </Col>
-          </Row>
-
-          <Row>
-            <Col md={12}>
-              <Form horizontal onSubmit={this.addToCart}>
+            <Col xs={12}>
+              <Form horizontal onSubmit={this.addToCart} style={{marginBottom: "0px"}}>
                 <FormGroup bsSize="small">
-                  <Col md={3} componentClass={ControlLabel}>
+                  <Col xs={3} componentClass={ControlLabel}>
                     Quantity:
                   </Col>
-                  <Col md={4}>
+                  <Col xs={4}>
                     <FormControl type="number"
                                  min={1} max={this.state.item.quantity} step={1}
                                  name="addToCartQuantity"
                                  value={this.state.addToCartQuantity}
                                  onChange={this.handleCartQuantityChange} />
                   </Col>
-                  <Col md={4}>
+                  <Col xs={4}>
                     <Button bsStyle="info" bsSize="small" type="submit">Add to cart</Button>
                   </Col>
                 </FormGroup>
               </Form>
             </Col>
           </Row>
-
-          <br />
-
-          <Row>
-            <Col md={12}>
-              { cartMessage }
-            </Col>
-          </Row>
-        </Grid>
     )
   },
 
   getItemStacksPanel() {
     return (
-      <Panel header={"Item Instance Breakdown"}>
+      <Panel header={"Item Tracking"}>
         <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
           <tbody>
             <tr>
@@ -472,48 +505,64 @@ const UserDetail = React.createClass({
       return (
         <Grid>
           <Row>
-          <Col xs={12}>
+            <Col xs={12}>
+              <Row>
+                <Col xs={12}>
+                  <h3>{this.props.params.item_name}</h3>
+                  <hr />
+                </Col>
+              </Row>
 
-            <br />
-            <br />
+              <Row>
+                <Col xs={3}>
+                  { this.getAddToCartForm() }
+                </Col>
+                <Col xs={5}>
+                  { this.getItemInfoPanel() }
+                </Col>
+                <Col xs={4}>
+                  { this.getItemStacksPanel() }
+                </Col>
+              </Row>
 
-            <Row>
-              <Col xs={4}>
-                { this.getAddToCartForm() }
-              </Col>
-              <Col xs={5}>
-                { this.getUserItemInfoPanel() }
-              </Col>
-              <Col xs={3}>
-                { this.getItemStacksPanel() }
-              </Col>
-            </Row>
+              <hr />
 
-            <hr />
-            <br />
+              <Row>
+                <Col xs={3}>
+                  { this.getRequestFilterPanel() }
+                </Col>
+                <Col xs={9}>
+                  { this.getRequestsPanel() }
+                </Col>
+              </Row>
 
-            <Row>
-              <Col xs={6}>
-                { this.getUserRequestsPanel() }
-              </Col>
-              <Col xs={6}>
-                { this.getUserLoanPanel() }
-              </Col>
-            </Row>
+              <hr />
 
-          </Col>
+              <Row>
+                <Col xs={3}>
+                  { this.getLoanFilterPanel() }
+                </Col>
+                <Col xs={9}>
+                  { this.getLoanPanel() }
+                </Col>
+              </Row>
+
+              <hr />
+
+            </Col>
           </Row>
+
         </Grid>
       )
     } else {
       return (
         <Grid>
-        <Row>
-          <Col>
-            <h3>404 - Item '{this.props.params.item_name}' not found.</h3>
-            <hr />
-          </Col>
-        </Row>
+          <Row>
+            <Col>
+              <h3>404 - Item '{this.props.params.item_name}' not found.</h3>
+              <hr />
+            </Col>
+          </Row>
         </Grid>
       )
     }
@@ -521,4 +570,4 @@ const UserDetail = React.createClass({
 
 })
 
-export default UserDetail
+export default ManagerDetail
