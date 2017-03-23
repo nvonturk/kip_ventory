@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Modal, Table, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
+import { Grid, Row, Col, Button, Modal, Table, Form, Tab, Nav, NavItem, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import CreateTransactionsContainer from '../CreateTransactionsContainer'
@@ -225,7 +225,7 @@ const ManagerDetail = React.createClass({
 
   getRequestFilterPanel() {
     return (
-      <Panel style={{marginBottom: "0px"}} header={"Filter Outstanding Requests"}>
+      <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
         <FormGroup>
           <ControlLabel>Type of Request</ControlLabel>
           <Select style={{fontSize:"12px"}} name="requests-type-filter"
@@ -328,17 +328,13 @@ const ManagerDetail = React.createClass({
     return (
 
 
-      <div className="panel panel-default" style={{marginBottom: "0px"}}>
-
-        <div className="panel-heading">
-          Outstanding Requests
-        </div>
+      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
         <div className="panel-body">
           { requestsTable }
         </div>
 
-        <div className="panel-footer">
+        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
           <Row>
             <Col md={12}>
               <Pagination next prev maxButtons={10} boundaryLinks
@@ -357,7 +353,7 @@ const ManagerDetail = React.createClass({
 
   getLoanFilterPanel() {
     return (
-      <Panel style={{marginBottom: "0px"}} header={"Filter Loans"}>
+      <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
         <p style={{fontSize:"12px"}}>View all of your current outstanding loans in the panel to the right.</p>
       </Panel>
     )
@@ -381,41 +377,42 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Approved by</th>
-              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-center">Admin Comment</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Link</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Request</th>
+              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-left">Admin Comment</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Details</th>
             </tr>
           </thead>
           <tbody>
             { this.state.loans.map( (loan, i) => {
               return (
                 <tr key={loan.id}>
-                  <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="ID" className="text-center" >
                     <span style={{fontSize: "12px"}}>{loan.id}</span>
                   </td>
-                  <td data-th="User" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="User" className="text-center" >
                     <span style={{fontSize: "11px", color: "#df691a"}}>{loan.request.requester}</span>
                   </td>
-                  <td data-th="Date Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Date Loaned" className="text-center" >
                     <span style={{fontSize: "11px"}}>{new Date(loan.date_loaned).toLocaleString()}</span>
                   </td>
-                  <td data-th="Request" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Request" className="text-center" >
                     <a style={{fontSize: "12px", textDecoration: "none", color: "#5bc0de"}} href={"/app/requests/" + loan.request.request_id + "/"}>{loan.request.request_id}</a>
                   </td>
-                  <td data-th="Admin Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Admin Comment" className="text-left" >
                     <span style={{fontSize: "11px"}}>{loan.request.closed_comment}</span>
                   </td>
-                  <td data-th="Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Loaned" className="text-center" >
                     <span style={{fontSize: "12px"}}>{loan.quantity_loaned}</span>
                   </td>
-                  <td data-th="Returned" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="Returned" className="text-center" >
                     <span style={{fontSize: "12px"}}>{loan.quantity_returned}</span>
                   </td>
-                  <td data-th="" className="text-center" style={{border: "1px solid #596a7b"}}>
+                  <td data-th="" className="text-center" >
                     <span className="clickable"
                           style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
                           onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}}>
@@ -430,17 +427,13 @@ const ManagerDetail = React.createClass({
       )
     }
     return (
-      <div className="panel panel-default" style={{marginBottom: "0px"}}>
-
-        <div className="panel-heading">
-          Your Outstanding Loans
-        </div>
+      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
         <div className="panel-body">
           { loanTable }
         </div>
 
-        <div className="panel-footer">
+        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
           <Row>
             <Col md={12}>
               <Pagination next prev maxButtons={10} boundaryLinks
@@ -518,48 +511,72 @@ const ManagerDetail = React.createClass({
         <Grid>
           <Row>
             <Col xs={12}>
-              <Row>
-                <Col xs={12}>
-                  <h3>{this.props.params.item_name}</h3>
-                  <hr />
-                </Col>
-              </Row>
+            <Row>
+              <Col xs={12}>
+                <h3>{this.props.params.item_name}</h3>
+                <hr />
+              </Col>
+            </Row>
 
-              <Row>
-                <Col xs={3}>
-                  { this.getAddToCartForm() }
-                </Col>
-                <Col xs={5}>
-                  { this.getItemInfoPanel() }
-                </Col>
-                <Col xs={4}>
-                  { this.getItemStacksPanel() }
-                </Col>
-              </Row>
+            <Row>
+              <Col md={6} xs={12}>
+                { this.getItemInfoPanel() }
+              </Col>
+              <Col md={4} xs={12}>
+                { this.getItemStacksPanel() }
 
-              <hr />
+                  <hr className="xs-hidden" style={{margin: "40px 0px"}} />
 
-              <Row>
-                <Col xs={3}>
-                  { this.getRequestFilterPanel() }
-                </Col>
-                <Col xs={9}>
-                  { this.getRequestsPanel() }
-                </Col>
-              </Row>
+                { this.getAddToCartForm() }
+              </Col>
+            </Row>
 
-              <hr />
+            <br />
+            <br />
 
-              <Row>
-                <Col xs={3}>
-                  { this.getLoanFilterPanel() }
-                </Col>
-                <Col xs={9}>
-                  { this.getLoanPanel() }
-                </Col>
-              </Row>
+            <Panel>
+              <Tab.Container id="tabs-with-dropdown" defaultActiveKey={1} >
+                <Row className="clearfix">
+                  <Col sm={12}>
+                    <Nav bsStyle="tabs" style={{borderBottom: "1px solid #596a7b"}}>
+                      <NavItem eventKey={1}>
+                        Outstanding Requests
+                      </NavItem>
+                      <NavItem eventKey={2}>
+                        Outstanding Loans
+                      </NavItem>
+                    </Nav>
+                  </Col>
+                  <Col sm={12}>
+                    <Tab.Content animation>
 
-              <hr />
+                      <Tab.Pane eventKey={1} style={{padding: "15px"}}>
+                        <Row>
+                          <Col xs={3} style={{paddingLeft: "0px"}}>
+                            { this.getRequestFilterPanel() }
+                          </Col>
+                          <Col xs={9} style={{paddingRight: "0px"}}>
+                            { this.getRequestsPanel() }
+                          </Col>
+                        </Row>
+                      </Tab.Pane>
+
+                      <Tab.Pane eventKey={2} style={{padding: "15px"}}>
+                        <Row>
+                          <Col xs={3} style={{paddingLeft: "0px"}}>
+                            { this.getLoanFilterPanel() }
+                          </Col>
+                          <Col xs={9} style={{paddingRight: "0px"}}>
+                            { this.getLoanPanel() }
+                          </Col>
+                        </Row>
+                      </Tab.Pane>
+
+                    </Tab.Content>
+                  </Col>
+                </Row>
+              </Tab.Container>
+            </Panel>
 
             </Col>
           </Row>
