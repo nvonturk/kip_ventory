@@ -1,19 +1,25 @@
 import React, {Component} from 'react'
 import Checkbox from './Checkbox'
-import { ListGroup, ListGroupItem, Label, Row, Col, Grid, Panel, Well, Button } from 'react-bootstrap'
+import { ListGroup, ListGroupItem, Label, Row, Col, Grid, Panel, Well, Button, Glyphicon, Modal } from 'react-bootstrap'
 import $ from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
-
+import LoanReminderModal from './LoanReminderModal'
+import LoanRemindersContainer from './LoanRemindersContainer'
 
 class EmailSubscriptionContainer extends Component {
   constructor(props) {
     super(props);
     this.user = this.props.route.admin;
     this.state = {
-      
+      showLoanReminderCreationModal: false, 
+      loanReminders: []
     }
     this.handleSubcriptionChange = this.handleSubcriptionChange.bind(this);
-   
+    this.showCreateLoanReminderForm = this.showCreateLoanReminderForm.bind(this);   
+    this.hideCreateLoanReminderForm = this.hideCreateLoanReminderForm.bind(this);
+    this.createLoanReminderSuccessHandler = this.createLoanReminderSuccessHandler.bind(this);
+
+    this.getLoanReminders();
   }
 
   handleSubcriptionChange(isSubcribed, label) {
@@ -45,6 +51,48 @@ class EmailSubscriptionContainer extends Component {
 
   }
 
+  getLoanReminders() {
+    var _this = this;
+    $.ajax({
+      url:"/api/loanreminders/",
+      type: "GET",
+      contentType:"application/json",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(data){
+        console.log("success");
+        _this.setState({
+          loanReminders: data.results
+        })
+      },
+      complete:function(){
+
+      },
+      error:function (xhr, textStatus, thrownError){
+        //todo show error message
+        console.log("error");
+      }
+    });
+  }
+
+  showCreateLoanReminderForm() {
+    this.setState({
+      showLoanReminderCreationModal: true
+    })
+  }
+
+  hideCreateLoanReminderForm() {
+    this.setState({
+      showLoanReminderCreationModal: false
+    })
+  }
+
+  createLoanReminderSuccessHandler() {
+    this.getLoanReminders()
+    this.hideCreateLoanReminderForm();
+  }
+
   render(){
 
     return(
@@ -69,15 +117,15 @@ class EmailSubscriptionContainer extends Component {
           <hr />
           <Row>
             <Col xs={12}>
-              TODO: add an email reminder here
-            </Col>
-          </Row>
-          <Row>
-            <Col xs={12}>
-              TODO: put list of Email Reminder Dates here
+              <span className="panel-title" style={{fontSize:"15px"}}>Loan Reminders</span>
+              <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showCreateLoanReminderForm}>
+                Add Loan Reminder &nbsp; <Glyphicon glyph="plus" />
+              </Button>
+              <LoanRemindersContainer loanReminders={this.state.loanReminders}/>
             </Col>
           </Row>
         </Panel>
+        <LoanReminderModal show={this.state.showLoanReminderCreationModal} onHide={this.hideCreateLoanReminderForm} createLoanReminderSuccessHandler={this.createLoanReminderSuccessHandler}/>
       </Grid>
     )
   }

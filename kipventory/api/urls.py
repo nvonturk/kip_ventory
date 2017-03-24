@@ -37,6 +37,8 @@ urlpatterns = [
 
     url(r'^disbursements/?$',                views.DisbursementList.as_view()),
     url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
+    
+    url(r'^loanreminders/?$', views.LoanReminderListCreate.as_view()),
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 

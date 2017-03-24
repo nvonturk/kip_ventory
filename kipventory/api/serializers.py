@@ -519,6 +519,11 @@ class ConversionSerializer(serializers.Serializer):
         d.save()
         return d
 
+class LoanReminderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.LoanReminder
+        fields = ['id', 'body', 'subject', 'date']
+
 class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)
     initiating_user = serializers.SlugRelatedField(slug_field="username", read_only=True)

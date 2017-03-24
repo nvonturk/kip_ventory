@@ -139,7 +139,7 @@ class UserPrivilegesContainer extends Component {
 
 	render() {
 		return (
-			<Table striped bordered condensed hover>
+			<Table bordered condensed hover>
 	          	{this.getTableHeader()}
 	          	<tbody>
  					{this.state.users.map((user, i) => this.getTableRow(user, i))}	          

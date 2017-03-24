@@ -24,6 +24,7 @@ from django.contrib.auth.views import password_reset, password_reset_confirm
 from django.http import HttpResponse
 
 import requests, csv, os, json
+import dateutil.parser
 
 class CustomPagination(pagination.PageNumberPagination):
     page_query_param = 'page'
@@ -1688,3 +1689,32 @@ def get_subscribed_managers(request):
         serializer = serializers.UserGETSerializer(instance=subscribed_managers, many=True)
         return Response(serializer.data)
 
+class LoanReminderListCreate(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return models.LoanReminder.objects.all().order_by("date")
+
+    def get_serializer_class(self):
+        return serializers.LoanReminderSerializer
+
+    def get(self, request, format=None):
+        queryset = self.get_queryset()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        print(serializer.data)
+        return response
+
+
+    def post(self, request, format=None):
+        data = request.data.copy()
+        data["date"] = dateutil.parser.parse(data["date"]).date()
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
