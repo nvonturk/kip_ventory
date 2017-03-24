@@ -23,7 +23,7 @@ import ManagerRequestsContainer from './manage/requests/ManagerRequestsContainer
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import LogsContainer from './manage/logs/LogsContainer'
 import TagsContainer from './manage/tags/TagsContainer'
-import EmailSubscriptionContainer from './manage/emails/EmailSubscriptionContainer'
+import EmailsContainer from './manage/emails/EmailsContainer'
 
 
 // MAIN APP PAGES
@@ -31,7 +31,7 @@ import InventoryContainer from './inventory/InventoryContainer'
 import CartContainer from './cart/CartContainer'
 import RequestsContainer from './requests/RequestsContainer'
 import LoansContainer from './loans/LoansContainer'
-import Profile from './Profile'
+import Profile from './profile/Profile'
 import {getJSON} from 'jquery'
 
 import UserDetail from './inventory/detail/UserDetail'
@@ -51,7 +51,7 @@ function getManagerPanel(userData) {
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="tags" component={TagsContainer} admin={userData} />
-      <Route path="emails" component={EmailSubscriptionContainer} admin={userData} />
+      <Route path="emails" component={EmailsContainer} admin={userData} />
     </Route>) : null
 }
 

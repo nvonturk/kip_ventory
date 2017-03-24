@@ -32,15 +32,20 @@ class GenerateAPITokenContainer extends Component {
   render(){
     return(
       <div>
-        <Col xs={3}>
-          <Button onClick={this.handleClick}>Generate Token</Button>
-        </Col>
-        <Col xs={3}>
-          <Well>API Token:</Well>
-        </Col>
-        <Col xs={6}>
-          <Well>{this.state.current_token}</Well>
-        </Col>
+        <h3>API Token Generator</h3>
+        <hr></hr>
+        <Row>
+          <Col xs={3}>
+            <Button onClick={this.handleClick}>Generate Token</Button>
+          </Col>
+          <Col xs={3}>
+            <p>API Token:</p>
+          </Col>
+          <Col xs={6}>
+            <p>{this.state.current_token}</p>
+          </Col>
+          
+        </Row>
       </div>
 
     );

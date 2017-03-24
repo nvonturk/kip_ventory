@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django_cron',
     # local
     'api',
+    "djcelery_email",
+    'celery',
 ]
 
 MIDDLEWARE = [
@@ -168,4 +170,15 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 
 # for development only
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# for production
+EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
+# CELERY STUFF
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Africa/Nairobi'
+

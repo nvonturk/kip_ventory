@@ -524,6 +524,11 @@ class LoanReminderSerializer(serializers.ModelSerializer):
         model = models.LoanReminder
         fields = ['id', 'body', 'subject', 'date']
 
+class SubjectTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SubjectTag
+        fields = ['text']
+
 class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)
     initiating_user = serializers.SlugRelatedField(slug_field="username", read_only=True)
