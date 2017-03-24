@@ -100,4 +100,3 @@ class LoanReminderModal extends Component {
 }
 
 export default LoanReminderModal
-  

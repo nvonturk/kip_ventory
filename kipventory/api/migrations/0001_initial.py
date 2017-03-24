@@ -109,8 +109,10 @@ class Migration(migrations.Migration):
             name='LoanReminder',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateTimeField()),
-                ('body', models.TextField()),
+                ('date', models.DateField()),
+                ('body', models.TextField(max_length=500)),
+                ('subject', models.CharField(default='Loan Reminder', max_length=100)),
+                ('sent', models.BooleanField(default=False)),
             ],
         ),
         migrations.CreateModel(
