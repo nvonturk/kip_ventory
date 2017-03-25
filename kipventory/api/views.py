@@ -22,9 +22,8 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.views import password_reset, password_reset_confirm
 from django.http import HttpResponse
-
-import requests, csv, os, json
 import dateutil.parser
+import json, requests, csv, os
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
@@ -1767,8 +1766,7 @@ class LoanReminderListCreate(generics.GenericAPIView):
         return response
 
     def post(self, request, format=None):
-        data = request.data.copy()
-        data["date"] = dateutil.parser.parse(data["date"]).date()
+        data = request.data
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -1785,8 +1783,7 @@ class LoanReminderModifyDelete(generics.GenericAPIView):
         return serializers.LoanReminderSerializer
 
     def put(self, request, id, format=None):
-        data = request.data.copy()
-        data["date"] = dateutil.parser.parse(data["date"]).date()
+        data = request.data
         loan_reminder = self.get_instance(id=id)       
         serializer = self.get_serializer(instance=loan_reminder, data=data)
         if serializer.is_valid():

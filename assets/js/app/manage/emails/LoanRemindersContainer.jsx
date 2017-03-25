@@ -16,6 +16,8 @@ class LoanRemindersContainer extends Component {
         body: "",
         date: null,
       },
+      errorNodes: {},
+
     }
 
     this.showCreateLoanReminderModal = this.showCreateLoanReminderModal.bind(this);   
@@ -58,7 +60,8 @@ class LoanRemindersContainer extends Component {
 
   hideCreateLoanReminderModal() {
     this.setState({
-      showCreateLoanReminderModal: false
+      showCreateLoanReminderModal: false,
+      errorNodes:{},
     })
   }
 
@@ -77,7 +80,8 @@ class LoanRemindersContainer extends Component {
 
   hideEditLoanReminderModal() {
     this.setState({
-      showEditLoanReminderModal: false
+      showEditLoanReminderModal: false,
+      errorNodes:{},
     })
   }
 
@@ -96,7 +100,7 @@ class LoanRemindersContainer extends Component {
     console.log(date);
     console.log(this.state.loanReminderToEditOrCreate);
     this.setState(function(prevState,props){
-      prevState.loanReminderToEditOrCreate["date"] = date.toISOString();
+      prevState.loanReminderToEditOrCreate["date"] = (date == null) ? null : date.toISOString();
       return {
         loanReminderToEditOrCreate: prevState.loanReminderToEditOrCreate
       }
@@ -120,7 +124,19 @@ class LoanRemindersContainer extends Component {
         _this.hideCreateLoanReminderModal();
       },
       error:function (xhr, textStatus, thrownError){
-        alert("Error creating loan reminder.")
+        if (xhr.status == 400) {
+          var response = xhr.responseJSON
+          var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
+        }
       }
     });
     
@@ -144,7 +160,19 @@ class LoanRemindersContainer extends Component {
       complete:function(){
       },
       error:function (xhr, textStatus, thrownError){
-        alert("Error editing loan reminder.");
+        if (xhr.status == 400) {
+          var response = xhr.responseJSON
+          var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
+        }
       }
     }); 
   }
@@ -228,8 +256,8 @@ class LoanRemindersContainer extends Component {
                         {this.state.loanReminders.map((loanReminder, i) => this.getTableRow(loanReminder, i))}            
                       </tbody>
                   </Table>
-                  <LoanReminderModal new={true} show={this.state.showCreateLoanReminderModal} onHide={this.hideCreateLoanReminderModal} loanReminder={this.state.loanReminderToEditOrCreate} handleDateChange={this.handleLoanReminderDateChange} handleLoanReminderFieldChange={this.handleLoanReminderFieldChange} saveLoanReminderToEdit={this.saveLoanReminderToEdit} createLoanReminder={this.createLoanReminder}/>
-                  <LoanReminderModal new={false} show={this.state.showEditLoanReminderModal} onHide={this.hideEditLoanReminderModal} loanReminder={this.state.loanReminderToEditOrCreate} handleDateChange={this.handleLoanReminderDateChange} handleLoanReminderFieldChange={this.handleLoanReminderFieldChange} saveLoanReminderToEdit={this.saveLoanReminderToEdit} createLoanReminder={this.createLoanReminder}/>
+                  <LoanReminderModal new={true} show={this.state.showCreateLoanReminderModal} onHide={this.hideCreateLoanReminderModal} loanReminder={this.state.loanReminderToEditOrCreate} handleDateChange={this.handleLoanReminderDateChange} handleLoanReminderFieldChange={this.handleLoanReminderFieldChange} saveLoanReminderToEdit={this.saveLoanReminderToEdit} createLoanReminder={this.createLoanReminder} errorNodes={this.state.errorNodes}/>
+                  <LoanReminderModal new={false} show={this.state.showEditLoanReminderModal} onHide={this.hideEditLoanReminderModal} loanReminder={this.state.loanReminderToEditOrCreate} handleDateChange={this.handleLoanReminderDateChange} handleLoanReminderFieldChange={this.handleLoanReminderFieldChange} saveLoanReminderToEdit={this.saveLoanReminderToEdit} createLoanReminder={this.createLoanReminder} errorNodes={this.state.errorNodes}/>
                 </div>
               </div>
             </Col>

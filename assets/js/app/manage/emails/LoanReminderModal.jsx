@@ -16,7 +16,7 @@ class LoanReminderModal extends Component {
   }
 
   getLoanReminderForm() {
-    return <LoanReminderForm subject={this.props.loanReminder.subject} body={this.props.loanReminder.body} date={this.props.loanReminder.date} handleDateChange={this.props.handleDateChange} handleLoanReminderFieldChange={this.props.handleLoanReminderFieldChange}/>
+    return <LoanReminderForm subject={this.props.loanReminder.subject} body={this.props.loanReminder.body} date={this.props.loanReminder.date} handleDateChange={this.props.handleDateChange} handleLoanReminderFieldChange={this.props.handleLoanReminderFieldChange}  errorNodes={this.props.errorNodes}/>
   }
 
   getCreateFooterView() {

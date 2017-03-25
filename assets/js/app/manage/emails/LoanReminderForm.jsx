@@ -11,7 +11,10 @@ class LoanReminderForm extends Component {
     super(props);
   }
 
-  
+  getFormValidationState(field_name) {
+    return (this.props.errorNodes[field_name] == null) ? null : "error"
+  }
+
   render() {
   	return (
   		<Grid fluid>
@@ -38,6 +41,8 @@ class LoanReminderForm extends Component {
                       value={this.props.subject}
                       onChange={this.props.handleLoanReminderFieldChange}
                     />
+                    { this.props.errorNodes["subject"] }
+
                   </Col>
                 </FormGroup>
 
@@ -54,16 +59,18 @@ class LoanReminderForm extends Component {
                       value={this.props.body}
                       onChange={this.props.handleLoanReminderFieldChange}
                     />
+                   { this.props.errorNodes["body"] }
                   </Col>
                 </FormGroup>
 
-                <FormGroup bsSize="small">
+                <FormGroup bsSize="small" validationState={this.getFormValidationState("date")}>
                   <Col componentClass={ControlLabel} sm={2}>
                     Date
                   </Col>
                   <Col sm={9}>
                   	<DatePicker selected={this.props.date == null ? null : Moment(this.props.date)} onChange={this.props.handleDateChange} />
-                	</Col>
+                	  { this.props.errorNodes["date"] }
+                  </Col>
                 </FormGroup>
               </Panel>
             </Form>

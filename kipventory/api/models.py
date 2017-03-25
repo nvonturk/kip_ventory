@@ -308,7 +308,7 @@ def delete_profile_for_user(sender, instance=None, **kwargs):
 class LoanReminder(models.Model):
     date = models.DateField()
     body = models.TextField(max_length=500)
-    subject = models.CharField(max_length=100, default="Loan Reminder")
+    subject = models.CharField(max_length=100, default="")
     sent = models.BooleanField(default=False)
 
 # Todo only allow one object. maybe use django-solo

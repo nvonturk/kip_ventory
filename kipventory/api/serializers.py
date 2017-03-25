@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 from . import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import dateutil.parser
 import re, json
 
 
@@ -523,6 +524,23 @@ class LoanReminderSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.LoanReminder
         fields = ['id', 'body', 'subject', 'date']
+
+    def to_internal_value(self, data):
+        print("to interval value")
+        validated_data = {}
+        errors = {}
+        if data["date"]==None:
+            errors["date"] = ["Date cannot be empty"]
+        else:
+            try:
+                validated_data["date"] = dateutil.parser.parse(data["date"]).date()
+            except:
+                errors["date"] = ["Invalid date."]
+
+        if errors:
+            raise ValidationError(errors)
+        return validated_data
+
 
 class SubjectTagSerializer(serializers.ModelSerializer):
     class Meta:
