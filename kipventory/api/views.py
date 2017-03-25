@@ -1766,15 +1766,39 @@ class LoanReminderListCreate(generics.GenericAPIView):
         print(serializer.data)
         return response
 
-
     def post(self, request, format=None):
         data = request.data.copy()
         data["date"] = dateutil.parser.parse(data["date"]).date()
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LoanReminderModifyDelete(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self, id):
+        return models.LoanReminder.objects.get(id=id)
+
+    def get_serializer_class(self):
+        return serializers.LoanReminderSerializer
+
+    def put(self, request, id, format=None):
+        data = request.data.copy()
+        data["date"] = dateutil.parser.parse(data["date"]).date()
+        loan_reminder = self.get_instance(id=id)       
+        serializer = self.get_serializer(instance=loan_reminder, data=data)
+        if serializer.is_valid():
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id, format=None):
+        #todo do i need to deal with DoNotExist?
+        loan_reminder = self.get_instance(id=id)
+        loan_reminder.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class SubjectTagGetModify(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)

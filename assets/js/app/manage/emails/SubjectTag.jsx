@@ -110,7 +110,8 @@ class SubjectTag extends Component {
 		} else {
 			return (
 				<div>
-					<p> Subject Tag:  <b>{this.state.subjectTag}</b>
+					<p>Subject Tag: 
+						<span className="subject-tag"> {this.state.subjectTag}</span>
 						<span className="clickable">
 	            <Glyphicon glyph="pencil" onClick={this.toggleEditMode}/>
 	          </span>

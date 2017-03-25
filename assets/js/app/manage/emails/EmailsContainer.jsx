@@ -18,11 +18,12 @@ class EmailsContainer extends Component {
   getAdminView() {
     if(this.user.is_superuser) {
       return (
-        <Row>
-          <Col xs={12}>
+        <Panel>
+            <h4>Configure Subject Tag</h4>
+            <hr></hr>
+            <p>This subject tag is a small piece of text to be prepended to the subject line of all emails sent by the system</p>
             <SubjectTag />
-          </Col>
-        </Row>
+        </Panel>
       )
     } else {
       return "";
@@ -44,15 +45,12 @@ class EmailsContainer extends Component {
             <br />
           </Col>
         </Row>
-
-        <Panel>
-          {this.getAdminView()}
-          <Row>
-            <Col xs={12}>
-              <LoanRemindersContainer loanReminders={this.state.loanReminders}/>
-            </Col>
-          </Row>
-        </Panel>
+        <Row>
+          <Col xs={12}>
+            {this.getAdminView()}
+            <LoanRemindersContainer loanReminders={this.state.loanReminders}/>
+          </Col>
+        </Row>
       </Grid>
     )
   }

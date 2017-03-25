@@ -39,6 +39,8 @@ urlpatterns = [
     url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
     
     url(r'^loanreminders/?$', views.LoanReminderListCreate.as_view()),
+    url(r'^loanreminders/(?P<id>[\d]+?)/?$', views.LoanReminderModifyDelete.as_view()),
+
     url(r'^subjecttag/?$', views.SubjectTagGetModify.as_view()),
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),

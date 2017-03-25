@@ -17,8 +17,6 @@ class LoanReminderForm extends Component {
   		<Grid fluid>
         <Row>
           <Col sm={12}>
-            <h3>Loan Reminder</h3>
-            <hr />
             <p>
               Use this form to schedule an email to be sent to all users with recorded loans.
             </p>
@@ -41,8 +39,6 @@ class LoanReminderForm extends Component {
                       onChange={this.props.handleLoanReminderFieldChange}
                     />
                   </Col>
-                  <Col sm={1}></Col>
-                  <HelpBlock>Note: the subject will prefixed by the subject tag configured by the admin.</HelpBlock>
                 </FormGroup>
 
                 <FormGroup bsSize="small">
@@ -66,7 +62,7 @@ class LoanReminderForm extends Component {
                     Date
                   </Col>
                   <Col sm={9}>
-                  	<DatePicker selected={this.props.date} onChange={this.props.handleDateChange} />
+                  	<DatePicker selected={this.props.date == null ? null : Moment(this.props.date)} onChange={this.props.handleDateChange} />
                 	</Col>
                 </FormGroup>
               </Panel>
