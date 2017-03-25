@@ -18,12 +18,25 @@ class EmailsContainer extends Component {
   getAdminView() {
     if(this.user.is_superuser) {
       return (
-        <Panel>
-            <h4>Configure Subject Tag</h4>
-            <hr></hr>
-            <p>This subject tag is a small piece of text to be prepended to the subject line of all emails sent by the system</p>
-            <SubjectTag />
-        </Panel>
+          <Row>
+            <Col xs={12}>
+              <div className="panel panel-default">
+                <div className="panel-heading">
+                  <Row>
+                    <Col xs={12}>
+                      <span className="panel-title" style={{fontSize:"15px"}}>Configure Subject Tag</span>
+                    </Col>
+                  </Row>
+                </div>
+                <div className="panel-body">
+                  <div className="info">
+                    <p>This subject tag is a small piece of text to be prepended to the subject line of all emails sent by the system</p>
+                  </div>
+                  <SubjectTag />
+                </div>
+              </div>
+            </Col>
+          </Row>
       )
     } else {
       return "";
@@ -34,7 +47,7 @@ class EmailsContainer extends Component {
   render(){
 
     return(
-      <Grid fluid>
+      <Grid>
         <Row>
           <Col xs={12}>
             <h3>Emails</h3>

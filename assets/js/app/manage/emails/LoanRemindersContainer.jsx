@@ -217,9 +217,11 @@ class LoanRemindersContainer extends Component {
                 </div>
                 <div className="panel-body">
                   <div className="info">
-                    <p>Each loan reminder will be sent to all users with recorded loans between 4am and 5am EST on the day specified.</p>
-                    <p>The subject specified will be prepended by a subject tag, which is configurable by admins.</p>
-                    <p>The body of the email will contain the specified, followed by a list of items loaned to the user</p>
+                    <p>
+                      Each loan reminder will be sent to all users with recorded loans between 4am and 5am EST on the day specified.<br/>
+                      The subject specified will be prepended by a subject tag, which is configurable by admins.<br/>
+                      The body of the email will contain the specified, followed by a list of items loaned to the user<br/>
+                    </p>
                   </div>
                   <Table bordered condensed hover>
                     {this.getTableHeader()}
