@@ -1,5 +1,5 @@
 import React from 'react'
-import { Row, Col, Label, Button, FormGroup, FormControl, Glyphicon, OverlayTrigger, Popover } from 'react-bootstrap'
+import { Row, Col, Label, Button, FormGroup, FormControl, Glyphicon, OverlayTrigger, Popover, Badge } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import { ajax } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
@@ -13,7 +13,7 @@ const InventoryItem = React.createClass({
     }
   },
 
-  onChange(event) {
+  onQuantityChange(event) {
     event.preventDefault()
     var q = Number(event.target.value)
     if (q > this.props.item.quantity) {
@@ -25,7 +25,8 @@ const InventoryItem = React.createClass({
     }
   },
 
-  addToCart() {
+  addToCart(e) {
+    e.stopPropagation()
     var url = "/api/items/" + this.props.item.name + "/addtocart/";
     var data = {
       quantity: this.state.quantity,
@@ -39,10 +40,9 @@ const InventoryItem = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        // console.log(response)
         _this.setState({
           quantity: response.quantity,
-          in_cart: true
+          in_cart: response.quantity
         });
       },
       complete:function() {
@@ -53,12 +53,55 @@ const InventoryItem = React.createClass({
     })
   },
 
+  deleteCartItem(e) {
+    e.stopPropagation()
+    var url = "/api/cart/" + this.props.item.name + "/"
+    var _this = this
+    ajax({
+      url: url,
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          in_cart: 0
+        })
+      },
+      complete:function(){},
+      error:function (xhr, textStatus, thrownError){console.log(xhr)}
+    });
+  },
+
   getItemStatus(item) {
     return this.state.in_cart ? (
       <div style={{display: "flex", flexDirection: "row", justifyContent: 'space-around'}}>
-        <Label onClick={() => {browserHistory.push("/app/cart/")}} className="clickable" href="/app/cart/" bsStyle="warning">In Cart</Label>
+        <Label style={{padding:"3px 5px"}} onClick={e => {e.stopPropagation(); browserHistory.push("/app/cart/")}} className="clickable" href="/app/cart/" bsStyle="warning">
+          <span style={{verticalAlign: "middle"}}>
+            In Cart &nbsp;
+          </span>
+          <Badge style={{fontSize: "10px"}}>{this.state.in_cart}</Badge>
+        </Label>
       </div>
     ) : null
+  },
+
+  getRemoveFromCartLink() {
+    return this.state.in_cart ? (
+      <span className="clickable" style={{color: "#5bc0de", fontSize: "12px", textDecoration: "underline"}} onClick={this.deleteCartItem}>Remove</span>
+    ) : null
+  },
+
+  getCartButton() {
+    return this.state.in_cart ? (
+      <Button disabled={this.state.quantity === 0} bsSize="small" bsStyle="info" style={{fontSize:"10px", width:"70px"}} onClick={this.addToCart}>
+        <span>Update</span>
+      </Button>
+    ) : (
+      <Button disabled={this.state.quantity === 0} bsSize="small" bsStyle="info" style={{fontSize:"10px", width:"70px"}} onClick={this.addToCart}>
+        <span>Add to Cart</span>
+      </Button>
+    )
   },
 
   getPopover() {
@@ -85,8 +128,8 @@ const InventoryItem = React.createClass({
 
   render() {
     return (
-      <tr style={{height: "40px"}}>
-        <td data-th="Item" className="clickable" onClick={this.viewItemDetail}>
+      <tr style={{height: "40px"}} className="clickable" onClick={this.viewItemDetail}>
+        <td data-th="Item">
           <h6 style={{color: "#df691a"}}>{this.props.item.name}</h6>
         </td>
         <td data-th="Model No." style={{fontSize:"10px"}} className="text-center">{this.props.item.model_no}</td>
@@ -96,20 +139,20 @@ const InventoryItem = React.createClass({
             <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>
           </OverlayTrigger>
         </td>
-        <td className="spacer" />
-        <td data-th="Status" className="text-center">
-          {this.getItemStatus(this.props.item)}
+        <td className="text-center" style={{zIndex: "9999"}}>
+          { this.getRemoveFromCartLink() }
         </td>
-        <td data-th="Quantity" style={{fontSize:"10px", zIndex:"9999"}}>
+        <td data-th="Status" className="text-center" style={{zIndex: "9999"}}>
+          { this.getItemStatus(this.props.item) }
+        </td>
+        <td className="spacer" />
+        <td data-th="Quantity" style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
           <FormGroup bsSize="small" style={{margin:"auto"}}>
-            <FormControl style={{fontSize: "10px"}} type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onChange} />
+            <FormControl style={{fontSize: "10px"}} type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onQuantityChange} />
           </FormGroup>
         </td>
-        <td className="spacer" />
-        <td className="text-center" style={{zIndex:"9999"}}>
-          <Button bsSize="small" bsStyle="info" style={{fontSize:"10px"}} onClick={this.addToCart}>
-            <span>Add to Cart</span>
-          </Button>
+        <td className="text-center" style={{zIndex:"9999"}} onClick={e => e.stopPropagation()}>
+          { this.getCartButton() }
         </td>
       </tr>
     )

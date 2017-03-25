@@ -103,7 +103,7 @@ const CartItemTableRow = React.createClass({
           </OverlayTrigger>
         </td>
         <td className="text-center">
-          <a href="" style={{color: "#5bc0de"}} onClick={this.deleteCartItem}>Delete</a>
+          <span style={{color: "#5bc0de"}} onClick={this.deleteCartItem}>Delete</span>
         </td>
         <td data-th="Request Type" className="text-center">
             <FormControl className="text-center"

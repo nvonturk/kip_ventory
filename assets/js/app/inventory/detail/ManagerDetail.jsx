@@ -60,12 +60,14 @@ const ManagerDetail = React.createClass({
       },
 
       itemExists: true,
-      modifyItem: false,
+
+      showModifyModal: false,
       showDeleteModal: false,
       showCreateTransactionModal: false,
 
       showLoanModal: false,
-      loanToShow: null
+      loanToShow: null,
+      errorNodes: {}
     }
   },
 
@@ -219,32 +221,84 @@ const ManagerDetail = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response) {
-        for (var i=0; i<_this.state.modifiedItem.custom_fields.length; i++) {
-          var cf = _this.state.modifiedItem.custom_fields[i]
-          var url = "/api/items/" + response.name + "/fields/" + cf.name + "/"
-          ajax({
-            url: url,
-            contentType: "application/json",
-            type: "PUT",
-            data: JSON.stringify({
-              value: cf.value
-            }),
-            beforeSend: function(request) {
-              request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-            },
-            success:function(response){},
-            complete:function(){},
-            error:function (xhr, textStatus, thrownError){
-              console.log(xhr);
-              console.log(textStatus);
-              console.log(thrownError);
-            }
-          });
-        }
         var new_url = "/app/inventory/" + response.name + "/"
         window.location.assign(new_url)
+      },
+      error: function(xhr, textStatus, thrownError) {
+        if (xhr.status == 400) {
+          var response = xhr.responseJSON
+          var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
+        }
       }
     })
+  },
+
+  handleTransactionQuantityChange(e) {
+    var q = Number(e.target.value)
+    if (q < 0) {
+      event.stopPropagation()
+    } else {
+      this.setState({
+        transactionQuantity: q
+      })
+    }
+  },
+
+  createTransaction(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var _this = this
+    var data = {
+      item: this.state.item.name,
+      quantity: this.state.transactionQuantity,
+      category: this.state.transactionCategory,
+      comment: this.state.transactionComment
+    }
+    ajax({
+      url: "/api/transactions/",
+      contentType: "application/json",
+      type: "POST",
+      data: JSON.stringify(data),
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          transactionComment: "",
+          transactionQuantity: 0,
+          transactionCategory: "Acquisition",
+          showCreateTransactionModal: false
+        }, function() {
+          _this.getItem();
+          _this.getTransactions();
+        });
+      },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr)
+        if (xhr.status == 400) {
+          var response = xhr.responseJSON
+          var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
+        }
+      }
+    });
   },
 
   handleTagSelection(tagsSelected) {
@@ -267,6 +321,7 @@ const ManagerDetail = React.createClass({
                      value={this.state.modifiedItem.custom_fields[i].value}
                      name={field_name}
                      onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+        { this.state.errorNodes[field_name] }
       </FormGroup>
     )
   },
@@ -281,6 +336,7 @@ const ManagerDetail = React.createClass({
                        value={this.state.modifiedItem.custom_fields[i].value}
                        name={field_name}
                        onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+          { this.state.errorNodes[field_name] }
       </FormGroup>
     )
   },
@@ -295,6 +351,7 @@ const ManagerDetail = React.createClass({
                      value={this.state.modifiedItem.custom_fields[i].value}
                      name={field_name}
                      onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+        { this.state.errorNodes[field_name] }
       </FormGroup>
     )
   },
@@ -307,6 +364,7 @@ const ManagerDetail = React.createClass({
                    value={this.state.modifiedItem.custom_fields[i].value}
                    name={field_name}
                    onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+        { this.state.errorNodes[field_name] }
       </FormGroup>
     )
   },
@@ -330,6 +388,7 @@ const ManagerDetail = React.createClass({
                          name="model_no"
                          value={this.state.modifiedItem.model_no}
                          onChange={this.handleItemFormChange}/>
+            { this.state.errorNodes['model_no'] }
           </FormGroup>
         </Col>
         <Col xs={4} xs={12}>
@@ -340,6 +399,7 @@ const ManagerDetail = React.createClass({
                          name="quantity"
                          value={this.state.modifiedItem.quantity}
                          onChange={this.handleItemFormChange}/>
+            { this.state.errorNodes['quantity'] }
           </FormGroup>
         </Col>
       </Row>
@@ -413,16 +473,16 @@ const ManagerDetail = React.createClass({
 
   toggleEdit(e) {
     e.preventDefault()
-    var cur = this.state.modifyItem
+    var cur = this.state.showModifyModal
     if (cur) {
       var itemCopy = JSON.parse(JSON.stringify(this.state.item))
       this.setState({
         modifiedItem: itemCopy,
-        modifyItem: false
+        showModifyModal: false
       })
     } else {
       this.setState({
-        modifyItem: true
+        showModifyModal: true
       })
     }
   },
@@ -449,69 +509,7 @@ const ManagerDetail = React.createClass({
     });
   },
 
-  getItemModificationForm() {
-    var deleteIcon = null
-    if (this.props.route.user.is_superuser) {
-      deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={e => {this.setState({showDeleteModal: true})}}/>
-    }
-    return (
-      <Panel style={{marginBottom: "0px"}}  header={
-        <div>
-          <span>Product Information</span>
-          <span className="clickable" style={{float: "right"}}>
-            <Glyphicon glyph="remove" onClick={this.toggleEdit}/>
-            { deleteIcon }
-          </span>
-        </div>} >
-        <Form onSubmit={this.handleSubmit}>
-          <Row>
-            <Col xs={12}>
-              <FormGroup bsSize="small" controlId="name">
-                <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
-                <FormControl type="text" name="name" value={this.state.modifiedItem.name} onChange={this.handleItemFormChange}/>
-              </FormGroup>
-            </Col>
-          </Row>
-
-          {this.getQuantityAndModelNoForm()}
-
-          <Row>
-            <Col xs={12}>
-              <FormGroup bsSize="small" controlId="description">
-                <ControlLabel>Description</ControlLabel>
-                <FormControl type="text"
-                             style={{resize: "vertical", height:"100px"}}
-                             componentClass={"textarea"}
-                             name="description"
-                             value={this.state.modifiedItem.description}
-                             onChange={this.handleItemFormChange}/>
-              </FormGroup>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col xs={12}>
-              <FormGroup bsSize="small" controlId="tags">
-                <ControlLabel>Tags</ControlLabel>
-                <TagMultiSelect tagsSelected={this.state.modifiedItem.tags} tagHandler={this.handleTagSelection}/>
-              </FormGroup>
-            </Col>
-          </Row>
-
-          {this.getCustomFieldForms()}
-
-          <Row>
-            <Col xs={6} smOffset={0}>
-              <Button bsSize="small" bsStyle="info" type="submit">Save</Button>
-            </Col>
-          </Row>
-
-        </Form>
-      </Panel>
-    )
-  },
-
-  getReadOnlyItemInfo() {
+  getItemInfoPanel() {
     var deleteIcon = null
     if (this.props.route.user.is_superuser) {
       deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={e => {this.setState({showDeleteModal: true})}}/>
@@ -575,14 +573,6 @@ const ManagerDetail = React.createClass({
         </Table>
       </Panel>
     )
-  },
-
-  getItemInfoPanel() {
-    if (this.state.modifyItem) {
-      return this.getItemModificationForm()
-    } else {
-      return this.getReadOnlyItemInfo()
-    }
   },
 
   handleRequestUserSelection(selectedUser) {
@@ -734,7 +724,7 @@ const ManagerDetail = React.createClass({
       <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
 
-        <div className="panel-body" >
+        <div className="panel-body" style={{minHeight:"220px"}}>
           { requestsTable }
         </div>
 
@@ -860,7 +850,7 @@ const ManagerDetail = React.createClass({
     return (
       <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
-        <div className="panel-body" >
+        <div className="panel-body" style={{minHeight:"220px"}}>
           { loanTable }
         </div>
 
@@ -906,58 +896,14 @@ const ManagerDetail = React.createClass({
     )
   },
 
-  handleTransactionQuantityChange(e) {
-    var q = Number(e.target.value)
-    if (q < 0) {
-      event.stopPropagation()
-    } else {
-      this.setState({
-        transactionQuantity: q
-      })
-    }
-  },
-
-  createTransaction(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    var _this = this
-    var data = {
-      item: this.state.item.name,
-      quantity: this.state.transactionQuantity,
-      category: this.state.transactionCategory,
-      comment: this.state.transactionComment
-    }
-    ajax({
-      url: "/api/transactions/",
-      contentType: "application/json",
-      type: "POST",
-      data: JSON.stringify(data),
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      success:function(response){
-        _this.setState({
-          transactionComment: "",
-          transactionQuantity: 0,
-          transactionCategory: "Acquisition",
-          showCreateTransactionModal: false
-        }, function() {
-          _this.getItem();
-          _this.getTransactions();
-        });
-      },
-      error:function (xhr, textStatus, thrownError){
-        console.log(xhr);
-        console.log(textStatus);
-        console.log(thrownError);
-      }
-    });
+  getValidationState(name) {
+    return (this.state.errorNodes['quantity'] == null) ? null : "error"
   },
 
   getCreateTransactionForm() {
     return (
       <Form style={{marginBottom: "0px"}} horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation();}}>
-        <FormGroup bsSize="small">
+        <FormGroup bsSize="small" validationState={this.getValidationState("quantity")}>
           <Col xs={2} componentClass={ControlLabel}>
             Quantity:
           </Col>
@@ -981,6 +927,9 @@ const ManagerDetail = React.createClass({
               <option value="Acquisition">Acquisition</option>
               <option value="Loss">Loss</option>
             </FormControl>
+          </Col>
+          <Col xs={12} className="text-center">
+            { this.state.errorNodes['quantity'] }
           </Col>
         </FormGroup>
         <FormGroup bsSize="small">
@@ -1117,7 +1066,7 @@ const ManagerDetail = React.createClass({
     return (
       <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
-        <div className="panel-body" >
+        <div className="panel-body" style={{minHeight:"220px"}}>
           { transactionsTable }
         </div>
 
@@ -1127,7 +1076,7 @@ const ManagerDetail = React.createClass({
             <Button bsSize="small" bsStyle="primary"
                     style={{float: "left", verticalAlign:"middle"}}
                     onClick={e => {this.setState({showCreateTransactionModal: true})}}>
-              Create
+              Log an Acquisition or Loss
             </Button>
               <Pagination next prev maxButtons={10} boundaryLinks
                           ellipsis style={{float:"right", margin: "0px"}}
@@ -1198,21 +1147,20 @@ const ManagerDetail = React.createClass({
                 </Col>
               </Row>
 
-              <br />
-              <br />
+              <hr />
 
               <Panel>
                 <Tab.Container id="tabs-with-dropdown" defaultActiveKey={1} >
                   <Row className="clearfix">
                     <Col sm={12}>
                       <Nav bsStyle="tabs" style={{borderBottom: "1px solid #596a7b"}}>
-                        <NavItem eventKey={1}>
+                        <NavItem eventKey={1} style={{borderBottom: "1px solid #596a7b"}}>
                           Outstanding Requests
                         </NavItem>
-                        <NavItem eventKey={2}>
+                        <NavItem eventKey={2} style={{borderBottom: "1px solid #596a7b"}}>
                           Outstanding Loans
                         </NavItem>
-                        <NavItem eventKey={3}>
+                        <NavItem eventKey={3} style={{borderBottom: "1px solid #596a7b"}}>
                           Acquisitions and Losses
                         </NavItem>
                       </Nav>
@@ -1258,6 +1206,8 @@ const ManagerDetail = React.createClass({
                 </Tab.Container>
               </Panel>
 
+              <hr />
+
             </Col>
           </Row>
 
@@ -1274,7 +1224,7 @@ const ManagerDetail = React.createClass({
             </Modal.Footer>
           </Modal>
 
-          <Modal show={this.state.showCreateTransactionModal} onHide={e => this.setState({showCreateTransactionModal: true})}>
+          <Modal show={this.state.showCreateTransactionModal} onHide={e => this.setState({showCreateTransactionModal: false})}>
             <Modal.Header closeButton>
               <Modal.Title>Log an Acquisition or Loss of Instances</Modal.Title>
             </Modal.Header>
@@ -1282,8 +1232,72 @@ const ManagerDetail = React.createClass({
               { this.getCreateTransactionForm() }
             </Modal.Body>
             <Modal.Footer>
-              <Button bsStyle="default" bsSize="small" onClick={e => this.setState({showCreateTransactionModal: true})}>Cancel</Button>
+              <Button bsStyle="default" bsSize="small" onClick={e => this.setState({showCreateTransactionModal: false})}>Cancel</Button>
               <Button bsStyle="info"    bsSize="small" onClick={this.createTransaction}>Create</Button>
+            </Modal.Footer>
+          </Modal>
+
+          <Modal show={this.state.showModifyModal} onHide={e => {this.setState({showModifyModal: false})}}>
+            <Modal.Header closeButton>
+              <Modal.Title>Modify Item</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+            <Form onSubmit={this.handleSubmit}>
+              <Row>
+                <Col xs={12}>
+                  <FormGroup bsSize="small" controlId="name">
+                    <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
+                    <FormControl type="text" name="name" value={this.state.modifiedItem.name} onChange={this.handleItemFormChange}/>
+                    { this.state.errorNodes['name'] }
+                  </FormGroup>
+                </Col>
+              </Row>
+
+              {this.getQuantityAndModelNoForm()}
+
+              <Row>
+                <Col xs={12}>
+                  <FormGroup bsSize="small" controlId="description">
+                    <ControlLabel>Description</ControlLabel>
+                    <FormControl type="text"
+                                 style={{resize: "vertical", height:"100px"}}
+                                 componentClass={"textarea"}
+                                 name="description"
+                                 value={this.state.modifiedItem.description}
+                                 onChange={this.handleItemFormChange}/>
+                    { this.state.errorNodes['description'] }
+                  </FormGroup>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col xs={12}>
+                  <FormGroup bsSize="small" controlId="tags">
+                    <ControlLabel>Tags</ControlLabel>
+                    <TagMultiSelect tagsSelected={this.state.modifiedItem.tags} tagHandler={this.handleTagSelection}/>
+                    { this.state.errorNodes['tags'] }
+                  </FormGroup>
+                </Col>
+              </Row>
+
+              {this.getCustomFieldForms()}
+
+            </Form>
+            </Modal.Body>
+            <Modal.Footer>
+              <span style={{float:"right"}}>
+                <Col xs={6}>
+                  <Button type="submit" bsSize="small" bsStyle="default" style={{float:"right",fontSize:"10px"}} onClick={e => {this.setState({showModifyModal: false})}}>
+                    Cancel
+                  </Button>
+                </Col>
+                <Col xs={6}>
+                  <Button type="submit" bsSize="small" bsStyle="info" style={{float:"right",fontSize:"10px"}}
+                          onClick={this.handleSubmit}>
+                    Save
+                  </Button>
+                </Col>
+              </span>
             </Modal.Footer>
           </Modal>
 

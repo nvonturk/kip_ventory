@@ -151,10 +151,10 @@ const RequestsContainer = React.createClass({
                       </div>
                     </td>
                     <td data-th="Status" className="text-center">{this.getStatusLabel(request.status)}</td>
-                    <td className="text-center">
+                    <td className="text-center" style={{fontSize:"12px"}}>
                       <Button block bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
                     </td>
-                    <td className="text-center">
+                    <td className="text-center" style={{fontSize:"12px"}}>
                       <Button block bsSize="small" bsStyle="danger" onClick={e => this.deleteRequest(request)} disabled={request.status != 'O'}>Cancel</Button>
                     </td>
                   </tr>
