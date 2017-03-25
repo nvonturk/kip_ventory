@@ -16,13 +16,11 @@ class LoanRemindersContainer extends Component {
         body: "",
         date: null,
       },
-      activeKey:0
     }
 
     this.showCreateLoanReminderModal = this.showCreateLoanReminderModal.bind(this);   
     this.hideCreateLoanReminderModal = this.hideCreateLoanReminderModal.bind(this);
     this.createLoanReminderSuccessHandler = this.createLoanReminderSuccessHandler.bind(this);
-    this.filterLoanReminders = this.filterLoanReminders.bind(this);
     this.hideEditLoanReminderModal = this.hideEditLoanReminderModal.bind(this);
     this.handleLoanReminderFieldChange = this.handleLoanReminderFieldChange.bind(this);
     this.handleLoanReminderDateChange = this.handleLoanReminderDateChange.bind(this);
@@ -34,7 +32,7 @@ class LoanRemindersContainer extends Component {
 
   getLoanReminders() {
     var _this = this;
-    var sent = this.state.activeKey == 0 ? false : true; //get sent or scheduled loan reminders
+    var sent = false; //this.state.activeKey == 0 ? false : true; //get sent or scheduled loan reminders
     var url = "/api/loanreminders/";
     var params = {
       "sent": sent
@@ -45,12 +43,6 @@ class LoanRemindersContainer extends Component {
           loanReminders: data.results
       });
     })
-  }
-
-  filterLoanReminders(activeKey) {
-    this.setState({
-      activeKey: activeKey
-    }, this.getLoanReminders);
   }
 
   showCreateLoanReminderModal() {
@@ -88,10 +80,6 @@ class LoanRemindersContainer extends Component {
       showEditLoanReminderModal: false
     })
   }
-
-	getLoanReminderStatus(loanReminder) {
-		return loanReminder.sent ? "Sent" : "Scheduled"
-	}
 
   handleLoanReminderFieldChange(e) {
     var name = e.target.name;
@@ -189,7 +177,6 @@ class LoanRemindersContainer extends Component {
         <td>{loanReminder.date}</td>
         <td>{loanReminder.subject}</td>
         <td>{loanReminder.body}</td>
-        <td>{this.getLoanReminderStatus(loanReminder)}</td>
         <td><span className="clickable"><Glyphicon glyph="pencil" onClick={this.showEditLoanReminderModal.bind(this, i)}/></span></td>
         <td><span className="clickable"><Glyphicon glyph="trash" onClick={this.deleteLoanReminder.bind(this, i)}/></span></td>
       </tr>
@@ -204,7 +191,6 @@ class LoanRemindersContainer extends Component {
           <th>Date</th>
           <th>Subject</th>
           <th>Body</th>
-          <th>Status</th>
           <th></th>
           <th></th>
         </tr>
@@ -235,10 +221,6 @@ class LoanRemindersContainer extends Component {
                     <p>The subject specified will be prepended by a subject tag, which is configurable by admins.</p>
                     <p>The body of the email will contain the specified, followed by a list of items loaned to the user</p>
                   </div>
-                  <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.filterLoanReminders}>
-                   <NavItem eventKey={0} title="scheduled">Scheduled</NavItem>
-                   <NavItem eventKey={1} title="sent">Sent</NavItem>
-                  </Nav>
                   <Table bordered condensed hover>
                     {this.getTableHeader()}
                     <tbody>
