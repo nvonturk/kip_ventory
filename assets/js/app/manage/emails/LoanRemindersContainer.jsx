@@ -1,8 +1,10 @@
 import React, {Component} from 'react'
-import { Nav, NavItem, Button, Glyphicon, Modal, Table, Col, Grid, Row} from 'react-bootstrap'
+import { Nav, NavItem, Button, Glyphicon, Modal, Table, Col, Grid, Row, Pagination} from 'react-bootstrap'
 import LoanReminderModal from './LoanReminderModal'
 import $ from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
+
+const LOAN_REMINDERS_PER_PAGE = 3;
 
 class LoanRemindersContainer extends Component {
 	constructor(props) {
@@ -10,6 +12,8 @@ class LoanRemindersContainer extends Component {
     this.state = {
       showCreateLoanReminderModal: false, 
       showEditLoanReminderModal: false,
+      page: 1,
+      pageCount: 1,
       loanReminders: [],
       loanReminderToEditOrCreate: {
         subject: "",
@@ -28,6 +32,7 @@ class LoanRemindersContainer extends Component {
     this.handleLoanReminderDateChange = this.handleLoanReminderDateChange.bind(this);
     this.createLoanReminder = this.createLoanReminder.bind(this);
     this.saveLoanReminderToEdit = this.saveLoanReminderToEdit.bind(this);
+    this.handlePageSelect = this.handlePageSelect.bind(this);
 
     this.getLoanReminders();
 	}
@@ -37,12 +42,15 @@ class LoanRemindersContainer extends Component {
     var sent = false; //this.state.activeKey == 0 ? false : true; //get sent or scheduled loan reminders
     var url = "/api/loanreminders/";
     var params = {
-      "sent": sent
+      sent: sent,
+      page: this.state.page,
+      itemsPerPage: LOAN_REMINDERS_PER_PAGE,
     }
    
     $.getJSON(url, params, function(data) {
        _this.setState({
-          loanReminders: data.results
+          loanReminders: data.results,
+          pageCount: data.num_pages,
       });
     })
   }
@@ -97,8 +105,6 @@ class LoanRemindersContainer extends Component {
   }
  
   handleLoanReminderDateChange(date) {
-    console.log(date);
-    console.log(this.state.loanReminderToEditOrCreate);
     this.setState(function(prevState,props){
       prevState.loanReminderToEditOrCreate["date"] = (date == null) ? null : date.toISOString();
       return {
@@ -108,8 +114,6 @@ class LoanRemindersContainer extends Component {
   }
 
   createLoanReminder() {
-    console.log("create");
-
     var _this = this;
     $.ajax({
       url: "/api/loanreminders/",
@@ -143,7 +147,6 @@ class LoanRemindersContainer extends Component {
   }
 
   saveLoanReminderToEdit() {
-    console.log("save");
     var _this = this;
     $.ajax({
       url:"/api/loanreminders/" + this.state.loanReminderToEditOrCreate.id + "/",
@@ -188,7 +191,13 @@ class LoanRemindersContainer extends Component {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        _this.getLoanReminders();
+        var page = _this.state.page;
+        if(_this.state.loanReminders.length<=1) {
+          page = page == 1 ? page : page-1;
+        }
+        _this.setState({
+          page: page
+        }, _this.getLoanReminders)
       },
       complete:function(){
       },
@@ -201,7 +210,7 @@ class LoanRemindersContainer extends Component {
 	getTableRow(loanReminder, i) {
     return (
       <tr key={loanReminder.id}>
-      	<td>{i+1}</td>
+      	<td>{(i+1) + (this.state.page-1)*LOAN_REMINDERS_PER_PAGE}</td>
         <td>{loanReminder.date}</td>
         <td>{loanReminder.subject}</td>
         <td>{loanReminder.body}</td>
@@ -225,6 +234,12 @@ class LoanRemindersContainer extends Component {
       </thead>
     )
  }
+
+ handlePageSelect(activeKey) {
+    this.setState({page: activeKey}, () => {
+      this.getLoanReminders();
+    })
+  }
 
 	render() {
 		return (
@@ -258,6 +273,13 @@ class LoanRemindersContainer extends Component {
                   </Table>
                   <LoanReminderModal new={true} show={this.state.showCreateLoanReminderModal} onHide={this.hideCreateLoanReminderModal} loanReminder={this.state.loanReminderToEditOrCreate} handleDateChange={this.handleLoanReminderDateChange} handleLoanReminderFieldChange={this.handleLoanReminderFieldChange} saveLoanReminderToEdit={this.saveLoanReminderToEdit} createLoanReminder={this.createLoanReminder} errorNodes={this.state.errorNodes}/>
                   <LoanReminderModal new={false} show={this.state.showEditLoanReminderModal} onHide={this.hideEditLoanReminderModal} loanReminder={this.state.loanReminderToEditOrCreate} handleDateChange={this.handleLoanReminderDateChange} handleLoanReminderFieldChange={this.handleLoanReminderFieldChange} saveLoanReminderToEdit={this.saveLoanReminderToEdit} createLoanReminder={this.createLoanReminder} errorNodes={this.state.errorNodes}/>
+                </div>
+                <div className="panel-footer">
+                  <Row>
+                    <Col md={12}>
+                      <Pagination next prev maxButtons={10} boundaryLinks ellipsis style={{float:"right", margin: "0px"}} bsSize="small" items={this.state.pageCount} activePage={this.state.page} onSelect={this.handlePageSelect} />
+                    </Col>
+                  </Row>
                 </div>
               </div>
             </Col>

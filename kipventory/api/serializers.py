@@ -4,6 +4,7 @@ from . import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 import dateutil.parser
+from datetime import datetime
 import re, json
 
 
@@ -527,15 +528,19 @@ class LoanReminderSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         print("to interval value")
-        validated_data = {}
+        validated_data = data.copy()
+        today = datetime.now().date()
         errors = {}
         if data["date"]==None:
             errors["date"] = ["Date cannot be empty"]
         else:
             try:
                 validated_data["date"] = dateutil.parser.parse(data["date"]).date()
+                if validated_data["date"] < today:
+                    errors["date"] = ["Date cannot be in the past."]
             except:
                 errors["date"] = ["Invalid date."]
+
 
         if errors:
             raise ValidationError(errors)
