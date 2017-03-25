@@ -201,7 +201,6 @@ class LoanRemindersContainer extends Component {
 	render() {
 		return (
       <div>
-        <Grid>
           <Row>
             <Col xs={12}>
               <div className="panel panel-default">
@@ -235,7 +234,6 @@ class LoanRemindersContainer extends Component {
               </div>
             </Col>
           </Row>
-        </Grid>
       </div>
 		)
 	}

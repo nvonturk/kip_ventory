@@ -47,7 +47,7 @@ class EmailsContainer extends Component {
   render(){
 
     return(
-      <Grid>
+      <div>
         <Row>
           <Col xs={12}>
             <h3>Emails</h3>
@@ -64,7 +64,7 @@ class EmailsContainer extends Component {
             <LoanRemindersContainer loanReminders={this.state.loanReminders}/>
           </Col>
         </Row>
-      </Grid>
+      </div>
     )
   }
 
