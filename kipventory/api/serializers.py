@@ -37,7 +37,6 @@ class CustomValueSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         validated_data = {}
         errors = {}
-        print(data)
         # get value type specified in CustomField
         name = data.get('name')
         ft = models.CustomField.objects.get(name=name).field_type
@@ -90,8 +89,11 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def is_item_in_cart(self, item):
         user = self.context['request'].user
-        is_in_cart = (models.CartItem.objects.filter(owner__pk=user.pk, item__name=item.name).count() > 0)
-        return is_in_cart
+        try:
+            cartitem = models.CartItem.objects.filter(owner__pk=user.pk).get(item__name=item.name)
+            return cartitem.quantity
+        except models.CartItem.DoesNotExist:
+            return 0
 
     def to_internal_value(self, data):
         errors = {}
@@ -100,12 +102,13 @@ class ItemSerializer(serializers.ModelSerializer):
         if name is None or name == "":
             errors.update({"name": ["This field is required."]})
         else:
-            try:
-                other_item = models.Item.objects.get(name=name)
-                errors.update({"name": ["An object with this name already exists."]})
-            except models.Item.DoesNotExist:
-                # We know this a new item name, and is therefore valid
-                pass
+            if self.context['request'].method == "POST":
+                try:
+                    other_item = models.Item.objects.get(name=name)
+                    errors.update({"name": ["An object with this name already exists."]})
+                except models.Item.DoesNotExist:
+                    # We know this a new item name, and is therefore valid
+                    pass
         quantity = data.get('quantity', None)
         if quantity is None:
             errors.update({"quantity": ["This field is required."]})
@@ -120,7 +123,7 @@ class ItemSerializer(serializers.ModelSerializer):
         data.update({"quantity": quantity})
 
         # validate custom fields
-        custom_field_objs = []
+        custom_field_data = {}
         custom_fields = data.get('custom_fields', None)
         if custom_fields is not None:
             for cf in custom_fields:
@@ -132,25 +135,63 @@ class ItemSerializer(serializers.ModelSerializer):
                     if val != None and val != "":
                         try:
                             val = models.FIELD_TYPE_DICT[ft](val)
+                            custom_field_data[name] = val
                         except:
                             errors.update({name: ["Value '{}' is not of type '{}'.".format(val, models.FIELD_TYPE_DICT[ft].__name__)]})
                 except:
                     errors.update({name: ["Custom field with name '{}' does not exist.".format(cf['name'])]})
 
+        # validate tags
+        tags = data.get('tags', [])
+        for tag in tags:
+            try:
+                tag = models.Tag.objects.all()
+            except models.Tag.DoesNotExist:
+                tag = models.Tag.objects.create(name=tag)
+
         if errors:
             raise ValidationError(errors)
 
-        data.pop('custom_fields')
+        data.update({"custom_fields": custom_field_data})
         return data
 
+    def create(self, validated_data):
+        custom_fields = validated_data.pop('custom_fields')
+
+        item = super(ItemSerializer, self).create(validated_data)
+
+        for (name, value) in custom_fields.items():
+            cv = item.values.get(field__name=name)
+            setattr(cv, cv.field.field_type, value)
+            cv.save()
+
+        item.save()
+        return item
+
+    def update(self, instance, validated_data):
+        custom_fields = validated_data.pop('custom_fields')
+        tags = validated_data.pop('tags')
+
+        item = super(ItemSerializer, self).update(instance, validated_data)
+
+        for tag in tags:
+            try:
+                tag = models.Tag.objects.all().get(name=tag)
+            except models.Tag.DoesNotExist:
+                tag = models.Tag.objects.create(name=tag)
+            item.tags.add(tag)
+
+        for (name, value) in custom_fields.items():
+            cv = item.values.get(field__name=name)
+            setattr(cv, cv.field.field_type, value)
+            cv.save()
+
+        item.save()
+        return item
 
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super(CartItemSerializer, self).__init__(*args, **kwargs)
-        self.fields['item'].context = self.context
-
     item         = ItemSerializer(read_only=True, many=False)
     quantity     = serializers.IntegerField(min_value=0, max_value=None, required=True)
     request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES, default=models.LOAN)
@@ -208,6 +249,32 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transaction
         fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+
+    def validate(self, data):
+        errors = {}
+
+        quantity = data['quantity']
+        try:
+            quantity = int(quantity)
+            if quantity <= 0:
+                errors.update({"quantity": ["Quantity be a positive integer"]})
+        except:
+            errors.update({"quantity": ["Quantity be a positive integer"]})
+
+        try:
+            item = models.Item.objects.get(name=data['item'])
+        except models.Item.DoesNotExist:
+            errors.update({"item": ["Item with name '{}' does not exist.".format(data['item'])]})
+
+        category = data.get('category', "")
+        if category.lower() == "loss":
+            if quantity > item.quantity:
+                errors.update({"quantity": ["You may not remove more instances than are currently in stock."]})
+
+        if errors:
+            raise ValidationError(errors)
+
+        return data
 
 class UserGETSerializer(serializers.ModelSerializer):
     class Meta:
@@ -305,10 +372,29 @@ class RequestSerializer(serializers.ModelSerializer):
     closed_comment   = serializers.ReadOnlyField()
     administrator    = serializers.SlugRelatedField(read_only=True, slug_field="username")
     status           = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
+    loaned_items     = serializers.SerializerMethodField()
+    disbursed_items     = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Request
-        fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
+        fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment',
+                  'date_closed', 'closed_comment', 'administrator', 'status', 'loaned_items', 'disbursed_items']
+
+    def get_loaned_items(self, request):
+        loan_json = []
+        for loan in request.loaned_items.all():
+            data = {
+
+            }
+            loan_json.append(data)
+        return loan_json
+
+    def get_disbursed_items(self, request):
+        disbursement_json = []
+        for loan in request.disbursed_items.all():
+            data = DisbursementSerializer(instance=request).data
+            disbursement_json.append(data)
+        return disbursement_json
 
     def to_internal_value(self, data):
         requester = data.get('requester', None)
@@ -360,13 +446,27 @@ class LoanSerializer(serializers.ModelSerializer):
         fields = ['id', 'request', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
         read_only_fields = ['id', 'request', 'item', 'quantity_loaned', 'date_loaned']
 
-    def update(self, instance, data):
-        is_returned = data.get('returned', False)
-        instance.is_returned = is_returned
-        if (instance.is_returned):
-            instance.date_returned = timezone.now()
-        instance.save()
-        return instance
+class LoanGroupSerializer(serializers.ModelSerializer):
+    request = serializers.SerializerMethodField(method_name="get_request_representation")
+    loans   = serializers.SerializerMethodField(method_name="get_loan_representations")
+
+    class Meta:
+        model = models.LoanGroup
+        fields = ['request', 'loans']
+
+    def get_request_representation(self, loangroup):
+        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
+        request_json.pop('requested_items')
+        return request_json
+
+    def get_loan_representations(self, loangroup):
+        loans = []
+        for loan in loangroup.loans.all():
+            loan_json = LoanSerializer(instance=loan, context=self.context).data
+            loan_json.pop('request') # don't duplicate the request information
+            loans.append(loan_json)
+        return loans
+
 
 class ConversionSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(required=True)
@@ -380,8 +480,8 @@ class ConversionSerializer(serializers.Serializer):
             raise serializers.ValidationError({"quantity": ["Quantity must be a positive integer."]})
         if quantity <= 0:
             raise serializers.ValidationError({"quantity": ["Quantity must be a positive integer."]})
-        if quantity > loan.quantity:
-            raise serializers.ValidationError({"quantity": ["Quantity must not be greater than the number of instances in this loan ({})".format(loan.quantity)]})
+        if quantity > loan.quantity_loaned - loan.quantity_returned:
+            raise serializers.ValidationError({"quantity": ["Quantity must not be greater than the number of outstanding instances in this loan ({})".format(loan.quantity_loaned - loan.quantity_returned)]})
 
         return {"quantity": quantity, "loan": loan}
 
@@ -389,9 +489,9 @@ class ConversionSerializer(serializers.Serializer):
         loan = validated_data.get('loan')
         quantity = validated_data.get('quantity')
         d = models.Disbursement.objects.create(request=loan.request, item=loan.item, quantity=quantity)
-        loan.quantity -= quantity
+        loan.quantity_loaned -= quantity
         loan.save()
-        if (loan.quantity == 0):
+        if (loan.quantity_loaned == 0):
             loan.delete()
         d.save()
         return d

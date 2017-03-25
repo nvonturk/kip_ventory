@@ -10,8 +10,6 @@ import Select from 'react-select'
 const LoanModal = React.createClass({
   getInitialState() {
     return {
-      loan: this.props.loan,
-
       showDisbursementForm: false,
       disbursementQuantity: 0,
 
@@ -21,9 +19,67 @@ const LoanModal = React.createClass({
     }
   },
 
-  saveLoan() {
-    var url = "/api/loans/" + this.props.loan.id + "/"
-    console.log(url)
+  componentDidMount() {
+    this.setState({
+      loan: this.props.loan,
+    })
+  },
+
+  logReturn() {
+    var url = "/api/loans/" + this.props.loan.id + "/";
+    var data = {
+      quantity_loaned: this.state.returnQuantity
+    }
+    var _this = this
+    ajax({
+      url: url,
+      contentType: "application/json",
+      type: "PUT",
+      data: JSON.stringify(data),
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success: function(response) {
+
+      },
+      error:function (xhr, textStatus, thrownError){}
+    });
+  },
+
+  convertToDisbursement() {
+    var url = "/api/loans/" + this.props.loan.id + "/convert/"
+    var data = {
+      quantity: this.state.disbursementQuantity
+    }
+    var _this = this
+    ajax({
+      url: url,
+      contentType: "application/json",
+      type: "POST",
+      data: JSON.stringify(data),
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success: function(response) {
+        _this.setState({
+          showDisbursementForm: false,
+          disbursementQuantity: 0,
+          showReturnForm: false,
+          returnQuantity: 0
+        }, _this.props.onHide)
+      },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr)
+      }
+    });
+  },
+
+  getReturnForm() {
+    return null
+  },
+
+  getDisbursementForm() {
+    return null
   },
 
   render() {
@@ -36,8 +92,9 @@ const LoanModal = React.createClass({
         <Label bsSize="small" bsStyle="danger">Outstanding</Label>
       )
       var saveButton = (this.state.showReturnForm || this.state.showDisbursementForm) ? (
-          <Button bsStyle="info"    bsSize="small" onClick={this.saveLoan}>Save</Button>
+          <Button bsStyle="info" bsSize="small" onClick={this.saveLoan}>Save</Button>
       ) : null
+      console.log(this.props.onLoanSave)
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
@@ -89,6 +146,7 @@ const LoanModal = React.createClass({
                     </Table>
                   </Col>
                 </Row>
+
 
               </Col>
             </Row>

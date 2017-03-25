@@ -23,7 +23,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.views import password_reset, password_reset_confirm
 from django.http import HttpResponse
 
-import requests, csv, os
+import requests, csv, os, json
 
 
 class CustomPagination(pagination.PageNumberPagination):
@@ -666,6 +666,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                     if (ri_instance.item.quantity < int(ri_dict.get('quantity'))):
                         valid_request = False
                 if valid_request:
+                    loangroup = models.LoanGroup.objects.create(request=instance)
                     for ri_instance, ri_dict in zip(ri_instances, ri_data):
                         new_quantity = int(ri_dict.get('quantity'))
                         new_type = ri_dict.get('request_type')
@@ -674,6 +675,8 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         ri_instance.save()
                         if ri_instance.request_type == models.LOAN:
                             loan = models.createLoanFromRequestItem(ri_instance)
+                            loan.loan_group = loangroup
+                            loan.save()
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
                 else:
@@ -702,10 +705,10 @@ class LoanListAll(generics.GenericAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return models.Loan.objects.all();
+        return models.LoanGroup.objects.all();
 
     def get_serializer_class(self):
-        return serializers.LoanSerializer
+        return serializers.LoanGroupSerializer
 
     def filter_queryset(self, queryset, request):
         status = request.query_params.get('status', None)
@@ -739,37 +742,88 @@ class LoanList(generics.GenericAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        queryset = models.Loan.objects.all();
-        if not (self.request.user.is_staff or self.request.user.is_superuser):
-            queryset = queryset.filter(request__requester=self.request.user)
-        return queryset
+        return models.LoanGroup.objects.filter(request__requester=self.request.user);
 
     def get_serializer_class(self):
-        return serializers.LoanSerializer
+        return serializers.LoanGroupSerializer
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
 
-        # Search filter
-        search = request.query_params.get('search', None)
-        if search is not None and search != '':
-            q_objs = (Q(item__name__icontains=search))
-            queryset = queryset.filter(q_objs).order_by('pk')
+        # filter by user who requested these loans
+        user = request.query_params.get('user', None)
+        if user != None and user != "":
+            q = Q(request__requester__username__icontains=user)
+            queryset = queryset.filter(q)
+
+        serializer = self.get_serializer(instance=queryset, many=True)
+        data = serializer.data
 
         status = request.query_params.get('status', None)
-        if status.lower() == "outstanding":
-            queryset = queryset.filter(quantity_loaned__gt=F('quantity_returned'))
-        elif status.lower() == "returned":
-            queryset = queryset.filter(quantity_loaned=F('quantity_returned'))
-
         item = request.query_params.get('item', None)
-        if item != None and item != "":
-            queryset = queryset.filter(item__name=item)
 
-        paginated_queryset = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(instance=paginated_queryset, many=True)
-        response = self.get_paginated_response(serializer.data)
+        results = []
+        for d in data:
+            request = d.get('request')
+            loans = d.get('loans')
+            keep_result = False
+            if (status == None or status == "") and (item == None or item == ""):
+                results.append({"request": request, "loans": loans})
+            else:
+                if status != None and status != "":
+                    status = status.lower()
+                    if status == "outstanding":
+                        for loan in loans:
+                            if (int(loan['quantity_returned']) != int(loan['quantity_loaned'])):
+                                keep_result = True
+                                break
+
+                    if status == "returned":
+                        for loan in loans:
+                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
+                                print("HERE")
+                                keep_result = True
+                                break
+
+                if not keep_result and (item != None and item != ""):
+                    item = item.lower()
+                    for loan in loans:
+                        if item in loan['item']['name'].lower():
+                            keep_result = True
+                            break
+
+                if keep_result:
+                    results.append({"request": request, "loans": loans})
+
+
+            # loans_to_remove = []
+            # for i, loan in enumerate(loans):
+            #     # item name filter
+            #     if item != None and item != "":
+            #         item = item.lower()
+            #         if item.lower() not in loan['item']['name'].lower():
+            #             loans_to_remove.append(i)
+            #
+            #     # loan status filter
+            #     if status is not None and status != "":
+            #         status = status.lower()
+            #         if status == "outstanding":
+            #             if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
+            #                 loans_to_remove.append(i)
+            #
+            #         elif status == "returned":
+            #             if (int(loan['quantity_loaned']) != int(loan['quantity_returned'])):
+            #                 loans_to_remove.append(i)
+            #
+            # loan_results = [x for j, x in enumerate(loans) if j not in loans_to_remove]
+            #
+            # if loan_results != []:
+            #     results.append({"request": request, "loans": loan_results})
+
+        results = self.paginate_queryset(results)
+        response = self.get_paginated_response(results)
         return response
+
 
 class LoanDetailModify(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
@@ -1140,27 +1194,18 @@ class TransactionListCreate(generics.GenericAPIView):
     def post(self, request, format=None):
         #todo django recommends doing this in middleware
         data = request.data.copy()
-
         data['administrator'] = request.user
+
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
-            transaction_quantity = int(data['quantity'])
-            if transaction_quantity < 0:
-                return Response({"quantity": "Quantity be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
-
-            item = models.Item.objects.get(name=data['item'])
-            if data['category'] == 'Acquisition':#models.ACQUISITION:
-                new_quantity = item.quantity + transaction_quantity
-            elif data['category'] == 'Loss':#models.LOSS:
-                new_quantity = item.quantity - transaction_quantity
-                if new_quantity < 0:
-                    return Response({"quantity": "Cannot remove more items from the inventory than currently exists"}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                #should never get here
-                pass
-            item.quantity = new_quantity
-            item.save()
-            transactionCreationLog(item, request.user.pk, request.data['category'], transaction_quantity)
+            quantity = serializer.validated_data.get('quantity', 0)
+            try:
+                item = models.Item.objects.get(name=serializer.validated_data.get('item'))
+                item.quantity -= quantity
+                item.save()
+            except:
+                return Response({"name": ["Item with name '{}' does not exist.".format(serializer.validated_data.get('name', None))]})
+            transactionCreationLog(item, request.user.pk, request.data['category'], quantity)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

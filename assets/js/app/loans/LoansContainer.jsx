@@ -1,23 +1,28 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Button, Modal, Table, Form, Glyphicon, Pagination,
          FormGroup, FormControl, ControlLabel, HelpBlock, Panel, InputGroup,
-         Label, Well } from 'react-bootstrap'
+         Label, Well, Badge, ListGroup, ListGroupItem } from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
 import Select from 'react-select'
 import LoanModal from './LoanModal'
 
+import LoanGroupPanel from './LoanGroupPanel'
+
 const LoansContainer = React.createClass({
   getInitialState() {
     return {
-      loans: [],
+      loanGroups: [],
+
+      expandedLoanGroup: null,
 
       page: 1,
-      itemsPerPage: 10,
+      itemsPerPage: 5,
       pageCount: 1,
 
-      searchText: "",
+      itemSearch: "",
+      userSearch: "",
       status: "",
 
       showLoanModal: false,
@@ -26,53 +31,59 @@ const LoansContainer = React.createClass({
   },
 
   componentWillMount() {
-    this.getLoans();
+    this.getLoanGroups();
   },
 
-  getLoans() {
+  getLoanGroups() {
     var url = "/api/loans/"
     var params = {
       page: this.state.page,
       itemsPerPage: this.state.itemsPerPage,
-      search: this.state.searchText,
+      item: this.state.itemSearch,
+      user: this.state.userSearch,
       status: this.state.status
     }
+    console.log(params)
     var _this = this;
     getJSON(url, params, function(data) {
       _this.setState({
-        loans: data.results,
+        loanGroups: data.results,
         pageCount: Number(data.num_pages)
       })
     })
   },
 
-  handleChange(e) {
-    this.setState({
-      [e.target.name]: e.target.value
-    })
+  handleLoanSave(e) {
+    console.log("SAVING LOAN")
   },
 
-  handleSearch(e) {
+  handleItemSearch(e) {
     this.setState({
-      searchText: e.target.value
-    }, this.getLoans)
+      itemSearch: e.target.value
+    }, this.getLoanGroups)
+  },
+
+  handleUserSearch(e) {
+    this.setState({
+      userSearch: e.target.value
+    }, this.getLoanGroups)
   },
 
   handlePageSelect(activeKey) {
     this.setState({
       page: activeKey
-    }, this.getLoans)
+    }, this.getLoanGroups)
   },
 
   handleStatusSelect(status) {
     if (status == null) {
       this.setState({
         status: ""
-      }, this.getLoans)
+      }, this.getLoanGroups)
     } else {
       this.setState({
         status: status.value
-      }, this.getLoans)
+      }, this.getLoanGroups)
     }
   },
 
@@ -81,6 +92,46 @@ const LoansContainer = React.createClass({
       showLoanModal: true,
       loanToShow: loan
     })
+  },
+
+  handleLoanGroupExpand(index) {
+    console.log(index)
+    var cur = this.state.expandedLoanGroup
+    if (cur == index) {
+      this.setState({
+        expandedLoanGroup: null
+      })
+    } else {
+      this.setState({
+        expandedLoanGroup: index
+      })
+    }
+  },
+
+  getLoanGroupListing() {
+    return (this.state.loanGroups.length > 0) ? (
+      <ListGroup style={{margin: "0px"}}>
+        { this.state.loanGroups.map( (lg, i) => {
+          return (
+            <LoanGroupPanel getLoanGroups={this.getLoanGroups}
+                            toggleExpanded={this.handleLoanGroupExpand.bind(this, i)}
+                            index={i} expanded={this.state.expandedLoanGroup}
+                            key={lg.request.request_id} loanGroup={lg} />
+          )
+        })}
+      </ListGroup>
+    ) : (
+      <Grid fluid>
+        <Row>
+          <Col xs={12}>
+            <br />
+            <Well className="text-center" bsSize="small" style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+              No results.
+            </Well>
+          </Col>
+        </Row>
+      </Grid>
+    )
   },
 
   render() {
@@ -100,47 +151,74 @@ const LoansContainer = React.createClass({
                 <div className="panel panel-default">
 
                   <div className="panel-heading">
-                    <span style={{fontSize:"15px"}}>Filter Loans</span>
+                    <span style={{fontSize:"15px"}}>Refine Results</span>
                   </div>
 
                   <div className="panel-body">
-                  <Row>
-                    <Col md={12}>
-                      <FormGroup>
-                        <ControlLabel>Search by Item Name</ControlLabel>
-                        <InputGroup bsSize="small">
-                          <FormControl placeholder="Item name"
-                                       style={{fontSize:"12px"}}
-                                       type="text" name="searchText"
-                                       value={this.state.searchText}
-                                       onChange={this.handleSearch}/>
-                          <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.handleSearch}>
-                            <Glyphicon glyph="search"/>
-                          </InputGroup.Addon>
-                        </InputGroup>
-                      </FormGroup>
+                    <Row>
+                      <Col md={12}>
+                        <FormGroup>
+                          <ControlLabel>Search by Item Name</ControlLabel>
+                          <InputGroup bsSize="small">
+                            <FormControl placeholder="Item name"
+                                         style={{fontSize:"12px"}}
+                                         type="text" name="itemSearch"
+                                         value={this.state.itemSearch}
+                                         onChange={this.handleItemSearch}/>
+                            <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.handleItemSearch}>
+                              <Glyphicon glyph="search"/>
+                            </InputGroup.Addon>
+                          </InputGroup>
+                        </FormGroup>
 
-                      <FormGroup>
-                        <ControlLabel>Loan Status</ControlLabel>
-                        <Select style={{fontSize:"12px"}} name="loan-status-filter"
-                                multi={false}
-                                placeholder="Filter by loan status"
-                                value={this.state.status}
-                                options={[
-                                  {
-                                    label: "Outstanding",
-                                    value: "Outstanding",
-                                  },
-                                  {
-                                    label: "Returned",
-                                    value: "Returned"
-                                  }
-                                ]}
-                                onChange={this.handleStatusSelect} />
-                      </FormGroup>
+                        <FormGroup>
+                          <ControlLabel>Loan Status</ControlLabel>
+                          <Select style={{fontSize:"12px"}} name="loan-status-filter"
+                                  multi={false}
+                                  placeholder="Filter by loan status"
+                                  value={this.state.status}
+                                  options={[
+                                    {
+                                      label: "Outstanding",
+                                      value: "Outstanding",
+                                    },
+                                    {
+                                      label: "Returned",
+                                      value: "Returned"
+                                    }
+                                  ]}
+                                  onChange={this.handleStatusSelect} />
+                        </FormGroup>
+                      </Col>
+                    </Row>
+                  </div>
 
-                    </Col>
-                  </Row>
+                </div>
+                <div className="panel panel-default">
+
+                  <div className="panel-heading">
+                    <span style={{fontSize:"15px"}}>Legend</span>
+                  </div>
+
+                  <div className="panel-body">
+                    <Row style={{display: "flex"}}>
+                      <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
+                        <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-circle" />
+                      </Col>
+                      <Col md={9}>
+                        <p style={{marginBottom:"0px", fontSize: "12px"}}>All items from this request have been returned or disbursed.</p>
+                      </Col>
+                    </Row>
+                    <hr />
+                    <Row style={{display: "flex"}}>
+                      <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
+                        <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="remove-circle" />
+                      </Col>
+                      <Col md={9}>
+                        <p style={{marginBottom: "0px", fontSize: "12px"}}>One or more item from this request is still outstanding.</p>
+                      </Col>
+                    </Row>
+
                   </div>
 
                 </div>
@@ -151,70 +229,13 @@ const LoansContainer = React.createClass({
 
                   <div className="panel-heading">
                     <span style={{fontSize:"15px"}}>View Your Loans</span>
+                    <span style={{float:"right", fontSize:"12px"}}>
+                      Loans are grouped by request. &nbsp; Click to expand.
+                    </span>
                   </div>
 
-                  <div className="panel-body">
-                    <Table condensed hover style={{marginBottom: "0px"}}>
-                      <thead>
-                        <tr>
-                          <th style={{width:" 5%"}} className="text-center">ID</th>
-                          <th style={{width:"15%"}} className="text-center">Item</th>
-                          <th style={{width:"20%"}} className="text-center">Date Loaned</th>
-                          <th style={{width:" 5%"}} className="text-center">Request</th>
-                          <th style={{width:"25%"}} className="text-center">Admin Comment</th>
-                          <th style={{width:" 5%"}} className="text-center">Loaned</th>
-                          <th style={{width:" 5%"}} className="text-center">Returned</th>
-                          <th style={{width:"10%"}} className="text-center">Status</th>
-                          <th style={{width:"10%"}} className="text-center">Loan Details</th>
-                        </tr>
-                        <tr>
-                          <th colSpan={9}>
-                            <hr style={{margin: "auto"}} />
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {this.state.loans.map( (loan, i) => {
-                          var statusLabel = null
-                          if (loan.quantity_returned == loan.quantity_loaned) {
-                            statusLabel = <Label bsStyle="success" bsSize="small">Returned</Label>
-                          } else {
-                            statusLabel = <Label bsStyle="danger" bsSize="small">Outstanding</Label>
-                          }
-                          return (
-                            <tr key={loan.id}>
-                              <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <span style={{fontSize:"12px"}}>{ loan.id }</span>
-                              </td>
-                              <td data-th="Item" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <h6 onClick={e => {browserHistory.push("/app/inventory/" + loan.item.name + "/")}} className="clickable" style={{fontSize:"11px", color: "#df691a"}} >{ loan.item.name }</h6>
-                              </td>
-                              <td data-th="Date Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <span style={{fontSize:"11px"}}>{ new Date(loan.date_loaned).toLocaleString() }</span>
-                              </td>
-                              <td data-th="Request" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <a style={{fontSize: "12px", textDecoration: "none", color: "#5bc0de"}} href={"/app/requests/" + loan.request.request_id + "/"}>{loan.request.request_id}</a>
-                              </td>
-                              <td data-th="Admin Comment" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <span style={{fontSize:"11px"}}>{ loan.request.closed_comment }</span>
-                              </td>
-                              <td data-th="Loaned" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <span style={{fontSize:"12px"}}>{ loan.quantity_loaned }</span>
-                              </td>
-                              <td data-th="Returned" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <span style={{fontSize:"12px"}}>{ loan.quantity_returned }</span>
-                              </td>
-                              <td data-th="Status" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                { statusLabel }
-                              </td>
-                              <td data-th="Loan Details" className="text-center" style={{border: "1px solid #596a7b"}}>
-                                <span className="clickable" style={{fontSize: "11px", color: "#5bc0de"}} onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}}>Click to view</span>
-                              </td>
-                          </tr>
-                          )
-                        })}
-                      </tbody>
-                    </Table>
+                  <div className="panel-body" style={{padding:"0px", minHeight:"485px"}}>
+                    { this.getLoanGroupListing() }
                   </div>
 
                   <div className="panel-footer">
@@ -229,13 +250,11 @@ const LoansContainer = React.createClass({
               </Col>
             </Row>
 
-            <LoanModal show={this.state.showLoanModal} onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}} loan={this.state.loanToShow} />
-
           </Col>
         </Row>
       </Grid>
     )
-  }
+  },
 
 })
 
