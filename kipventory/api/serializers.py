@@ -512,6 +512,12 @@ class BulkImportSerializer(serializers.ModelSerializer):
     )
     data = serializers.FileField()
 
+    def validate(self, data):
+        datafile = data.get('data', None)
+        if datafile is None:
+            raise ValidationError({"data": ["Please select a .csv file."]})
+        return data
+
     class Meta:
         model = models.BulkImport
         fields = ['id', 'data', 'administrator']
