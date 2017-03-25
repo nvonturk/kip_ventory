@@ -105,11 +105,11 @@ function initialize(userData) {
         </Route>
 
         <Route path="loans" component={LoansContainer} user={userData} />
-
-        <Route path="cart" component={CartContainer} user={userData} />
-        <Route path="profile" component={Profile} user={userData} />
         { getManagerPanel(userData) }
         { getAdminPanel(userData) }
+        
+        <Route path="cart" component={CartContainer} user={userData} />
+        <Route path="settings" component={Profile} user={userData} />
         <Route path='404' component={My404Component} />
       </Route>
       <Redirect from='*' to='/app/404/' />

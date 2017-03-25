@@ -1762,7 +1762,6 @@ class LoanReminderListCreate(generics.GenericAPIView):
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
-        print(serializer.data)
         return response
 
     def post(self, request, format=None):
