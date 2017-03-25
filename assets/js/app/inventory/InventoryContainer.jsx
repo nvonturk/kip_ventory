@@ -442,26 +442,37 @@ const InventoryContainer = React.createClass({
         })
       },
       error:function (xhr, textStatus, thrownError){
-        console.log(xhr.responseJSON);
-        console.log(textStatus);
-        console.log(thrownError);
+        // console.log(xhr.responseJSON);
+        // console.log(textStatus);
+        // console.log(thrownError);
         // Logic to parse error
         var response = xhr.responseJSON
-        var errNodes = JSON.parse(JSON.stringify(_this.state.bulkImportErrorNodes))
+        var bulkErrNodes = JSON.parse(JSON.stringify(_this.state.bulkImportErrorNodes))
+        var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
+        errNodes['no_file'] = null
         for (var key in response) {
           if (response.hasOwnProperty(key)) {
-            var message = ""
-            for (var mess in response[key]){
-              message = message.concat(response[key][mess])
-              message = message.concat("\n")
-              console.log("Response[key][mess]:", response[key][mess])
+            if (key == 'no_file'){
+              errNodes[key] = response[key]
             }
-            console.log("Message", message)
-            errNodes[key] = message
+            else {
+              var message = ""
+              for (var mess in response[key]){
+                message = message.concat(response[key][mess])
+                message = message.concat("\n")
+                // console.log("Response[key][mess]:", response[key][mess])
+              }
+              // console.log("Message", message)
+              bulkErrNodes[key] = message
+              console.log(key)
+              console.log(message)
+            }
           }
+
         }
         _this.setState({
-          bulkImportErrorNodes: errNodes
+          errorNodes: errNodes,
+          bulkImportErrorNodes: bulkErrNodes
         })
 
 
@@ -502,6 +513,7 @@ const InventoryContainer = React.createClass({
               </FormGroup>
               <Button style={{fontSize:"10px"}} type="submit" bsSize="small" bsStyle="info">Import</Button>
             </Form>
+            <p style={{color: "red"}}>{this.state.errorNodes['no_file']}</p>
           </Col>
           <Col md={12} xs={6}>
             <p style={{fontSize:"12px"}}>

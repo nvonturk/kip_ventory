@@ -1261,7 +1261,8 @@ class BulkImport(generics.GenericAPIView):
         data.update({"administrator": request.user})
         serializer = self.get_serializer(data=data)
 
-        if serializer.is_valid(raise_exception=True):
+        if serializer.is_valid():
+            print("HERE")
             inputfile = request.FILES['data']
             fout = open('importtempfile.csv', 'wb')
             for chunk in inputfile.chunks():
@@ -1373,8 +1374,6 @@ class BulkImport(generics.GenericAPIView):
             if custom_field_errors:
                 for e in custom_field_errors:
                     errors.update(e)
-            print("ERRORS")
-            print(errors)
             if errors:
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1414,6 +1413,8 @@ class BulkImport(generics.GenericAPIView):
                 }
 
             return Response(d)
+        else:
+            return Response({"no_file": ["Please select a .csv file."]}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         return serializers.BulkImportSerializer
