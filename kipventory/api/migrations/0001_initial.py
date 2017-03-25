@@ -94,6 +94,15 @@ class Migration(migrations.Migration):
                 ('date_returned', models.DateTimeField(blank=True, null=True)),
                 ('item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Item')),
             ],
+            options={
+                'ordering': ('id',),
+            },
+        ),
+        migrations.CreateModel(
+            name='LoanGroup',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+            ],
         ),
         migrations.CreateModel(
             name='Log',
@@ -177,6 +186,16 @@ class Migration(migrations.Migration):
             model_name='log',
             name='request',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='api.Request'),
+        ),
+        migrations.AddField(
+            model_name='loangroup',
+            name='request',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='loan_group', to='api.Request'),
+        ),
+        migrations.AddField(
+            model_name='loan',
+            name='loan_group',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='loans', to='api.LoanGroup'),
         ),
         migrations.AddField(
             model_name='loan',

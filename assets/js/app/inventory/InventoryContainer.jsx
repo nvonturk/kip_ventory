@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Table, Image, Button, Panel, Label, Modal, HelpBlock,
-         Glyphicon, Form, Pagination, FormGroup, FieldGroup, FormControl,
+         Glyphicon, Form, Pagination, FormGroup, FieldGroup, FormControl, Well,
         ControlLabel, InputGroup } from 'react-bootstrap'
 import InventoryItem from './InventoryItem'
 import InventoryGridHeader from './InventoryGridHeader'
@@ -121,27 +121,8 @@ const InventoryContainer = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response) {
-        for (var i=0; i<_this.state.item.custom_fields.length; i++) {
-          var cf = _this.state.item.custom_fields[i]
-          var url = "/api/items/" + _this.state.item.name + "/fields/" + cf.name + "/"
-          ajax({
-            url: url,
-            contentType: "application/json",
-            type: "PUT",
-            data: JSON.stringify({
-              value: cf.value
-            }),
-            beforeSend: function(request) {
-              request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-            },
-            success:function(response){},
-            error:function (xhr, textStatus, thrownError){
-              console.log(xhr);
-              console.log(textStatus);
-              console.log(thrownError);
-            }
-          });
-        }
+        // Show success message
+        var itemURL = "/app/inventory/" + response.name + "/"
         _this.setState({
           item: {
             name: "",
@@ -153,8 +134,8 @@ const InventoryContainer = React.createClass({
           },
           showItemCreationModal: false,
           nameErrorNode: null,
-          quantityErrorNode: null
-        }, _this.getAllItems)
+          quantityErrorNode: null,
+        }, () => {browserHistory.push(itemURL)})
       },
       // TODO : BETTER ERROR HANDLING. PARSE THE RESULT, AND ASSOCIATE WITH THE CORRECT FORM FIELD
       // USE THE <HelpBlock /> component to add subtext to the forms that failed the test.
@@ -604,13 +585,14 @@ const InventoryContainer = React.createClass({
                 </Row>
               </Col>
               <Col md={9} sm={12}>
-                <div className="panel panel-default">
+                <div className="panel panel-default" >
 
                   <div className="panel-heading">
                     { inventoryPanelHeader }
                   </div>
 
-                  <div className="panel-body">
+                  <div className="panel-body" style={{minHeight:"460px"}}>
+
                     <Table condensed hover style={{marginBottom: "0px"}}>
                       <thead>
                         <tr>
@@ -618,10 +600,10 @@ const InventoryContainer = React.createClass({
                           <th style={{width:"10%"}} className="text-center">Model No.</th>
                           <th style={{width:"10%"}} className="text-center">In Stock</th>
                           <th style={{width:"10%"}} className="text-center">Tags</th>
-                          <th style={{width:"10%"}} className="spacer" />
+                          <th style={{width:"10%"}} className="text-center"/>
                           <th style={{width:"10%"}} className="text-center">Status</th>
+                          <th style={{width:"5%"}}  className="spacer" />
                           <th style={{width:"8%" }} className="text-center">Quantity</th>
-                          <th style={{width:"5%"}} className="spacer" />
                           <th style={{width:"12%"}} className="text-center"></th>
                         </tr>
                         <tr>

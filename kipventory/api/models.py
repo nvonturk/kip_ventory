@@ -160,6 +160,12 @@ class RequestedItem(models.Model):
     class Meta:
         ordering = ('item__name',)
 
+class LoanGroup(models.Model):
+    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loan_group', blank=True, null=True)
+
+    def str(self):
+        return
+
 class Loan(models.Model):
     request           = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loaned_items', blank=True, null=True)
     date_loaned       = models.DateTimeField(blank=True, auto_now_add=True)
@@ -167,6 +173,18 @@ class Loan(models.Model):
     quantity_loaned   = models.PositiveIntegerField(default=0)
     quantity_returned = models.PositiveIntegerField(default=0)
     date_returned     = models.DateTimeField(blank=True, null=True)
+    loan_group        = models.ForeignKey(LoanGroup, on_delete=models.CASCADE, related_name='loans', blank=True, null=True)
+
+    class Meta:
+        ordering = ('id',)
+
+    def delete(self):
+        lg = self.loan_group
+        print("DELETING A LOAN")
+        if lg.loans.all().count() == 1:
+            print("DELETING A GROUP")
+            # lg.delete()
+        super(Loan, self).delete()
 
 
 class Disbursement(models.Model):
