@@ -647,7 +647,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             return Response({"error": "Only outstanding requests may be modified."})
 
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
-
+        print("DATA", data)
         if serializer.is_valid():
             # check integrity of approval operation
             if data['status'] == 'D':
@@ -674,8 +674,10 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         ri_instance.save()
                         if ri_instance.request_type == models.LOAN:
                             loan = models.createLoanFromRequestItem(ri_instance)
+                            requestItemApproval(ri_instance.item, request.user.pk, data)
                         elif ri_instance.request_type == models.DISBURSEMENT:
-                            disbursement = models.createDisbursementFromRequestItem(ri_instance)
+                            disbursement = models.createDisbursementFromRequestItem(data)
+                            requestItemApproval(ri_instance, request.user.pk, ri_instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()

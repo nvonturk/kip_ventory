@@ -521,6 +521,11 @@ const InventoryContainer = React.createClass({
               </FormGroup>
               <Button style={{fontSize:"10px"}} type="submit" bsSize="small" bsStyle="info">Import</Button>
             </Form>
+          </Col>
+          <Col md={12} xs={6}>
+            <p style={{fontSize:"12px"}}>
+              View Import Errors Below:
+            </p>
             {this.displayBulkImportErrors()}
           </Col>
         </Row>
