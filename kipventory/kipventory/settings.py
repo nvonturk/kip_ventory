@@ -113,6 +113,14 @@ SFTP_STORAGE_PARAMS = {
     'password': 'submenCo1e',
 }
 
+DBBACKUP_CONNECTORS = {
+    'default': {
+        'USER': 'bitnami',
+        'PASSWORD': '',
+        'HOST': ''
+    }
+}
+
 # Classes working Django-Cron
 CRON_CLASSES = [
     "kipventory.crons.Backup",
