@@ -64,7 +64,9 @@ const CartItemTableRow = React.createClass({
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      success:function(response){},
+      success:function(response){
+        window.location.assign("/app/cart")
+      },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){console.log(xhr)}
     });
@@ -103,7 +105,7 @@ const CartItemTableRow = React.createClass({
           </OverlayTrigger>
         </td>
         <td className="text-center">
-          <span style={{color: "#5bc0de"}} onClick={this.deleteCartItem}>Delete</span>
+          <span style={{color: "#5bc0de"}} className="clickable" onClick={this.deleteCartItem}>Delete</span>
         </td>
         <td data-th="Request Type" className="text-center">
             <FormControl className="text-center"
