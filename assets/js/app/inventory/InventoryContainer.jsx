@@ -28,6 +28,7 @@ const InventoryContainer = React.createClass({
       pageCount: 1,
       tags: [],
       showItemCreationModal: false,
+      showBulkImportModal: false,
       custom_fields: [],
       item: {
         name: "",
@@ -40,6 +41,7 @@ const InventoryContainer = React.createClass({
 
       errorNodes: {},
       bulkImportErrorNodes: {},
+      importSuccess: null,
 
       importFile: null,
     }
@@ -405,6 +407,12 @@ const InventoryContainer = React.createClass({
     })
   },
 
+  showBulkImportForm(e){
+    this.setState({
+      showBulkImportModal: true
+    })
+  },
+
   displayBulkImportErrors(){
     var message = ""
     for (var key in this.state.bulkImportErrorNodes){
@@ -438,7 +446,10 @@ const InventoryContainer = React.createClass({
         _this.getAllItems()
         _this.setState({
           importFile: null,
-          importResults: response
+          importResults: response,
+          importSuccess: "File imported successfully",
+          bulkImportErrorNodes: {},
+          errorNodes: {}
         })
       },
       error:function (xhr, textStatus, thrownError){
@@ -496,7 +507,7 @@ const InventoryContainer = React.createClass({
 
   render() {
     var bulkImportPanel = (this.props.route.user.is_superuser) ? (
-      <Panel header={"Bulk Import Items"}>
+      <Panel>
         <Row>
           <Col md={12} xs={6}>
             <p style={{fontSize:"12px"}}>
@@ -514,6 +525,7 @@ const InventoryContainer = React.createClass({
               <Button style={{fontSize:"10px"}} type="submit" bsSize="small" bsStyle="info">Import</Button>
             </Form>
             <p style={{color: "red"}}>{this.state.errorNodes['no_file']}</p>
+            <p style={{color: "#99ff99"}}>{this.state.importSuccess}</p>
           </Col>
           <Col md={12} xs={6}>
             <p style={{fontSize:"12px"}}>
@@ -530,6 +542,9 @@ const InventoryContainer = React.createClass({
           <span className="panel-title" style={{fontSize:"15px"}}>Current Inventory</span>
           <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showCreateItemForm}>
             Add Item &nbsp; <Glyphicon glyph="plus" />
+          </Button>
+          <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showBulkImportForm}>
+            Bulk Import &nbsp; <Glyphicon glyph="plus" /> <Glyphicon glyph="plus" />
           </Button>
         </Col>
       </Row>
@@ -590,9 +605,6 @@ const InventoryContainer = React.createClass({
                         </Col>
                       </Row>
                     </Panel>
-                  </Col>
-                  <Col md={12} sm={6}>
-                    { bulkImportPanel }
                   </Col>
                 </Row>
               </Col>
@@ -656,6 +668,18 @@ const InventoryContainer = React.createClass({
           <Modal.Footer>
             <Button bsSize="small" onClick={e => {this.setState({showItemCreationModal: false})}}>Cancel</Button>
             <Button bsStyle="info" bsSize="small" onClick={this.createItem}>Create</Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal show={this.state.showBulkImportModal} onHide={e => {this.setState({showBulkImportModal: false})}}>
+          <Modal.Header closeButton>
+            <Modal.Title>Bulk Import of Items</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            { bulkImportPanel }
+          </Modal.Body>
+          <Modal.Footer>
+            <Button bsSize="small" onClick={e => {this.setState({showBulkImportModal: false, errorNodes: {}, importSuccess: null, bulkImportErrorNodes:{}})}}>Cancel</Button>
           </Modal.Footer>
         </Modal>
 
