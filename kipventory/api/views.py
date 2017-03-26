@@ -979,7 +979,7 @@ class UserList(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
-        return User.objects.all()
+        return User.objects.all().order_by("username")
 
     def get_serializer_class(self):
         return serializers.UserGETSerializer
