@@ -679,7 +679,7 @@ const InventoryContainer = React.createClass({
             { bulkImportPanel }
           </Modal.Body>
           <Modal.Footer>
-            <Button bsSize="small" onClick={e => {this.setState({showBulkImportModal: false, errorNodes: {}, importSuccess: null, bulkImportErrorNodes:{}})}}>Cancel</Button>
+            <Button bsSize="small" onClick={e => {this.setState({showBulkImportModal: false, errorNodes: {}, importSuccess: null, importFile: null, bulkImportErrorNodes:{}})}}>Cancel</Button>
           </Modal.Footer>
         </Modal>
 
