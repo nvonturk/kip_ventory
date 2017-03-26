@@ -18,7 +18,8 @@ const RequestDetail = React.createClass({
       closed_comment: "",
       administrator: "",
       status: "X",
-      requestExists: true
+      requestExists: true,
+      forbidden: false,
     }
   },
 
@@ -48,7 +49,8 @@ const RequestDetail = React.createClass({
           closed_comment: response.closed_comment,
           administrator: response.administrator,
           status: response.status,
-          requestExists: true
+          requestExists: true,
+          forbidden: false
         })
       },
       complete:function(){},
@@ -56,6 +58,10 @@ const RequestDetail = React.createClass({
         if (xhr.status == 404) {
           _this.setState({
             requestExists: false
+          })
+        } else if (xhr.status == 403) {
+          _this.setState({
+            forbidden: true
           })
         }
       }
@@ -145,6 +151,10 @@ const RequestDetail = React.createClass({
         } else if (xhr.status == 404) {
           _this.setState({
             requestExists: false
+          })
+        } else if (xhr.status == 403) {
+          _this.setState({
+            forbidden: true
           })
         }
       }
@@ -493,6 +503,18 @@ const RequestDetail = React.createClass({
   },
 
   render() {
+    if (this.state.forbidden) {
+      return (
+        <Grid>
+          <Row>
+            <Col sm={12}>
+              <h3>403 - You do not have permission to view this request.</h3>
+              <hr />
+            </Col>
+          </Row>
+        </Grid>
+      )
+    }
     if (this.state.requestExists) {
       var statusIndicator = null;
       if (this.state.status == "A") {

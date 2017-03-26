@@ -332,13 +332,13 @@ class UserPUTSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         return validate_username(self.instance, value)
-    
+
     def update(self, instance, validated_data):
         # Update the Profile
         profile_data = validated_data.pop('profile', None)
         for attr, value in profile_data.items():
             setattr(instance.profile, attr, value)
-        
+
         # Update the User (could do super().update(instance, validated_data))
         instance = super(UserPUTSerializer, self).update(instance, validated_data)
 
@@ -397,29 +397,27 @@ class RequestSerializer(serializers.ModelSerializer):
     closed_comment   = serializers.ReadOnlyField()
     administrator    = serializers.SlugRelatedField(read_only=True, slug_field="username")
     status           = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
-    loaned_items     = serializers.SerializerMethodField()
-    disbursed_items     = serializers.SerializerMethodField()
+    loans            = serializers.SerializerMethodField(method_name="get_loan_representations")
+    disbursements    = serializers.SerializerMethodField(method_name="get_disbursement_representations")
 
     class Meta:
         model = models.Request
         fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment',
-                  'date_closed', 'closed_comment', 'administrator', 'status', 'loaned_items', 'disbursed_items']
+                  'date_closed', 'closed_comment', 'administrator', 'status', 'loans', 'disbursements']
 
-    def get_loaned_items(self, request):
-        loan_json = []
-        for loan in request.loaned_items.all():
-            data = {
+    def get_loan_representations(self, request):
+        loans = []
+        for loan in request.loans.all():
+            loan_json = LoanSerializerNoRequest(instance=loan, context=self.context).data
+            loans.append(loan_json)
+        return loans
 
-            }
-            loan_json.append(data)
-        return loan_json
-
-    def get_disbursed_items(self, request):
-        disbursement_json = []
-        for loan in request.disbursed_items.all():
-            data = DisbursementSerializer(instance=request).data
-            disbursement_json.append(data)
-        return disbursement_json
+    def get_disbursement_representations(self, request):
+        disbursements = []
+        for disbursement in request.disbursements.all():
+            disbursement_json = DisbursementSerializerNoRequest(instance=disbursement, context=self.context).data
+            disbursements.append(disbursement_json)
+        return disbursements
 
     def to_internal_value(self, data):
         requester = data.get('requester', None)
@@ -453,44 +451,80 @@ class RequestPUTSerializer(serializers.ModelSerializer):
         instance = super(RequestPUTSerializer, self).update(instance, data)
         return instance
 
-class DisbursementSerializer(serializers.ModelSerializer):
-    request = RequestSerializer(read_only=True)
-    item    = ItemSerializer(read_only=True)
-
-    class Meta:
-        model = models.Disbursement
-        fields = ['id', 'request', 'item', 'quantity', 'date']
-        read_only_fields = ['id', 'request', 'item', 'quantity', 'date']
-
 class LoanSerializer(serializers.ModelSerializer):
-    request = RequestSerializer(read_only=True)
     item    = ItemSerializer(read_only=True)
+    request = serializers.SerializerMethodField(method_name="get_request_representation")
 
     class Meta:
         model = models.Loan
         fields = ['id', 'request', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
-        read_only_fields = ['id', 'request', 'item', 'quantity_loaned', 'date_loaned']
+        read_only_fields = ['id', 'item', 'quantity_loaned', 'date_loaned']
+
+    def get_request_representation(self, loangroup):
+        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
+        request_json.pop('loans')
+        request_json.pop('disbursements')
+        return request_json
+
+class LoanSerializerNoRequest(serializers.ModelSerializer):
+    item    = ItemSerializer(read_only=True)
+
+    class Meta:
+        model = models.Loan
+        fields = ['id', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
+        read_only_fields = ['id', 'item', 'quantity_loaned', 'date_loaned']
+
+class DisbursementSerializer(serializers.ModelSerializer):
+    item    = ItemSerializer(read_only=True)
+    request = serializers.SerializerMethodField(method_name="get_request_representation")
+
+    class Meta:
+        model = models.Disbursement
+        fields = ['id', 'request', 'item', 'quantity', 'date']
+        read_only_fields = ['id', 'item', 'quantity_loaned', 'date']
+
+    def get_request_representation(self, loangroup):
+        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
+        request_json.pop('loans')
+        request_json.pop('disbursements')
+        return request_json
+
+class DisbursementSerializerNoRequest(serializers.ModelSerializer):
+    item    = ItemSerializer(read_only=True)
+
+    class Meta:
+        model = models.Disbursement
+        fields = ['id', 'item', 'quantity', 'date']
+        read_only_fields = ['id', 'item', 'quantity_loaned', 'date']
 
 class LoanGroupSerializer(serializers.ModelSerializer):
     request = serializers.SerializerMethodField(method_name="get_request_representation")
     loans   = serializers.SerializerMethodField(method_name="get_loan_representations")
+    disbursements   = serializers.SerializerMethodField(method_name="get_disbursement_representations")
 
     class Meta:
         model = models.LoanGroup
-        fields = ['request', 'loans']
+        fields = ['request', 'loans', 'disbursements']
 
     def get_request_representation(self, loangroup):
         request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
-        request_json.pop('requested_items')
+        request_json.pop('loans')
+        request_json.pop('disbursements')
         return request_json
 
     def get_loan_representations(self, loangroup):
         loans = []
         for loan in loangroup.loans.all():
-            loan_json = LoanSerializer(instance=loan, context=self.context).data
-            loan_json.pop('request') # don't duplicate the request information
+            loan_json = LoanSerializerNoRequest(instance=loan, context=self.context).data
             loans.append(loan_json)
         return loans
+
+    def get_disbursement_representations(self, loangroup):
+        disbursements = []
+        for disbursement in loangroup.disbursements.all():
+            disbursement_json = DisbursementSerializerNoRequest(instance=disbursement, context=self.context).data
+            disbursements.append(disbursement_json)
+        return disbursements
 
 
 class ConversionSerializer(serializers.Serializer):
@@ -510,16 +544,6 @@ class ConversionSerializer(serializers.Serializer):
 
         return {"quantity": quantity, "loan": loan}
 
-    def create(self, validated_data):
-        loan = validated_data.get('loan')
-        quantity = validated_data.get('quantity')
-        d = models.Disbursement.objects.create(request=loan.request, item=loan.item, quantity=quantity)
-        loan.quantity_loaned -= quantity
-        loan.save()
-        if (loan.quantity_loaned == 0):
-            loan.delete()
-        d.save()
-        return d
 
 class LoanReminderSerializer(serializers.ModelSerializer):
     class Meta:

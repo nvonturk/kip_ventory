@@ -322,15 +322,15 @@ class GetItemStacks(generics.GenericAPIView):
                 if (ri.item.name == item_name):
                     rq += ri.quantity
 
-        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
+        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, is_disbursement=False, quantity_loaned__gt=F('quantity_returned'))
         lq = 0
         for l in loans.all():
             lq += (l.quantity_loaned - l.quantity_returned)
 
-        disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
+        disbursements = models.Loan.objects.filter(request__requester=request.user.pk, is_disbursement=True, item__name=item_name)
         dq = 0
         for d in disbursements.all():
-            dq += d.quantity
+            dq += d.quantity_disbursed
 
         cart = models.CartItem.objects.filter(owner__pk=request.user.pk, item__name=item_name)
         cq = 0
@@ -678,17 +678,21 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         ri_instance.request_type = new_type
                         ri_instance.quantity = new_quantity
                         ri_instance.save()
+
                         if ri_instance.request_type == models.LOAN:
                             loan = models.createLoanFromRequestItem(ri_instance)
                             # requestItemApproval(ri_instance.item, request.user.pk, data)
                             loan.loan_group = loangroup
                             loan.save()
-                            print(instance)
                             requestItemApprovalLoan(ri_instance.item, request.user.pk, instance)
+
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
+                            disbursement.loan_group = loangroup
+                            disbursement.save()
                             requestItemApprovalDisburse(ri_instance.item, request.user.pk, instance)
-                    sendEmailForRequestStatusUpdate(instance)
+
+                        sendEmailForRequestStatusUpdate(instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
@@ -721,31 +725,63 @@ class LoanListAll(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.LoanGroupSerializer
 
-    def filter_queryset(self, queryset, request):
-        status = request.query_params.get('status', None)
-        if status == "outstanding":
-            queryset = queryset.filter(quantity_loaned__gt=F('quantity_returned'))
-        elif status == "returned":
-            queryset = queryset.filter(quantity_loaned=F('quantity_returned'))
-
-        item = request.query_params.get('item', None)
-        if item != None and item != "":
-            queryset = queryset.filter(item__name=item)
-
-        return queryset
-
     def get(self, request, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            d = {"error": "Manager permissions required."}
-            return Response(d, status=status.HTTP_403_FORBIDDEN)
+        if not request.user.is_staff or request.user.is_superuser:
+            return Response({"error": "Manager permissions required."})
 
         queryset = self.get_queryset()
-        queryset = self.filter_queryset(queryset, request)
 
-        paginated_queryset = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(instance=paginated_queryset, many=True)
-        response = self.get_paginated_response(serializer.data)
+        # filter by user who requested these loans
+        user = request.query_params.get('user', None)
+        if user != None and user != "":
+            q = Q(request__requester__username__icontains=user)
+            queryset = queryset.filter(q)
+
+        serializer = self.get_serializer(instance=queryset, many=True)
+        data = serializer.data
+
+        status = request.query_params.get('status', None)
+        item = request.query_params.get('item', None)
+
+        results = []
+        for d in data:
+            request = d.get('request')
+            loans = d.get('loans')
+            disbursements = d.get('disbursements')
+            keep_result = False
+            if (status == None or status == "") and (item == None or item == ""):
+                results.append({"request": request, "loans": loans, "disbursements": disbursements})
+            else:
+                if status != None and status != "":
+                    status = status.lower()
+                    if status == "outstanding":
+                        for loan in loans:
+                            if (int(loan['quantity_returned']) != int(loan['quantity_loaned'])):
+                                keep_result = True
+                                break
+
+                    if status == "returned":
+                        for loan in loans:
+                            print(loan.is_disbursement)
+                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned']) and not loan.is_disbursement):
+                                print("HERE")
+                                keep_result = True
+                                break
+
+                if not keep_result and (item != None and item != ""):
+                    item = item.lower()
+                    for loan in loans:
+                        if item in loan['item']['name'].lower():
+                            keep_result = True
+                            break
+
+                if keep_result:
+                    results.append({"request": request, "loans": loans, "disbursements": disbursements})
+
+        results = self.paginate_queryset(results)
+        response = self.get_paginated_response(results)
         return response
+
 
 class LoanList(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
@@ -777,9 +813,10 @@ class LoanList(generics.GenericAPIView):
         for d in data:
             request = d.get('request')
             loans = d.get('loans')
+            disbursements = d.get('disbursements')
             keep_result = False
             if (status == None or status == "") and (item == None or item == ""):
-                results.append({"request": request, "loans": loans})
+                results.append({"request": request, "loans": loans, "disbursements": disbursements})
             else:
                 if status != None and status != "":
                     status = status.lower()
@@ -792,7 +829,6 @@ class LoanList(generics.GenericAPIView):
                     if status == "returned":
                         for loan in loans:
                             if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
-                                print("HERE")
                                 keep_result = True
                                 break
 
@@ -804,32 +840,7 @@ class LoanList(generics.GenericAPIView):
                             break
 
                 if keep_result:
-                    results.append({"request": request, "loans": loans})
-
-
-            # loans_to_remove = []
-            # for i, loan in enumerate(loans):
-            #     # item name filter
-            #     if item != None and item != "":
-            #         item = item.lower()
-            #         if item.lower() not in loan['item']['name'].lower():
-            #             loans_to_remove.append(i)
-            #
-            #     # loan status filter
-            #     if status is not None and status != "":
-            #         status = status.lower()
-            #         if status == "outstanding":
-            #             if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
-            #                 loans_to_remove.append(i)
-            #
-            #         elif status == "returned":
-            #             if (int(loan['quantity_loaned']) != int(loan['quantity_returned'])):
-            #                 loans_to_remove.append(i)
-            #
-            # loan_results = [x for j, x in enumerate(loans) if j not in loans_to_remove]
-            #
-            # if loan_results != []:
-            #     results.append({"request": request, "loans": loan_results})
+                    results.append({"request": request, "loans": loans, "disbursements": disbursements})
 
         results = self.paginate_queryset(results)
         response = self.get_paginated_response(results)
@@ -862,6 +873,7 @@ class LoanDetailModify(generics.GenericAPIView):
 
     def put(self, request, pk, format=None):
         loan = self.get_instance(pk=pk)
+
         data = request.data.copy()
         data.update({"loan": loan})
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
@@ -892,62 +904,36 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             raise NotFound('Loan {} not found.'.format(pk))
 
     def post(self, request, pk, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({"error": ["Manager permissions required."]})
+
         loan = self.get_instance(pk=pk)
+
         data = request.data.copy()
         data.update({"loan": loan})
+
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            data = serializer.data
+
+            quantity = data.get('quantity')
+            loan.quantity_loaned -= quantity
+
+            disbursements = loan.loan_group.disbursements.filter(item__name=loan.item.name)
+            # add to existing disbursement or create a new one
+            if disbursements.count() > 0:
+                disbursement = disbursements.first()
+                disbursement.quantity += quantity
+                disbursement.save()
+            else:
+                disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity, loan_group=loan.loan_group)
+                disbursement.save()
+            loan.save()
             #todo can only mangers do this? send email?
             sendEmailForLoanToDisbursementConversion(loan)
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class DisbursementList(generics.GenericAPIView):
-    authentication_classes = (authentication.SessionAuthentication,)
-    permission_classes = (permissions.IsAuthenticated,)
-    pagination_class = CustomPagination
-
-    def get_queryset(self):
-        queryset = models.Disbursement.objects.filter(request__requester=self.request.user)
-        if not (self.request.user.is_staff or self.request.user.is_superuser):
-            queryset = queryset.filter(request__requester=self.request.user)
-        return queryset
-
-    def get_serializer_class(self):
-        return serializers.DisbursementSerializer
-
-    def get(self, request, format=None):
-        queryset = self.get_queryset()
-        paginated_queryset = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(instance=paginated_queryset, many=True)
-        response = self.get_paginated_response(serializer.data)
-        return response
-
-class DisbursementDetail(generics.GenericAPIView):
-    authentication_classes = (authentication.SessionAuthentication,)
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def get_queryset(self):
-        queryset = models.Disbursement.objects.all()
-        if not (self.request.user.is_staff or self.request.user.is_superuser):
-            queryset = queryset.filter(request__requester=self.request.user)
-        return queryset
-
-    def get_serializer_class(self):
-        return serializers.DisbursementSerializer
-
-    def get_instance(self, pk):
-        try:
-            return models.Disbursement.objects.get(pk=pk)
-        except models.Disbursement.DoesNotExist:
-            raise NotFound('Disbursement {} not found.'.format(pk))
-
-    def get(self, request, pk, format=None):
-        disbursement = self.get_instance(pk=pk)
-        serializer = self.get_serializer(instance=disbursement)
-        return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -1034,7 +1020,7 @@ def edit_user(request, username, format=None):
     if request.method == 'PUT':
         if not request.user.is_superuser and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
             return Response(status=status.HTTP_403_FORBIDDEN)
-        
+
         jsonData = json.loads(request.body.decode("utf-8"))
         user = models.User.objects.get(username=username)
 
@@ -1223,7 +1209,11 @@ class TransactionListCreate(generics.GenericAPIView):
             quantity = serializer.validated_data.get('quantity', 0)
             try:
                 item = models.Item.objects.get(name=serializer.validated_data.get('item'))
-                item.quantity -= quantity
+                category = serializer.validated_data.get('category')
+                if category.lower() == "acquisition":
+                    item.quantity += quantity
+                elif category.lower() == "loss":
+                    item.quantity -= quantity
                 item.save()
             except:
                 return Response({"name": ["Item with name '{}' does not exist.".format(serializer.validated_data.get('name', None))]})
@@ -1643,7 +1633,12 @@ def sendEmailForNewRequest(request):
 
 def sendEmail(subject, text_content, html_content, to_emails, bcc_emails=[]):
     from_email = settings.EMAIL_HOST_USER
-    subject = "{} {}".format(models.SubjectTag.objects.get().text, subject)            
+    x = None
+    try:
+        x = models.SubjectTag.objects.get()
+    except models.SubjectTag.DoesNotExist:
+        x = models.SubjectTag.objects.create(text='[kipventory]')
+    subject = "{} {}".format(x.text, subject)
     msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails, bcc_emails)
     msg.attach_alternative(html_content, "text/html")
     msg.send()
@@ -1784,7 +1779,7 @@ class LoanReminderModifyDelete(generics.GenericAPIView):
 
     def put(self, request, id, format=None):
         data = request.data
-        loan_reminder = self.get_instance(id=id)       
+        loan_reminder = self.get_instance(id=id)
         serializer = self.get_serializer(instance=loan_reminder, data=data)
         if serializer.is_valid():
             serializer.save()
