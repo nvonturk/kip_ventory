@@ -428,7 +428,7 @@ const RequestDetail = React.createClass({
           </td>
         </tr>
       )
-    } else if (this.state.status == 'O'){
+    } else if (this.state.status == 'O' && (this.props.route.user.is_staff || this.props.route.user.is_superuser)){
       approvalForm = (
         <Form horizontal>
           <br />
@@ -455,7 +455,10 @@ const RequestDetail = React.createClass({
           </FormGroup>
         </Form>
       )
+    } else if (this.state.status == 'O' && !(this.props.route.user.is_staff || this.props.route.user.is_superuser)){
+      approvalForm = null
     }
+
 
     return (
       <Panel header={"Request Details"}>

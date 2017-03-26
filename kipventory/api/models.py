@@ -246,25 +246,27 @@ class Log(models.Model):
     default_affected_user   = models.CharField(max_length=100, blank=True, null=True)
 
     # The following categories detail what type of inventory change occurred
-    ITEM_CREATION           = "Item Creation"
-    ITEM_MODIFICATION       = "Item Modification"
-    ITEM_DELETION           = "Item Deletion"
-    REQUEST_ITEM_CREATION   = "Request Item Creation"
-    REQUEST_ITEM_APPROVAL   = "Request Item Approval"
-    REQUEST_ITEM_DENIAL     = "Request Item Denial"
-    USER_CREATION           = "User Creation"
-    TRANSACTION_CREATION    = "Transaction Creation"
+    ITEM_CREATION                   = "Item Creation"
+    ITEM_MODIFICATION               = "Item Modification"
+    ITEM_DELETION                   = "Item Deletion"
+    REQUEST_ITEM_CREATION           = "Request Item Creation"
+    REQUEST_ITEM_APPROVAL_LOAN      = "Request Item Approval: Loan"
+    REQUEST_ITEM_APPROVAL_DISBURSE  = "Request Item Approval: Disburse"
+    REQUEST_ITEM_DENIAL             = "Request Item Denial"
+    USER_CREATION                   = "User Creation"
+    TRANSACTION_CREATION            = "Transaction Creation"
     category_choices    = (
         (ITEM_MODIFICATION, ITEM_MODIFICATION),
         (ITEM_CREATION, ITEM_CREATION),
         (ITEM_DELETION, ITEM_DELETION),
         (REQUEST_ITEM_CREATION, REQUEST_ITEM_CREATION),
-        (REQUEST_ITEM_APPROVAL, REQUEST_ITEM_APPROVAL),
+        (REQUEST_ITEM_APPROVAL_LOAN, REQUEST_ITEM_APPROVAL_LOAN),
+        (REQUEST_ITEM_APPROVAL_DISBURSE, REQUEST_ITEM_APPROVAL_DISBURSE),
         (REQUEST_ITEM_DENIAL, REQUEST_ITEM_DENIAL),
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),
     )
-    category            = models.CharField(max_length=25, choices=category_choices)
+    category            = models.CharField(max_length=50, choices=category_choices)
 
     def __str__(self):
         return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)

@@ -647,7 +647,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             return Response({"error": "Only outstanding requests may be modified."})
 
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
-
+        print("DATA", data)
         if serializer.is_valid():
             # check integrity of approval operation
             if data['status'] == 'D':
@@ -675,10 +675,14 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         ri_instance.save()
                         if ri_instance.request_type == models.LOAN:
                             loan = models.createLoanFromRequestItem(ri_instance)
+                            # requestItemApproval(ri_instance.item, request.user.pk, data)
                             loan.loan_group = loangroup
                             loan.save()
+                            print(instance)
+                            requestItemApprovalLoan(ri_instance.item, request.user.pk, instance)
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
+                            requestItemApprovalDisburse(ri_instance.item, request.user.pk, instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
@@ -1258,6 +1262,7 @@ class BulkImport(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
 
         if serializer.is_valid():
+            print("HERE")
             inputfile = request.FILES['data']
             fout = open('importtempfile.csv', 'wb')
             for chunk in inputfile.chunks():
@@ -1334,7 +1339,6 @@ class BulkImport(generics.GenericAPIView):
 
                 except models.CustomField.DoesNotExist:
                     custom_field_errors.append({field_name: ["Custom field '{}' does not exist (column {}).".format(field_name, i)]})
-
             # check unique names
             nameset = set()
             name_errors = []
@@ -1370,7 +1374,6 @@ class BulkImport(generics.GenericAPIView):
             if custom_field_errors:
                 for e in custom_field_errors:
                     errors.update(e)
-
             if errors:
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1410,6 +1413,8 @@ class BulkImport(generics.GenericAPIView):
                 }
 
             return Response(d)
+        else:
+            return Response({"no_file": ["Please select a .csv file."]}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         return serializers.BulkImportSerializer
@@ -1487,7 +1492,7 @@ class DisburseCreate(generics.GenericAPIView):
 
                 # Logging
                 requestItemCreation(req_item, request.user.pk, request_instance)
-                requestItemApproval(req_item, request.user.pk, request_instance)
+                requestItemApprovalDisburse(item, request.user.pk, request_instance)
 
             serializer.save()
             return Response(serializer.data)
@@ -1577,19 +1582,50 @@ def requestItemDenial(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category='Request Item Denial', message=message, affected_user=affected_user)
     log.save()
 
-def requestItemApproval(request_item, initiating_user_pk, requestObj):
-    item = request_item.item
+# def requestItemApproval(request_item, initiating_user_pk, requestObj):
+#     item = request_item.item
+#     initiating_user = None
+#     quantity = request_item.quantity
+#     affected_user = request_item.request.requester
+#     request = requestObj
+#     try:
+#         initiating_user = User.objects.get(pk=initiating_user_pk)
+#     except User.DoesNotExist:
+#         raise NotFound('User not found.')
+#     message = 'Request Item for item {} approved by {}'.format(request_item.item.name, initiating_user.username)
+#     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category='Request Item Approval', message=message, affected_user=affected_user)
+#     log.save()
+
+def requestItemApprovalLoan(request_item, initiating_user_pk, requestObj):
+    item = request_item
     initiating_user = None
     quantity = request_item.quantity
-    affected_user = request_item.request.requester
+    affected_user = requestObj.requester
     request = requestObj
+    category = 'Request Item Approval: Loan'
     try:
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
-    message = 'Request Item for item {} approved by {}'.format(request_item.item.name, initiating_user.username)
-    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category='Request Item Approval', message=message, affected_user=affected_user)
+    message = 'Request Item for item {} approved by {} as a {}'.format(item.name, initiating_user.username, category)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
     log.save()
+
+def requestItemApprovalDisburse(request_item, initiating_user_pk, requestObj):
+    item = request_item
+    initiating_user = None
+    quantity = request_item.quantity
+    affected_user = requestObj.requester
+    request = requestObj
+    category = 'Request Item Approval: Disburse'
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Request Item for item {} approved by {} as a {}'.format(item.name, initiating_user.username, category)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
+    log.save()
+
 
 def userCreationLog(data, initiating_user_pk):
     item = None
