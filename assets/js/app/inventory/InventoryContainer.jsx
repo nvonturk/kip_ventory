@@ -15,7 +15,7 @@ import Select from 'react-select';
 import 'react-select/dist/react-select.css';
 
 
-const ITEMS_PER_PAGE = 1;
+const ITEMS_PER_PAGE = 10;
 
 const InventoryContainer = React.createClass({
   getInitialState() {

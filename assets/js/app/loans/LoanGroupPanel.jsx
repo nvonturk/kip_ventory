@@ -78,8 +78,8 @@ const LoanGroupPanel = React.createClass({
       <Table style={{marginBottom: "0px"}}>
         <thead>
           <tr>
-            <th style={{width:"70%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
+            <th style={{width:"70%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
           </tr>
@@ -88,13 +88,13 @@ const LoanGroupPanel = React.createClass({
           { loans.map( (loan, i) => {
             return (
               <tr key={loan.id}>
+                <td data-th="" className="text-center">
+                  { this.getLoanStatusSymbol(loan, "15px") }
+                </td>
                 <td data-th="Item" className="text-left">
                   <a href={"/app/inventory/" + loan.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
                     { loan.item.name }
                   </a>
-                </td>
-                <td data-th="Status" className="text-center">
-                  { this.getLoanStatusSymbol(loan, "15px") }
                 </td>
                 <td data-th="Loaned" className="text-center">
                   { loan.quantity_loaned }
@@ -119,22 +119,22 @@ const LoanGroupPanel = React.createClass({
       <Table style={{marginBottom: "0px"}}>
         <thead>
           <tr>
-            <th style={{width:"70%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-            <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+            <th style={{width:"80%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
           </tr>
         </thead>
         <tbody>
           { disbursements.map( (disbursement, i) => {
             return (
               <tr key={disbursement.id}>
+                <td data-th="Status" className="text-center">
+                  <Glyphicon style={{color: "#f0ad4e", fontSize: "15px"}} glyph="log-out" />
+                </td>
                 <td data-th="Item" className="text-left">
                   <a href={"/app/inventory/" + disbursement.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
                     { disbursement.item.name }
                   </a>
-                </td>
-                <td data-th="Status" className="text-center">
-                  <Glyphicon style={{color: "#f0ad4e", fontSize: "15px"}} glyph="log-out" />
                 </td>
                 <td data-th="Quantity" className="text-center">
                   { disbursement.quantity }
@@ -162,14 +162,11 @@ const LoanGroupPanel = React.createClass({
           <Col xs={1} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             { this.getRequestStatusSymbol("18px") }
           </Col>
-          <Col xs={4} style={{paddingLeft: "0px"}}>
+          <Col xs={10} style={{paddingLeft: "0px"}}>
             <div style={{padding: "10px 0px", fontSize:"15px", color: "#df691a"}}>
               Request #{request.request_id}
             </div>
             <p style={{fontSize: "12px"}}>{ this.getRequestSubtitle() }</p>
-          </Col>
-          <Col xs={6}>
-
           </Col>
           <Col xs={1} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             { this.getExpandChevron() }

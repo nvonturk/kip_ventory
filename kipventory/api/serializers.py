@@ -332,13 +332,13 @@ class UserPUTSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         return validate_username(self.instance, value)
-    
+
     def update(self, instance, validated_data):
         # Update the Profile
         profile_data = validated_data.pop('profile', None)
         for attr, value in profile_data.items():
             setattr(instance.profile, attr, value)
-        
+
         # Update the User (could do super().update(instance, validated_data))
         instance = super(UserPUTSerializer, self).update(instance, validated_data)
 
@@ -453,11 +453,18 @@ class RequestPUTSerializer(serializers.ModelSerializer):
 
 class LoanSerializer(serializers.ModelSerializer):
     item    = ItemSerializer(read_only=True)
-    request = RequestSerializer(read_only=True)
+    request = serializers.SerializerMethodField(method_name="get_request_representation")
+
     class Meta:
         model = models.Loan
         fields = ['id', 'request', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date_loaned']
+
+    def get_request_representation(self, loangroup):
+        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
+        request_json.pop('loans')
+        request_json.pop('disbursements')
+        return request_json
 
 class LoanSerializerNoRequest(serializers.ModelSerializer):
     item    = ItemSerializer(read_only=True)
@@ -467,13 +474,20 @@ class LoanSerializerNoRequest(serializers.ModelSerializer):
         fields = ['id', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date_loaned']
 
-class DisbursementSerializerNoRequest(serializers.ModelSerializer):
+class DisbursementSerializer(serializers.ModelSerializer):
     item    = ItemSerializer(read_only=True)
-    request = RequestSerializer(read_only=True)
+    request = serializers.SerializerMethodField(method_name="get_request_representation")
+
     class Meta:
         model = models.Disbursement
         fields = ['id', 'request', 'item', 'quantity', 'date']
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date']
+
+    def get_request_representation(self, loangroup):
+        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
+        request_json.pop('loans')
+        request_json.pop('disbursements')
+        return request_json
 
 class DisbursementSerializerNoRequest(serializers.ModelSerializer):
     item    = ItemSerializer(read_only=True)

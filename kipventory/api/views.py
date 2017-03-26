@@ -688,7 +688,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
 
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
-                            disbursement.loan_group = loan_group
+                            disbursement.loan_group = loangroup
                             disbursement.save()
                             requestItemApprovalDisburse(ri_instance.item, request.user.pk, instance)
 
@@ -1633,7 +1633,12 @@ def sendEmailForNewRequest(request):
 
 def sendEmail(subject, text_content, html_content, to_emails, bcc_emails=[]):
     from_email = settings.EMAIL_HOST_USER
-    subject = "{} {}".format(models.SubjectTag.objects.get().text, subject)
+    x = None
+    try:
+        x = models.SubjectTag.objects.get()
+    except models.SubjectTag.DoesNotExist:
+        x = models.SubjectTag.objects.create(text='[kipventory]')
+    subject = "{} {}".format(x.text, subject)
     msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails, bcc_emails)
     msg.attach_alternative(html_content, "text/html")
     msg.send()
