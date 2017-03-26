@@ -3,7 +3,8 @@ import $ from "jquery"
 import TransactionList from './TransactionList'
 import Select from 'react-select'
 import Paginator from '../../Paginator'
-import { Grid, Row, Col } from 'react-bootstrap'
+import { Grid, Row, Col, Button, Glyphicon } from 'react-bootstrap'
+import CreateTransactionsContainer from './CreateTransactionsContainer'
 
 
 const TRANSACTIONS_PER_PAGE = 2;
@@ -17,6 +18,7 @@ class TransactionsContainer extends Component {
       filter_option: 'All',
       page: 1,
       pageCount: 0,
+      showCreateTransactionForm: false,
 
     };
 
@@ -28,7 +30,9 @@ class TransactionsContainer extends Component {
     this.placeholder = "Filter";
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handlePageClick = this.handlePageClick.bind(this);
-
+    this.showCreateTransactionForm = this.showCreateTransactionForm.bind(this);
+    this.getTransactions = this.getTransactions.bind(this);
+    
     this.getTransactions();
   }
 
@@ -68,19 +72,23 @@ class TransactionsContainer extends Component {
     }, this.getTransactions);
   }
 
+  showCreateTransactionForm() {
+    this.setState({
+      showCreateTransactionForm: true
+    })
+  }
+
   render() {
     return (
       <Grid fluid>
         <Row>
           <Col sm={12}>
-            <h3>Transactions</h3>
+            <h3 style={{display:"inline-block"}}>Acquisitions and Losses</h3>
             <hr />
-            <p>
-              View Item Transcations.
-            </p>
-            <br />
           </Col>
         </Row>
+        <p>View Acquisitions and Losses or Log a new one.</p>
+        <CreateTransactionsContainer handleTransactionCreated={this.getTransactions} />
         <Select value={this.state.filter_option} placeholder={this.placeholder} options={this.options} onChange={this.handleFilterChange} clearable={false}/>
         <TransactionList transactions={this.state.transactions} />
         <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>

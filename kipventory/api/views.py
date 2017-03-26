@@ -91,7 +91,7 @@ class ItemListCreate(generics.GenericAPIView):
         all_items = request.query_params.get('all', False)
         if all_items:
             serializer = self.get_serializer(instance=queryset, many=True)
-            d = {"count": 1, 'num_pages': 1, "results": serializer.data}
+            d = {"count": len(serializer.data), 'num_pages': 1, "results": serializer.data}
             return Response(d)
 
         queryset = self.filter_queryset(queryset, request)
@@ -1201,9 +1201,10 @@ class TransactionListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
 
-        category = request.GET.get('category')
-        if not (category is None or category==""):
-            queryset = models.Transaction.objects.filter(category=category)
+        category = request.query_params.get('category', None)
+        if category != None and category != "":
+            if category in set(['Acquisition', 'Loss']):
+                queryset = queryset.filter(category=category)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)

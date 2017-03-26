@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import { Grid, Row, Col, Button, Modal, Table, Form, Tab, Nav, NavItem, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
-import CreateTransactionsContainer from '../CreateTransactionsContainer'
 import {browserHistory} from 'react-router'
 import TagMultiSelect from '../../TagMultiSelect'
 import Select from 'react-select'
