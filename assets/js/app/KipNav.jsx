@@ -22,6 +22,64 @@ const KipNav = React.createClass({
     )
   },
 
+  getCustomFieldsLink(is_superuser) {
+    return is_superuser ? (
+      <LinkContainer to="/app/manage/custom-fields">
+        <MenuItem eventKey={1.8}>Custom Fields</MenuItem>
+      </LinkContainer>
+    ) : null
+  },
+
+  getManagerLink(url, name) {
+    var i = INDEX
+    INDEX = INDEX + 1
+    return (
+      <NavDropdown eventKey={i} title={name} id="manage-nav-dropdown">
+        <LinkContainer to="/app/manage/create-item">
+          <MenuItem eventKey={1.1}>Create Items</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/manage/tags">
+          <MenuItem eventKey={1.2}>Tags</MenuItem>
+        </LinkContainer>
+        { this.getCustomFieldsLink(this.props.route.user.is_superuser) }
+        <LinkContainer to="/app/manage/disburse">
+          <MenuItem eventKey={1.3}>Disbursement</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/manage/requests">
+          <MenuItem eventKey={1.4}>Requests</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/manage/transactions">
+          <MenuItem eventKey={1.5}>Aquisitions and Losses</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/manage/logs">
+          <MenuItem eventKey={1.6}>Logs</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/manage/emails">
+          <MenuItem eventKey={1.7}>Emails</MenuItem>
+        </LinkContainer>
+      </NavDropdown>
+    )
+    
+  },
+
+  getAdminLink(url, name) {
+    var i = INDEX
+    INDEX = INDEX + 1
+    return (
+      <NavDropdown eventKey={i} title={name} id="admin-nav-dropdown">
+        <LinkContainer to="/app/admin/users/create/">
+          <MenuItem eventKey={2.1}>Create Users</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/admin/users/manage/">
+          <MenuItem eventKey={2.2}>Manage Users</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/admin/adminpanel/">
+          <MenuItem eventKey={2.3}>Django Admin Panel</MenuItem>
+        </LinkContainer>          
+      </NavDropdown>
+    )
+  },
+
   render() {
     return (
       <div>
@@ -37,8 +95,9 @@ const KipNav = React.createClass({
               {this.getLink("/app/inventory/", "Inventory")}
               {this.getLink("/app/requests/", "Your Requests")}
               {this.getLink("/app/loans/", "Your Loans")}
-              {(this.props.route.user.is_staff)     ? this.getLink("/app/manage/", "Manage") : null}
-              {(this.props.route.user.is_superuser) ? this.getLink("/app/admin/",  "Admin") : null}
+
+              {(this.props.route.user.is_staff)     ? this.getManagerLink("/app/manage/", "Manage") : null}
+              {(this.props.route.user.is_superuser) ? this.getAdminLink("/app/admin/",  "Admin") : null}
             </Nav>
             <Nav pullRight>
               {this.getLink("/app/cart/", <Glyphicon glyph="shopping-cart" />)}
