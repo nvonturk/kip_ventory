@@ -35,13 +35,14 @@ urlpatterns = [
     url(r'^loans/(?P<pk>[\d]+?)/?$',         views.LoanDetailModify.as_view()),
     url(r'^loans/(?P<pk>[\d]+?)/convert/?$', views.ConvertLoanToDisbursement.as_view()),
 
-    url(r'^disbursements/?$',                views.DisbursementList.as_view()),
-    url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
-    
+    # url(r'^disbursements/?$',                views.DisbursementList.as_view()),
+    # url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
+
     url(r'^loanreminders/?$', views.LoanReminderListCreate.as_view()),
     url(r'^loanreminders/(?P<id>[\d]+?)/?$', views.LoanReminderModifyDelete.as_view()),
 
     url(r'^subjecttag/?$', views.SubjectTagGetModify.as_view()),
+
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 

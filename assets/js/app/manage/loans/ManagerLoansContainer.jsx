@@ -8,9 +8,9 @@ import { browserHistory } from 'react-router'
 import Select from 'react-select'
 import LoanModal from './LoanModal'
 
-import LoanGroupPanel from './LoanGroupPanel'
+import ManagerLoanPanel from './ManagerLoanPanel'
 
-const LoansContainer = React.createClass({
+const ManagerLoansContainer = React.createClass({
   getInitialState() {
     return {
       loanGroups: [],
@@ -43,7 +43,6 @@ const LoansContainer = React.createClass({
     console.log(params)
     var _this = this;
     getJSON(url, params, function(data) {
-      console.log(data.results)
       _this.setState({
         loanGroups: data.results,
         pageCount: Number(data.num_pages)
@@ -254,4 +253,4 @@ const LoansContainer = React.createClass({
 
 })
 
-export default LoansContainer
+export default ManagerLoansContainer
