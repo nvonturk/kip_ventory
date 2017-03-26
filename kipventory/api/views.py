@@ -322,15 +322,15 @@ class GetItemStacks(generics.GenericAPIView):
                 if (ri.item.name == item_name):
                     rq += ri.quantity
 
-        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, is_disbursement=False, quantity_loaned__gt=F('quantity_returned'))
+        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
         lq = 0
         for l in loans.all():
             lq += (l.quantity_loaned - l.quantity_returned)
 
-        disbursements = models.Loan.objects.filter(request__requester=request.user.pk, is_disbursement=True, item__name=item_name)
+        disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
         dq = 0
         for d in disbursements.all():
-            dq += d.quantity_disbursed
+            dq += d.quantity
 
         cart = models.CartItem.objects.filter(owner__pk=request.user.pk, item__name=item_name)
         cq = 0
@@ -1480,22 +1480,29 @@ class DisburseCreate(generics.GenericAPIView):
         if serializer.is_valid():
             request_instance = serializer.save()
 
-        data = {}
-        data.update({'administrator': request.user})
-        data.update({'closed_comment': closed_comment})
-        data.update({'status': 'A'})
+            data = {}
+            data.update({'administrator': request.user})
+            data.update({'closed_comment': closed_comment})
+            data.update({'status': 'A'})
 
-        serializer = serializers.RequestPUTSerializer(instance=request_instance, data=data, partial=True)
+            request_instance.administrator = request.user
+            request_instance.closed_comment = closed_comment
+            request_instance.status = 'A'
+            request_instance.save()
 
-        # We're good to go!
-        if serializer.is_valid():
+            loangroup = models.LoanGroup.objects.create(request=request_instance)
             for item, quantity in zip(items, quantities):
-                # Create the request item
-                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request=request_instance)
+                # Create request item
+                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request_type=models.DISBURSEMENT, request=request_instance)
                 req_item.save()
 
+                # Create the disbursement from this request item
+                disbursement = models.createDisbursementFromRequestItem(req_item)
+                disbursement.loan_group = loangroup
+                disbursement.save()
+
                 # Decrement the quantity remaining on the Item
-                setattr(item, 'quantity', (item.quantity - quantity))
+                item.quantity -= quantity
                 item.save()
 
                 # Logging
@@ -1503,10 +1510,10 @@ class DisburseCreate(generics.GenericAPIView):
                 requestItemApprovalDisburse(item, request.user.pk, request_instance)
 
             sendEmailForNewDisbursement(requester)
-            serializer.save()
+            loangroup.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def itemCreationLog(data, initiating_user_pk):
