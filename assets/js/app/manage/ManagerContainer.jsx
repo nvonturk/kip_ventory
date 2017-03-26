@@ -7,7 +7,7 @@ import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap'
 const ManagerContainer = React.createClass({
   getInitialState() {
     return {
-      activeKey: 0,
+      activeKey: 1,
     }
   },
 
@@ -34,9 +34,10 @@ const ManagerContainer = React.createClass({
               <LinkContainer to="/app/manage/create-item">
                 <NavItem eventKey={1}>Create Items</NavItem>
               </LinkContainer>
-
+              <LinkContainer to="/app/manage/tags">
+                <NavItem eventKey={7}>Tags</NavItem>
+              </LinkContainer>
               { this.getCustomFieldsLink(this.props.route.admin.is_superuser) }
-
               <LinkContainer to="/app/manage/disburse">
                 <NavItem eventKey={3}>Disbursement</NavItem>
               </LinkContainer>
@@ -44,13 +45,13 @@ const ManagerContainer = React.createClass({
                 <NavItem eventKey={4}>Requests</NavItem>
               </LinkContainer>
               <LinkContainer to="/app/manage/transactions">
-                <NavItem eventKey={5}>Transactions</NavItem>
+                <NavItem eventKey={5}>Aquisitions and Losses</NavItem>
               </LinkContainer>
               <LinkContainer to="/app/manage/logs">
                 <NavItem eventKey={6}>Logs</NavItem>
               </LinkContainer>
-              <LinkContainer to="/app/manage/tags">
-                <NavItem eventKey={7}>Tags</NavItem>
+              <LinkContainer to="/app/manage/emails">
+                <NavItem eventKey={8}>Emails</NavItem>
               </LinkContainer>
             </Nav>
           </Col>

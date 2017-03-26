@@ -37,6 +37,11 @@ urlpatterns = [
 
     url(r'^disbursements/?$',                views.DisbursementList.as_view()),
     url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
+    
+    url(r'^loanreminders/?$', views.LoanReminderListCreate.as_view()),
+    url(r'^loanreminders/(?P<id>[\d]+?)/?$', views.LoanReminderModifyDelete.as_view()),
+
+    url(r'^subjecttag/?$', views.SubjectTagGetModify.as_view()),
 
     url(r'^transactions/?$', views.TransactionListCreate.as_view()),
 
@@ -57,6 +62,7 @@ urlpatterns = [
     url(r'^users/current/?$', views.GetCurrentUser.as_view()),
     url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.edit_user),
     url(r'^users/create/?$',         views.UserCreate.as_view()),
+    url(r'^users/managers/subscribed/?$', views.get_subscribed_managers),
 
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 ]

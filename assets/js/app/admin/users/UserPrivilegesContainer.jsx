@@ -89,7 +89,9 @@ class UserPrivilegesContainer extends Component {
 		$.ajax({
 		    url:"/api/users/edit/" + user.username + "/",
 		    type: "PUT",
-		    data: user,
+		    data: JSON.stringify(user),
+		    contentType:"application/json; charset=utf-8",
+      		processData: false,
 		    beforeSend: function(request) {
 		      request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
 		    },
@@ -106,16 +108,16 @@ class UserPrivilegesContainer extends Component {
 		});
 	}
 
-	// todo change i to actual i (pagination)
 	getTableRow(user, i) {
 	    return (
 	      <tr key={user.username}>
-	      	<td>{i}</td>
+	      	<td>{i+1}</td>
 	        <td>{user.username}</td>
 	        <td>{user.first_name}</td>
 	        <td>{user.last_name}</td>
 	        <td>{user.email}</td>
 	        <td><UserPrivilegesSelect user={user} changePrivilegeHandler={this.changePrivilegeHandler}/></td>
+
 	      </tr>
 	    )
 	 }
@@ -137,12 +139,14 @@ class UserPrivilegesContainer extends Component {
 
 	render() {
 		return (
-			<Table striped bordered condensed hover>
-	          	{this.getTableHeader()}
-	          	<tbody>
+			<div>
+			<Table bordered condensed hover>
+	    	{this.getTableHeader()}
+	      <tbody>
  					{this.state.users.map((user, i) => this.getTableRow(user, i))}	          
  				</tbody>
-	        </Table>
+	    </Table>
+	    </div>
 		)
 	}
 }	

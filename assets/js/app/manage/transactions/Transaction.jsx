@@ -19,7 +19,6 @@ function Transaction(props){
 		Administrator: kip
 		Comment: bought them
 	*/
-	console.log(props);
   return (
   	<div>
   		<p>{props.transaction.category} of {props.transaction.quantity} {props.transaction.item}(s) on {new Date(props.transaction.date).toLocaleString()}</p>

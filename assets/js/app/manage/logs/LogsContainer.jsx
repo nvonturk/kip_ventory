@@ -53,11 +53,15 @@ class LogsContainer extends Component {
   }
 
   getItems(){
-    var thisObj = this
-    $.getJSON("/api/items.json", function(data){
+    var thisObj = this;
+    var params = {
+      all: true
+    };
+    $.getJSON("/api/items.json", params, function(data){
       thisObj.setState({items: data.results})
       thisObj.createItemlist(data.results)
-    });  }
+    });  
+  }
 
   createUserlist(data){
     var list = []

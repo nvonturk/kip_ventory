@@ -10,7 +10,6 @@ class AdminContainer extends Component {
     this.state = {
       activeKey: 0,
       headers: ['', 'Create Users', 'Manage Users'], //New User Requests
-      currentHeader: ''
     };
 
     this.handleSelect = this.handleSelect.bind(this);
@@ -20,7 +19,6 @@ class AdminContainer extends Component {
     var header = this.state.headers[key];
     this.setState({
       activeKey: key,
-      currentHeader: header,
     })
   }
 

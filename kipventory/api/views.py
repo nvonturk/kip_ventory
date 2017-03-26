@@ -22,9 +22,10 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.views import password_reset, password_reset_confirm
 from django.http import HttpResponse
-
-import requests, csv, os, json
-
+import dateutil.parser
+import json, requests, csv, os
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 
 class CustomPagination(pagination.PageNumberPagination):
     page_query_param = 'page'
@@ -90,7 +91,7 @@ class ItemListCreate(generics.GenericAPIView):
         all_items = request.query_params.get('all', False)
         if all_items:
             serializer = self.get_serializer(instance=queryset, many=True)
-            d = {"count": 1, 'num_pages': 1, "results": serializer.data}
+            d = {"count": len(serializer.data), 'num_pages': 1, "results": serializer.data}
             return Response(d)
 
         queryset = self.filter_queryset(queryset, request)
@@ -599,6 +600,9 @@ class RequestListCreate(generics.GenericAPIView):
             requestItemCreation(req_item, request.user.pk, request_instance)
             ci.delete()
 
+        #todo maybe combine this with the requsetItemCreationLog method (involves refactoring of logs)
+        sendEmailForNewRequest(request_instance)
+
         serializer = self.get_serializer(instance=request_instance)
         return Response(serializer.data)
 
@@ -655,6 +659,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                 # Need {serializer.data, initiating_user_pk, 'Request Approved'}
                 for ri in instance.requested_items.all():
                     requestItemDenial(ri, request.user.pk, instance)
+                sendEmailForRequestStatusUpdate(instance)
             # need to check that we're not giving out more instances than currently exist
             elif data['status'] == 'A':
                 valid_request = True
@@ -683,6 +688,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
                             requestItemApprovalDisburse(ri_instance.item, request.user.pk, instance)
+                    sendEmailForRequestStatusUpdate(instance)
                 else:
                     return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
@@ -700,6 +706,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             d = {"error": "Cannot delete an approved/denied request."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         instance.delete()
+        #sendEmailForDeletedOutstandingRequest? Probably not
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -860,6 +867,8 @@ class LoanDetailModify(generics.GenericAPIView):
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            #todo can only managers do this? send email??
+            sendEmailForLoanModification(loan)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -889,6 +898,8 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
+            #todo can only mangers do this? send email?
+            sendEmailForLoanToDisbursementConversion(loan)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -968,7 +979,7 @@ class UserList(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
-        return User.objects.all()
+        return User.objects.all().order_by("username")
 
     def get_serializer_class(self):
         return serializers.UserGETSerializer
@@ -1001,9 +1012,11 @@ class UserCreate(generics.GenericAPIView):
 class GetCurrentUser(generics.GenericAPIView):
     queryset = None
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = None
+    serializer_class = serializers.UserGETSerializer
 
     def get(self, request, format=None):
+        serializer = self.get_serializer(instance=request.user)
+        return Response(serializer.data)
         user = request.user
         return Response({
             "username": user.username,
@@ -1011,22 +1024,26 @@ class GetCurrentUser(generics.GenericAPIView):
             "last_name": user.last_name,
             "email": user.email,
             "is_staff": user.is_staff,
-            "is_superuser": user.is_superuser
+            "is_superuser": user.is_superuser,
+            "profile" : user.profile
         })
 
 @api_view(['PUT'])
 @permission_classes((permissions.IsAuthenticated,))
 def edit_user(request, username, format=None):
     if request.method == 'PUT':
-        if not request.user.is_superuser:
+        if not request.user.is_superuser and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
             return Response(status=status.HTTP_403_FORBIDDEN)
-        updatedUser = request.data
-        user = models.User.objects.get(username=updatedUser['username'])
-        serializer = serializers.UserPUTSerializer(instance=user, data=updatedUser, partial=True)
+        
+        jsonData = json.loads(request.body.decode("utf-8"))
+        user = models.User.objects.get(username=username)
+
+        serializer = serializers.UserPUTSerializer(instance=user, data=jsonData, partial=True)
         if serializer.is_valid():
+            print("saving user serializer")
             serializer.save()
             return Response(serializer.data)
-
+        print("error saving user {} ".format(serializer.errors))
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetNetIDToken(generics.GenericAPIView):
@@ -1184,9 +1201,10 @@ class TransactionListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
 
-        category = request.GET.get('category')
-        if not (category is None or category==""):
-            queryset = models.Transaction.objects.filter(category=category)
+        category = request.query_params.get('category', None)
+        if category != None and category != "":
+            if category in set(['Acquisition', 'Loss']):
+                queryset = queryset.filter(category=category)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
@@ -1494,6 +1512,7 @@ class DisburseCreate(generics.GenericAPIView):
                 requestItemCreation(req_item, request.user.pk, request_instance)
                 requestItemApprovalDisburse(item, request.user.pk, request_instance)
 
+            sendEmailForNewDisbursement(requester)
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1567,6 +1586,67 @@ def requestItemCreation(request_item, initiating_user_pk, requestObj):
     message = 'Request Item for item {} created by {}'.format(request_item.item.name, initiating_user)
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
     log.save()
+
+def sendEmailForLoanToDisbursementConversion(loan):
+    user = User.objects.get(username=loan.request.requester)
+    subject = "Loan To Disbursement"
+    text_content = "One of your loans has been converted to a disbursement."
+    html_content = text_content
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+def sendEmailForLoanModification(loan):
+    #todo make something more specific for loan returns
+    #are there any other loan modificaations besides marking as returned?
+    user = User.objects.get(username=loan.request.requester)
+    subject = "Loan Modification"
+    text_content = "One of your loans has been modified."
+    html_content = text_content
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+def sendEmailForNewDisbursement(user):
+    subject = "New Disbursement"
+    text_content = "An administrator has disbursed one or more item(s) to you. Check the website for details."
+    html_content = text_content
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+def sendEmailForRequestStatusUpdate(request):
+    user = request.requester
+    subject = "Request Status Update"
+    text_content = "The status of one of your requests has changed."
+    html_content = text_content
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+def sendEmailForNewRequest(request):
+    user = request.requester
+    request_items = models.RequestedItem.objects.filter(request=request)
+    subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
+
+    # Send email to all subscribed managers
+    subject = "New User Request"
+    text_content = "User {} initiated a new request for one or more item(s). Go to the website to view and/or respond to this request.".format(user.username)
+    html_content = "User <b>{}</b> initiated a new request for one or more item(s). Go to the website to view and/or respond to this request.".format(user.username)
+    to_emails = []
+    bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
+    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+
+    # Send email to requesting user
+    subject = "Request Confirmation"
+    text_content = "This email is to confirm that you have made a new request for one or more item(s). Go to the website to view your request. An email will be sent when the status of your request changes."
+    html_content = text_content
+    to_emails = [user.email]
+    bcc_emails = []
+    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+
+def sendEmail(subject, text_content, html_content, to_emails, bcc_emails=[]):
+    from_email = settings.EMAIL_HOST_USER
+    subject = "{} {}".format(models.SubjectTag.objects.get().text, subject)            
+    msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails, bcc_emails)
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
 
 def requestItemDenial(request_item, initiating_user_pk, requestObj):
     item = request_item.item
@@ -1656,3 +1736,91 @@ def transactionCreationLog(item, initiating_user_pk, category, amount):
     message = "User {} created a {} transaction on item {} of quantity {} and it now has a quantity of {}".format(initiating_user, category, item, quantity, item.quantity)
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Transaction Creation', message=message, affected_user=affected_user)
     log.save()
+
+@api_view(['GET'])
+@permission_classes((permissions.IsAuthenticated,))
+def get_subscribed_managers(request):
+    if request.method == 'GET':
+        subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
+        serializer = serializers.UserGETSerializer(instance=subscribed_managers, many=True)
+        return Response(serializer.data)
+
+class LoanReminderListCreate(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return models.LoanReminder.objects.all().order_by("date")
+
+    def get_serializer_class(self):
+        return serializers.LoanReminderSerializer
+
+    def get(self, request, format=None):
+        queryset = self.get_queryset()
+        sent = json.loads(request.query_params.get("sent", "false"))
+        queryset = queryset.filter(sent=sent)
+        # Pagination
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+    def post(self, request, format=None):
+        data = request.data
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LoanReminderModifyDelete(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self, id):
+        return models.LoanReminder.objects.get(id=id)
+
+    def get_serializer_class(self):
+        return serializers.LoanReminderSerializer
+
+    def put(self, request, id, format=None):
+        data = request.data
+        loan_reminder = self.get_instance(id=id)       
+        serializer = self.get_serializer(instance=loan_reminder, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id, format=None):
+        #todo do i need to deal with DoNotExist?
+        loan_reminder = self.get_instance(id=id)
+        loan_reminder.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class SubjectTagGetModify(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self):
+        try:
+            subject_tag = models.SubjectTag.objects.get()
+            return subject_tag
+        except models.SubjectTag.DoesNotExist:
+            subject_tag = models.SubjectTag(text='[kipventory]')
+            subject_tag.save()
+            return subject_tag
+
+    def get_serializer_class(self):
+        return serializers.SubjectTagSerializer
+
+    def get(self, request, format=None):
+        subject_tag = self.get_instance()
+        serializer = self.get_serializer(instance=subject_tag)
+        return Response(serializer.data)
+
+    def put(self, request, format=None):
+        subject_tag = self.get_instance()
+        serializer = self.get_serializer(instance=subject_tag, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

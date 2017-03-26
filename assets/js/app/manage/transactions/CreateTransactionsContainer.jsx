@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 import { ajax } from "jquery"
-import { FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Button} from 'react-bootstrap'
-import { getCookie } from '../../csrf/DjangoCSRFToken'
-
+import { FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Button, Glyphicon} from 'react-bootstrap'
+import { getCookie } from '../../../csrf/DjangoCSRFToken'
+import $ from 'jquery'
 
 class CreateTransactionsContainer extends Component {
   constructor(props) {
@@ -11,7 +11,9 @@ class CreateTransactionsContainer extends Component {
       showModal: false,
       category: "Acquisition",
       quantity: "",
-      comment: ""
+      comment: "",
+      items: [], 
+      item_name: "",
     };
     this.close = this.close.bind(this);
     this.open = this.open.bind(this);
@@ -19,7 +21,27 @@ class CreateTransactionsContainer extends Component {
     this.handleCommentChange = this.handleCommentChange.bind(this);
     this.handleTypeChange = this.handleTypeChange.bind(this);
     this.createTransaction = this.createTransaction.bind(this);
+    this.getItems = this.getItems.bind(this)
+    this.handleItemChange = this.handleItemChange.bind(this);
+    
+    this.getItems()
 
+  }
+
+  getItems(){
+    var thisObj = this;
+    var params = {
+      all: true
+    };
+    $.getJSON("/api/items.json", params, function(data){
+      var item_name = data.results.length > 0 ? data.results[0].name : "";
+      thisObj.setState({items: data.results, item_name: item_name})
+    });  
+  }
+
+  getItemOptions() {
+    return this.state.items.map((item, i)=> { return <option key={item.name} value={item.name}>{item.name}</option>})
+    
   }
 
   close() {
@@ -28,6 +50,10 @@ class CreateTransactionsContainer extends Component {
 
   open() {
     this.setState({ showModal: true });
+  }
+
+  handleItemChange(item) {
+    this.setState({item_name: item.target.value});
   }
 
   handleQuantityChange(e) {
@@ -52,7 +78,7 @@ class CreateTransactionsContainer extends Component {
       quantity: this.state.quantity,
       comment: this.state.comment,
       category: this.state.category,
-      item: this.props.item_name
+      item: this.state.item_name
     }
 
     var thisObj = this;
@@ -70,10 +96,9 @@ class CreateTransactionsContainer extends Component {
           quantity: "",
           comment: ""
         });
+        thisObj.props.handleTransactionCreated();
       },
       complete:function() {
-        //todo success vs complete
-        thisObj.props.handleTransactionCreated();
       },
       error:function (xhr, textStatus, thrownError){
           alert(xhr.responseText);
@@ -85,14 +110,21 @@ class CreateTransactionsContainer extends Component {
 
     return (
       <div>
-         <Button bsStyle="success" onClick={this.open}>Create Transaction</Button>
-
+          <Button bsSize="small" bsStyle="primary" style={{verticalAlign:"middle", marginBottom:"20px"}} onClick={this.open}>
+              Log an Acquisition or Loss &nbsp; <Glyphicon glyph="plus" />
+          </Button>
          <Modal show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>
-            <Modal.Title>Create Transaction</Modal.Title>
+            <Modal.Title>Log an Acquisition or Loss of Instances</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <form>
+              <FormGroup controlId="formControlsSelect">
+                <ControlLabel>Item</ControlLabel>
+                <FormControl componentClass="select" value={this.state.item_name} onChange={this.handleItemChange}>
+                  {this.getItemOptions()}
+                </FormControl>
+              </FormGroup>
               <FormGroup controlId="formControlsText">
                 <ControlLabel>Quantity</ControlLabel>
                 <FormControl type="text" placeholder="Enter amount acquired or lost." value={this.state.quantity} onChange={this.handleQuantityChange} />

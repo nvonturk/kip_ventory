@@ -154,3 +154,13 @@ body, html {
 .table>tbody>tr>td, .table>tfoot>tr>td{
     vertical-align: middle;
 }
+
+.subject-tag {
+	color: black;
+	padding-right: 10px;
+	padding-left: 5px;
+}
+
+.info {
+	padding-bottom: 20px;
+}

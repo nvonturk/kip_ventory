@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Table, Button } from 'react-bootstrap'
+import { Table, Button, Glyphicon} from 'react-bootstrap'
 import Select from 'react-select'
 import $ from 'jquery'
 
@@ -12,9 +12,9 @@ class UserPrivilegesSelect extends Component {
 	    };
 
 	    this.privilegeOptions = [
-	    	 	{ value: 'Admin', label: 'Admin' },
-                { value: 'Manager', label: 'Manager' },
-                { value: 'User', label: 'User' },
+	    	 { value: 'Admin', label: 'Admin' },
+         { value: 'Manager', label: 'Manager' },
+         { value: 'User', label: 'User' },
 	    ];
 
 	    this.handleEditButtonClicked = this.handleEditButtonClicked.bind(this);
@@ -22,8 +22,16 @@ class UserPrivilegesSelect extends Component {
 
 	}
 
-	getEditButtonName() {
-		return this.state.editMode ? "Done" : "Edit";
+	getEditOrSaveButton() {
+		if(this.state.editMode) {
+			return (
+				<span className="clickable"><Glyphicon glyph="check" onClick={this.handleEditButtonClicked}/></span>
+			)
+		} else {
+			return (
+				<span className="clickable"><Glyphicon glyph="pencil" onClick={this.handleEditButtonClicked}/></span>
+			)
+		}
 	}
 
 	handleEditButtonClicked() {
@@ -50,17 +58,14 @@ class UserPrivilegesSelect extends Component {
 	}
 
 	changePrivilege(value) {
-		//console.log(this.props);
 		this.props.changePrivilegeHandler(this.state.user, value);
 	}
 
 	getPrivilegeEditMode(is_superuser, is_staff) {
 		var value = this.getPrivilegeValue(is_superuser, is_staff);
-        return (
-        	<div>
-         	<Select user={this.state.user} value={value} options={this.privilegeOptions} onChange={this.changePrivilege} clearable={false}/>
-         	</div>
-        )
+    return (
+     	<Select user={this.state.user} value={value} options={this.privilegeOptions} onChange={this.changePrivilege} clearable={false}/>
+    )
 	}
 
 
@@ -68,8 +73,10 @@ class UserPrivilegesSelect extends Component {
 		var privilegeDiv = this.getPrivilege(this.state.user.is_superuser, this.state.user.is_staff);
 		return (
 			<div>
-			{privilegeDiv}
-			<Button onClick={this.handleEditButtonClicked}>{this.getEditButtonName()}</Button>
+			<div style={{width:"80px", display:"inline-block"}}>
+				{privilegeDiv}
+			</div>
+			{this.getEditOrSaveButton()}
 			</div>
 		)
 	}

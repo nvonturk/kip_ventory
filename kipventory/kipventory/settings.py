@@ -46,8 +46,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_swagger',
+    'django_cron',
     # local
     'api',
+    'djcelery',
+    'djcelery_email',
 ]
 
 MIDDLEWARE = [
@@ -58,6 +61,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CRON_CLASSES = [
+    "api.crons.SendLoanReminderEmail",
+    # ...
 ]
 
 ROOT_URLCONF = 'kipventory.urls'
@@ -153,10 +161,28 @@ EMAIL_HOST_USER = "kipventory@gmail.com"
 
 EMAIL_HOST_PASSWORD = "ece458kipventory"
 
-EMAIL_PORT = 465 #587 for TLS
+EMAIL_PORT = 465 #465 for SSL, #587 for TLS
 
 EMAIL_USE_SSL = True
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SERVER_EMAIL = EMAIL_HOST_USER
+
+# for development only
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# for production
+EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
+
+# CELERY STUFF
+CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//' #rabbitMQ
+#CELERY_BROKER_URL = 'redis://localhost:6379' #redis
+'''
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Africa/Nairobi'
+'''
+

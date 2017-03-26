@@ -3,6 +3,8 @@ from rest_framework.exceptions import ValidationError
 from . import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import dateutil.parser
+from datetime import datetime
 import re, json
 
 
@@ -276,10 +278,10 @@ class TransactionSerializer(serializers.ModelSerializer):
 
         return data
 
-class UserGETSerializer(serializers.ModelSerializer):
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
+        model = models.Profile
+        fields = ['subscribed']
 
 def validate_username(instance, value):
     netid_regex = re.compile(r'[a-z]{2,3}[0-9]{1,3}')
@@ -296,10 +298,17 @@ def validate_username(instance, value):
                 raise ValidationError({"username": ["Username '{}' is already taken.".format(username)]})
     return value
 
+class UserGETSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser', 'profile']
+
 class UserPOSTSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
     def validate_username(self, value):
         return validate_username(self.instance, value)
@@ -315,13 +324,29 @@ class UserPOSTSerializer(serializers.ModelSerializer):
     '''
 
 class UserPUTSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
+        fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser', 'profile']
 
     def validate_username(self, value):
-        #todo make sure you can't change username to somebody else's.
         return validate_username(self.instance, value)
+    
+    def update(self, instance, validated_data):
+        # Update the Profile
+        profile_data = validated_data.pop('profile', None)
+        for attr, value in profile_data.items():
+            setattr(instance.profile, attr, value)
+        
+        # Update the User (could do super().update(instance, validated_data))
+        instance = super(UserPUTSerializer, self).update(instance, validated_data)
+
+        # Save the User (might not be necessary because it's called in super)
+        # Profile gets saved automatically through post_save hook in models.py
+        instance.save()
+
+        return instance
 
 class RequestedItemSerializer(serializers.ModelSerializer):
     item         = serializers.SlugRelatedField(read_only=True, slug_field="name")
@@ -495,6 +520,37 @@ class ConversionSerializer(serializers.Serializer):
             loan.delete()
         d.save()
         return d
+
+class LoanReminderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.LoanReminder
+        fields = ['id', 'body', 'subject', 'date']
+
+    def to_internal_value(self, data):
+        print("to interval value")
+        validated_data = data.copy()
+        today = datetime.now().date()
+        errors = {}
+        if data["date"]==None:
+            errors["date"] = ["Date cannot be empty"]
+        else:
+            try:
+                validated_data["date"] = dateutil.parser.parse(data["date"]).date()
+                if validated_data["date"] < today:
+                    errors["date"] = ["Date cannot be in the past."]
+            except:
+                errors["date"] = ["Invalid date."]
+
+
+        if errors:
+            raise ValidationError(errors)
+        return validated_data
+
+
+class SubjectTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SubjectTag
+        fields = ['text']
 
 class LogSerializer(serializers.ModelSerializer):
     item            = serializers.SlugRelatedField(slug_field="name",     read_only=True)

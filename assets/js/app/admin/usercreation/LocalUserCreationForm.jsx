@@ -14,9 +14,12 @@ class LocalUserCreationForm extends Component {
       email: '',
       password: '',
       message: '',
-    };
+      is_staff: false,
+      is_superuser: false,
+    }
 
     this.onChange = this.onChange.bind(this);
+    this.onChangePrivilege = this.onChangePrivilege.bind(this);
     this.createUser = this.createUser.bind(this);
   }
 
@@ -43,6 +46,23 @@ class LocalUserCreationForm extends Component {
 
   getEmailField(field_name, presentation_name) {
     return this.getTextField(field_name, presentation_name, "email");
+  }
+
+  getPrivilegeField() {
+    return (
+      <FormGroup bsSize="small" controlId="formControlsSelect">
+        <Col componentClass={ControlLabel} sm={2}>
+          Privilege
+        </Col>
+        <Col sm={9}>
+          <FormControl componentClass="select" value={this.getPrivilegeValue()} onChange={this.onChangePrivilege}>
+            <option value="User">User</option>
+            <option value="Manager">Manager</option>
+            <option value="Admin">Admin</option>
+          </FormControl>
+        </Col>
+      </FormGroup>
+    )
   }
 
   showSuccess(message) {
@@ -78,10 +98,11 @@ class LocalUserCreationForm extends Component {
     ajax({
       url:"/api/users/create/",
       type: "POST",
+      contentType: "application/json",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      data: _this.state,
+      data: JSON.stringify(_this.state),
       success:function(response){
         var message = "User " + _this.state.username + " created successfully!";
         _this.showSuccess(message);
@@ -101,6 +122,34 @@ class LocalUserCreationForm extends Component {
           _this.showError('Error creating user.')
         }
       }
+    });
+  }
+
+  getPrivilegeValue() {
+    if (this.state.is_superuser) return "Admin";
+    else if (this.state.is_staff) return "Manager";
+    else return "User";
+  }
+
+  onChangePrivilege(e) {
+    e.preventDefault();
+    var value = e.target.value;
+    var is_staff = false;
+    var is_superuser = false;
+    if(value == "Admin") {
+      is_superuser = true;
+      is_staff = true;
+    } else if (value == "Manager") {
+      is_superuser = false;
+      is_staff = true;
+    } else if (value == "User"){
+      is_superuser = false;
+      is_staff = false;
+    }
+
+    this.setState({
+      "is_staff": is_staff,
+      "is_superuser": is_superuser,
     });
   }
 
@@ -125,6 +174,7 @@ class LocalUserCreationForm extends Component {
               { this.getShortTextField("first_name", "First Name") }
               { this.getShortTextField("last_name", "Last Name") }
               { this.getEmailField("email", "Email") }
+              { this.getPrivilegeField() }
               <FormGroup>
                 <Col smOffset={2} sm={2}>
                   <Button bsSize="small" type="button" bsStyle="info" onClick={this.createUser}>

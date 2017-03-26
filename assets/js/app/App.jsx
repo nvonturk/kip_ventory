@@ -23,13 +23,15 @@ import ManagerRequestsContainer from './manage/requests/ManagerRequestsContainer
 import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import LogsContainer from './manage/logs/LogsContainer'
 import TagsContainer from './manage/tags/TagsContainer'
+import EmailsContainer from './manage/emails/EmailsContainer'
+
 
 // MAIN APP PAGES
 import InventoryContainer from './inventory/InventoryContainer'
 import CartContainer from './cart/CartContainer'
 import RequestsContainer from './requests/RequestsContainer'
 import LoansContainer from './loans/LoansContainer'
-import Profile from './Profile'
+import Profile from './profile/Profile'
 import {getJSON} from 'jquery'
 
 import UserDetail from './inventory/detail/UserDetail'
@@ -49,6 +51,7 @@ function getManagerPanel(userData) {
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="tags" component={TagsContainer} admin={userData} />
+      <Route path="emails" component={EmailsContainer} admin={userData} />
     </Route>) : null
 }
 
@@ -102,11 +105,11 @@ function initialize(userData) {
         </Route>
 
         <Route path="loans" component={LoansContainer} user={userData} />
-
-        <Route path="cart" component={CartContainer} user={userData} />
-        <Route path="profile" component={Profile} user={userData} />
         { getManagerPanel(userData) }
         { getAdminPanel(userData) }
+        
+        <Route path="cart" component={CartContainer} user={userData} />
+        <Route path="settings" component={Profile} user={userData} />
         <Route path='404' component={My404Component} />
       </Route>
       <Redirect from='*' to='/app/404/' />
