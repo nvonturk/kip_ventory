@@ -242,7 +242,7 @@ class GetLoansByItem(generics.GenericAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return models.Loan.objects.all()
+        return models.Loan.objects.filter(quantity_loaned__gt=F('quantity_returned'))
 
     def get_serializer_class(self):
         return serializers.LoanSerializer
@@ -873,7 +873,6 @@ class LoanDetailModify(generics.GenericAPIView):
 
     def put(self, request, pk, format=None):
         loan = self.get_instance(pk=pk)
-
         data = request.data.copy()
         data.update({"loan": loan})
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
@@ -881,6 +880,8 @@ class LoanDetailModify(generics.GenericAPIView):
             serializer.save()
             #todo can only managers do this? send email??
             sendEmailForLoanModification(loan)
+            if loan.quantity_loaned == 0:
+                loan.delete()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -931,6 +932,8 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             loan.save()
             #todo can only mangers do this? send email?
             sendEmailForLoanToDisbursementConversion(loan)
+            if loan.quantity_loaned == 0:
+                loan.delete()
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

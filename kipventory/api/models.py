@@ -178,6 +178,7 @@ class Loan(models.Model):
     class Meta:
         ordering = ('id',)
 
+
 class Disbursement(models.Model):
     request    = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursements', blank=True, null=True)
     item       = models.ForeignKey(Item, on_delete=models.CASCADE)

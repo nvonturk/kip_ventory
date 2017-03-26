@@ -35,9 +35,6 @@ const ManagerDetail = React.createClass({
       },
 
       itemExists: true,
-
-      showLoanModal: false,
-      loanToShow: null
     }
   },
 
@@ -269,18 +266,16 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
-              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Request</th>
-              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-center">Admin Comment</th>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Details</th>
+              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requester</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Requested</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Requested For</th>
+              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Justification</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Request Details</th>
             </tr>
           </thead>
           <tbody>
-
             { this.state.requests.map( (request, i) => {
               var request_items = request.requested_items.filter( (ri) => {return (ri.item == this.state.item.name)})
               if (request_items.length == 1) {
@@ -293,26 +288,26 @@ const ManagerDetail = React.createClass({
                 }
                 return (
                   <tr key={request.request_id}>
-                    <td data-th="ID" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      {request.request_id}
+                    <td data-th="ID" className="text-center" >
+                      <span style={{fontSize:"11px"}}>{request.request_id}</span>
                     </td>
-                    <td data-th="Requester" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      <span style={{color: "#df691a"}}>{request.requester}</span>
+                    <td data-th="Requester" className="text-center" >
+                      <span style={{fontSize:"11px", color: "#df691a"}}>{request.requester}</span>
                     </td>
-                    <td data-th="Date Opened" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      {new Date(request.date_open).toLocaleString()}
+                    <td data-th="Date Requested" className="text-center" >
+                      <span style={{fontSize:"11px"}}>{new Date(request.date_open).toLocaleString()}</span>
                     </td>
-                    <td data-th="Requested For" className="text-center" style={{border: "1px solid #596a7b"}}>
+                    <td data-th="Requested For" className="text-center" >
                       { label }
                     </td>
-                    <td data-th="Quantity" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      {request_item.quantity}
+                    <td data-th="Quantity" className="text-center" >
+                      <span style={{fontSize:"11px"}}>{request_item.quantity}</span>
                     </td>
-                    <td data-th="Justification" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      { request.open_comment }
+                    <td data-th="Justification" className="text-left" >
+                      <span style={{fontSize:"11px"}}>{ request.open_comment }</span>
                     </td>
-                    <td data-th="Link" className="text-center" style={{border: "1px solid #596a7b"}}>
-                      <a style={{color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
+                    <td data-th="Link" className="text-center" >
+                      <a style={{fontSize:"11px", color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
                     </td>
                   </tr>
                 )
@@ -352,8 +347,33 @@ const ManagerDetail = React.createClass({
 
   getLoanFilterPanel() {
     return (
-      <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
+      <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
         <p style={{fontSize:"12px"}}>View all of your current outstanding loans in the panel to the right.</p>
+      </Panel>
+    )
+  },
+
+  getStatusSymbol(loan, fs) {
+    return (loan.quantity_returned === loan.quantity_loaned) ? (
+      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-circle" />
+    ) : (
+      <Glyphicon style={{color: "#d9534f", fontSize: fs}} glyph="remove-circle" />
+    )
+  },
+
+  getLoanLegendPanel() {
+    return (
+      <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
+      <h5>Legend</h5>
+      <hr />
+        <Row style={{display: "flex"}}>
+          <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
+            <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="remove-circle" />
+          </Col>
+          <Col md={9}>
+            <p style={{marginBottom: "0px", fontSize: "12px"}}>This loan is outstanding.</p>
+          </Col>
+        </Row>
       </Panel>
     )
   },
@@ -376,22 +396,21 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
               <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Request</th>
-              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-left">Admin Comment</th>
+              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Request</th>
+              <th style={{width:"40%", borderBottom: "1px solid #596a7b"}} className="text-left">Admin Comment</th>
               <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
               <th style={{width:" 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loan Details</th>
             </tr>
           </thead>
           <tbody>
             { this.state.loans.map( (loan, i) => {
               return (
                 <tr key={loan.id}>
-                  <td data-th="ID" className="text-center" >
-                    <span style={{fontSize: "12px"}}>{loan.id}</span>
+                  <td data-th="Status" className="text-center" >
+                    { this.getStatusSymbol(loan, "15px") }
                   </td>
                   <td data-th="User" className="text-center" >
                     <span style={{fontSize: "11px", color: "#df691a"}}>{loan.request.requester}</span>
@@ -400,7 +419,11 @@ const ManagerDetail = React.createClass({
                     <span style={{fontSize: "11px"}}>{new Date(loan.date_loaned).toLocaleString()}</span>
                   </td>
                   <td data-th="Request" className="text-center" >
-                    <a style={{fontSize: "12px", textDecoration: "none", color: "#5bc0de"}} href={"/app/requests/" + loan.request.request_id + "/"}>{loan.request.request_id}</a>
+                    <span className="clickable"
+                          style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
+                          onClick={e => {browserHistory.push("/app/requests/" + loan.request.request_id + "/")}}>
+                        Click to view
+                    </span>
                   </td>
                   <td data-th="Admin Comment" className="text-left" >
                     <span style={{fontSize: "11px"}}>{loan.request.closed_comment}</span>
@@ -410,13 +433,6 @@ const ManagerDetail = React.createClass({
                   </td>
                   <td data-th="Returned" className="text-center" >
                     <span style={{fontSize: "12px"}}>{loan.quantity_returned}</span>
-                  </td>
-                  <td data-th="" className="text-center" >
-                    <span className="clickable"
-                          style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
-                          onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}}>
-                        Click to view
-                    </span>
                   </td>
                 </tr>
               )
@@ -564,6 +580,7 @@ const ManagerDetail = React.createClass({
                         <Row>
                           <Col xs={3} style={{paddingLeft: "0px"}}>
                             { this.getLoanFilterPanel() }
+                            { this.getLoanLegendPanel() }
                           </Col>
                           <Col xs={9} style={{paddingRight: "0px"}}>
                             { this.getLoanPanel() }
@@ -579,10 +596,6 @@ const ManagerDetail = React.createClass({
 
             </Col>
           </Row>
-
-          <LoanModal show={this.state.showLoanModal}
-                     onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
-                     loan={this.state.loanToShow} />
 
         </Grid>
       )
