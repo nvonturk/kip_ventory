@@ -864,13 +864,16 @@ class LoanDetailModify(generics.GenericAPIView):
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
+        if not (request.user.is_superuser or request.user.is_staff):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
         loan = self.get_instance(pk=pk)
         data = request.data.copy()
         data.update({"loan": loan})
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            #todo can only managers do this? send email??
+            # send email that loan was returned
             sendEmailForLoanModification(loan)
             if loan.quantity_loaned == 0:
                 loan.delete()
@@ -897,8 +900,9 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             raise NotFound('Loan {} not found.'.format(pk))
 
     def post(self, request, pk, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            return Response({"error": ["Manager permissions required."]})
+        if not (request.user.is_superuser or request.user.is_staff):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         loan = self.get_instance(pk=pk)
 
@@ -1599,10 +1603,10 @@ def sendEmailForLoanToDisbursementConversion(loan):
     sendEmail(subject, text_content, html_content, to_emails)
 
 def sendEmailForLoanModification(loan):
-    #todo make something more specific for loan returns
-    #are there any other loan modificaations besides marking as returned?
+    #todo make something more specific for loan returns 
+    #are there any other loan modificaations besides marking as returned? i don't think so
     user = User.objects.get(username=loan.request.requester)
-    subject = "Loan Modification"
+    subject = "Loan Modification" #"Loan Returned"
     text_content = "One of your loans has been modified."
     html_content = text_content
     to_emails = [user.email]
