@@ -30,33 +30,27 @@ import json, requests, csv, os
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
-class ItemListFilter(BaseFilterBackend):
-  def get_schema_fields(self, view):
-    fields = [
-      coreapi.Field(name="search", description="Filter by name or model no", required=False, location='query'),
-      coreapi.Field(name="tags", description="Filter by tag (comma separated)", required=False, location='query'),
-      coreapi.Field(name="excludeTags", description="Filter by excluding tags (comma separated", required=False, location='query'),
-    ]
-
-    return fields
-
 class CustomPagination(pagination.PageNumberPagination):
     page_query_param = 'page'
     page_size_query_param = 'itemsPerPage'
 
     def get_paginated_response(self, data):
-        '''
-        return Response({
-            'num_pages': self.page.paginator.num_pages,
-            'count': self.page.paginator.count,
-            'results': data
-        })
-        '''
         return Response({
              "count": self.page.paginator.count,
              "num_pages": self.page.paginator.num_pages,
              "results": data
             })
+
+class ItemListFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="search", description="Filter by name or model no", required=False, location='query'),
+      coreapi.Field(name="tags", description="Filter by tag (comma separated)", required=False, location='query'),
+      coreapi.Field(name="excludeTags", description="Filter by excluding tags (comma separated)", required=False, location='query'),
+      coreapi.Field(name="all", description="Set this to true to get all items instead of paginated.", required=False, location='query'),
+    ]
+
+    return fields
 
 class ItemListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -215,9 +209,20 @@ class AddItemToCart(generics.GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class GetOutstandingRequestsByItemFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="user", description="Filter by user", required=False, location='query'),
+      coreapi.Field(name="type", description="Filter by request type", required=False, location='query'),
+    ]
+
+    return fields
+
 class GetOutstandingRequestsByItem(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (GetOutstandingRequestsByItemFilter,)
 
     def get_queryset(self):
         return models.Request.objects.filter(status='O')
@@ -248,9 +253,18 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
+class GetLoansByItemFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="user", description="Filter by user", required=False, location='query'),
+    ]
+
+    return fields
+
 class GetLoansByItem(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (GetLoansByItemFilter,)
 
     def get_queryset(self):
         return models.Loan.objects.filter(quantity_loaned__gt=F('quantity_returned'))
@@ -276,9 +290,19 @@ class GetLoansByItem(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
+class GetTransactionsByItemFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="category", description="Filter by category (Acquisition, Loss)", required=False, location='query'),
+      coreapi.Field(name="administrator", description="Filter by administrator username", required=False, location='query'),
+    ]
+
+    return fields
+
 class GetTransactionsByItem(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (GetTransactionsByItemFilter,)
 
     def get_queryset(self):
         return models.Transaction.objects.filter()
@@ -728,10 +752,21 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class LoanListAllFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="user", description="Filter by requester's username", required=False, location='query'),
+      coreapi.Field(name="status", description="Filter by loan status (Outstanding, Returned)", required=False, location='query'),      coreapi.Field(name="status", description="Filter by loan status (Outstanding, Returned)", required=False, location='query'),
+      coreapi.Field(name="item", description="Filter by item", required=False, location='query'),
+    ]
+
+    return fields
+
 class LoanListAll(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (LoanListAllFilter,)
 
     def get_queryset(self):
         return models.LoanGroup.objects.all();
@@ -791,11 +826,20 @@ class LoanListAll(generics.GenericAPIView):
         response = self.get_paginated_response(results)
         return response
 
+class LoanListFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="status", description="Filter by loan status (Outstanding, Returned)", required=False, location='query'),      coreapi.Field(name="status", description="Filter by loan status (Outstanding, Returned)", required=False, location='query'),
+      coreapi.Field(name="item", description="Filter by item", required=False, location='query'),
+    ]
+
+    return fields
 
 class LoanList(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (LoanListFilter,)
 
     def get_queryset(self):
         return models.LoanGroup.objects.filter(request__requester=self.request.user);
@@ -1046,10 +1090,19 @@ def edit_user(request, username, format=None):
         print("error saving user {} ".format(serializer.errors))
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class GetNetIDTokenFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="code", description="Authorization code", required=False, location='query'),
+    ]
+
+    return fields
+
 class GetNetIDToken(generics.GenericAPIView):
     queryset = None
     permission_classes = (permissions.AllowAny,)
     serializer_class = None
+    filter_backends = (GetNetIDTokenFilter, )
 
     def get(self, request, format=None):
         code = request.query_params.get('code')
@@ -1086,17 +1139,19 @@ class GetNetIDToken(generics.GenericAPIView):
             print("Multiple NetId Users this is big time wrong need to throw an error")
             return redirect('/app/')
 
+class TagListFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="all", description="Set all=true to get all tags instead of paginated", required=False, location='query'),
+    ]
+
+    return fields
 
 class TagListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.TagSerializer
     pagination_class = CustomPagination
-
-    def get_instance(self, tag_name):
-        try:
-            return models.Tag.objects.get(name=tag_name)
-        except models.Tag.DoesNotExist:
-            raise NotFound('Tag {} not found.'.format(tag_name))
+    filter_backends = (TagListFilter,)
 
     def get_queryset(self):
         return models.Tag.objects.all()
@@ -1123,14 +1178,24 @@ class TagListCreate(generics.GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class TagDelete(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self, tag_name):
+        try:
+            return models.Tag.objects.get(name=tag_name)
+        except models.Tag.DoesNotExist:
+            raise NotFound('Tag {} not found.'.format(tag_name))
+    
     # Maybe put into its own view? Seems like a lot for now
     # manager restricted
-    def delete(self, request, format=None):
+    def delete(self, request, tag_name, format=None):
         if not (request.user.is_staff):
             d = {"error": "Administrator permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        tag = self.get_instance(tag_name=request.query_params.get("name"))
+        tag = self.get_instance(tag_name=tag_name)
         tag.delete()
         # Insert Delete Log
         # Need {serializer.data, initiating_user_pk, 'Item Changed'}
@@ -1138,10 +1203,22 @@ class TagListCreate(generics.GenericAPIView):
         #TODO NEED TO LOG DELETION HERE
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class LogListFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="user", description="Filter by affected user or initiating user's username", required=False, location='query'),
+      coreapi.Field(name="item", description="Filter by item name", required=False, location='query'),
+      coreapi.Field(name="endDate", description="Filter by start date/end date", required=False, location='query'),
+      coreapi.Field(name="startDate", description="Filter by start date/end date", required=False, location='query'),
+
+    ]
+
+    return fields
 
 class LogList(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (LogListFilter,)
 
     def get_queryset(self):
         return models.Log.objects.all()
@@ -1191,10 +1268,18 @@ class LogList(generics.GenericAPIView):
         return response
 
 
+class TransactionListFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="category", description="Filter by category(Acquisition, Loss)", required=False, location='query'),
+    ]
+
+    return fields
 
 class TransactionListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (TransactionListFilter,)
 
     def get_queryset(self):
         return models.Transaction.objects.all()
@@ -1812,9 +1897,19 @@ def get_subscribed_managers(request):
         serializer = serializers.UserGETSerializer(instance=subscribed_managers, many=True)
         return Response(serializer.data)
 
+
+class LoanReminderListFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="sent", description="Filter by sent or not sent (true/false)", required=False, location='query'),
+    ]
+
+    return fields
+
 class LoanReminderListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (LoanReminderListFilter,)
 
     def get_queryset(self):
         return models.LoanReminder.objects.all().order_by("date")

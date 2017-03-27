@@ -94,7 +94,7 @@ class TagsContainer extends Component{
 
     var _this = this
     $.ajax({
-      url:"/api/tags/?name="+tag.name,
+      url:"/api/tags/"+tag.name+"/",
       type: "DELETE",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));

@@ -22,6 +22,8 @@ urlpatterns = [
     url(r'^import/template/?$', views.BulkImportTemplate.as_view()),
 
     url(r'^tags/?$', views.TagListCreate.as_view()),
+    url(r'^tags/(?P<tag_name>.+?)/$', views.TagDelete.as_view()),
+
 
     url(r'^fields/?$',                     views.CustomFieldListCreate.as_view()),
     url(r'^fields/(?P<field_name>.+?)/?$', views.CustomFieldDetailDelete.as_view()),
