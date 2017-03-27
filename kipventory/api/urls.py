@@ -22,6 +22,8 @@ urlpatterns = [
     url(r'^import/template/?$', views.BulkImportTemplate.as_view()),
 
     url(r'^tags/?$', views.TagListCreate.as_view()),
+    url(r'^tags/(?P<tag_name>.+?)/$', views.TagDelete.as_view()),
+
 
     url(r'^fields/?$',                     views.CustomFieldListCreate.as_view()),
     url(r'^fields/(?P<field_name>.+?)/?$', views.CustomFieldDetailDelete.as_view()),
@@ -61,9 +63,9 @@ urlpatterns = [
 
     url(r'^users/?$',         views.UserList.as_view()),
     url(r'^users/current/?$', views.GetCurrentUser.as_view()),
-    url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.edit_user),
+    url(r'^users/edit/(?P<username>[\w\s]+)/?$',         views.EditUser.as_view()),
     url(r'^users/create/?$',         views.UserCreate.as_view()),
-    url(r'^users/managers/subscribed/?$', views.get_subscribed_managers),
+    url(r'^users/managers/subscribed/?$', views.GetSubscribedManagers.as_view()),
 
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 ]
