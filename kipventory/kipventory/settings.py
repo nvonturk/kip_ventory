@@ -115,9 +115,9 @@ SFTP_STORAGE_PARAMS = {
 
 DBBACKUP_CONNECTORS = {
     'default': {
-        'USER': 'kip',
-        'PASSWORD': 'kipcoonley',
-        'HOST': 'localhost'
+        'USER': 'bitnami',
+        'PASSWORD': '',
+        'HOST': ''
     }
 }
 
