@@ -48,7 +48,8 @@ const InventoryItem = React.createClass({
       complete:function() {
       },
       error:function (xhr, textStatus, thrownError){
-          alert(xhr.responseText);
+          console.log(xhr);
+          alert(xhr.responseText)
       }
     })
   },
@@ -69,7 +70,9 @@ const InventoryItem = React.createClass({
         })
       },
       complete:function(){},
-      error:function (xhr, textStatus, thrownError){console.log(xhr)}
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr)
+      }
     });
   },
 

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Select from 'react-select';
+import { Creatable } from 'react-select';
 import 'react-select/dist/react-select.css'
 
 /*
@@ -19,9 +19,13 @@ class MultiSelect extends Component {
     this.setState({ value });
   }
 
+  createLabel(label) {
+    return "Create tag '" + label + "'"
+  }
+
   render () {
     return (
-      <Select style={{fontSize:"12px"}} multi simpleValue value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
+      <Creatable promptTextCreator={this.createLabel} style={{fontSize:"12px"}} multi simpleValue value={this.props.value} placeholder={this.props.placeholder} options={this.props.options} onChange={this.props.onChange} />
     );
   }
 }

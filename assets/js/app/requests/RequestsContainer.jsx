@@ -62,7 +62,6 @@ const RequestsContainer = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        console.log(response);
         _this.getRequests();
         _this.setState({
           showSuccessMessage: true,

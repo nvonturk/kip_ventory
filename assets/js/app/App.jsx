@@ -37,7 +37,9 @@ import {getJSON} from 'jquery'
 
 import UserDetail from './inventory/detail/UserDetail'
 import ManagerDetail from './inventory/detail/ManagerDetail'
-import RequestDetail from './requests/RequestDetail'
+import ManagerRequestDetail from './requests/detail/ManagerRequestDetail'
+import UserRequestDetail from './requests/detail/UserRequestDetail'
+// import RequestDetail from './requests/RequestDetail'
 
 function getManagerPanel(userData) {
   const custom_field_route = userData.is_superuser ? (<Route path="custom-fields" component={CustomFieldContainer} admin={userData} />) : null;
@@ -75,6 +77,14 @@ function getItemDetailRoute(userData) {
   )
 }
 
+function getRequestDetailRoute(userData) {
+  return (userData.is_staff || userData.is_superuser) ? (
+    <Route path="requests/:request_id" component={ManagerRequestDetail} user={userData} />
+  ) : (
+    <Route path="requests/:request_id" component={UserRequestDetail} user={userData} />
+  )
+}
+
 const My404Component = React.createClass({
   getInitialState() {
     return {}
@@ -101,10 +111,8 @@ function initialize(userData) {
           { getItemDetailRoute(userData) }
         </Route>
 
-        <Route path="requests" user={userData} >
-          <IndexRoute component={RequestsContainer} user={userData}/>
-        </Route>
-        <Route path="requests/:request_id" component={RequestDetail} user={userData} />
+        <Route path="requests" component={RequestsContainer} user={userData} />
+        { getRequestDetailRoute(userData) }
 
         <Route path="loans" component={LoansContainer} user={userData} />
         { getManagerPanel(userData) }

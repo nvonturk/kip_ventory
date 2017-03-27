@@ -40,10 +40,8 @@ const LoansContainer = React.createClass({
       user: this.state.userSearch,
       status: this.state.status
     }
-    console.log(params)
     var _this = this;
     getJSON(url, params, function(data) {
-      console.log(data.results)
       _this.setState({
         loanGroups: data.results,
         pageCount: Number(data.num_pages)
@@ -82,7 +80,6 @@ const LoansContainer = React.createClass({
   },
 
   handleLoanGroupExpand(index) {
-    console.log(index)
     var cur = this.state.expandedLoanGroup
     if (cur == index) {
       this.setState({
