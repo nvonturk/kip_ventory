@@ -103,8 +103,8 @@ function initialize(userData) {
 
         <Route path="requests" user={userData} >
           <IndexRoute component={RequestsContainer} user={userData}/>
-          <Route path=":request_id" component={RequestDetail} user={userData} />
         </Route>
+        <Route path="requests/:request_id" component={RequestDetail} user={userData} />
 
         <Route path="loans" component={LoansContainer} user={userData} />
         { getManagerPanel(userData) }
