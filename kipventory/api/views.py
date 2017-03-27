@@ -1077,14 +1077,14 @@ class GetNetIDToken(generics.GenericAPIView):
         if user_count == 1:
             user = User.objects.get(username=netid)
             login(request, user)
-            return redirect('/app/')
+            return redirect('/app/inventory/')
         elif user_count == 0:
             user = User.objects.create_user(username=netid, email=email, password=None, first_name=first_name, last_name=last_name)
             login(request, user)
-            return redirect('/app/')
+            return redirect('/app/inventory/')
         else:
             print("Multiple NetId Users this is big time wrong need to throw an error")
-            return redirect('/app/')
+            return redirect('/app/inventory/')
 
 
 class TagListCreate(generics.GenericAPIView):
@@ -1104,12 +1104,11 @@ class TagListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         tags = self.get_queryset()
 
-        paginated_tags = self.paginate_queryset(tags)
-
         if(request.query_params.get("all") == "true"):
             serializer = self.get_serializer(instance=tags, many=True)
             return Response(serializer.data)
         else:
+            paginated_tags = self.paginate_queryset(tags)
             serializer = self.get_serializer(instance=paginated_tags, many=True)
             response = self.get_paginated_response(serializer.data)
             return response
@@ -1620,7 +1619,7 @@ REQUESTS_URL = "{}{}".format(DOMAIN, "app/requests/")
 def sendEmailForLoanToDisbursementConversion(loan):
     user = User.objects.get(username=loan.request.requester)
     subject = "Loan To Disbursement"
-    request_url = "{}{}".format(REQUESTS_URL, loan.request.id) 
+    request_url = "{}{}".format(REQUESTS_URL, loan.request.id)
     text_content = "One of your loans has been converted to a disbursement. Check {} for details.".format(request_url)
     html_content = "One of your loans has been converted to a disbursement. Check <a href='{}'>{}</a> for details.".format(request_url, request_url)
     to_emails = [user.email]
@@ -1631,7 +1630,7 @@ def sendEmailForLoanModification(loan):
     #are there any other loan modificaations besides marking as returned? i don't think so
     user = User.objects.get(username=loan.request.requester)
     subject = "Loan Returned" #"Loan Modified"
-    request_url = "{}{}".format(REQUESTS_URL, loan.request.id) 
+    request_url = "{}{}".format(REQUESTS_URL, loan.request.id)
     text_content = "One of your loans has been marked as returned. Check {} for details.".format(request_url)
     html_content = "One of your loans has been marked as returned. Check <a href='{}'>{}</a> for details.".format(request_url, request_url)
     to_emails = [user.email]
@@ -1639,7 +1638,7 @@ def sendEmailForLoanModification(loan):
 
 def sendEmailForNewDisbursement(user, request):
     subject = "New Disbursement"
-    request_url = "{}{}".format(REQUESTS_URL, request.id) 
+    request_url = "{}{}".format(REQUESTS_URL, request.id)
     text_content = "An administrator has disbursed one or more item(s) to you. Check {} for details.".format(request_url)
     html_content = "An administrator has disbursed one or more item(s) to you. Check <a href='{}'>{}</a> for details.".format(request_url, request_url)
     to_emails = [user.email]
@@ -1648,7 +1647,7 @@ def sendEmailForNewDisbursement(user, request):
 def sendEmailForRequestStatusUpdate(request):
     user = request.requester
     subject = "Request Status Update"
-    request_url = "{}{}".format(REQUESTS_URL, request.id) 
+    request_url = "{}{}".format(REQUESTS_URL, request.id)
     text_content = "The status of one of your requests has changed. Go to {} to view the request".format(request_url)
     html_content = "The status of one of your requests has changed. Go to <a href='{}'>{}</a> to view the request".format(request_url, request_url)
     to_emails = [user.email]
@@ -1661,7 +1660,7 @@ def sendEmailForNewRequest(request):
 
     # Send email to all subscribed managers
     subject = "New User Request"
-    request_url = "{}{}".format(REQUESTS_URL, request.id) 
+    request_url = "{}{}".format(REQUESTS_URL, request.id)
     text_content = "User {} initiated a new request for one or more item(s). Go to {} to view and/or respond to this request.".format(user.username, request_url)
     html_content = "User <b>{}</b> initiated a new request for one or more item(s). Go to <a href='{}'>{}</a> to view and/or respond to this request.".format(user.username, request_url, request_url)
     to_emails = []
