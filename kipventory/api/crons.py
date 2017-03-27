@@ -24,10 +24,10 @@ def sendEmail(subject, text_content, html_content, from_email, to_emails, bcc_em
     msg.send()
 
 class SendLoanReminderEmail(CronJobBase):
-    RUN_AT_TIMES = ['15:50'] # TODO Deal with timezones. Currently it uses TIMEZONE from settings.py, which is UTC
+    RUN_AT_TIMES = ['08:00'] # TODO Deal with timezones. Currently it uses TIMEZONE from settings.py, which is UTC
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
-    code = 'kipventory.send_email'    # a unique code
+    code = 'kipventory.send_loan_reminder_email'    # a unique code
 
     def sendLoanReminderEmail(self, loan_reminder, loan_reminder_contents):
         bcc_emails = []
@@ -38,8 +38,12 @@ class SendLoanReminderEmail(CronJobBase):
             to_emails = [loan_reminder_content["user"].email]
             text_content = loan_reminder.body + "\n\n" + loansToString(loan_reminder_content["loans"])
             html_content = text_content #todo maybe figure out how to use a template
-            sendEmail(subject, text_content, html_content, from_email, to_emails, bcc_emails)
-
+            try:
+                sendEmail(subject, text_content, html_content, from_email, to_emails, bcc_emails)
+            except:
+                #todo deal with this
+                pass
+        
         loan_reminder.sent = True
         loan_reminder.save()
 
@@ -66,3 +70,5 @@ class SendLoanReminderEmail(CronJobBase):
         
         for loan_reminder in loan_reminders_to_send:
             self.sendLoanReminderEmail(loan_reminder, loan_reminder_contents)
+            
+            

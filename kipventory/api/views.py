@@ -7,6 +7,9 @@ from rest_framework.exceptions import NotFound
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 
+from rest_framework.filters import BaseFilterBackend
+from rest_framework.schemas import coreapi
+
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render, get_object_or_404
@@ -27,6 +30,16 @@ import json, requests, csv, os
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
+class ItemListFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="search", description="Filter by name or model no", required=False, location='query'),
+      coreapi.Field(name="tags", description="Filter by tag (comma separated)", required=False, location='query'),
+      coreapi.Field(name="excludeTags", description="Filter by excluding tags (comma separated", required=False, location='query'),
+    ]
+
+    return fields
+
 class CustomPagination(pagination.PageNumberPagination):
     page_query_param = 'page'
     page_size_query_param = 'itemsPerPage'
@@ -45,12 +58,10 @@ class CustomPagination(pagination.PageNumberPagination):
              "results": data
             })
 
-
-
-
 class ItemListCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (ItemListFilter,)
 
     def get_queryset(self):
         return models.Item.objects.all()
@@ -1528,7 +1539,7 @@ class DisburseCreate(generics.GenericAPIView):
                 requestItemCreation(req_item, request.user.pk, request_instance)
                 requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
 
-            sendEmailForNewDisbursement(requester)
+            sendEmailForNewDisbursement(requester, request_instance)
             loangroup.save()
             return Response(serializer.data)
 
@@ -1603,11 +1614,15 @@ def requestItemCreation(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
     log.save()
 
+DOMAIN = "https://colab-sbx-277.oit.duke.edu/"
+REQUESTS_URL = "{}{}".format(DOMAIN, "app/requests/")
+
 def sendEmailForLoanToDisbursementConversion(loan):
     user = User.objects.get(username=loan.request.requester)
     subject = "Loan To Disbursement"
-    text_content = "One of your loans has been converted to a disbursement."
-    html_content = text_content
+    request_url = "{}{}".format(REQUESTS_URL, loan.request.id) 
+    text_content = "One of your loans has been converted to a disbursement. Check {} for details.".format(request_url)
+    html_content = "One of your loans has been converted to a disbursement. Check <a href='{}'>{}</a> for details.".format(request_url, request_url)
     to_emails = [user.email]
     sendEmail(subject, text_content, html_content, to_emails)
 
@@ -1615,24 +1630,27 @@ def sendEmailForLoanModification(loan):
     #todo make something more specific for loan returns
     #are there any other loan modificaations besides marking as returned? i don't think so
     user = User.objects.get(username=loan.request.requester)
-    subject = "Loan Modification" #"Loan Returned"
-    text_content = "One of your loans has been modified."
-    html_content = text_content
+    subject = "Loan Returned" #"Loan Modified"
+    request_url = "{}{}".format(REQUESTS_URL, loan.request.id) 
+    text_content = "One of your loans has been marked as returned. Check {} for details.".format(request_url)
+    html_content = "One of your loans has been marked as returned. Check <a href='{}'>{}</a> for details.".format(request_url, request_url)
     to_emails = [user.email]
     sendEmail(subject, text_content, html_content, to_emails)
 
-def sendEmailForNewDisbursement(user):
+def sendEmailForNewDisbursement(user, request):
     subject = "New Disbursement"
-    text_content = "An administrator has disbursed one or more item(s) to you. Check the website for details."
-    html_content = text_content
+    request_url = "{}{}".format(REQUESTS_URL, request.id) 
+    text_content = "An administrator has disbursed one or more item(s) to you. Check {} for details.".format(request_url)
+    html_content = "An administrator has disbursed one or more item(s) to you. Check <a href='{}'>{}</a> for details.".format(request_url, request_url)
     to_emails = [user.email]
     sendEmail(subject, text_content, html_content, to_emails)
 
 def sendEmailForRequestStatusUpdate(request):
     user = request.requester
     subject = "Request Status Update"
-    text_content = "The status of one of your requests has changed."
-    html_content = text_content
+    request_url = "{}{}".format(REQUESTS_URL, request.id) 
+    text_content = "The status of one of your requests has changed. Go to {} to view the request".format(request_url)
+    html_content = "The status of one of your requests has changed. Go to <a href='{}'>{}</a> to view the request".format(request_url, request_url)
     to_emails = [user.email]
     sendEmail(subject, text_content, html_content, to_emails)
 
@@ -1643,16 +1661,17 @@ def sendEmailForNewRequest(request):
 
     # Send email to all subscribed managers
     subject = "New User Request"
-    text_content = "User {} initiated a new request for one or more item(s). Go to the website to view and/or respond to this request.".format(user.username)
-    html_content = "User <b>{}</b> initiated a new request for one or more item(s). Go to the website to view and/or respond to this request.".format(user.username)
+    request_url = "{}{}".format(REQUESTS_URL, request.id) 
+    text_content = "User {} initiated a new request for one or more item(s). Go to {} to view and/or respond to this request.".format(user.username, request_url)
+    html_content = "User <b>{}</b> initiated a new request for one or more item(s). Go to <a href='{}'>{}</a> to view and/or respond to this request.".format(user.username, request_url, request_url)
     to_emails = []
     bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
     sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
 
     # Send email to requesting user
     subject = "Request Confirmation"
-    text_content = "This email is to confirm that you have made a new request for one or more item(s). Go to the website to view your request. An email will be sent when the status of your request changes."
-    html_content = text_content
+    text_content = "This email is to confirm that you have made a new request for one or more item(s). Go to {} to view your request. An email will be sent when the status of your request changes.".format(request_url)
+    html_content = "This email is to confirm that you have made a new request for one or more item(s). Go to <a href='{}'>{}</a> to view your request. An email will be sent when the status of your request changes.".format(request_url, request_url)
     to_emails = [user.email]
     bcc_emails = []
     sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
