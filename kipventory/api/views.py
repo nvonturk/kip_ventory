@@ -1072,17 +1072,21 @@ class GetCurrentUser(generics.GenericAPIView):
             "profile" : user.profile
         })
 
-@api_view(['PUT'])
-@permission_classes((permissions.IsAuthenticated,))
-def edit_user(request, username, format=None):
-    if request.method == 'PUT':
-        if not request.user.is_superuser and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
+class EditUser(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.UserPUTSerializer
+    
+    def get_instance(self, username):
+        return models.User.objects.get(username=username)
+
+    def put(self, request, username, format=None):
+        if not request.user.is_superuser: #and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         jsonData = json.loads(request.body.decode("utf-8"))
-        user = models.User.objects.get(username=username)
+        user = self.get_instance(username)
 
-        serializer = serializers.UserPUTSerializer(instance=user, data=jsonData, partial=True)
+        serializer = self.get_serializer(instance=user, data=jsonData, partial=True)
         if serializer.is_valid():
             print("saving user serializer")
             serializer.save()
@@ -1889,14 +1893,20 @@ def transactionCreationLog(item, initiating_user_pk, category, amount):
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Transaction Creation', message=message, affected_user=affected_user)
     log.save()
 
-@api_view(['GET'])
-@permission_classes((permissions.IsAuthenticated,))
-def get_subscribed_managers(request):
-    if request.method == 'GET':
-        subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
-        serializer = serializers.UserGETSerializer(instance=subscribed_managers, many=True)
-        return Response(serializer.data)
 
+class GetSubscribedManagers(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return User.objects.filter(is_staff=True).filter(profile__subscribed=True)
+
+    def get_serializer_class(self):
+        return serializers.UserGETSerializer
+
+    def get(self, request):
+        subscribed_managers = self.get_queryset()
+        serializer = self.get_serializer(instance=subscribed_managers, many=True)
+        return Response(serializer.data)
 
 class LoanReminderListFilter(BaseFilterBackend):
   def get_schema_fields(self, view):
