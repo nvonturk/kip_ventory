@@ -1,8 +1,10 @@
 import React, { Component } from 'react'
-import { Form, Grid, Row, Button, Col, ListGroup, ListGroupItem, FormGroup, FormControl, ControlLabel, Alert } from 'react-bootstrap'
+import { Form, Grid, Row, Button, Col, ListGroup, ListGroupItem, FormGroup, FormControl, ControlLabel, Alert, Pagination } from 'react-bootstrap'
 import $ from "jquery"
 import { getJSON, ajax } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
+
+const TAGS_PER_PAGE = 3
 
 class TagsContainer extends Component{
   constructor(props) {
@@ -13,18 +15,23 @@ class TagsContainer extends Component{
       showCreatedSuccess: false,
       createdMessage: "",
       showErrorMessage: false,
-      errorMessage: ""
+      errorMessage: "",
+      page: 1,
+      pageCount: 1,
     }
 
-    this.getAllTags = this.getAllTags.bind(this);
+    //this.getAllTags = this.getAllTags.bind(this);
+    this.getTags = this.getTags.bind(this);
     this.createTag = this.createTag.bind(this);
     this.deleteTag = this.deleteTag.bind(this);
     this.updateTagList = this.updateTagList.bind(this);
     this.getTagList = this.getTagList.bind(this);
+    this.handlePageSelect = this.handlePageSelect.bind(this);
 
-    this.getAllTags();
+    this.getTags();
   }
 
+/*
   getAllTags(){
       var url = "/api/tags/?all=true"
       var _this = this
@@ -33,8 +40,22 @@ class TagsContainer extends Component{
           tags: data,
         });
       })
+  }
+  */
 
-
+  getTags() {
+    var url = "/api/tags/"
+    var params = {
+      page: this.state.page,
+      itemsPerPage: TAGS_PER_PAGE,
+    }
+    var _this = this
+    getJSON(url, params, function(data) {
+      _this.setState({
+        tags: data.results,
+        pageCount: data.num_pages,
+      });
+    })
   }
 
   handleChange(name, e) {
@@ -63,7 +84,7 @@ class TagsContainer extends Component{
         traditional: true,
         success:function(response){
           var name = response.name
-          _this.getAllTags();
+          _this.getTags();
           _this.setState({
             name: "",
             showCreatedSuccess: true,
@@ -94,19 +115,24 @@ class TagsContainer extends Component{
 
     var _this = this
     $.ajax({
-      url:"/api/tags/?name="+tag.name,
+      url:"/api/tags/"+tag.name+"/",
       type: "DELETE",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        _this.getAllTags();
+        var page = _this.state.page;
+        if(_this.state.tags.length<=1) {
+          page = page == 1 ? page : page-1;
+        }
         _this.setState({
+          page: page,
           showCreatedSuccess: false,
           showErrorMessage: false,
           errorMessage: "",
           createdMessage: ""
-        })
+        }, _this.getTags)
+  
       },
       complete:function(){
           },
@@ -154,6 +180,12 @@ class TagsContainer extends Component{
     ) : null
   }
 
+  handlePageSelect(activeKey) {
+    this.setState({page: activeKey}, () => {
+      this.getTags();
+    })
+  }
+
   render(){
     var tagList = this.getTagList();
     var finalList = (<ListGroup>{tagList}</ListGroup>);
@@ -170,16 +202,6 @@ class TagsContainer extends Component{
               <br />
             </Col>
           </Row>
-
-          { this.showErrorMessage() }
-          { this.showSuccessMessage() }
-
-          <Row>
-            <Col sm={12} style={{maxHeight: '500px', overflow: 'auto'}}>
-              {finalList}
-            </Col>
-          </Row>
-
           <Row>
             <Form horizontal onSubmit={e => e.preventDefault()}>
               <FormGroup controlId="newTagForm">
@@ -202,6 +224,20 @@ class TagsContainer extends Component{
             </Form>
           </Row>
 
+          { this.showErrorMessage() }
+          { this.showSuccessMessage() }
+
+          <Row>
+            <Col sm={12} style={{maxHeight: '500px', overflow: 'auto'}}>
+              {finalList}
+            </Col>
+          </Row>
+
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks ellipsis style={{float:"right", margin: "0px"}} bsSize="small" items={this.state.pageCount} activePage={this.state.page} onSelect={this.handlePageSelect} />
+            </Col>
+          </Row>
         </Grid>
     );
   }

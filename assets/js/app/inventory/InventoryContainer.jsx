@@ -567,9 +567,9 @@ const InventoryContainer = React.createClass({
                       <Row>
                         <Col md={12}>
                           <FormGroup>
-                            <ControlLabel>Search</ControlLabel>
+                            <ControlLabel>Search by item name or model number</ControlLabel>
                             <InputGroup bsSize="small">
-                              <FormControl placeholder="Search"
+                              <FormControl placeholder="Item name or model number"
                                            style={{fontSize:"12px"}}
                                            type="text" name="searchText"
                                            value={this.state.searchText}
