@@ -23,8 +23,21 @@ function LogEntry(props){
       <td data-th="Affected User" className="text-left">{affectedUser}</td>
       <td data-th="Date" className="text-left">{dateString}</td>
       <td data-th="Category" className="text-left">{props.log.category}</td>
-      <td data-th="Item" className="text-left"> <a href={item_url}>{props.log.default_item}</a></td>
-      <td data-th="Request" className="text-left"> { props.log.request != null ? <a href={request_url}>Request</a> : null } </td>
+      <td data-th="Item" className="text-left">
+        <span className="clickable"
+              style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
+              onClick={e => {browserHistory.push(item_url)}}>
+            {props.log.default_item}
+        </span>
+      </td>
+      <td data-th="Request" className="text-left">
+        { props.log.request != null ? (
+          <span className="clickable"
+              style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
+              onClick={e => {browserHistory.push(request_url)}}>
+            Click to view
+          </span>) : null }
+      </td>
       <td data-th="Quantity" className="text-left">{props.log.quantity}</td>
       <td data-th="Message" className="text-left">{props.log.message}</td>
     </tr>

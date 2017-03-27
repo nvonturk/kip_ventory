@@ -466,6 +466,14 @@ class LoanSerializer(serializers.ModelSerializer):
         request_json.pop('disbursements')
         return request_json
 
+    def update(self, instance, validated_data):
+        old_quantity = instance.quantity_returned
+        loan = super(LoanSerializer, self).update(instance, validated_data)
+        new_quantity = instance.quantity_returned
+        loan.item.quantity += (new_quantity - old_quantity)
+        loan.item.save()
+        return loan
+
 class LoanSerializerNoRequest(serializers.ModelSerializer):
     item    = ItemSerializer(read_only=True)
 

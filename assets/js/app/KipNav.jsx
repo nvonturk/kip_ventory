@@ -25,7 +25,7 @@ const KipNav = React.createClass({
   getCustomFieldsLink(is_superuser) {
     return is_superuser ? (
       <LinkContainer to="/app/manage/custom-fields">
-        <MenuItem eventKey={1.8}>Custom Fields</MenuItem>
+        <MenuItem eventKey={1.8}>Add/Remove Custom Fields</MenuItem>
       </LinkContainer>
     ) : null
   },
@@ -35,31 +35,31 @@ const KipNav = React.createClass({
     INDEX = INDEX + 1
     return (
       <NavDropdown eventKey={i} title={name} id="manage-nav-dropdown">
-        <LinkContainer to="/app/manage/create-item">
-          <MenuItem eventKey={1.1}>Create Items</MenuItem>
+        <LinkContainer to="/app/manage/requests">
+          <MenuItem eventKey={1.1}>Manage Requests</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/manage/loans">
+          <MenuItem eventKey={1.2}>Manage Loans and Disbursements</MenuItem>
+        </LinkContainer>
+        <LinkContainer to="/app/manage/emails">
+          <MenuItem eventKey={1.3}>Configure Email Settings</MenuItem>
         </LinkContainer>
         <LinkContainer to="/app/manage/tags">
-          <MenuItem eventKey={1.2}>Tags</MenuItem>
+          <MenuItem href="/app/manage/tags" eventKey={1.2}>Manage Tags</MenuItem>
         </LinkContainer>
         { this.getCustomFieldsLink(this.props.route.user.is_superuser) }
         <LinkContainer to="/app/manage/disburse">
-          <MenuItem eventKey={1.3}>Disbursement</MenuItem>
-        </LinkContainer>
-        <LinkContainer to="/app/manage/requests">
-          <MenuItem eventKey={1.4}>Requests</MenuItem>
+          <MenuItem eventKey={1.4}>Create New Loan or Disbursement</MenuItem>
         </LinkContainer>
         <LinkContainer to="/app/manage/transactions">
           <MenuItem eventKey={1.5}>Aquisitions and Losses</MenuItem>
         </LinkContainer>
         <LinkContainer to="/app/manage/logs">
-          <MenuItem eventKey={1.6}>Logs</MenuItem>
-        </LinkContainer>
-        <LinkContainer to="/app/manage/emails">
-          <MenuItem eventKey={1.7}>Emails</MenuItem>
+          <MenuItem eventKey={1.6}>View Logs</MenuItem>
         </LinkContainer>
       </NavDropdown>
     )
-    
+
   },
 
   getAdminLink(url, name) {
@@ -75,7 +75,7 @@ const KipNav = React.createClass({
         </LinkContainer>
         <LinkContainer to="/app/admin/adminpanel/">
           <MenuItem eventKey={2.3}>Django Admin Panel</MenuItem>
-        </LinkContainer>          
+        </LinkContainer>
       </NavDropdown>
     )
   },
@@ -94,7 +94,7 @@ const KipNav = React.createClass({
             <Nav>
               {this.getLink("/app/inventory/", "Inventory")}
               {this.getLink("/app/requests/", "Your Requests")}
-              {this.getLink("/app/loans/", "Your Loans")}
+              {this.getLink("/app/loans/", "Your Loans and Disbursements")}
 
               {(this.props.route.user.is_staff)     ? this.getManagerLink("/app/manage/", "Manage") : null}
               {(this.props.route.user.is_superuser) ? this.getAdminLink("/app/admin/",  "Admin") : null}

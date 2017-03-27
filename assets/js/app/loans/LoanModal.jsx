@@ -10,25 +10,35 @@ import Select from 'react-select'
 const LoanModal = React.createClass({
   getInitialState() {
     return {
-      showDisbursementForm: false,
-      disbursementQuantity: 0,
-
-      showReturnForm: false,
+      disburseQuantity: 0,
       returnQuantity: 0
-
     }
   },
 
-  componentDidMount() {
-    this.setState({
-      loan: this.props.loan,
-    })
+  handleReturnQuantityChange(e) {
+    var q = Number(e.target.value)
+    if ((q >= 0) && (q <= (this.props.loan.quantity_loaned))) {
+      this.setState({
+        returnQuantity: q
+      })
+    }
   },
 
-  logReturn() {
-    var url = "/api/loans/" + this.props.loan.id + "/";
+  handleDisburseQuantityChange(e) {
+    var q = Number(e.target.value)
+    if ((q >= 0) && (q <= (this.props.loan.quantity_loaned - this.props.loan.quantity_returned))) {
+      this.setState({
+        disburseQuantity: q
+      })
+    }
+  },
+
+  handleReturn(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    var url = "/api/loans/" + this.props.loan.id + "/"
     var data = {
-      quantity_loaned: this.state.returnQuantity
+      quantity_returned: this.state.returnQuantity
     }
     var _this = this
     ajax({
@@ -39,17 +49,25 @@ const LoanModal = React.createClass({
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      success: function(response) {
-
+      success:function(response){
+        _this.setState({
+          returnQuantity: 0,
+        }, () => {_this.props.onHide(); _this.props.refresh();})
       },
-      error:function (xhr, textStatus, thrownError){}
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr);
+        console.log(textStatus);
+        console.log(thrownError);
+      }
     });
   },
 
-  convertToDisbursement() {
+  handleDisbursement(e) {
+    e.preventDefault()
+    e.stopPropagation()
     var url = "/api/loans/" + this.props.loan.id + "/convert/"
     var data = {
-      quantity: this.state.disbursementQuantity
+      quantity: this.state.disburseQuantity
     }
     var _this = this
     ajax({
@@ -60,26 +78,17 @@ const LoanModal = React.createClass({
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
-      success: function(response) {
+      success:function(response){
         _this.setState({
-          showDisbursementForm: false,
-          disbursementQuantity: 0,
-          showReturnForm: false,
-          returnQuantity: 0
-        }, _this.props.onHide)
+          disburseQuantity: 0,
+        }, () => {_this.props.onHide(); _this.props.refresh();})
       },
       error:function (xhr, textStatus, thrownError){
-        console.log(xhr)
+        console.log(xhr);
+        console.log(textStatus);
+        console.log(thrownError);
       }
     });
-  },
-
-  getReturnForm() {
-    return null
-  },
-
-  getDisbursementForm() {
-    return null
   },
 
   render() {
@@ -91,10 +100,7 @@ const LoanModal = React.createClass({
       ) : (
         <Label bsSize="small" bsStyle="danger">Outstanding</Label>
       )
-      var saveButton = (this.state.showReturnForm || this.state.showDisbursementForm) ? (
-          <Button bsStyle="info" bsSize="small" onClick={this.saveLoan}>Save</Button>
-      ) : null
-      console.log(this.props.onLoanSave)
+      console.log(this.props.loan)
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
@@ -106,9 +112,9 @@ const LoanModal = React.createClass({
               <Col xs={12}>
                 <Row>
                   <Col xs={6}>
-                    <h4 style={{marginTop: "0px", color: "rgb(223, 105, 26)"}}>
+                    <h5 style={{marginTop: "0px", color: "rgb(223, 105, 26)"}}>
                       { this.props.loan.item.name }
-                    </h4>
+                    </h5>
                   </Col>
                   <Col xs={6}>
                     <span style={{float:"right", fontSize:"12px"}}>Status: &nbsp; &nbsp; {statusLabel}</span>
@@ -120,11 +126,11 @@ const LoanModal = React.createClass({
                       <tbody>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Loaned to:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b", color: "rgb(223, 105, 26)"}}>{this.props.loan.request.requester}</td>
+                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b", color: "rgb(223, 105, 26)"}}>{this.props.request.requester}</td>
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Justification:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.request.open_comment}</td>
+                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.request.open_comment}</td>
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Approval date:</th>
@@ -132,7 +138,7 @@ const LoanModal = React.createClass({
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Admin comments:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.request.closed_comment}</td>
+                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.request.closed_comment}</td>
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Number Loaned:</th>
@@ -147,6 +153,58 @@ const LoanModal = React.createClass({
                   </Col>
                 </Row>
 
+
+                <Row>
+                  <Col xs={12}>
+                    <h5>Return Loan</h5>
+                    <p style={{fontSize: "12px"}}>
+                      Log returned instances from this loan.
+                    </p>
+                    <hr />
+
+                    <Form horizontal>
+                      <FormGroup bsSize="small">
+                        <Col xs={4} componentClass={ControlLabel}>
+                          Quantity Returned:
+                        </Col>
+                        <Col xs={4}>
+                          <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
+                                       onChange={this.handleReturnQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned} />
+                        </Col>
+                        <Col xs={4}>
+                          <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleReturn}>
+                            Update Quantity Returned
+                          </Button>
+                        </Col>
+                      </FormGroup>
+                    </Form>
+                  </Col>
+
+                  <Col xs={12}>
+                    <h5>Convert to Disbursement</h5>
+                    <p style={{fontSize: "12px"}}>
+                      Disburse instances from this loan.
+                    </p>
+                    <hr />
+
+                    <Form horizontal>
+                      <FormGroup bsSize="small">
+                        <Col xs={4} componentClass={ControlLabel}>
+                          Quantity to Disburse
+                        </Col>
+                        <Col xs={4}>
+                          <FormControl type="number" name="disburseQuantity" value={this.state.disburseQuantity}
+                                       onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
+                        </Col>
+                        <Col xs={4}>
+                          <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
+                            Disburse Instances
+                          </Button>
+                        </Col>
+                      </FormGroup>
+                    </Form>
+                  </Col>
+                </Row>
 
               </Col>
             </Row>

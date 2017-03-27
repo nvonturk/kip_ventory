@@ -10,9 +10,9 @@ class EmailsContainer extends Component {
     super(props);
     this.user = this.props.route.admin;
     this.state = {
-     
+
     }
-   
+
   }
 
   getAdminView() {
@@ -47,10 +47,10 @@ class EmailsContainer extends Component {
   render(){
 
     return(
-      <div>
+      <Grid fluid>
         <Row>
           <Col xs={12}>
-            <h3>Emails</h3>
+            <h3>Configure Emails</h3>
             <hr />
             <p>
               Configure and schedule emails.
@@ -64,7 +64,7 @@ class EmailsContainer extends Component {
             <LoanRemindersContainer loanReminders={this.state.loanReminders}/>
           </Col>
         </Row>
-      </div>
+      </Grid>
     )
   }
 
