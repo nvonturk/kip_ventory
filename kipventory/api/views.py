@@ -78,7 +78,7 @@ class ItemListCreate(generics.GenericAPIView):
 
         # Search filter
         if search is not None and search != '':
-            q_objs &= (Q(name__icontains=search) | Q(model_no__icontains=search) | Q(description__icontains=search) | Q(tags__name__icontains=search))
+            q_objs &= (Q(name__icontains=search) | Q(model_no__icontains=search))
             queryset = queryset.filter(q_objs).order_by('name')
 
         # Tags filter
