@@ -62,6 +62,12 @@ const KipNav = React.createClass({
 
   },
 
+  getCog(name) {
+    return (
+      <span>{name} <Glyphicon glyph="cog"/></span>
+    )
+  },
+
   getAdminLink(url, name) {
     var i = INDEX
     INDEX = INDEX + 1
@@ -76,6 +82,19 @@ const KipNav = React.createClass({
         <LinkContainer to="/app/admin/adminpanel/">
           <MenuItem eventKey={2.3}>Django Admin Panel</MenuItem>
         </LinkContainer>
+      </NavDropdown>
+    )
+  },
+
+  getUserLink(user) {
+    var i = INDEX
+    INDEX = INDEX + 1
+    return (
+      <NavDropdown eventKey={i} title={user.username} id="admin-nav-dropdown">
+        <LinkContainer to="/app/settings">
+          <MenuItem eventKey={3.1}>Settings</MenuItem>
+        </LinkContainer>
+        <MenuItem eventKey={3.2} onClick={this.goToURL("/api/logout/")}>Logout</MenuItem>
       </NavDropdown>
     )
   },
@@ -102,8 +121,7 @@ const KipNav = React.createClass({
             <Nav pullRight>
               {this.getLink("/app/cart/", <Glyphicon glyph="shopping-cart" />)}
               <NavItem eventKey={INDEX}   onClick={this.goToURL("/swagger/")}>API</NavItem>
-              {this.getLink("/app/settings/", "Settings")}
-              <NavItem eventKey={INDEX+1} onClick={this.goToURL("/api/logout/")}>Logout {this.props.route.user.username}</NavItem>
+              {this.getUserLink(this.props.route.user)} 
             </Nav>
           </Navbar.Collapse>
         </Navbar>
