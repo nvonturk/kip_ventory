@@ -45,7 +45,7 @@ const LoginForm = React.createClass({
           <input type="hidden" name="next" value={this.props.next} />
 
           <FormGroup bsSize="small">
-            <Button block type="submit">
+            <Button block bsSize="small" type="submit">
               Sign in
             </Button>
           </FormGroup>
@@ -55,8 +55,8 @@ const LoginForm = React.createClass({
         <form>
           <CSRFToken />
           <FormGroup controlId="netid">
-            <Button block>
-              <a href={netid_url}> Login with Duke NetID</a>
+            <Button block style={{color: "#df691a"}} bsSize="small" onClick={e => {window.location.assign(netid_url)}}>
+              Login with Duke NetID
             </Button>
           </FormGroup>
         </form>
