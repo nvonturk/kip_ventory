@@ -1083,7 +1083,7 @@ class EditUser(generics.GenericAPIView):
         if not request.user.is_superuser: #and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        jsonData = json.loads(request.body.decode("utf-8"))
+        jsonData = request.data.copy()
         user = self.get_instance(username)
 
         serializer = self.get_serializer(instance=user, data=jsonData, partial=True)
@@ -1903,7 +1903,10 @@ class GetSubscribedManagers(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.UserGETSerializer
 
-    def get(self, request):
+    def get(self, request, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Permission denied."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
         subscribed_managers = self.get_queryset()
         serializer = self.get_serializer(instance=subscribed_managers, many=True)
         return Response(serializer.data)
