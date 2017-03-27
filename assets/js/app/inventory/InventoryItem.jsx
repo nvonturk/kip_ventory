@@ -7,7 +7,7 @@ import { getCookie } from '../../csrf/DjangoCSRFToken'
 const InventoryItem = React.createClass({
   getInitialState() {
     return {
-      quantity: 1,
+      quantity: 0,
       in_cart: this.props.item.in_cart,
       showTags: false
     }
@@ -151,7 +151,7 @@ const InventoryItem = React.createClass({
         <td className="spacer" />
         <td data-th="Quantity" style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
           <FormGroup bsSize="small" style={{margin:"auto"}}>
-            <FormControl style={{fontSize: "10px"}} type="number" min={1} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onQuantityChange} />
+            <FormControl style={{fontSize: "10px"}} type="number" min={0} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onQuantityChange} />
           </FormGroup>
         </td>
         <td className="text-center" style={{zIndex:"9999"}} onClick={e => e.stopPropagation()}>
