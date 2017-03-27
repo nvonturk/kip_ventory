@@ -1,10 +1,12 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Nav, NavItem, Table, Panel, Label, Well, Pagination } from 'react-bootstrap'
+import { Grid, Row, Col, Button, Nav, NavItem, Table, Panel, Label, Well, Pagination, ControlLabel, FormGroup, FormControl } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import $ from "jquery"
 import Paginator from '../Paginator'
 import { ajax, getJSON } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
+import Select from 'react-select'
+
 
 const REQUESTS_PER_PAGE = 10;
 
@@ -14,11 +16,10 @@ const RequestsContainer = React.createClass({
 
   getInitialState() {
     return {
-      activeKey: 0,
       requests: [],
       page: 1,
       pageCount: 0,
-      filter_option: 'All',
+      status: "",
       showSuccessMessage: false,
       successMessage: "",
       showErrorMessage: false,
@@ -34,7 +35,7 @@ const RequestsContainer = React.createClass({
     var params = {
       page: this.state.page,
       itemsPerPage: REQUESTS_PER_PAGE,
-      status: this.state.filter_option,
+      status: this.state.status,
     };
     var url = "/api/requests/";
     var _this = this;
@@ -84,12 +85,16 @@ const RequestsContainer = React.createClass({
     browserHistory.push("/app/requests/" + request.request_id);
   },
 
-  handleSelect(selectedKey) {
-    this.setState({
-      activeKey: selectedKey,
-      filter_option: STATUS[selectedKey],
-      page: 1
-    }, this.getRequests);
+  handleStatusSelect(status) {
+    if (status == null) {
+      this.setState({
+        status: ""
+      }, this.getRequests)
+    } else {
+      this.setState({
+        status: status.value
+      }, this.getRequests)
+    }
   },
 
   getStatusLabel(status) {
@@ -114,7 +119,7 @@ const RequestsContainer = React.createClass({
         <div className="panel-heading">
           <Row>
             <Col xs={12}>
-              <span style={{fontSize:"15px"}} className="panel-title">Request Listing</span>
+              <span style={{fontSize:"15px"}} className="panel-title">View Your Requests</span>
             </Col>
           </Row>
         </div>
@@ -176,6 +181,42 @@ const RequestsContainer = React.createClass({
     )
   },
 
+  getRequestFilterPanel() {
+    return (
+      <Panel header={<span style={{fontSize:"15px"}}>Refine Results</span>}>
+        <Row>
+          <Col sm={12}>
+            <FormGroup bsSize="small">
+              <ControlLabel>
+                Filter by Request Status
+              </ControlLabel>
+              <Select style={{fontSize:"12px"}}
+                      name="request-status-filter"
+                      multi={false}
+                      placeholder="Filter by Request Status"
+                      value={this.state.status}
+                      options={[
+                        {
+                          label: "Outstanding",
+                          value: "O",
+                        },
+                        {
+                          label: "Approved",
+                          value: "A"
+                        },
+                        {
+                          label: "Denied",
+                          value: "D"
+                        }
+                      ]}
+                      onChange={this.handleStatusSelect} />
+            </FormGroup>
+          </Col>
+        </Row>
+      </Panel>
+    )
+  },
+
   getSuccessMessage() {
     return this.state.showSuccessMessage ? (
       <Row>
@@ -203,18 +244,7 @@ const RequestsContainer = React.createClass({
 
             <Row>
               <Col sm={3}>
-                <Panel header={<span style={{fontSize:"15px"}}>Filter Request Type</span>}>
-                  <Row>
-                    <Col sm={12}>
-                      <Nav bsStyle="pills" stacked activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-                        <NavItem eventKey={0} title="all">All</NavItem>
-                        <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
-                        <NavItem eventKey={2} title="approved">Approved</NavItem>
-                        <NavItem eventKey={3} title="denied">Denied</NavItem>
-                      </Nav>
-                    </Col>
-                  </Row>
-                </Panel>
+                { this.getRequestFilterPanel() }
               </Col>
 
               <Col sm={9}>
