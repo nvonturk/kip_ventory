@@ -156,10 +156,10 @@ const LoansContainer = React.createClass({
                         </FormGroup>
 
                         <FormGroup>
-                          <ControlLabel>Loan Status</ControlLabel>
+                          <ControlLabel>Filter by Loan Status</ControlLabel>
                           <Select style={{fontSize:"12px"}} name="loan-status-filter"
                                   multi={false}
-                                  placeholder="Filter by loan status"
+                                  placeholder="Loan status"
                                   value={this.state.status}
                                   options={[
                                     {

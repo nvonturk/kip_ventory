@@ -192,7 +192,7 @@ const RequestsContainer = React.createClass({
               <Select style={{fontSize:"12px"}}
                       name="request-status-filter"
                       multi={false}
-                      placeholder="Filter by Request Status"
+                      placeholder="Request Status"
                       value={this.state.status}
                       options={[
                         {
