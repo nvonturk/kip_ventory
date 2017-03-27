@@ -687,13 +687,13 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                             # requestItemApproval(ri_instance.item, request.user.pk, data)
                             loan.loan_group = loangroup
                             loan.save()
-                            requestItemApprovalLoan(ri_instance.item, request.user.pk, instance)
+                            requestItemApprovalLoan(ri_instance, request.user.pk, instance)
 
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
                             disbursement.loan_group = loangroup
                             disbursement.save()
-                            requestItemApprovalDisburse(ri_instance.item, request.user.pk, instance)
+                            requestItemApprovalDisburse(ri_instance, request.user.pk, instance)
 
                         sendEmailForRequestStatusUpdate(instance)
                 else:
@@ -875,6 +875,9 @@ class LoanDetailModify(generics.GenericAPIView):
             serializer.save()
             # send email that loan was returned
             sendEmailForLoanModification(loan)
+            # Log the loan being returned
+            requestItemLoanModify(loan, request.user.pk)
+
             if loan.quantity_loaned == 0:
                 loan.delete()
             return Response(serializer.data)
@@ -928,6 +931,7 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             loan.save()
             #todo can only mangers do this? send email?
             sendEmailForLoanToDisbursementConversion(loan)
+            requestItemLoantoDisburse(loan, request.user, quantity)
             if loan.quantity_loaned == 0:
                 loan.delete()
             return Response(serializer.data)
@@ -1516,8 +1520,9 @@ class DisburseCreate(generics.GenericAPIView):
                 item.save()
 
                 # Logging
+                print("Rq Instance", request_instance)
                 requestItemCreation(req_item, request.user.pk, request_instance)
-                requestItemApprovalDisburse(item, request.user.pk, request_instance)
+                requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
 
             sendEmailForNewDisbursement(requester)
             loangroup.save()
@@ -1603,7 +1608,7 @@ def sendEmailForLoanToDisbursementConversion(loan):
     sendEmail(subject, text_content, html_content, to_emails)
 
 def sendEmailForLoanModification(loan):
-    #todo make something more specific for loan returns 
+    #todo make something more specific for loan returns
     #are there any other loan modificaations besides marking as returned? i don't think so
     user = User.objects.get(username=loan.request.requester)
     subject = "Loan Modification" #"Loan Returned"
@@ -1689,7 +1694,7 @@ def requestItemDenial(request_item, initiating_user_pk, requestObj):
 #     log.save()
 
 def requestItemApprovalLoan(request_item, initiating_user_pk, requestObj):
-    item = request_item
+    item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
     affected_user = requestObj.requester
@@ -1703,8 +1708,35 @@ def requestItemApprovalLoan(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
+def requestItemLoanModify(loan, initiating_user_pk):
+    item = loan.item
+    initiating_user = None
+    quantity = loan.quantity_returned
+    request = loan.request
+    affected_user = request.requester
+    category = 'Request Item Loan Modify'
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Loan for item {} modified. The number of items returned by {} is now {}. The total number loaned is {}'.format(item.name, initiating_user.username, quantity, loan.quantity_loaned)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
+    log.save()
+
+def requestItemLoantoDisburse(loan, user, num_disbursed):
+    item = loan.item
+    initiating_user = user
+    quantity = num_disbursed
+    loaned_quantity = loan.quantity_loaned
+    request = loan.request
+    affected_user = request.requester
+    category = 'Request Item Loan Changed to Disburse'
+    message = 'Loan for item {} modified. {} items have been disbursed from a loan by {}. The number still loaned is {}.'.format(item.name, quantity, initiating_user.username, loaned_quantity)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
+    log.save()
+
 def requestItemApprovalDisburse(request_item, initiating_user_pk, requestObj):
-    item = request_item
+    item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
     affected_user = requestObj.requester
