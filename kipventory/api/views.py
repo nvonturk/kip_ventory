@@ -348,6 +348,7 @@ class GetItemStacks(generics.GenericAPIView):
 
 class CustomFieldListCreate(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         return serializers.CustomFieldSerializer
@@ -361,8 +362,10 @@ class CustomFieldListCreate(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         queryset = self.get_queryset()
-        serializer = self.get_serializer(instance=queryset, many=True)
-        return Response(serializer.data)
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
     def post(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
@@ -726,9 +729,6 @@ class LoanListAll(generics.GenericAPIView):
         return serializers.LoanGroupSerializer
 
     def get(self, request, format=None):
-        if not request.user.is_staff or request.user.is_superuser:
-            return Response({"error": "Manager permissions required."})
-
         queryset = self.get_queryset()
 
         # filter by user who requested these loans
@@ -762,9 +762,7 @@ class LoanListAll(generics.GenericAPIView):
 
                     if status == "returned":
                         for loan in loans:
-                            print(loan.is_disbursement)
-                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned']) and not loan.is_disbursement):
-                                print("HERE")
+                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
                                 keep_result = True
                                 break
 
@@ -796,12 +794,6 @@ class LoanList(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
-
-        # filter by user who requested these loans
-        user = request.query_params.get('user', None)
-        if user != None and user != "":
-            q = Q(request__requester__username__icontains=user)
-            queryset = queryset.filter(q)
 
         serializer = self.get_serializer(instance=queryset, many=True)
         data = serializer.data
@@ -1448,10 +1440,13 @@ class DisburseCreate(generics.GenericAPIView):
         # validate user input
         data = {}
         data.update(request.data)
-        requester = data.get('requester')[0]
-        closed_comment = data.get('closed_comment')[0]
+        requester = data.get('requester')
+        closed_comment = data.get('closed_comment')
         items = data['items']
         quantities = data['quantities']
+        types = data['types']
+
+        print(data)
 
         try:
             requester = User.objects.get(username=requester)
@@ -1481,6 +1476,7 @@ class DisburseCreate(generics.GenericAPIView):
         # if we made it here, we know we can go ahead and create the request, all the request items, and approve it
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
+            print("MADE IT")
             request_instance = serializer.save()
 
             data = {}
@@ -1494,15 +1490,22 @@ class DisburseCreate(generics.GenericAPIView):
             request_instance.save()
 
             loangroup = models.LoanGroup.objects.create(request=request_instance)
-            for item, quantity in zip(items, quantities):
+            for item, quantity, request_type in zip(items, quantities, types):
                 # Create request item
-                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request_type=models.DISBURSEMENT, request=request_instance)
+                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request_type=request_type, request=request_instance)
                 req_item.save()
 
-                # Create the disbursement from this request item
-                disbursement = models.createDisbursementFromRequestItem(req_item)
-                disbursement.loan_group = loangroup
-                disbursement.save()
+                if (request_type == "loan"):
+                    # Create the loan from this request item
+                    loan = models.createLoanFromRequestItem(req_item)
+                    loan.loan_group = loangroup
+                    loan.save()
+
+                elif (request_type == "disbursement"):
+                    # Create the disbursement from this request item
+                    disbursement = models.createDisbursementFromRequestItem(req_item)
+                    disbursement.loan_group = loangroup
+                    disbursement.save()
 
                 # Decrement the quantity remaining on the Item
                 item.quantity -= quantity

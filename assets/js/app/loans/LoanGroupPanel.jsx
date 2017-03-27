@@ -11,15 +11,7 @@ import LoanModal from './LoanModal'
 const LoanGroupPanel = React.createClass({
 
   getInitialState() {
-    return {
-      showReturnModal: false,
-      loanToReturn: null,
-      returnQuantity: 1,
-
-      showDisburseModal: false,
-      loanToDisburse: null,
-      disburseQuantity: 1
-    }
+    return {}
   },
 
   isAllReturned() {

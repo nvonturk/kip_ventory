@@ -133,7 +133,7 @@ const ManagerRequestsContainer = React.createClass({
 
         <Row>
           <Col sm={12}>
-            <h3>Requests</h3>
+            <h3>Manage Requests</h3>
             <hr />
             <p>
               View, respond to, and manage inventory requests.

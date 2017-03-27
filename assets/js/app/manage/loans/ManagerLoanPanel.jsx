@@ -3,10 +3,10 @@ import { Grid, Row, Col, Button, Modal, Table, Form, Glyphicon, Pagination,
          FormGroup, FormControl, ControlLabel, HelpBlock, Panel, InputGroup,
          Label, Well, Badge, ListGroup, ListGroupItem } from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
-import { getCookie } from '../../csrf/DjangoCSRFToken'
+import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
 import Select from 'react-select'
-import LoanModal from './LoanModal'
+import LoanModal from '../../loans/LoanModal'
 
 const ManagerLoanPanel = React.createClass({
 
@@ -120,7 +120,7 @@ const ManagerLoanPanel = React.createClass({
                   { loan.quantity_returned }
                 </td>
                 <td data-th="Returned" className="text-center">
-                  <span className="clickable" style={{color: "#5bc0de", fontSize: "12px", textDecoration: "underline"}} onClick={this.showModal}>
+                  <span className="clickable" style={{color: "#5bc0de", fontSize: "12px", textDecoration: "underline"}} onClick={this.showModal.bind(this, loan)}>
                     Modify
                   </span>
                 </td>
@@ -184,11 +184,14 @@ const ManagerLoanPanel = React.createClass({
           <Col xs={1} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             { this.getRequestStatusSymbol("18px") }
           </Col>
-          <Col xs={10} style={{paddingLeft: "0px"}}>
+          <Col xs={6} style={{paddingLeft: "0px"}}>
             <div style={{padding: "10px 0px", fontSize:"15px", color: "#df691a"}}>
               Request #{request.request_id}
             </div>
             <p style={{fontSize: "12px"}}>{ this.getRequestSubtitle() }</p>
+          </Col>
+          <Col xs={4} style={{padding:"10px 0px"}}>
+            <p style={{fontSize: "12px"}}>Requested by: <span style={{color:"#df691a"}}>{ request.requester }</span></p>
           </Col>
           <Col xs={1} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             { this.getExpandChevron() }
@@ -254,11 +257,15 @@ const ManagerLoanPanel = React.createClass({
           </Col>
         </Row>
 
-        <LoanModal loan={this.state.loanToModify} show={this.state.showModal} onHide={this.hideModal} refresh={this.getLoanGroups} />
+        <LoanModal loan={this.state.loanToModify}
+                   request={request}
+                   show={this.state.showModal}
+                   onHide={this.hideModal}
+                   refresh={this.props.getLoanGroups} />
 
       </ListGroupItem>
     );
   }
 });
 
-export default LoanGroupPanel
+export default ManagerLoanPanel

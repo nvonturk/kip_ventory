@@ -24,6 +24,7 @@ import TransactionsContainer from './manage/transactions/TransactionsContainer'
 import LogsContainer from './manage/logs/LogsContainer'
 import TagsContainer from './manage/tags/TagsContainer'
 import EmailsContainer from './manage/emails/EmailsContainer'
+import ManagerLoansContainer from './manage/loans/ManagerLoansContainer'
 
 
 // MAIN APP PAGES
@@ -48,6 +49,7 @@ function getManagerPanel(userData) {
       {custom_field_route}}
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={ManagerRequestsContainer} admin={userData} />
+      <Route path="loans" component={ManagerLoansContainer} admin={userData} />
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="tags" component={TagsContainer} admin={userData} />
@@ -107,7 +109,7 @@ function initialize(userData) {
         <Route path="loans" component={LoansContainer} user={userData} />
         { getManagerPanel(userData) }
         { getAdminPanel(userData) }
-        
+
         <Route path="cart" component={CartContainer} user={userData} />
         <Route path="settings" component={Profile} user={userData} />
         <Route path='404' component={My404Component} />

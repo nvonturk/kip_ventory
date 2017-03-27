@@ -52,7 +52,7 @@ const LoanModal = React.createClass({
       success:function(response){
         _this.setState({
           returnQuantity: 0,
-        }, _this.props.refresh)
+        }, () => {_this.props.onHide(); _this.props.refresh();})
       },
       error:function (xhr, textStatus, thrownError){
         console.log(xhr);
@@ -81,7 +81,7 @@ const LoanModal = React.createClass({
       success:function(response){
         _this.setState({
           disburseQuantity: 0,
-        }, _this.props.refresh)
+        }, () => {_this.props.onHide(); _this.props.refresh();})
       },
       error:function (xhr, textStatus, thrownError){
         console.log(xhr);
@@ -100,7 +100,7 @@ const LoanModal = React.createClass({
       ) : (
         <Label bsSize="small" bsStyle="danger">Outstanding</Label>
       )
-
+      console.log(this.props.loan)
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
@@ -126,11 +126,11 @@ const LoanModal = React.createClass({
                       <tbody>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Loaned to:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b", color: "rgb(223, 105, 26)"}}>{this.props.loan.request.requester}</td>
+                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b", color: "rgb(223, 105, 26)"}}>{this.props.request.requester}</td>
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Justification:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.request.open_comment}</td>
+                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.request.open_comment}</td>
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Approval date:</th>
@@ -138,7 +138,7 @@ const LoanModal = React.createClass({
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Admin comments:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.request.closed_comment}</td>
+                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.request.closed_comment}</td>
                         </tr>
                         <tr>
                           <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Number Loaned:</th>

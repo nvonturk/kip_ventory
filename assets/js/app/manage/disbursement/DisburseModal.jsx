@@ -238,7 +238,6 @@ const DisbursementContainer = React.createClass({
 
   getDisbursementCreationForm() {
     return (
-      <div>
       <Row>
         <Col xs={12}>
           <h5>Add items to loan</h5>
@@ -339,19 +338,18 @@ const DisbursementContainer = React.createClass({
         </FormGroup>
 
       </Form>
-      </div>
     )
-  },
+  }
 
   render() {
     return (
       <Grid fluid>
         <Row>
           <Col sm={12}>
-            <h3>Create New Loan or Disbursement</h3>
+            <h3>Direct Disbursement</h3>
             <hr />
             <p>
-              Use this form to loan or disburse items directly to users without waiting for them to initiate a request.
+              Use this form to disburse items directly to users without waiting for them to initiate a request.
             </p>
             <p>
               A request will be automatically generated, logged, and approved for disbursement on behalf of the specified user.

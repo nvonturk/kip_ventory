@@ -162,7 +162,7 @@ class TagsContainer extends Component{
           <Row>
 
             <Col sm={12}>
-              <h3>Tags</h3>
+              <h3>Manage Tags</h3>
               <hr />
               <p>
                 Create and delete tags in the system.

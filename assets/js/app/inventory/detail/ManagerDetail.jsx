@@ -188,7 +188,6 @@ const ManagerDetail = React.createClass({
     }
     var _this = this;
     getJSON(url, params, function(data) {
-      console.log(data)
       _this.setState({
         loans: data.results,
         loansPageCount: Number(data.num_pages),
@@ -290,7 +289,6 @@ const ManagerDetail = React.createClass({
         });
       },
       error:function (xhr, textStatus, thrownError){
-        console.log(xhr)
         if (xhr.status == 400) {
           var response = xhr.responseJSON
           var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
@@ -1157,6 +1155,7 @@ const ManagerDetail = React.createClass({
 
   render() {
     if (this.state.itemExists) {
+      var request = (this.state.loanToShow == null) ? null : this.state.loanToShow.request
       return (
         <Grid>
           <Row>
@@ -1337,8 +1336,9 @@ const ManagerDetail = React.createClass({
           </Modal>
 
           <LoanModal show={this.state.showLoanModal}
-                     onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
                      loan={this.state.loanToShow}
+                     request={request}
+                     onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
                      refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.getLoans(); this.getItem();}}/>
 
 
