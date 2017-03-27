@@ -91,6 +91,10 @@ const LoanModal = React.createClass({
     });
   },
 
+  isDisburseDisabled() {
+    return (this.state.disburseQuantity == 0)
+  },
+
   render() {
     if (this.props.loan == null) {
       return null
@@ -100,7 +104,6 @@ const LoanModal = React.createClass({
       ) : (
         <Label bsSize="small" bsStyle="danger">Outstanding</Label>
       )
-      console.log(this.props.loan)
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
@@ -156,15 +159,14 @@ const LoanModal = React.createClass({
 
                 <Row>
                   <Col xs={12}>
-                    <h5>Return Loan</h5>
-                    <p style={{fontSize: "12px"}}>
-                      Log returned instances from this loan.
-                    </p>
-                    <hr />
+                  <hr />
+                    <h5>
+                      Log a Return
+                    </h5>
 
                     <Form horizontal>
                       <FormGroup bsSize="small">
-                        <Col xs={4} componentClass={ControlLabel}>
+                        <Col xs={2} componentClass={ControlLabel}>
                           Quantity Returned:
                         </Col>
                         <Col xs={4}>
@@ -181,15 +183,17 @@ const LoanModal = React.createClass({
                   </Col>
 
                   <Col xs={12}>
-                    <h5>Convert to Disbursement</h5>
-                    <p style={{fontSize: "12px"}}>
-                      Disburse instances from this loan.
-                    </p>
                     <hr />
+                  </Col>
+
+                  <Col xs={12}>
+                    <h5>
+                      Convert to Disbursement
+                    </h5>
 
                     <Form horizontal>
                       <FormGroup bsSize="small">
-                        <Col xs={4} componentClass={ControlLabel}>
+                        <Col xs={2} componentClass={ControlLabel}>
                           Quantity to Disburse
                         </Col>
                         <Col xs={4}>
@@ -197,12 +201,13 @@ const LoanModal = React.createClass({
                                        onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
                         </Col>
                         <Col xs={4}>
-                          <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
+                          <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()} style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
                             Disburse Instances
                           </Button>
                         </Col>
                       </FormGroup>
                     </Form>
+                    <hr />
                   </Col>
                 </Row>
 

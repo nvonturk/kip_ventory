@@ -161,7 +161,6 @@ const InventoryContainer = React.createClass({
 
   handleIncludeTagSelection(tagsSelected) {
     tagsSelected = tagsSelected.map((tag, i) => {return tag.value}).join(",")
-    console.log(tagsSelected)
     this.setState({tagsSelected: tagsSelected, page: 1}, this.filterItems);
   },
 
@@ -461,10 +460,6 @@ const InventoryContainer = React.createClass({
         })
       },
       error:function (xhr, textStatus, thrownError){
-        // console.log(xhr.responseJSON);
-        // console.log(textStatus);
-        // console.log(thrownError);
-        // Logic to parse error
         var response = xhr.responseJSON
         var bulkErrNodes = JSON.parse(JSON.stringify(_this.state.bulkImportErrorNodes))
         var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
@@ -479,12 +474,8 @@ const InventoryContainer = React.createClass({
               for (var mess in response[key]){
                 message = message.concat(response[key][mess])
                 message = message.concat("\n")
-                // console.log("Response[key][mess]:", response[key][mess])
               }
-              // console.log("Message", message)
               bulkErrNodes[key] = message
-              console.log(key)
-              console.log(message)
             }
           }
 

@@ -1054,12 +1054,16 @@ class GetNetIDToken(generics.GenericAPIView):
     def get(self, request, format=None):
         code = request.query_params.get('code')
 
-        p = {'grant_type' : 'authorization_code', 'code' : code, 'redirect_uri' : "https://colab-sbx-226.oit.duke.edu/api/netidtoken/", 'client_id' : 'kipventory', 'client_secret' : 'sn6j#IzL*PXUxmPKvJ7Gs+1vzukxlx#yoFDnh%WI7GzLs$=1so'}
+        p = {'grant_type' : 'authorization_code',
+             'code' : code,
+             'redirect_uri' : "https://colab-sbx-277.oit.duke.edu/api/netidtoken/",
+             'client_id' : 'ece458kipventory',
+             'client_secret' : '%Y1S@xJm8VUSp*LZL!hgdgv5IWdVl7gugIpb*vXNrnKLzL1dQd'}
 
-        token_request = requests.post('https://oauth.oit.duke.edu/oauth/token.php', data = p)
+        token_request = requests.post('https://oauth.oit.duke.edu/oauth/token.php', data=p)
         token_json = token_request.json()
 
-        headers = {'Accept' : 'application/json', 'x-api-key' : 'kipventory', 'Authorization' : 'Bearer '+token_json['access_token']}
+        headers = {'Accept' : 'application/json', 'x-api-key' : 'ece458kipventory', 'Authorization' : 'Bearer '+token_json['access_token']}
 
         identity = requests.get('https://api.colab.duke.edu/identity/v1/', headers= headers)
         identity_json = identity.json()
