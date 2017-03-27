@@ -159,8 +159,16 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         custom_fields = validated_data.pop('custom_fields')
+        tags = validated_data.pop('tags')
 
         item = super(ItemSerializer, self).create(validated_data)
+
+        for tag in tags:
+            try:
+                tag = models.Tag.objects.all().get(name=tag)
+            except models.Tag.DoesNotExist:
+                tag = models.Tag.objects.create(name=tag)
+            item.tags.add(tag)
 
         for (name, value) in custom_fields.items():
             cv = item.values.get(field__name=name)
