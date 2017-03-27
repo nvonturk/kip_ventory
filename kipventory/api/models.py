@@ -242,6 +242,7 @@ class Log(models.Model):
     REQUEST_ITEM_CREATION           = "Request Item Creation"
     REQUEST_ITEM_APPROVAL_LOAN      = "Request Item Approval: Loan"
     REQUEST_ITEM_APPROVAL_DISBURSE  = "Request Item Approval: Disburse"
+    REQUEST_ITEM_LOAN_MODIFY        = "Request Item Loan Modify"
     REQUEST_ITEM_DENIAL             = "Request Item Denial"
     USER_CREATION                   = "User Creation"
     TRANSACTION_CREATION            = "Transaction Creation"
@@ -252,6 +253,7 @@ class Log(models.Model):
         (REQUEST_ITEM_CREATION, REQUEST_ITEM_CREATION),
         (REQUEST_ITEM_APPROVAL_LOAN, REQUEST_ITEM_APPROVAL_LOAN),
         (REQUEST_ITEM_APPROVAL_DISBURSE, REQUEST_ITEM_APPROVAL_DISBURSE),
+        (REQUEST_ITEM_LOAN_MODIFY, REQUEST_ITEM_LOAN_MODIFY),
         (REQUEST_ITEM_DENIAL, REQUEST_ITEM_DENIAL),
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),

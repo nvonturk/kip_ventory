@@ -684,13 +684,13 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                             # requestItemApproval(ri_instance.item, request.user.pk, data)
                             loan.loan_group = loangroup
                             loan.save()
-                            requestItemApprovalLoan(ri_instance.item, request.user.pk, instance)
+                            requestItemApprovalLoan(ri_instance, request.user.pk, instance)
 
                         elif ri_instance.request_type == models.DISBURSEMENT:
                             disbursement = models.createDisbursementFromRequestItem(ri_instance)
                             disbursement.loan_group = loangroup
                             disbursement.save()
-                            requestItemApprovalDisburse(ri_instance.item, request.user.pk, instance)
+                            requestItemApprovalDisburse(ri_instance, request.user.pk, instance)
 
                         sendEmailForRequestStatusUpdate(instance)
                 else:
@@ -881,6 +881,9 @@ class LoanDetailModify(generics.GenericAPIView):
             serializer.save()
             #todo can only managers do this? send email??
             sendEmailForLoanModification(loan)
+            # Log the loan being returned
+            requestItemLoanModify(loan, request.user.pk, data)
+
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1499,8 +1502,9 @@ class DisburseCreate(generics.GenericAPIView):
                 item.save()
 
                 # Logging
+                print("Rq Instance", request_instance)
                 requestItemCreation(req_item, request.user.pk, request_instance)
-                requestItemApprovalDisburse(item, request.user.pk, request_instance)
+                requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
 
             sendEmailForNewDisbursement(requester)
             serializer.save()
@@ -1672,7 +1676,7 @@ def requestItemDenial(request_item, initiating_user_pk, requestObj):
 #     log.save()
 
 def requestItemApprovalLoan(request_item, initiating_user_pk, requestObj):
-    item = request_item
+    item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
     affected_user = requestObj.requester
@@ -1686,8 +1690,21 @@ def requestItemApprovalLoan(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
+def requestItemLoanModify(loan, initiating_user_pk, requestObj):
+    item = loan.item
+    initiating_user = None
+    quantity = loan.quantity_returned
+    affected_user = requestObj.requester
+    request = requestObj
+    category = 'Request Item Loan Modify'
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Loan for item {} modified. The number of items returned by {} is now {}.'.format(item.name, initiating_user.username, quantity)
+
 def requestItemApprovalDisburse(request_item, initiating_user_pk, requestObj):
-    item = request_item
+    item = request_item.item
     initiating_user = None
     quantity = request_item.quantity
     affected_user = requestObj.requester
