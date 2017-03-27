@@ -109,15 +109,13 @@ const ManagerRequestsContainer = React.createClass({
   },
 
   getRequestView() {
-
     return (
-
       <div className="panel panel-default">
 
         <div className="panel-heading">
           <Row>
             <Col xs={12}>
-              <span style={{fontSize:"15px"}} className="panel-title">View Your Requests</span>
+              <span style={{fontSize:"15px"}} className="panel-title">View All Requests</span>
             </Col>
           </Row>
         </div>
@@ -229,7 +227,7 @@ const ManagerRequestsContainer = React.createClass({
           <Col sm={12}>
             <Row>
               <Col sm={12}>
-                <h3>Your Requests</h3>
+                <h3>Manage Requests</h3>
                 <hr />
               </Col>
             </Row>

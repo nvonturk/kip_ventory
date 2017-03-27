@@ -351,6 +351,14 @@ const InventoryContainer = React.createClass({
     })
   },
 
+  handleTagSelection(tagsSelected) {
+    var item = this.state.item
+    item.tags = tagsSelected.split(",")
+    this.setState({
+      item: item
+    })
+  },
+
   getItemCreationForm() {
     return (
       <Form horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation()}}>
