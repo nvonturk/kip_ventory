@@ -562,6 +562,8 @@ const RequestDetail = React.createClass({
             </Col>
           </Row>
 
+          
+
         </Grid>
       )
     } else {

@@ -546,7 +546,7 @@ class RequestListAll(generics.GenericAPIView):
 
         queryset = self.get_queryset()
         status = request.GET.get('status')
-        if not (status is None or status=="All"):
+        if not (status is None or status=="All" or status==""):
             queryset = models.Request.objects.filter(status=status)
 
         paginated_queryset = self.paginate_queryset(queryset)
@@ -570,7 +570,7 @@ class RequestListCreate(generics.GenericAPIView):
         queryset = self.get_queryset()
 
         status = request.GET.get('status')
-        if not (status is None or status=="All"):
+        if not (status is None or status=="All" or status==""):
             queryset = queryset.filter(status=status)
 
         paginated_queryset = self.paginate_queryset(queryset)
@@ -1603,7 +1603,7 @@ def sendEmailForLoanToDisbursementConversion(loan):
     sendEmail(subject, text_content, html_content, to_emails)
 
 def sendEmailForLoanModification(loan):
-    #todo make something more specific for loan returns 
+    #todo make something more specific for loan returns
     #are there any other loan modificaations besides marking as returned? i don't think so
     user = User.objects.get(username=loan.request.requester)
     subject = "Loan Modification" #"Loan Returned"

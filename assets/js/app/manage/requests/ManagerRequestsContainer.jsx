@@ -1,12 +1,12 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Button, Nav, NavItem, Table, Panel, Label } from 'react-bootstrap'
+import { Grid, Row, Col, Button, Nav, NavItem, Table, Panel, Label, Well, Pagination, ControlLabel, FormGroup, FormControl } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import $ from "jquery"
-import Paginator from '../../Paginator'
 import { ajax, getJSON } from 'jquery'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
+import Select from 'react-select'
 
-const REQUESTS_PER_PAGE = 5;
+const REQUESTS_PER_PAGE = 10;
 
 const STATUS = ["All", "O", "A", "D"];
 
@@ -14,11 +14,14 @@ const ManagerRequestsContainer = React.createClass({
 
   getInitialState() {
     return {
-      "activeKey": 0,
-      "requests": [],
-      "page": 1,
-      "pageCount": 0,
-      "filter_option": "All"
+      requests: [],
+      page: 1,
+      pageCount: 0,
+      status: "",
+      showSuccessMessage: false,
+      successMessage: "",
+      showErrorMessage: false,
+      errorMessage: ""
     }
   },
 
@@ -30,7 +33,7 @@ const ManagerRequestsContainer = React.createClass({
     var params = {
       page: this.state.page,
       itemsPerPage: REQUESTS_PER_PAGE,
-      status: this.state.filter_option,
+      status: this.state.status,
     };
     var url = "/api/requests/all/";
     var _this = this;
@@ -42,22 +45,54 @@ const ManagerRequestsContainer = React.createClass({
     })
   },
 
-  handlePageClick(data) {
-    let selected = data.selected;
-    let offset = Math.ceil(selected * REQUESTS_PER_PAGE);
-    let page = data.selected + 1;
-
-    this.setState({page: page}, () => {
+  handlePageSelect(activeKey) {
+    this.setState({page: activeKey}, () => {
       this.getRequests();
     });
   },
 
-  handleSelect(selectedKey) {
-    this.setState({
-      activeKey: selectedKey,
-      filter_option: STATUS[selectedKey],
-      page: 1
-    }, this.getRequests);
+  deleteRequest(request) {
+    var _this = this
+    ajax({
+      url:"/api/requests/" + request.request_id + "/",
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        console.log(response);
+        _this.getRequests();
+        _this.setState({
+          showSuccessMessage: true,
+          successMessage: "Successfully deleted outstanding request."
+        });
+      },
+      complete:function(){
+
+      },
+      error:function (xhr, textStatus, thrownError){
+        console.log(xhr)
+        console.log(textStatus)
+        console.log(thrownError)
+        alert("error doing something");
+      }
+    });
+  },
+
+  viewRequest(request) {
+    browserHistory.push("/app/requests/" + request.request_id);
+  },
+
+  handleStatusSelect(status) {
+    if (status == null) {
+      this.setState({
+        status: ""
+      }, this.getRequests)
+    } else {
+      this.setState({
+        status: status.value
+      }, this.getRequests)
+    }
   },
 
   getStatusLabel(status) {
@@ -74,97 +109,145 @@ const ManagerRequestsContainer = React.createClass({
   },
 
   getRequestView() {
-    var stat = STATUS[this.state.activeKey]
-    var requests = []
-    if (stat == "All") {
-      requests = this.state.requests
-    } else if (stat == "O") {
-      requests = this.state.requests.filter( (request) => {return request.status == "O"})
-    } else if (stat == "A") {
-      requests = this.state.requests.filter( (request) => {return request.status == "A"})
-    } else if (stat == "D") {
-      requests = this.state.requests.filter( (request) => {return request.status == "D"})
-    } else {
-      requests = []
-    }
 
     return (
-      <Row>
-        <Col sm={12}>
-          <Table condensed hover >
+
+      <div className="panel panel-default">
+
+        <div className="panel-heading">
+          <Row>
+            <Col xs={12}>
+              <span style={{fontSize:"15px"}} className="panel-title">View Your Requests</span>
+            </Col>
+          </Row>
+        </div>
+
+        <div className="panel-body" style={{minHeight: "480px", maxHeight: "500px"}}>
+          <Table condensed hover style={{marginBottom:"0px"}}>
             <thead>
               <tr>
+                <th style={{width: " 5%"}} className="text-center">ID</th>
                 <th style={{width: "15%"}} className="text-left">Requester</th>
                 <th style={{width: "20%"}} className="text-left">Date Open</th>
-                <th style={{width: "40%"}} className="text-left">Comment</th>
-                <th style={{width: "13%"}} className="text-center">Status</th>
-                <th style={{width: "12%"}} className="text-center"></th>
+                <th style={{width: "35%"}} className="text-left">Comment</th>
+                <th style={{width: "15%"}} className="text-center">Status</th>
+                <th style={{width: "10%"}} className="text-center"></th>
+              </tr>
+              <tr>
+                <th colSpan={6}>
+                  <hr style={{margin: "auto"}} />
+                </th>
               </tr>
             </thead>
             <tbody>
-              {requests.map( (request, i) => {
+              {this.state.requests.map( (request, i) => {
                 var d = new Date(request.date_open)
                 return (
-                  <tr key={request.request_id} style={{height: '50px'}}>
+                  <tr key={request.request_id} style={{height: "41px"}}>
+                    <td data-th="ID" className="text-center">{request.request_id}</td>
                     <td data-th="Requester" className="text-left">{request.requester}</td>
                     <td data-th="Date Open" className="text-left">{d.toLocaleString()}</td>
-                    <td data-th="Comment" className="text-left"><div style={{maxHeight: '100px', overflow: 'auto'}}>{request.open_comment}</div></td>
+                    <td data-th="Comment" className="text-left">
+                      <div style={{maxHeight: '100px', overflow: 'auto'}}>
+                        {request.open_comment}
+                      </div>
+                    </td>
                     <td data-th="Status" className="text-center">{this.getStatusLabel(request.status)}</td>
-                    <td style={{width: "12%"}} className="text-center">
-                        <Button bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
+                    <td className="text-center" style={{fontSize:"12px"}}>
+                      <Button block bsSize="small" bsStyle="info" onClick={e => this.viewRequest(request)}>View</Button>
                     </td>
                   </tr>
                 )
               })}
             </tbody>
           </Table>
-        </Col>
-      </Row>
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination next prev maxButtons={10} boundaryLinks ellipsis style={{float:"right", margin: "0px"}} bsSize="small" items={this.state.pageCount} activePage={this.state.page} onSelect={this.handlePageSelect} />
+            </Col>
+          </Row>
+        </div>
+
+      </div>
     )
   },
 
-  viewRequest(request) {
-    browserHistory.push("/app/requests/" + request.request_id);
+  getRequestFilterPanel() {
+    return (
+      <Panel header={<span style={{fontSize:"15px"}}>Refine Results</span>}>
+        <Row>
+          <Col sm={12}>
+            <FormGroup bsSize="small">
+              <ControlLabel>
+                Filter by Request Status
+              </ControlLabel>
+              <Select style={{fontSize:"12px"}}
+                      name="request-status-filter"
+                      multi={false}
+                      placeholder="Filter by Request Status"
+                      value={this.state.status}
+                      options={[
+                        {
+                          label: "Outstanding",
+                          value: "O",
+                        },
+                        {
+                          label: "Approved",
+                          value: "A"
+                        },
+                        {
+                          label: "Denied",
+                          value: "D"
+                        }
+                      ]}
+                      onChange={this.handleStatusSelect} />
+            </FormGroup>
+          </Col>
+        </Row>
+      </Panel>
+    )
+  },
+
+  getSuccessMessage() {
+    return this.state.showSuccessMessage ? (
+      <Row>
+        <Col sm={12}>
+          <Well bsSize="small">{this.state.successMessage}</Well>
+        </Col>
+      </Row>
+    ) : null
   },
 
   render() {
     return (
-      <Grid fluid>
+      <Grid>
 
         <Row>
           <Col sm={12}>
-            <h3>Manage Requests</h3>
-            <hr />
-            <p>
-              View, respond to, and manage inventory requests.
-            </p>
-            <br />
+            <Row>
+              <Col sm={12}>
+                <h3>Your Requests</h3>
+                <hr />
+              </Col>
+            </Row>
+
+            { this.getSuccessMessage() }
+
+            <Row>
+              <Col sm={3}>
+                { this.getRequestFilterPanel() }
+              </Col>
+
+              <Col sm={9}>
+                { this.getRequestView() }
+              </Col>
+            </Row>
+
           </Col>
         </Row>
-
-        <Panel>
-          <Row>
-            <Col sm={12}>
-              <Nav bsStyle="pills" justified activeKey={this.state.activeKey} onSelect={this.handleSelect}>
-                <NavItem eventKey={0} title="all">All</NavItem>
-                <NavItem eventKey={1} title="outstanding">Outstanding</NavItem>
-                <NavItem eventKey={2} title="approved">Approved</NavItem>
-                <NavItem eventKey={3} title="denied">Denied</NavItem>
-              </Nav>
-            </Col>
-          </Row>
-
-          <hr />
-
-          <Row>
-            <Col sm={12}>
-              { this.getRequestView() }
-              <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
-
-            </Col>
-          </Row>
-        </Panel>
-
       </Grid>
     )
   }

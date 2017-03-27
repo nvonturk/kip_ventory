@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { ajax } from "jquery"
-import { FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Button, Glyphicon} from 'react-bootstrap'
+import { Form, Row, Col, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Button, Glyphicon} from 'react-bootstrap'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import $ from 'jquery'
 
@@ -10,9 +10,9 @@ class CreateTransactionsContainer extends Component {
      this.state = {
       showModal: false,
       category: "Acquisition",
-      quantity: "",
+      quantity: 1,
       comment: "",
-      items: [], 
+      items: [],
       item_name: "",
     };
     this.close = this.close.bind(this);
@@ -23,7 +23,7 @@ class CreateTransactionsContainer extends Component {
     this.createTransaction = this.createTransaction.bind(this);
     this.getItems = this.getItems.bind(this)
     this.handleItemChange = this.handleItemChange.bind(this);
-    
+
     this.getItems()
 
   }
@@ -36,12 +36,12 @@ class CreateTransactionsContainer extends Component {
     $.getJSON("/api/items.json", params, function(data){
       var item_name = data.results.length > 0 ? data.results[0].name : "";
       thisObj.setState({items: data.results, item_name: item_name})
-    });  
+    });
   }
 
   getItemOptions() {
     return this.state.items.map((item, i)=> { return <option key={item.name} value={item.name}>{item.name}</option>})
-    
+
   }
 
   close() {
@@ -57,7 +57,10 @@ class CreateTransactionsContainer extends Component {
   }
 
   handleQuantityChange(e) {
-    this.setState({quantity: e.target.value})
+    var q = Number(e.target.value)
+    if (q > 0) {
+      this.setState({quantity: e.target.value})
+    }
   }
 
   handleCommentChange(e) {
@@ -110,7 +113,7 @@ class CreateTransactionsContainer extends Component {
 
     return (
       <div>
-          <Button bsSize="small" bsStyle="primary" style={{verticalAlign:"middle", marginBottom:"20px"}} onClick={this.open}>
+          <Button bsSize="small" bsStyle="primary" style={{verticalAlign:"middle", fontSize:"10px"}} onClick={this.open}>
               Log an Acquisition or Loss &nbsp; <Glyphicon glyph="plus" />
           </Button>
          <Modal show={this.state.showModal} onHide={this.close}>
@@ -118,37 +121,56 @@ class CreateTransactionsContainer extends Component {
             <Modal.Title>Log an Acquisition or Loss of Instances</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <form>
-              <FormGroup controlId="formControlsSelect">
-                <ControlLabel>Item</ControlLabel>
-                <FormControl componentClass="select" value={this.state.item_name} onChange={this.handleItemChange}>
-                  {this.getItemOptions()}
-                </FormControl>
-              </FormGroup>
-              <FormGroup controlId="formControlsText">
-                <ControlLabel>Quantity</ControlLabel>
-                <FormControl type="text" placeholder="Enter amount acquired or lost." value={this.state.quantity} onChange={this.handleQuantityChange} />
-                <HelpBlock>Must be a positive integer</HelpBlock>
+
+            <Form horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation();}}>
+              <FormGroup bsSize="small" controlId="formControlsSelect">
+                <Col xs={2} componentClass={ControlLabel}>
+                  Item
+                </Col>
+                <Col xs={10}>
+                  <FormControl componentClass="select" value={this.state.item_name} onChange={this.handleItemChange}>
+                    {this.getItemOptions()}
+                  </FormControl>
+                </Col>
               </FormGroup>
 
-              <FormGroup controlId="formControlsSelect">
-                <ControlLabel>Type</ControlLabel>
-                <FormControl componentClass="select" placeholder="select" value={this.state.category} onChange={this.handleTypeChange}>
-                  <option value="Acquisition">Acquisition</option>
-                  <option value="Loss">Loss</option>
-                </FormControl>
+              <FormGroup bsSize="small" controlId="formControlsText">
+                <Col xs={2} componentClass={ControlLabel}>
+                  Quantity
+                </Col>
+                <Col xs={2}>
+                  <FormControl type="number" min={1} step={1} value={this.state.quantity} onChange={this.handleQuantityChange} />
+                </Col>
+                <Col xs={2} componentClass={ControlLabel}>
+                  Category
+                </Col>
+                <Col xs={4}>
+                  <FormControl componentClass="select" placeholder="select" value={this.state.category} onChange={this.handleTypeChange}>
+                    <option value="Acquisition">Acquisition</option>
+                    <option value="Loss">Loss</option>
+                  </FormControl>
+                </Col>
               </FormGroup>
 
-               <FormGroup controlId="formControlsText">
-                <ControlLabel>Comment</ControlLabel>
-                <FormControl type="text" placeholder="Enter an explanation." value={this.state.comment} onChange={this.handleCommentChange} />
+               <FormGroup bsSize="small" controlId="formControlsText">
+                 <Col xs={2} componentClass={ControlLabel}>
+                   Comment
+                 </Col>
+                 <Col xs={10}>
+                 <FormControl type="text"
+                              style={{resize: "vertical", height:"100px"}}
+                              componentClass={"textarea"}
+                              name="comment"
+                              value={this.state.comment}
+                              onChange={this.handleCommentChange}/>
+                 </Col>
               </FormGroup>
 
-            </form>
+            </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button onClick={this.createTransaction}>Create</Button>
-            <Button onClick={this.close}>Close</Button>
+            <Button bsSize="small" bsStyle="default" onClick={this.close}>Close</Button>
+            <Button bsSize="small" bsStyle="info" onClick={this.createTransaction}>Create</Button>
           </Modal.Footer>
         </Modal>
       </div>
