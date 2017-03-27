@@ -242,7 +242,7 @@ class GetLoansByItem(generics.GenericAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return models.Loan.objects.all()
+        return models.Loan.objects.filter(quantity_loaned__gt=F('quantity_returned'))
 
     def get_serializer_class(self):
         return serializers.LoanSerializer
@@ -322,15 +322,15 @@ class GetItemStacks(generics.GenericAPIView):
                 if (ri.item.name == item_name):
                     rq += ri.quantity
 
-        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, is_disbursement=False, quantity_loaned__gt=F('quantity_returned'))
+        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
         lq = 0
         for l in loans.all():
             lq += (l.quantity_loaned - l.quantity_returned)
 
-        disbursements = models.Loan.objects.filter(request__requester=request.user.pk, is_disbursement=True, item__name=item_name)
+        disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
         dq = 0
         for d in disbursements.all():
-            dq += d.quantity_disbursed
+            dq += d.quantity
 
         cart = models.CartItem.objects.filter(owner__pk=request.user.pk, item__name=item_name)
         cq = 0
@@ -348,6 +348,7 @@ class GetItemStacks(generics.GenericAPIView):
 
 class CustomFieldListCreate(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         return serializers.CustomFieldSerializer
@@ -361,8 +362,10 @@ class CustomFieldListCreate(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         queryset = self.get_queryset()
-        serializer = self.get_serializer(instance=queryset, many=True)
-        return Response(serializer.data)
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
 
     def post(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
@@ -726,9 +729,6 @@ class LoanListAll(generics.GenericAPIView):
         return serializers.LoanGroupSerializer
 
     def get(self, request, format=None):
-        if not request.user.is_staff or request.user.is_superuser:
-            return Response({"error": "Manager permissions required."})
-
         queryset = self.get_queryset()
 
         # filter by user who requested these loans
@@ -762,9 +762,7 @@ class LoanListAll(generics.GenericAPIView):
 
                     if status == "returned":
                         for loan in loans:
-                            print(loan.is_disbursement)
-                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned']) and not loan.is_disbursement):
-                                print("HERE")
+                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
                                 keep_result = True
                                 break
 
@@ -796,12 +794,6 @@ class LoanList(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
-
-        # filter by user who requested these loans
-        user = request.query_params.get('user', None)
-        if user != None and user != "":
-            q = Q(request__requester__username__icontains=user)
-            queryset = queryset.filter(q)
 
         serializer = self.get_serializer(instance=queryset, many=True)
         data = serializer.data
@@ -872,18 +864,22 @@ class LoanDetailModify(generics.GenericAPIView):
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
+        if not (request.user.is_superuser or request.user.is_staff):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
         loan = self.get_instance(pk=pk)
-
         data = request.data.copy()
         data.update({"loan": loan})
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            #todo can only managers do this? send email??
+            # send email that loan was returned
             sendEmailForLoanModification(loan)
             # Log the loan being returned
-            requestItemLoanModify(loan, request.user.pk, data)
+            requestItemLoanModify(loan, request.user.pk)
 
+            if loan.quantity_loaned == 0:
+                loan.delete()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -907,8 +903,9 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             raise NotFound('Loan {} not found.'.format(pk))
 
     def post(self, request, pk, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            return Response({"error": ["Manager permissions required."]})
+        if not (request.user.is_superuser or request.user.is_staff):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         loan = self.get_instance(pk=pk)
 
@@ -934,6 +931,9 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             loan.save()
             #todo can only mangers do this? send email?
             sendEmailForLoanToDisbursementConversion(loan)
+            requestItemLoantoDisburse(loan, request.user, quantity)
+            if loan.quantity_loaned == 0:
+                loan.delete()
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1448,10 +1448,13 @@ class DisburseCreate(generics.GenericAPIView):
         # validate user input
         data = {}
         data.update(request.data)
-        requester = data.get('requester')[0]
-        closed_comment = data.get('closed_comment')[0]
+        requester = data.get('requester')
+        closed_comment = data.get('closed_comment')
         items = data['items']
         quantities = data['quantities']
+        types = data['types']
+
+        print(data)
 
         try:
             requester = User.objects.get(username=requester)
@@ -1481,24 +1484,39 @@ class DisburseCreate(generics.GenericAPIView):
         # if we made it here, we know we can go ahead and create the request, all the request items, and approve it
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
+            print("MADE IT")
             request_instance = serializer.save()
 
-        data = {}
-        data.update({'administrator': request.user})
-        data.update({'closed_comment': closed_comment})
-        data.update({'status': 'A'})
+            data = {}
+            data.update({'administrator': request.user})
+            data.update({'closed_comment': closed_comment})
+            data.update({'status': 'A'})
 
-        serializer = serializers.RequestPUTSerializer(instance=request_instance, data=data, partial=True)
+            request_instance.administrator = request.user
+            request_instance.closed_comment = closed_comment
+            request_instance.status = 'A'
+            request_instance.save()
 
-        # We're good to go!
-        if serializer.is_valid():
-            for item, quantity in zip(items, quantities):
-                # Create the request item
-                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request=request_instance)
+            loangroup = models.LoanGroup.objects.create(request=request_instance)
+            for item, quantity, request_type in zip(items, quantities, types):
+                # Create request item
+                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request_type=request_type, request=request_instance)
                 req_item.save()
 
+                if (request_type == "loan"):
+                    # Create the loan from this request item
+                    loan = models.createLoanFromRequestItem(req_item)
+                    loan.loan_group = loangroup
+                    loan.save()
+
+                elif (request_type == "disbursement"):
+                    # Create the disbursement from this request item
+                    disbursement = models.createDisbursementFromRequestItem(req_item)
+                    disbursement.loan_group = loangroup
+                    disbursement.save()
+
                 # Decrement the quantity remaining on the Item
-                setattr(item, 'quantity', (item.quantity - quantity))
+                item.quantity -= quantity
                 item.save()
 
                 # Logging
@@ -1507,10 +1525,10 @@ class DisburseCreate(generics.GenericAPIView):
                 requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
 
             sendEmailForNewDisbursement(requester)
-            serializer.save()
+            loangroup.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def itemCreationLog(data, initiating_user_pk):
@@ -1591,9 +1609,9 @@ def sendEmailForLoanToDisbursementConversion(loan):
 
 def sendEmailForLoanModification(loan):
     #todo make something more specific for loan returns
-    #are there any other loan modificaations besides marking as returned?
+    #are there any other loan modificaations besides marking as returned? i don't think so
     user = User.objects.get(username=loan.request.requester)
-    subject = "Loan Modification"
+    subject = "Loan Modification" #"Loan Returned"
     text_content = "One of your loans has been modified."
     html_content = text_content
     to_emails = [user.email]
@@ -1690,18 +1708,32 @@ def requestItemApprovalLoan(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
-def requestItemLoanModify(loan, initiating_user_pk, requestObj):
+def requestItemLoanModify(loan, initiating_user_pk):
     item = loan.item
     initiating_user = None
     quantity = loan.quantity_returned
-    affected_user = requestObj.requester
-    request = requestObj
+    request = loan.request
+    affected_user = request.requester
     category = 'Request Item Loan Modify'
     try:
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
-    message = 'Loan for item {} modified. The number of items returned by {} is now {}.'.format(item.name, initiating_user.username, quantity)
+    message = 'Loan for item {} modified. The number of items returned by {} is now {}. The total number loaned is {}'.format(item.name, initiating_user.username, quantity, loan.quantity_loaned)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
+    log.save()
+
+def requestItemLoantoDisburse(loan, user, num_disbursed):
+    item = loan.item
+    initiating_user = user
+    quantity = num_disbursed
+    loaned_quantity = loan.quantity_loaned
+    request = loan.request
+    affected_user = request.requester
+    category = 'Request Item Loan Changed to Disburse'
+    message = 'Loan for item {} modified. {} items have been disbursed from a loan by {}. The number still loaned is {}.'.format(item.name, quantity, initiating_user.username, loaned_quantity)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
+    log.save()
 
 def requestItemApprovalDisburse(request_item, initiating_user_pk, requestObj):
     item = request_item.item

@@ -16,9 +16,9 @@ function LogEntryContainer(props){
           <th style={{width:'10%'}} className="text-left">Affected User</th>
           <th style={{width:'10%'}} className="text-left">Date</th>
           <th style={{width:'10%'}} className="text-left">Category</th>
-          <th style={{width:'10%'}} className="text-left">Item</th>
+          <th style={{width:'15%'}} className="text-left">Item</th>
           <th style={{width:'10%'}} className="text-left">Request</th>
-          <th style={{width:'10%'}} className="text-left">Quantity</th>
+          <th style={{width:'5%'}} className="text-left">Quantity</th>
           <th style={{width:'20%'}} className="text-left">Message</th>
         </tr>
       </thead>

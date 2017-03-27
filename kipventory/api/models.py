@@ -178,6 +178,7 @@ class Loan(models.Model):
     class Meta:
         ordering = ('id',)
 
+
 class Disbursement(models.Model):
     request    = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursements', blank=True, null=True)
     item       = models.ForeignKey(Item, on_delete=models.CASCADE)
@@ -243,6 +244,7 @@ class Log(models.Model):
     REQUEST_ITEM_APPROVAL_LOAN      = "Request Item Approval: Loan"
     REQUEST_ITEM_APPROVAL_DISBURSE  = "Request Item Approval: Disburse"
     REQUEST_ITEM_LOAN_MODIFY        = "Request Item Loan Modify"
+    REQUEST_ITEM_LOAN_TO_DISBURSE   = 'Request Item Loan Changed to Disburse'
     REQUEST_ITEM_DENIAL             = "Request Item Denial"
     USER_CREATION                   = "User Creation"
     TRANSACTION_CREATION            = "Transaction Creation"
@@ -253,12 +255,16 @@ class Log(models.Model):
         (REQUEST_ITEM_CREATION, REQUEST_ITEM_CREATION),
         (REQUEST_ITEM_APPROVAL_LOAN, REQUEST_ITEM_APPROVAL_LOAN),
         (REQUEST_ITEM_APPROVAL_DISBURSE, REQUEST_ITEM_APPROVAL_DISBURSE),
+        (REQUEST_ITEM_LOAN_TO_DISBURSE, REQUEST_ITEM_LOAN_TO_DISBURSE),
         (REQUEST_ITEM_LOAN_MODIFY, REQUEST_ITEM_LOAN_MODIFY),
         (REQUEST_ITEM_DENIAL, REQUEST_ITEM_DENIAL),
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),
     )
     category            = models.CharField(max_length=50, choices=category_choices)
+
+    class Meta:
+        ordering = ('-date_created',)
 
     def __str__(self):
         return "{} {}".format(self.date_created, self.item, self.quantity, self.initiating_user, self.affected_user)

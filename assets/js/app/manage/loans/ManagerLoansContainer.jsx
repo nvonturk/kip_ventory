@@ -3,10 +3,10 @@ import { Grid, Row, Col, Button, Modal, Table, Form, Glyphicon, Pagination,
          FormGroup, FormControl, ControlLabel, HelpBlock, Panel, InputGroup,
          Label, Well, Badge, ListGroup, ListGroupItem } from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
-import { getCookie } from '../../csrf/DjangoCSRFToken'
+import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
 import Select from 'react-select'
-import LoanModal from './LoanModal'
+import LoanModal from '../../loans/LoanModal'
 
 import ManagerLoanPanel from './ManagerLoanPanel'
 
@@ -32,7 +32,7 @@ const ManagerLoansContainer = React.createClass({
   },
 
   getLoanGroups() {
-    var url = "/api/loans/"
+    var url = "/api/loans/all/"
     var params = {
       page: this.state.page,
       itemsPerPage: this.state.itemsPerPage,
@@ -99,7 +99,7 @@ const ManagerLoansContainer = React.createClass({
       <ListGroup style={{margin: "0px"}}>
         { this.state.loanGroups.map( (lg, i) => {
           return (
-            <LoanGroupPanel getLoanGroups={this.getLoanGroups}
+            <ManagerLoanPanel getLoanGroups={this.getLoanGroups}
                             toggleExpanded={this.handleLoanGroupExpand.bind(this, i)}
                             index={i} expanded={this.state.expandedLoanGroup}
                             key={lg.request.request_id} loanGroup={lg} />
@@ -127,7 +127,7 @@ const ManagerLoansContainer = React.createClass({
           <Col md={12}>
             <Row >
               <Col md={12}>
-                <h3>Your Loans</h3>
+                <h3>Manage Loans and Disbursements</h3>
                 <hr />
               </Col>
             </Row>
@@ -223,7 +223,7 @@ const ManagerLoansContainer = React.createClass({
                 <div className="panel panel-default">
 
                   <div className="panel-heading">
-                    <span style={{fontSize:"15px"}}>View Your Loans</span>
+                    <span style={{fontSize:"15px"}}>View All Loans and Disbursements</span>
                     <span style={{float:"right", fontSize:"12px"}}>
                       Loans are grouped by request. &nbsp; Click to expand.
                     </span>

@@ -11,15 +11,7 @@ import LoanModal from './LoanModal'
 const LoanGroupPanel = React.createClass({
 
   getInitialState() {
-    return {
-      showReturnModal: false,
-      loanToReturn: null,
-      returnQuantity: 1,
-
-      showDisburseModal: false,
-      loanToDisburse: null,
-      disburseQuantity: 1
-    }
+    return {}
   },
 
   isAllReturned() {
@@ -109,7 +101,7 @@ const LoanGroupPanel = React.createClass({
       </Table>
     ) : (
       <Well bsSize="small" style={{fontSize: "12px"}} className="text-center">
-        All loans in this request have been disbursed to <span style={{color: "rgb(223, 105, 26)"}}>{request.requester}</span>
+        This request has no associated loans.
       </Well>
     )
   },

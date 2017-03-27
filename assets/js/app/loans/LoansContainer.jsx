@@ -128,7 +128,7 @@ const LoansContainer = React.createClass({
           <Col md={12}>
             <Row >
               <Col md={12}>
-                <h3>Your Loans</h3>
+                <h3>Your Loans and Disbursements</h3>
                 <hr />
               </Col>
             </Row>
@@ -224,7 +224,7 @@ const LoansContainer = React.createClass({
                 <div className="panel panel-default">
 
                   <div className="panel-heading">
-                    <span style={{fontSize:"15px"}}>View Your Loans</span>
+                    <span style={{fontSize:"15px"}}>View Your Loans and Disbursements</span>
                     <span style={{float:"right", fontSize:"12px"}}>
                       Loans are grouped by request. &nbsp; Click to expand.
                     </span>

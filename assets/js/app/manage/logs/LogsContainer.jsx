@@ -60,7 +60,7 @@ class LogsContainer extends Component {
     $.getJSON("/api/items.json", params, function(data){
       thisObj.setState({items: data.results})
       thisObj.createItemlist(data.results)
-    });  
+    });
   }
 
   createUserlist(data){
@@ -156,7 +156,7 @@ class LogsContainer extends Component {
 
         <Row>
           <Col sm={12}>
-            <h3>Logs</h3>
+            <h3>View Logs</h3>
             <hr />
             <p>
               View all logging history. Logs are searchable by item, user, specific date, or range of dates.
