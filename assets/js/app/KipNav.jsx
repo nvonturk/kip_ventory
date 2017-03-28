@@ -112,8 +112,8 @@ const KipNav = React.createClass({
           <Navbar.Collapse>
             <Nav>
               {this.getLink("/app/inventory/", "Inventory")}
-              {this.getLink("/app/requests/", "Your Requests")}
-              {this.getLink("/app/loans/", "Your Loans and Disbursements")}
+              {this.getLink("/app/requests/", "My Requests")}
+              {this.getLink("/app/loans/", "My Loans and Disbursements")}
 
               {(this.props.route.user.is_staff)     ? this.getManagerLink("/app/manage/", "Manage") : null}
               {(this.props.route.user.is_superuser) ? this.getAdminLink("/app/admin/",  "Admin") : null}

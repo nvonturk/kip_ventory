@@ -22,9 +22,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '3*4v%9@r16tm(^i$6v%g776at)-&el=a#gnq8zyxezw3ufwd!3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['colab-sbx-277.oit.duke.edu', '152.3.52.30']
 
 LOGIN_URL = "/"
 LOGIN_REDIRECT_URL = "/app/"
@@ -170,10 +170,11 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 
 # for development only
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # for production
-#EMAIL_BACKEND =   'djcelery_email.backends.CeleryEmailBackend'
+EMAIL_BACKEND =   'djcelery_email.backends.CeleryEmailBackend'
 
 # CELERY STUFF
 CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//' #rabbitMQ
