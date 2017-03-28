@@ -68,6 +68,8 @@ urlpatterns = [
     url(r'^users/managers/subscribed/?$', views.GetSubscribedManagers.as_view()),
 
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
+
+    url(r'^backupemail/?$', views.BackupEmail.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
