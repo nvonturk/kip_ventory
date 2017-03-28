@@ -223,12 +223,15 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         cart_quantity = data.get('quantity', None)
+        item = data.get('item')
         try:
             cart_quantity = int(cart_quantity)
         except:
             raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
         if (cart_quantity <= 0):
             raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
+        if (cart_quantity > item.quantity):
+            raise ValidationError({"quantity": ["Cannot add more instances to your cart than are in stock ({}).".format(item.quantity)]})
 
         request_type = data.get('request_type', None)
         if (request_type != "disbursement") and (request_type != "loan"):
@@ -441,7 +444,7 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     open_comment    = serializers.CharField(read_only=True)
     administrator   = serializers.SlugRelatedField(read_only=True, slug_field="username")
     date_closed     = serializers.DateTimeField(read_only=True)
-    closed_comment  = serializers.CharField(max_length=500, allow_blank=True, default="")
+    closed_comment  = serializers.CharField(max_length=500, allow_blank=False, default="")
     status          = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
 
     class Meta:

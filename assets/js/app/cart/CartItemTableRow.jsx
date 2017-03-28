@@ -20,7 +20,7 @@ const CartItemTableRow = React.createClass({
 
   handleQuantityChange(e) {
     var q = Number(e.target.value)
-    if (q > this.state.item.quantity) {
+    if (q > this.state.item.quantity || q <= 0) {
       e.stopPropagation()
     } else {
       this.setState({quantity: Number(e.target.value)}, this.updateCartItem)

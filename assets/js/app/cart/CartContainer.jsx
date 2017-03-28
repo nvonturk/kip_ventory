@@ -135,7 +135,7 @@ const CartContainer = React.createClass({
                     <HelpBlock>Enter a brief justification for requesting these items.</HelpBlock>
                   </FormGroup>
                   <FormGroup>
-                    <Button disabled={this.state.showConfirmationNode} bsSize="small" bsStyle="info" type="submit">Generate request</Button>
+                    <Button disabled={this.state.showConfirmationNode || this.state.openReason.length == 0} bsSize="small" bsStyle="info" type="submit">Generate request</Button>
                   </FormGroup>
                 </Form>
               </Well>
