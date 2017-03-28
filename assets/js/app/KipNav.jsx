@@ -112,7 +112,7 @@ const KipNav = React.createClass({
     INDEX = INDEX + 1
     return (
       <NavDropdown eventKey={i} title="API" id="api-nav-dropdown">
-        <MenuItem eventKey={4.1} onClick={this.openURLInNewTab("https://github.com/nbv3/kip_ventory/blob/ccbacb42f07b8eb28d471021c6d88ecbd8df5ff0/API.md")}>API Guide</MenuItem>
+        <MenuItem eventKey={4.1} onClick={this.openURLInNewTab("https://github.com/nbv3/kip_ventory/blob/ev3/docs/API.md")}>API Guide</MenuItem>
         <MenuItem eventKey={4.2} onClick={this.openURLInNewTab("/swagger/")}>API Tester</MenuItem>
       </NavDropdown>
     )
