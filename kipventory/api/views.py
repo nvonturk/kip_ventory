@@ -562,11 +562,19 @@ class CartItemDetailModifyDelete(generics.GenericAPIView):
         cartitem.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class RequestListAllFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="status", description="Filter by status (Outstanding, Approved, Denied)", required=False, location='query'),
+    ]
+
+    return fields
 
 class RequestListAll(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     permissions = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (RequestListAllFilter,)
 
     def get_queryset(self):
         return models.Request.objects.all()
@@ -589,10 +597,19 @@ class RequestListAll(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
+class RequestListCreateFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="status", description="Filter by status (Outstanding, Approved, Denied)", required=False, location='query'),
+    ]
+
+    return fields
+
 class RequestListCreate(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
+    filter_backends = (RequestListCreateFilter,)
 
     # restrict this queryset - each user can only see his/her own Requests
     def get_queryset(self):
