@@ -352,8 +352,22 @@ Please see crontab documentation to schedule the jobs to tailor your needs.  Add
 
 #### On the Production Server
 
+Now it is time to enable your PostgreSQL database for backups. SSH on to your production server and edit the /etc/postgresql/version_number/main/postgresql.conf file.
 
+Uncomment the following parameter in the CONNECTIONS AND AUTHENTICATION section to enable a connection to the database.
+```
+listen_addresses = 'localhost'
+```
+Now restart PostgreSQL on your server.
+```
+sudo systemctl restart  postgresql
+```
 
+Next we are going to set up a bitnami user in your database that will be used for backups. Perform the following commands to set up the user.
+```
+sudo -u postgres psql dbname
+create user bitnami with password 'your_production_bitnami_password';
+alter role bitnami with superuser;
+```
 
-
-Profit.
+Your backup configuration is now complete.
