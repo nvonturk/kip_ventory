@@ -26,7 +26,7 @@ def loansToString(loans, loan_reminder_body):
 
 def loanToHtml(loan):
     request_url = "{}{}".format(REQUESTS_URL, loan.request.id)
-    return "<a href='{}''>{}</a><ul><li>Item: {}</li><li>Quantity Loaned {}</li><li>Quantity Returned {}</li></ul>".format(request_url, request_url, loan.item, loan.quantity_loaned, loan.quantity_returned)
+    return "<a href='{}''>{}</a><ul><li>Item: {}</li><li>Quantity Loaned: {}</li><li>Quantity Returned: {}</li></ul>".format(request_url, request_url, loan.item, loan.quantity_loaned, loan.quantity_returned)
 
 def loansToHtml(loans, loan_reminder_body):
     intro = "<p>The following is a list of your recorded loans with a link to each loan:</p>"
