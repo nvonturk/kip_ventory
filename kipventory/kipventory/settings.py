@@ -170,6 +170,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 
 # for development only
+
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # for production

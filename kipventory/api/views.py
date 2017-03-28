@@ -1075,7 +1075,7 @@ class GetCurrentUser(generics.GenericAPIView):
 class EditUser(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.UserPUTSerializer
-    
+
     def get_instance(self, username):
         return models.User.objects.get(username=username)
 
@@ -1190,7 +1190,7 @@ class TagDelete(generics.GenericAPIView):
             return models.Tag.objects.get(name=tag_name)
         except models.Tag.DoesNotExist:
             raise NotFound('Tag {} not found.'.format(tag_name))
-    
+
     # Maybe put into its own view? Seems like a lot for now
     # manager restricted
     def delete(self, request, tag_name, format=None):
@@ -1998,3 +1998,36 @@ class SubjectTagGetModify(generics.GenericAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class BackupEmail(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return User.objects.filter(is_superuser=True)
+
+    def get(self, request, format=None):
+        admins = self.get_queryset()
+        bcc_emails = []
+        for admin in admins:
+            bcc_emails.append(admin.email)
+        backup_status = request.query_params.get("status", "")
+
+        try:
+            if backup_status == "success":
+                subject = "Backup Successful"
+                text_content = "Backup was successful."
+                html_content = text_content
+                to_emails = []
+                sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+                return Response(data={}, status=status.HTTP_200_OK)
+            elif backup_status == "failure":
+                subject = "Backup Failure"
+                text_content = "ERROR Backup was a failure."
+                html_content = text_content
+                to_emails = []
+                sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+                return Response(data={}, status=status.HTTP_200_OK)
+            else:
+                return Response(data={}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response(data={}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
