@@ -88,31 +88,34 @@ Note: many of the GET requests return paginated results. You can specify a `page
 ```
 
 #### API Token
-* '/apitoken'
+* `/apitoken`
   * GET: get an API token (must be logged in via application interface)
 
 #### Backup Email
-* '/backupemail/'
+* `/backupemail/`
   * GET: initiate the sending of emails to administrative users notifying of backup results
+  
   | Parameter | Type   | Purpose                                | Required? |
   |-----------|--------|----------------------------------------|-----------|
   | status    | string | backup result status (success/failure) | yes       |
 
 #### Cart
-* '/cart/'
+* `/cart/`
   * GET: get the cart for the logged in user
-* '/cart/{item_name}'
+* `/cart/{item_name}`
   * GET: get the number of a specified item in the user's cart
   * DELETE: delete a specified item from the user's cart
   * PUT: modify quantity of item in user's cart or whether item is requested for loan/disbursement
+  
   | Parameter    | Type   | Purpose                                              | Required? |
   |--------------|--------|------------------------------------------------------|-----------|
   | quantity     | string | number of item to be requested                       | yes       |
   | request type | string | specify whether request will be loan or disbursement | yes       |
 
 #### Disburse
-* '/disburse/'
+* `/disburse/`
   * POST: create approved disbursals from an admin user to a regular user, logged in user defaults to admin user
+  
   | Parameter      | Type          | Purpose                                                                      | Required? |
   |----------------|---------------|------------------------------------------------------------------------------|-----------|
   | requester      | string        | filter logs by user associated with entries                                  | yes       |
@@ -123,31 +126,36 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | open_comment   | string        | comment on opening of requests                                               | yes       |
 
 #### Fields
-* '/fields/'
+* `/fields/`
   * GET: get all custom fields in system
   * POST: create a new custom field
+  
   | Parameter  | Type    | Purpose                                                   | Required? |
   |------------|---------|-----------------------------------------------------------|-----------|
   | private    | boolean | whether or not field is hidden to non-admin/manager users | yes       |
   | name       | string  | the name of the custom field                              | yes       |
   | field_type | string  | one of four custom field types (Single/Multi/Float/Int)   | yes       |
-* '/fields/{field_name}'
+
+* `/fields/{field_name}`
   * DELETE: delete a specified custom field
   * GET: get the information associated with a specified custom field
 
 #### Import
-* '/import/'
+* `/import/`
   * POST: initiate a bulk import, a files is included with this request
+  
   | Parameter     | Type   | Purpose                         | Required? |
   |---------------|--------|---------------------------------|-----------|
   | administrator | string | administrator initiating import | yes       |
-* '/import/tempalte/'
+
+* `/import/tempalte/`
   * GET: get the CSV bulk import template
 
 #### Items
 * `/items/`
   * GET: get all items
   * POST: create a new item
+  
   | Parameter   | Type             | Purpose                          | Required? |
   |-------------|------------------|----------------------------------|-----------|
   | model_no    | string           | the id of the item               | yes       |
@@ -160,6 +168,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   * GET: get the item with the specified item name
   * DELETE: delete the item with the specified item name
   * PUT: modify the values of a currently existing item
+  
   | Parameter   | Type             | Purpose                          | Required? |
   |-------------|------------------|----------------------------------|-----------|
   | model_no    | string           | the id of the item               | yes       |
@@ -167,35 +176,45 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | quantity    | positive integer | amount of item in inventory      | yes       |
   | name        | string           | colloquial name of item          | yes       |
   | tags        | string array     | tags associated with item        | yes       |
+
 * `/items/{item_name}/addtocart`
   * POST: add an item to the logged in user's cart.
+  
   | Parameter    | Type             | Purpose                                                     | Required? |
   |--------------|------------------|-------------------------------------------------------------|-----------|
   | quantity     | positive integer | number of items requested                                   | yes       |
   | request type | string           | delineates whether item is request for loan or disbursement | yes       |
+
 * `/items/{item_name}/fields`
   * GET: get the values of all custom fields for an item
 * `/items/{item_name}/fields/{field_name}`
   * GET: get the value of a specified custom field for an item
   * PUT: modify the value of a specified custom field for an item
+  
   | Parameter | Type   | Purpose                                                        | Required? |
   |-----------|--------|----------------------------------------------------------------|-----------|
   | value     | string | custom field value, parsed into required field type on backend | yes       |
+
 * `/items/{item_name}/loans`
   * GET: get all loans associated with an item.
+  
   | Parameter | Type   | Purpose                 | Required? |
   |-----------|--------|-------------------------|-----------|
   | user      | string | filter loans by user    | no        |
+
 * `/items/{item_name}/requests`
   * GET: get all requests associated with an item
+  
   | Parameter | Type   | Purpose                         | Required? |
   |-----------|--------|---------------------------------|-----------|
   | type      | string | fitler requests by request type | no        |
   | user      | string | filter requests by user         | no        |
+
 * `/items/{item_name}/stacks`
   * GET: get item stack values for a specified item
 * `/items/{item_name}/transactions`
   * GET: get all transactions associated with a specified item
+  
   | Parameter     | Type   | Purpose                                       | Required? |
   |---------------|--------|-----------------------------------------------|-----------|
   | category      | string | filter transactions by transaction category   | no        |
