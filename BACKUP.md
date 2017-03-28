@@ -16,6 +16,7 @@ sudo scp postgresql-dump.sql bitnami@colab-sbx-XXX.oit.duke.edu:/home/bitnami
 Now SSH into you production server, which in our case is colab-sbx-277.oit.duke.edu. Run the following commands to restore your database from the copied pg_dump file in the /home/bitnami directory.
 
 ```
+ssh -X bitnami@colab-sbx-XXX.oit.duke.edu
 cd /home/bitnami/
 dropdb dbname
 psql postgres
