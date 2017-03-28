@@ -7,16 +7,34 @@ from django.conf import settings
 from django.db.models import F
 
 
+DOMAIN = "https://colab-sbx-277.oit.duke.edu/"
+REQUESTS_URL = "{}{}".format(DOMAIN, "app/requests/")
+
 def loanToString(loan):
     #todo maybe include request's date_closed
-    return "Item: {} \nQuanity Loaned: {} \nQuantity Returned: {}".format(loan.item, loan.quantity_loaned, loan.quantity_returned)
+    request_url = "{}{}".format(REQUESTS_URL, loan.request.id)
+    return "Link: {} \nItem: {} \nQuantity Loaned: {} \nQuantity Returned: {}".format(request_url, loan.item, loan.quantity_loaned, loan.quantity_returned)
 
-def loansToString(loans):
+def loansToString(loans, loan_reminder_body):
+    intro = "The following is a list of your recorded loans with a link to each loan:\n\n"
+    loansString = "{}\n\n{}".format(loan_reminder_body, intro)
     loansString = ""
     for loan in loans:
         loansString += loanToString(loan)
         loansString += "\n\n"
     return loansString
+
+def loanToHtml(loan):
+    request_url = "{}{}".format(REQUESTS_URL, loan.request.id)
+    return "<a href='{}''>{}</a><ul><li>Item: {}</li><li>Quantity Loaned: {}</li><li>Quantity Returned: {}</li></ul>".format(request_url, request_url, loan.item, loan.quantity_loaned, loan.quantity_returned)
+
+def loansToHtml(loans, loan_reminder_body):
+    intro = "<p>The following is a list of your recorded loans with a link to each loan:</p>"
+    loansHtml = "{}<br/><br/>{}".format(loan_reminder_body, intro)
+    for loan in loans:
+        loansHtml += loanToHtml(loan)
+        loansHtml += "<hr/>"
+    return loansHtml
 
 def sendEmail(subject, text_content, html_content, from_email, to_emails, bcc_emails):
     msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails, bcc_emails)
@@ -36,8 +54,9 @@ class SendLoanReminderEmail(CronJobBase):
         subject = "{} {}".format(subject_tag.text, loan_reminder.subject)
         for username, loan_reminder_content in loan_reminder_contents.items():
             to_emails = [loan_reminder_content["user"].email]
-            text_content = loan_reminder.body + "\n\n" + loansToString(loan_reminder_content["loans"])
-            html_content = text_content #todo maybe figure out how to use a template
+            loan = loan_reminder_content["loans"]
+            text_content = loansToString(loan, loan_reminder.body)
+            html_content = loansToHtml(loan, loan_reminder.body)
             try:
                 sendEmail(subject, text_content, html_content, from_email, to_emails, bcc_emails)
             except:
@@ -49,6 +68,7 @@ class SendLoanReminderEmail(CronJobBase):
 
     def do(self):
         print("send email cronjob starting")
+        print(timezone.now())
 
         # Check if a loan reminder email(s) should be sent
         loan_reminders_to_send = models.LoanReminder.objects.filter(sent=False).filter(date__lte=timezone.now()) #todo check timezones datetime.now() vs timezone.now()

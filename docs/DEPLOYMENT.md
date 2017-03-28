@@ -142,7 +142,7 @@ Now, you should be able to access your app (unsecured, HTTP only) at your URL. V
 
 
 
-## Adding HTTPS/SSL 
+## Adding HTTPS/SSL
 
 ###### Configure SSL
 Create a signed certificate with `letsencrypt`. First, we have to stop the `nginx` process.
@@ -222,7 +222,7 @@ server {
 
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    
+
     include snippets/ssl-colab-sbx-[XXX].oit.duke.edu.conf;
     include snippets/ssl-params.conf;
 
@@ -262,4 +262,172 @@ sudo ufw allow 'Nginx Full'
 sudo systemctl restart nginx
 ```
 
-Profit.
+## Configuring Emails
+
+###### Install and run RabbitMQ
+```
+# Download rabbitmq. Follow instructions at https://www.rabbitmq.com/install-debian.html
+echo 'deb http://www.rabbitmq.com/debian/ testing main' | sudo tee /etc/apt/sources.list.d/rabbitmq.list
+wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install rabbitmq-server
+```
+```
+# Setup rabbitmq. Follow instructions at http://docs.celeryproject.org/en/latest/getting-started/brokers/rabbitmq.html
+sudo rabbitmqctl add_user kip kipcoonley
+sudo rabbitmqctl add_vhost kipvhost
+sudo rabbitmqctl set_user_tags kip kiptag
+sudo rabbitmqctl set_permissions -p kipvhost kip ".*" ".*" ".*"
+```
+```
+# Run rabbitmq
+sudo rabbitmq-server -detached # runs in background (sudo "rabbitmq-server" to run synchronously)
+# Invoke 'sudo rabbitmqctl status' to check whether it is running.
+# Invoke 'sudo rabbitmqctl stop' to stop it
+```
+
+###### Install and run Celery
+```
+# Make sure celery is installed
+pip install -r requirements.txt 
+```
+```
+# Run celery (make sure you are within kipventory directory)
+cd /home/bitnami/kip_ventory/kipventory
+celery -A kipventory worker -l info --detached
+# Check that it's running with `ps aux | grep "celery"`. You should see 3 workers
+```
+
+###### Make sure settings.py is updated for production
+```
+# This line should be commented out
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# This line should be uncommented
+EMAIL_BACKEND =   'djcelery_email.backends.CeleryEmailBackend'
+```
+
+###### Set up Loan Reminders cron job
+```
+# Change crons.sh to be executable 
+cd /home/bitnami/kip_ventory/
+sudo chmod +x crons.sh
+# Make sure crons.sh is in production mode (no --force)
+#python /home/bitnami/kip_ventory/kipventory/manage.py runcrons --force > /home/bitnami/cron.log 2>&1 #wrong
+python /home/bitnami/kip_ventory/kipventory/manage.py runcrons > /home/bitnami/cron.log 2>&1 #correct
+```
+```
+# Set up crontab to run crons.sh every 5 min
+crontab -e
+*/5 * * * * /home/bitnami/kip_ventory/crons.sh
+```
+
+## Configuring a Backup Server with RSnapshot and PostgreSQL
+
+#### On the Backup Server
+
+SSH into your backup server and switch to the root user. Running the following commands to install and configure rsnapshot and set up ssh keys between your backup and production servers.
+
+When generating your ssh key ensure that you press enter to take the default/blank value for the passphrase and for key location.
+```
+ssh bitnami@colab-sbx-XXX.oit.duke.edu
+sudo -i
+sudo apt-get install rsnapshot
+sudo ssh-keygen -t rsa
+sudo ssh-copy-id -i /root/.ssh/id_rsa.pub bitnami@colab-sbx-XXX.oit.duke.edu
+```
+
+Next test whether your SSH keys are working and ssh into your production machine from your backup server.  You should successfully authenticate without being prompted to enter a password.
+```
+ssh bitnami@colab-sbx-XXX.oit.duke.edu
+//exit if successful
+```
+Next create the /root/.pgpass file that will be used to authenticate into your PostgreSQL database.  Enter these values into the .pgpass file.
+```
+hostname:port:database:username:password
+```
+After this is done we can create our backup script. Create the backup bash script at /usr/local/bin/ and enter the following.
+```
+#!/bin/bash
+export PGPASS=/root/.pgpass
+
+ssh bitnami@colab-sbx-XXX.oit.duke.edu  pg_dump -w -U bitnami dbname > postgresql-dump.sql
+
+gzip postgresql-dump.sql
+
+if [ "$?" -ne 0 ]
+then
+ curl https://colab-sbx-277.oit.duke.edu/api/backupemail/?status=failure -H 'Authorization: Token ADMIN_AUTH_TOKEN'
+else
+ curl https://colab-sbx-277.oit.duke.edu/api/backupemail/?status=success -H 'Authorization: Token ADMIN_AUTH_TOKEN'
+fi
+```
+You will need to copy paste an admin authentication API token from the user interface in order for this script to successfully authenticate and perform a complete database backup.
+
+
+Next we will configure rsnapshot on the backup server.  First set the value of your backup directory.  When editing the rsnapshot.conf file only use tabs do not use spaces.
+```
+snapshot_root   /backup/
+```
+Uncomment the cmd_ssh line.
+```
+cmd_ssh /usr/bin/ssh
+```
+Enter the following values in the BACKUP LEVELS / INTERVALS section.  Number may change if you wish to change the number of retained backups for a certain time frame.
+```
+retain  hourly  6
+retain  daily   7
+retain  weekly  4
+retain  monthly 12
+```
+Change the following global options for debugging ease.  Additionally, uncomment the logfile global option.
+```
+verbose         5
+...
+loglevel        5
+...
+logfile /var/log/rsnapshot.log
+```
+Finally add the backup script that we created in the BACKUP POINTS SECTION of the config file.
+```
+backup_script   /usr/local/bin/your_script.sh     localhost/postgres/
+```
+Additionally change the permissions on both your script and the backup script to be 644.
+```
+chmod 644 /root/.pgpass
+chmod 644 /usr/local/bin/your_script.sh
+```
+Run the following command to ensure that the syntax of your rsnapshot configuration is correct.
+```
+rsnapshot configtest
+```
+In order to automate the running of rsnapshot uncomment and modify the values of the cron jobs in /etc/cron.d/rsnapshot.  They should look something like the following:
+```
+0 */4         * * *           root    /usr/bin/rsnapshot hourly
+30 3          * * *           root    /usr/bin/rsnapshot daily
+0  3          * * 1           root    /usr/bin/rsnapshot weekly
+30 2          1 * *           root    /usr/bin/rsnapshot monthly
+```
+Please see crontab documentation to schedule the jobs to tailor your needs.  Additionally be sure to have the rsnapshot of the greatest time interval running first on any given day, as is done in the above example.  This helps ensure proper retention of backups.
+
+#### On the Production Server
+
+Now it is time to enable your PostgreSQL database for backups. SSH on to your production server and edit the /etc/postgresql/version_number/main/postgresql.conf file.
+
+Uncomment the following parameter in the CONNECTIONS AND AUTHENTICATION section to enable a connection to the database.
+```
+listen_addresses = 'localhost'
+```
+Now restart PostgreSQL on your server.
+```
+sudo systemctl restart  postgresql
+```
+
+Next we are going to set up a bitnami user in your database that will be used for backups. Perform the following commands to set up the user.
+```
+sudo -u postgres psql dbname
+create user bitnami with password 'your_production_bitnami_password';
+alter role bitnami with superuser;
+```
+
+Your backup configuration is now complete.

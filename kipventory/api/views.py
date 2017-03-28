@@ -1087,11 +1087,18 @@ class EditUser(generics.GenericAPIView):
         return models.User.objects.get(username=username)
 
     def put(self, request, username, format=None):
-        if not request.user.is_superuser: #and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
-            return Response(status=status.HTTP_403_FORBIDDEN)
+        # Only managers can edit users
+        if not request.user.is_staff: #and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         jsonData = request.data.copy()
         user = self.get_instance(username)
+
+         # Only admins can change privilege
+        if not request.user.is_superuser and (jsonData["is_staff"] != user.is_staff or jsonData["is_superuser"] != user.is_superuser):
+            d = {"error": "Admin permissions required to change privilege."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(instance=user, data=jsonData, partial=True)
         if serializer.is_valid():
@@ -1910,7 +1917,7 @@ class GetSubscribedManagers(generics.GenericAPIView):
         return serializers.UserGETSerializer
 
     def get(self, request, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
+        if not (request.user.is_staff):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         subscribed_managers = self.get_queryset()
