@@ -81,42 +81,7 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
   * GET: get all items
 * `/items/[id]/`
   * GET: get the item with the specified id
-* `/requests/`
-  * GET: get all requests made by the current user
-  * POST: create a request
-    * Parameters (note: date_open, status, date_closed, closed_comment, and administrator should not be included in the POST data. date_open gets automatically set to the current time, status gets set to 'Outstanding', and the other fields get populated when an admin approves or denies a request)
 
-
-      | Parameter   | Type             | Purpose                          | Required? |
-      |-------------|------------------|----------------------------------|-----------|
-      | item        | string           | the id of the Item               | yes       |
-      | quantity    | positive integer | the amount of the Item requested | yes       |
-      | open_reason | string           | reason for request               | yes       |
-
-
-* `/requests/[id]/`
-  * GET: get the request with the specified id
-    * Permissions:  
-      * Admin: can get any request
-      * User: can only get own requests
-
-  * PUT: approve or deny the request with the specified id
-    * Permissions: must be an admin
-    * Parameters: (note: this PUT request is to modify requests by approving or denying the request. Other modifications are not currently supported. If they are in the future, this PUT request should be moved to a different URL)
-
-
-      | Parameter     | Type             | Purpose                                    | Required? |
-      |-------------  |------------------|----------------------------------          |-----------|
-      | quantity      | positive integer | the amount of the Item requested           | no        |
-      | status        | string           | request status: 'Approved', or 'Denied'    | yes       |
-      | closed_comment| string           | reason for approving or denying            | no        |
-
-
-  * DELETE: delete the request with the specified id
-    * Permissions: must be the request owner
-* `/requests/all/`
-  * GET: get all requests
-    * Permissions: must be an admin
 * `/disburse/`
   * POST: disburse an item to a user (i.e. automatically create and approve a request for a user)
     * Parameters (note: open_reason, open_date, date_closed, status, and administrator get auto-filled in the backend and should not be included in the POST data)
@@ -153,8 +118,131 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
 
 
   * DELETE: delete the cart item with the specified id
+
+#### Loan Reminders
+* `/loanreminders/`
+  * GET: get all loan reminders
+    * Permissions: must be a manager
+    * Query params:
+
+    | Parameter  | Type   | Purpose                   | Required? |
+    |------------|--------|---------------------------|-----------|
+    | sent   | boolean | Filter by loan reminder status (sent or not sent yet)    | no      |
+
+  * POST: create a loan reminder
+    * Permissions: must be a manager
+    * date must be able to parsed by python's dateutil.parser.parse
+    * Sample data:
+    ```
+    {
+      "subject": "string",
+      "body": "string",
+      "date": "string"
+    }
+    ```
+
+* `/loanreminders/{id}`
+  * PUT: modify a loan reminder with specified id
+    * Permissions: must be a manager
+    * date must be able to parsed by python's dateutil.parser.parse
+    * Sample data:
+    ```
+    {
+      "subject": "string",
+      "body": "string",
+      "date": "string"
+    }
+
+  * DELETE: delete a loan reminder with specified id
+  
+#### Login
+* `/login/`
+  * POST: authenticate and login a user
+  * Parameters:
+
+
+  | Parameter  | Type   | Purpose                   | Required? |
+  |------------|--------|---------------------------|-----------|
+  | username   | string | the new user's username   | yes       |
+  | password   | string | the new user's password   | yes       |
+
+#### Logout
+  * `/logout/`
+  * GET: logout the current user
+
+#### Requests
+* `/requests/`
+  * GET: get all requests made by the current user
+    * Query params:
+     
+      | Parameter   | Type             | Purpose                          | Required? |
+      |-------------|------------------|----------------------------------|-----------|
+      | status      | string           | Filter by status (Outstanding, Approved, or Denied) | no       |
+
+  * TODO POST: create a request
+    * Parameters (note: date_open, status, date_closed, closed_comment, and administrator should not be included in the POST data. date_open gets automatically set to the current time, status gets set to 'Outstanding', and the other fields get populated when an admin approves or denies a request)
+
+
+      | Parameter   | Type             | Purpose                          | Required? |
+      |-------------|------------------|----------------------------------|-----------|
+      | item        | string           | the id of the Item               | yes       |
+      | quantity    | positive integer | the amount of the Item requested | yes       |
+      | open_reason | string           | reason for request               | yes       |
+
+* `/requests/all/`
+  * GET: get all requests in the system
+    * Permissions: must be a manager
+    * Query params:
+
+      | Parameter   | Type             | Purpose                          | Required? |
+      |-------------|------------------|----------------------------------|-----------|
+      | status      | string           | Filter by status (Outstanding, Approved, or Denied) | no       |
+     
+* `/requests/[request_pk]/`
+  * GET: get the request with the specified id (request_pk)
+    * Permissions:  
+      * Admin: can get any request
+      * User: can only get own requests
+
+  * TODO PUT: approve or deny the request with the specified id (request_pk)
+    * Permissions: must be an admin
+    * Parameters: (note: this PUT request is to modify requests by approving or denying the request. Other modifications are not currently supported. If they are in the future, this PUT request should be moved to a different URL)
+
+
+      | Parameter     | Type             | Purpose                                    | Required? |
+      |-------------  |------------------|----------------------------------          |-----------|
+      | quantity      | positive integer | the amount of the Item requested           | no        |
+      | status        | string           | request status: 'Approved', or 'Denied'    | yes       |
+      | closed_comment| string           | reason for approving or denying            | no        |
+
+
+  * DELETE: delete (cancel) the request with the specified id (request.pk)
+    * Permissions: must be the request owner
+    * Request must be outstanding
+* `/requests/all/`
+  * GET: get all requests
+    * Permissions: must be an admin
+
+#### Subject Tag
+* `/subjecttag`
+  * GET: get the global subject tag
+    * default is [kipventory]
+  * PUT: modify the subject tag
+
+#### Tags
 * `/tags/`
   * GET: get all tags in the database
+  * POST: add a tag
+    * Sample data: 
+      ```
+      {
+        "name": "string"
+      }
+      ```
+* `/tags/{tag_name}`
+  * DELETE: delete a tag with name tag_name
+
+#### Transactions
 * `/transactions/`
   * GET: get all transactions in the database
   * POST: create a transaction
@@ -168,39 +256,53 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
       | category      | string            | the transaction category: 'Acquired' or 'Lost'| yes       |
       | comment       | string            | a comment to explain the transaction          | no        |
 
-
-* `/login/`
-  * POST: authenticate and login a user
-  * Parameters:
-
-
-  | Parameter  | Type   | Purpose                   | Required? |
-  |------------|--------|---------------------------|-----------|
-  | username   | string | the new user's username   | yes       |
-  | password   | string | the new user's password   | yes       |
-
-
-* `/signup/`
-  * POST: create a new user
-  * Parameters:
-
-
-  | Parameter  | Type   | Purpose                   | Required? |
-  |------------|--------|---------------------------|-----------|
-  | username   | string | the new user's username   | yes       |
-  | password   | string | the new user's password   | yes       |
-  | email      | string | the new user's email      | yes       |
-  | first_name | string | the new user's first name | yes       |
-  | last_name  | string | the new user's last name  | yes       |
-
-
-* `/logout/`
-  * GET: logout the current user
+#### Users
 * `/users/`
   * GET: get all users
     * Permissions: must be an admin
+* `/users/create/`
+  * POST: create a new local user (non-netid)
+    * Permissions: must be an admin
+    * Sample POST data:
+      *  
+      ```
+      {
+        "username": "string",
+        "first_name": "string",
+        "last_name": "string",
+        "password": "string",
+        "email": "string",
+        "is_staff": true,
+        "is_superuser": true,
+      }
+      ```
 * `/users/current/`
   * GET: get the current user
+*`/api/users/edit/{username}/`
+  * PUT: edit the user with username `username`
+    * Permissions: 
+      * must be an admin to change privilege (is_superuser, is_staff)
+      * must be a manager to change profile.subscribed
+    * Cannot change username to a netid (or else that netid could not log in for the first time)
+    * Sample PUT data:
+
+    ```
+    {
+      "username": "string",
+      "first_name": "string",
+      "last_name": "string",
+      "password": "string",
+      "email": "string",
+      "is_staff": true,
+      "is_superuser": true,
+      "profile": {
+        "subscribed": false
+      },
+    }
+    ```
+* `/api/users/managers/subscribed/`
+  * GET: get all subscribed managers
+
 
 
 Technologies
