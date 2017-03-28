@@ -346,7 +346,7 @@ class UserPUTSerializer(serializers.ModelSerializer):
             # make sure you don't change username to a net id
             return validate_username(self.instance, value)
         else:
-            return True
+            return value
 
     def update(self, instance, validated_data):
         # Update the Profile

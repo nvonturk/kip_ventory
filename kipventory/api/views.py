@@ -1096,7 +1096,7 @@ class EditUser(generics.GenericAPIView):
         user = self.get_instance(username)
 
          # Only admins can change privilege
-        if jsonData["privilege"] != user.privilege and not request.user.is_superuser:
+        if not request.user.is_superuser and (jsonData["is_staff"] != user.is_staff or jsonData["is_superuser"] != user.is_superuser):
             d = {"error": "Admin permissions required to change privilege."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
