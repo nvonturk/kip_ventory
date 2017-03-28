@@ -1,7 +1,7 @@
 API Documentation
 =================
 
-This document details how the database models are organized, and how to interact with the REST API via HTTP methods.
+This document details how to interact with the REST API via HTTP methods.
 
 
 Models
@@ -154,7 +154,50 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
     }
 
   * DELETE: delete a loan reminder with specified id
-  
+
+#### Loans
+* `/loans/`
+  * GET: get all loans loaned to current user
+    * Query params:
+
+    | Parameter  | Type   | Purpose                   | Required? |
+    |------------|--------|---------------------------|-----------|
+    | status  | string | Filter by loan status (Outstanding, Returned)   | no      |
+    | item   | string | Filter by item name   | no       |
+
+* `/loans/all/`
+  * GET: get all loans 
+    * Permissions: must be a manager
+    * Query params:
+
+    | Parameter  | Type   | Purpose                   | Required? |
+    |------------|--------|---------------------------|-----------|
+    | status  | string | Filter by loan status (Outstanding, Returned)   | no      |
+    | item   | string | Filter by item name   | no       |
+
+* `/loans/{id}/`
+  * GET: get the loan with the specific id
+    * Permissions: must be a manager unless the user owns the specified loan
+  * PUT: mark a loan as returned
+    * Permissions: must be a manager
+    * Sample data
+    ```
+    {
+      "quantity_returned": 0,
+      "date_returned": "string"
+    }
+    ```
+
+* `/loans/{id}/convert/`
+  * POST: convert a loan to a disbursement
+    * Permissions: must be a manager
+    * Sample data
+    ```
+    {
+      "quantity": 0
+    }
+    ```
+
 #### Login
 * `/login/`
   * POST: authenticate and login a user
@@ -179,15 +222,11 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
       |-------------|------------------|----------------------------------|-----------|
       | status      | string           | Filter by status (Outstanding, Approved, or Denied) | no       |
 
-  * TODO POST: create a request
-    * Parameters (note: date_open, status, date_closed, closed_comment, and administrator should not be included in the POST data. date_open gets automatically set to the current time, status gets set to 'Outstanding', and the other fields get populated when an admin approves or denies a request)
-
-
+  * POST: create a request for the current user for the items currently in his/her cart
+      
       | Parameter   | Type             | Purpose                          | Required? |
       |-------------|------------------|----------------------------------|-----------|
-      | item        | string           | the id of the Item               | yes       |
-      | quantity    | positive integer | the amount of the Item requested | yes       |
-      | open_reason | string           | reason for request               | yes       |
+      | open_comment | string           | reason for request               | yes      |
 
 * `/requests/all/`
   * GET: get all requests in the system
@@ -204,16 +243,31 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
       * Admin: can get any request
       * User: can only get own requests
 
-  * TODO PUT: approve or deny the request with the specified id (request_pk)
+  * PUT: approve or deny the request with the specified id (request_pk)
     * Permissions: must be an admin
-    * Parameters: (note: this PUT request is to modify requests by approving or denying the request. Other modifications are not currently supported. If they are in the future, this PUT request should be moved to a different URL)
-
+    * Parameters: 
 
       | Parameter     | Type             | Purpose                                    | Required? |
       |-------------  |------------------|----------------------------------          |-----------|
-      | quantity      | positive integer | the amount of the Item requested           | no        |
+      | requested_items      | list of dictionaries | the items in the cart - can modify quantity and request_type         | no        |
       | status        | string           | request status: 'Approved', or 'Denied'    | yes       |
       | closed_comment| string           | reason for approving or denying            | no        |
+
+    * Requested items sample data:
+    ```
+    [
+      {
+          "item": "xyz",
+          "quantity": 1,
+          "request_type": "loan" // or "disbursement"
+      }
+      {
+          "item": "item2",
+          "quantity": 3,
+          "request_type": "disbursement" // or "loan"
+      }
+    ]
+    ```
 
 
   * DELETE: delete (cancel) the request with the specified id (request.pk)
@@ -224,10 +278,16 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
     * Permissions: must be an admin
 
 #### Subject Tag
-* `/subjecttag`
+* `/subjecttag/`
   * GET: get the global subject tag
     * default is [kipventory]
   * PUT: modify the subject tag
+    * Sample data:
+    ```
+    {
+      "text": "string"
+    }
+    ```
 
 #### Tags
 * `/tags/`
@@ -243,6 +303,7 @@ The following is a list of all REST endpoints in the web app. Under each endpoin
   * DELETE: delete a tag with name tag_name
 
 #### Transactions
+* Note: this is named poorly because of a miscommunication in a previous evolution about what a transaction was. This endpoint retrieves any registered Acquisitions or Losses of items. This may be renamed in a future release.
 * `/transactions/`
   * GET: get all transactions in the database
   * POST: create a transaction
