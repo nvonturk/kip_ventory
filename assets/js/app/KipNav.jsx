@@ -12,6 +12,14 @@ const KipNav = React.createClass({
     window.location.assign(url);
   },
 
+  openURLInNewTab: url => event => {
+    event.preventDefault();
+    window.open(
+      url,
+      '_blank' // <- This is what makes it open in a new window.
+    );
+  },
+
   getLink(url, name) {
     var i = INDEX
     INDEX = INDEX + 1
@@ -90,11 +98,22 @@ const KipNav = React.createClass({
     var i = INDEX
     INDEX = INDEX + 1
     return (
-      <NavDropdown eventKey={i} title={user.username} id="admin-nav-dropdown">
+      <NavDropdown eventKey={i} title={user.username} id="user-nav-dropdown">
         <LinkContainer to="/app/settings">
           <MenuItem eventKey={3.1}>Settings</MenuItem>
         </LinkContainer>
         <MenuItem eventKey={3.2} onClick={this.goToURL("/api/logout/")}>Logout</MenuItem>
+      </NavDropdown>
+    )
+  },
+
+  getAPIDropdown() {
+    var i = INDEX
+    INDEX = INDEX + 1
+    return (
+      <NavDropdown eventKey={i} title="API" id="api-nav-dropdown">
+        <MenuItem eventKey={4.1} onClick={this.openURLInNewTab("https://github.com/nbv3/kip_ventory/blob/ccbacb42f07b8eb28d471021c6d88ecbd8df5ff0/API.md")}>API Guide</MenuItem>
+        <MenuItem eventKey={4.2} onClick={this.openURLInNewTab("/swagger/")}>API Tester</MenuItem>
       </NavDropdown>
     )
   },
@@ -120,7 +139,7 @@ const KipNav = React.createClass({
             </Nav>
             <Nav pullRight>
               {this.getLink("/app/cart/", <Glyphicon glyph="shopping-cart" />)}
-              <NavItem eventKey={INDEX}   onClick={this.goToURL("/swagger/")}>API</NavItem>
+              {this.getAPIDropdown()}
               {this.getUserLink(this.props.route.user)} 
             </Nav>
           </Navbar.Collapse>
