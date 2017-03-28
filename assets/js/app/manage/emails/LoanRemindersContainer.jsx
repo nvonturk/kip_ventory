@@ -262,7 +262,7 @@ class LoanRemindersContainer extends Component {
                     <p>
                       Each loan reminder will be sent to all users with recorded loans between 4am and 5am EST on the day specified.<br/>
                       The subject specified will be prepended by a subject tag, which is configurable by admins.<br/>
-                      The body of the email will contain the specified, followed by a list of items loaned to the user<br/>
+                      The body of the email will contain the specified body, followed by a list of items loaned to the user.<br/>
                     </p>
                   </div>
                   <Table bordered condensed hover>
