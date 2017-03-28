@@ -448,7 +448,7 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     open_comment    = serializers.CharField(read_only=True)
     administrator   = serializers.SlugRelatedField(read_only=True, slug_field="username")
     date_closed     = serializers.DateTimeField(read_only=True)
-    closed_comment  = serializers.CharField(max_length=500, allow_blank=False, default="")
+    closed_comment  = serializers.CharField(max_length=500, allow_blank=True, default="")
     status          = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
 
     class Meta:

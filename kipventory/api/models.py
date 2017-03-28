@@ -151,7 +151,7 @@ class Request(models.Model):
     administrator  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
     class Meta:
-        ordering = ('date_open',)
+        ordering = ('-date_open',)
 
 class RequestedItem(models.Model):
     request      = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='requested_items', blank=True, null=True)
