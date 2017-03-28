@@ -23,14 +23,18 @@ const ManagerRequestsDetail = React.createClass({
         disbursements: []
       },
 
+      itemQuantities: {},
+
       original_items: [],
       requestExists: true,
       forbidden: false,
 
       showModal: false,
       loanToModify: null,
-      returnQuantity: 1,
-      disburseQuantity: 1
+      returnQuantity: 0,
+      disburseQuantity: 0,
+
+      errorNodes: {}
     }
   },
 
@@ -49,10 +53,27 @@ const ManagerRequestsDetail = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
+        if (response.status == "O") {
+          var ris = JSON.parse(JSON.stringify(response.requested_items))
+          var original_items = JSON.parse(JSON.stringify(ris))
+          for (var i=0; i<ris.length; i++) {
+            ris[i].quantity = 0
+          }
+          response.requested_items = ris
+        }
         _this.setState({
           request: response,
-          original_items: JSON.parse(JSON.stringify(response.requested_items))
+          original_items: original_items
         })
+        for (var i=0; i<response.requested_items.length; i++) {
+          var item = response.requested_items[i].item
+          var url = "/api/items/" + item + "/"
+          getJSON(url, function(data) {
+            var itemQuantities = JSON.parse(JSON.stringify(_this.state.itemQuantities))
+            itemQuantities[data.name] = Number(data.quantity)
+            _this.setState({itemQuantities: itemQuantities})
+          })
+        }
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
@@ -122,7 +143,19 @@ const ManagerRequestsDetail = React.createClass({
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
         if (xhr.status == 400) {
-          console.log(xhr)
+          var response = xhr.responseJSON
+          var errNodes = {}
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var messages = response[key]
+              console.log(key, messages)
+              var node = <span key={key} className="help-block">{messages[0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
         } else if (xhr.status == 404) {
           _this.setState({
             requestExists: false
@@ -145,11 +178,15 @@ const ManagerRequestsDetail = React.createClass({
   },
 
   handleRequestItemQuantityChange(i, e) {
+    var q = Number(e.target.value)
     var request = JSON.parse(JSON.stringify(this.state.request))
-    request.requested_items[i].quantity = Number(e.target.value)
-    this.setState({
-      request: request
-    })
+    var item_name = request.requested_items[i].item
+    if (q <= this.state.itemQuantities[item_name]) {
+      request.requested_items[i].quantity = Number(e.target.value)
+      this.setState({
+        request: request
+      })
+    }
   },
 
   handleClosedCommentChange(e) {
@@ -176,8 +213,8 @@ const ManagerRequestsDetail = React.createClass({
     this.setState({
       showModal: true,
       loanToModify: loan,
-      returnQuantity: 1,
-      disburseQuantity: 1
+      returnQuantity: 0,
+      disburseQuantity: 0
     })
   },
 
@@ -185,8 +222,8 @@ const ManagerRequestsDetail = React.createClass({
     this.setState({
       showModal: false,
       loanToModify: null,
-      returnQuantity: 1,
-      disburseQuantity: 1
+      returnQuantity: 0,
+      disburseQuantity: 0
     })
   },
 
@@ -236,6 +273,10 @@ const ManagerRequestsDetail = React.createClass({
     }
   },
 
+  getValidationState(key) {
+    return (this.state.errorNodes[key] == null) ? null : "error"
+  },
+
   getRequestInfoPanel() {
     var administrator = null
     var date_closed = null
@@ -271,9 +312,11 @@ const ManagerRequestsDetail = React.createClass({
     } else if (this.state.request.status == 'O' && (this.props.route.user.is_staff || this.props.route.user.is_superuser)){
       approvalForm = (
         <Form horizontal onSubmit={e => {e.stopPropagation(); e.preventDefault();}}>
-          <br />
-          <FormGroup bsSize="small">
-            <Col xs={10} xsOffset={1}>
+          <hr />
+          <FormGroup bsSize="small" validationState={this.getValidationState('closed_comment')}>
+            <Col xs={12} xsOffset={0}>
+              <HelpBlock>Provide feedback as to why you are approving or denying this request.</HelpBlock>
+              <hr />
               <FormControl
                 type="text"
                 style={{resize: "vertical", height:"100px"}}
@@ -282,15 +325,13 @@ const ManagerRequestsDetail = React.createClass({
                 value={this.state.request.closed_comment}
                 onChange={this.handleClosedCommentChange}
               />
-              <HelpBlock>Provide feedback as to why you are approving or denying this request.</HelpBlock>
+              { this.state.errorNodes['closed_comment']}
             </Col>
           </FormGroup>
           <FormGroup bsSize="small">
-            <Col xs={2} xsOffset={4} style={{textAlign: "center"}}>
-              <Button bsStyle="info" bsSize="small" onClick={this.approveRequest}>Approve</Button>
-            </Col>
-            <Col xs={2} style={{textAlign: "center"}}>
-              <Button bsStyle="danger" bsSize="small" onClick={this.denyRequest}>Deny</Button>
+            <Col xs={4} xsOffset={4} style={{textAlign: "center"}}>
+              <Button block bsStyle="info" bsSize="small" onClick={this.approveRequest}>Approve</Button>
+              <Button block bsStyle="danger" bsSize="small" onClick={this.denyRequest}>Deny</Button>
             </Col>
           </FormGroup>
         </Form>
@@ -335,14 +376,16 @@ const ManagerRequestsDetail = React.createClass({
   getModifiableRequestedItems() {
     if (this.state.request.requested_items.length > 0) {
       return (
+        <div>
         <Table hover style={{marginBottom: "0px"}}>
           <thead>
             <tr>
               <th style={{width:"30%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
+              <th style={{width:" 5%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Stock:</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Requested For:</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Requested Quantity:</th>
               <th style={{width:" 5%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="spacer" />
-              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Approved For:</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Approved For:</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Approved Quantity:</th>
             </tr>
           </thead>
@@ -354,31 +397,37 @@ const ManagerRequestsDetail = React.createClass({
                   <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
                     <span style={{fontSize:"12px", color: "#df691a"}}>{ri.item}</span>
                   </td>
+                  <td style={{verticalAlign:"middle"}} data-th="Stock:" className="text-center">{this.state.itemQuantities[ri.item]}</td>
                   <td style={{verticalAlign:"middle"}} data-th="Requested For:" className="text-center">{ri_original.request_type}</td>
                   <td style={{verticalAlign:"middle"}} data-th="Requested Quantity:" className="text-center">{ri_original.quantity}</td>
                   <td style={{verticalAlign:"middle"}} data-th="" className="spacer" />
                   <td style={{verticalAlign:"middle", zIndex:9999}} onClick={e => {e.stopPropagation()}} data-th="Approved For:" className="text-center">
-                    <FormControl className="text-center"
-                                 style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
-                                 componentClass="select"
-                                 value={this.state.request.requested_items[i].request_type}
-                                 onChange={this.handleRequestItemTypeChange.bind(this, i)}>
-                      <option value="disbursement">Disbursement</option>
-                      <option value="loan">Loan</option>
-                    </FormControl>
+                    <FormGroup style={{marginBottom: "0px"}}>
+                      <FormControl className="text-center"
+                                   style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
+                                   componentClass="select"
+                                   value={this.state.request.requested_items[i].request_type}
+                                   onChange={this.handleRequestItemTypeChange.bind(this, i)}>
+                        <option value="disbursement">Disbursement</option>
+                        <option value="loan">Loan</option>
+                      </FormControl>
+                    </FormGroup>
                   </td>
                   <td style={{verticalAlign:"middle", zIndex:9999}} onClick={e => {e.stopPropagation()}} data-th="Approved Quantity:" className="text-center">
-                    <FormControl type="number" min={1} className="text-center"
-                                 style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
-                                 value={this.state.request.requested_items[i].quantity}
-                                 onChange={this.handleRequestItemQuantityChange.bind(this, i)}>
-                    </FormControl>
+                    <FormGroup bsSize="small" style={{marginBottom: "0px"}} validationState={this.getValidationState(ri.item)}>
+                      <FormControl type="number" min={0} className="text-center"
+                                   style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
+                                   value={this.state.request.requested_items[i].quantity}
+                                   onChange={this.handleRequestItemQuantityChange.bind(this, i)}>
+                      </FormControl>
+                    </FormGroup>
                   </td>
                 </tr>
               )
             })}
           </tbody>
         </Table>
+        </div>
       )
     } else {
       return (

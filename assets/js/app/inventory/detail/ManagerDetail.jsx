@@ -32,7 +32,7 @@ const ManagerDetail = React.createClass({
       users: [],
       admins: [],
 
-      addToCartQuantity: 1,
+      addToCartQuantity: 0,
 
       transactionQuantity: 0,
       transactionCategory: "Acquisition",
@@ -210,6 +210,7 @@ const ManagerDetail = React.createClass({
     var url = "/api/items/" + this.props.params.item_name + "/"
     var data = this.state.modifiedItem
     var _this = this
+    console.log("submitting", this.state.errorNodes)
     ajax({
       url: url,
       contentType: "application/json",
@@ -225,7 +226,7 @@ const ManagerDetail = React.createClass({
       error: function(xhr, textStatus, thrownError) {
         if (xhr.status == 400) {
           var response = xhr.responseJSON
-          var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
+          var errNodes = {}
           for (var key in response) {
             if (response.hasOwnProperty(key)) {
               var node = <span key={key} className="help-block">{response[key][0]}</span>
@@ -320,7 +321,7 @@ const ManagerDetail = React.createClass({
 
   getShortTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <ControlLabel>{presentation_name}</ControlLabel>
         <FormControl type="text"
                      value={this.state.modifiedItem.custom_fields[i].value}
@@ -333,7 +334,7 @@ const ManagerDetail = React.createClass({
 
   getLongTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
           <ControlLabel>{presentation_name}</ControlLabel>
           <FormControl type="text"
                        style={{resize: "vertical", height:"100px"}}
@@ -348,7 +349,7 @@ const ManagerDetail = React.createClass({
 
   getIntegerField(field_name, presentation_name, min, step, i) {
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <ControlLabel>{presentation_name}</ControlLabel>
         <FormControl type="number"
                      min={min}
@@ -363,7 +364,7 @@ const ManagerDetail = React.createClass({
 
   getFloatField(field_name, presentation_name, i){
     return (
-      <FormGroup key={field_name} bsSize="small">
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <ControlLabel>{presentation_name} </ControlLabel>
         <FormControl type="number"
                    value={this.state.modifiedItem.custom_fields[i].value}
@@ -386,7 +387,7 @@ const ManagerDetail = React.createClass({
     return (
       <Row>
         <Col xs={8} xs={12}>
-          <FormGroup bsSize="small" controlId="model_no">
+          <FormGroup bsSize="small" controlId="model_no" validationState={this.getValidationState('model_no')}>
             <ControlLabel>Model No.</ControlLabel>
             <FormControl disabled={!this.props.route.user.is_superuser && !this.props.route.user.is_staff}
                          type="text"
@@ -397,7 +398,7 @@ const ManagerDetail = React.createClass({
           </FormGroup>
         </Col>
         <Col xs={4} xs={12}>
-          <FormGroup bsSize="small" controlId="quantity" >
+          <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('quantity')}>
             <ControlLabel>Quantity<span style={{color:"red"}}>*</span></ControlLabel>
             <FormControl disabled={!this.props.route.user.is_superuser}
                          type="number"
@@ -476,20 +477,26 @@ const ManagerDetail = React.createClass({
     });
   },
 
-  toggleEdit(e) {
-    e.preventDefault()
-    var cur = this.state.showModifyModal
-    if (cur) {
-      var itemCopy = JSON.parse(JSON.stringify(this.state.item))
-      this.setState({
-        modifiedItem: itemCopy,
-        showModifyModal: false
-      })
-    } else {
-      this.setState({
-        showModifyModal: true
-      })
-    }
+  getValidationState(key) {
+    return (this.state.errorNodes[key] == null) ? null : "error"
+  },
+
+  showEditModal(e) {
+    var itemCopy = JSON.parse(JSON.stringify(this.state.item))
+    this.setState({
+      modifiedItem: itemCopy,
+      showModifyModal: true,
+      errorNodes: {}
+    })
+  },
+
+  closeEditModal(e) {
+    var itemCopy = JSON.parse(JSON.stringify(this.state.item))
+    this.setState({
+      modifiedItem: itemCopy,
+      showModifyModal: false,
+      errorNodes: {}
+    })
   },
 
   deleteItem(e) {
@@ -524,7 +531,7 @@ const ManagerDetail = React.createClass({
         <div>
           <span style={{fontSize:"15px"}}>Item Details</span>
           <span className="clickable" style={{float: "right"}}>
-            <Glyphicon glyph="pencil" onClick={this.toggleEdit}/>
+            <Glyphicon glyph="pencil" onClick={this.showEditModal}/>
             { deleteIcon }
           </span>
         </div>} >
@@ -917,17 +924,13 @@ const ManagerDetail = React.createClass({
                                  onChange={this.handleCartQuantityChange} />
                   </Col>
                   <Col xs={4}>
-                    <Button bsStyle="info" bsSize="small" type="submit">Add to cart</Button>
+                    <Button disabled={this.state.addToCartQuantity == 0} bsStyle="info" bsSize="small" type="submit">Add to cart</Button>
                   </Col>
                 </FormGroup>
               </Form>
             </Col>
           </Row>
     )
-  },
-
-  getValidationState(name) {
-    return (this.state.errorNodes['quantity'] == null) ? null : "error"
   },
 
   getCreateTransactionForm() {
@@ -1271,7 +1274,7 @@ const ManagerDetail = React.createClass({
             </Modal.Footer>
           </Modal>
 
-          <Modal show={this.state.showModifyModal} onHide={e => {this.setState({showModifyModal: false})}}>
+          <Modal show={this.state.showModifyModal} onHide={this.closeEditModal}>
             <Modal.Header closeButton>
               <Modal.Title>Modify Item</Modal.Title>
             </Modal.Header>
@@ -1279,7 +1282,7 @@ const ManagerDetail = React.createClass({
             <Form onSubmit={this.handleSubmit}>
               <Row>
                 <Col xs={12}>
-                  <FormGroup bsSize="small" controlId="name">
+                  <FormGroup bsSize="small" controlId="name" validationState={this.getValidationState("name")}>
                     <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
                     <FormControl type="text" name="name" value={this.state.modifiedItem.name} onChange={this.handleItemFormChange}/>
                     { this.state.errorNodes['name'] }
@@ -1321,7 +1324,7 @@ const ManagerDetail = React.createClass({
             <Modal.Footer>
               <span style={{float:"right"}}>
                 <Col xs={6}>
-                  <Button type="submit" bsSize="small" bsStyle="default" style={{float:"right",fontSize:"10px"}} onClick={e => {this.setState({showModifyModal: false})}}>
+                  <Button type="submit" bsSize="small" bsStyle="default" style={{float:"right",fontSize:"10px"}} onClick={this.closeEditModal}>
                     Cancel
                   </Button>
                 </Col>

@@ -262,6 +262,66 @@ sudo ufw allow 'Nginx Full'
 sudo systemctl restart nginx
 ```
 
+## Configuring Emails
+
+###### Install and run RabbitMQ
+```
+# Download rabbitmq. Follow instructions at https://www.rabbitmq.com/install-debian.html
+echo 'deb http://www.rabbitmq.com/debian/ testing main' | sudo tee /etc/apt/sources.list.d/rabbitmq.list
+wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install rabbitmq-server
+```
+```
+# Setup rabbitmq. Follow instructions at http://docs.celeryproject.org/en/latest/getting-started/brokers/rabbitmq.html
+sudo rabbitmqctl add_user kip kipcoonley
+sudo rabbitmqctl add_vhost kipvhost
+sudo rabbitmqctl set_user_tags kip kiptag
+sudo rabbitmqctl set_permissions -p kipvhost kip ".*" ".*" ".*"
+```
+```
+# Run rabbitmq
+sudo rabbitmq-server -detached # runs in background (sudo "rabbitmq-server" to run synchronously)
+# Invoke 'sudo rabbitmqctl status' to check whether it is running.
+# Invoke 'sudo rabbitmqctl stop' to stop it
+```
+
+###### Install and run Celery
+```
+# Make sure celery is installed
+pip install -r requirements.txt 
+```
+```
+# Run celery (make sure you are within kipventory directory)
+cd /home/bitnami/kip_ventory/kipventory
+celery -A kipventory worker -l info --detached
+# Check that it's running with `ps aux | grep "celery"`. You should see 3 workers
+```
+
+###### Make sure settings.py is updated for production
+```
+# This line should be commented out
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# This line should be uncommented
+EMAIL_BACKEND =   'djcelery_email.backends.CeleryEmailBackend'
+```
+
+###### Set up Loan Reminders cron job
+```
+# Change crons.sh to be executable 
+cd /home/bitnami/kip_ventory/
+sudo chmod +x crons.sh
+# Make sure crons.sh is in production mode (no --force)
+#python /home/bitnami/kip_ventory/kipventory/manage.py runcrons --force > /home/bitnami/cron.log 2>&1 #wrong
+python /home/bitnami/kip_ventory/kipventory/manage.py runcrons > /home/bitnami/cron.log 2>&1 #correct
+```
+```
+# Set up crontab to run crons.sh every 5 min
+crontab -e
+*/5 * * * * /home/bitnami/kip_ventory/crons.sh
+```
+
 ## Configuring a Backup Server with RSnapshot and PostgreSQL
 
 #### On the Backup Server

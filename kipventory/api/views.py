@@ -689,7 +689,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             return Response({"error": "Only outstanding requests may be modified."})
 
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
-        print("DATA", data)
+
         if serializer.is_valid():
             # check integrity of approval operation
             if data['status'] == 'D':
@@ -700,15 +700,22 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                 sendEmailForRequestStatusUpdate(instance)
             # need to check that we're not giving out more instances than currently exist
             elif data['status'] == 'A':
-                valid_request = True
+                errors = {}
                 ri_data = data.get('requested_items', [])
                 ri_instances = []
                 for ri_instance, ri_dict in zip(instance.requested_items.all(), ri_data):
                     # ri_instance = instance.requested_items.all().get(item__name=ri_data.get('item'))
                     ri_instances.append(ri_instance)
                     if (ri_instance.item.quantity < int(ri_dict.get('quantity'))):
-                        valid_request = False
-                if valid_request:
+                        errors.update({ri_instance.item.name: ["Cannot approve a request for more instances than are currently in stock (requested: {}, in stock: {}).".format(int(ri_dict.get('quantity')), ri_instance.item.quantity)]})
+                    elif (int(ri_dict.get('quantity')) <= 0):
+                        errors.update({ri_instance.item.name: ["Cannot approve a request for less than 1 instance ({}).".format(int(ri_dict.get('quantity')))]})
+
+
+                if errors:
+                    return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+                else:
                     loangroup = models.LoanGroup.objects.create(request=instance)
                     for ri_instance, ri_dict in zip(ri_instances, ri_data):
                         new_quantity = int(ri_dict.get('quantity'))
@@ -731,8 +738,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                             requestItemApprovalDisburse(ri_instance, request.user.pk, instance)
 
                         sendEmailForRequestStatusUpdate(instance)
-                else:
-                    return Response({"error": "Cannot satisfy request."}, status=status.HTTP_400_BAD_REQUEST)
+
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1047,6 +1053,7 @@ class UserCreate(generics.GenericAPIView):
     def post(self, request, format=None):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            # serializer.save()
             user = User.objects.create_user(**serializer.validated_data)
             #todo do we log this for net id creations?
             userCreationLog(serializer.data, request.user.pk)
@@ -1080,11 +1087,18 @@ class EditUser(generics.GenericAPIView):
         return models.User.objects.get(username=username)
 
     def put(self, request, username, format=None):
-        if not request.user.is_superuser: #and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
-            return Response(status=status.HTTP_403_FORBIDDEN)
+        # Only managers can edit users
+        if not request.user.is_staff: #and not (request.user.username == username): #todo fix this. users should be able to edit any of their attributes except permissions
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         jsonData = request.data.copy()
         user = self.get_instance(username)
+
+         # Only admins can change privilege
+        if not request.user.is_superuser and (jsonData["is_staff"] != user.is_staff or jsonData["is_superuser"] != user.is_superuser):
+            d = {"error": "Admin permissions required to change privilege."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(instance=user, data=jsonData, partial=True)
         if serializer.is_valid():
@@ -1915,7 +1929,7 @@ class GetSubscribedManagers(generics.GenericAPIView):
         return serializers.UserGETSerializer
 
     def get(self, request, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
+        if not (request.user.is_staff):
             d = {"error": "Permission denied."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         subscribed_managers = self.get_queryset()

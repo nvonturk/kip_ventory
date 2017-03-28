@@ -144,7 +144,7 @@ const InventoryContainer = React.createClass({
       error:function (xhr, textStatus, thrownError){
         if (xhr.status == 400) {
           var response = xhr.responseJSON
-          var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
+          var errNodes = {}
           for (var key in response) {
             if (response.hasOwnProperty(key)) {
               var node = <span key={key} className="help-block">{response[key][0]}</span>

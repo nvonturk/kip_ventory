@@ -223,12 +223,15 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         cart_quantity = data.get('quantity', None)
+        item = data.get('item')
         try:
             cart_quantity = int(cart_quantity)
         except:
             raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
         if (cart_quantity <= 0):
             raise ValidationError({"quantity": ["Quantity must be a positive integer."]})
+        if (cart_quantity > item.quantity):
+            raise ValidationError({"quantity": ["Cannot add more instances to your cart than are in stock ({}).".format(item.quantity)]})
 
         request_type = data.get('request_type', None)
         if (request_type != "disbursement") and (request_type != "loan"):
@@ -339,7 +342,11 @@ class UserPUTSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'password', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser', 'profile']
 
     def validate_username(self, value):
-        return validate_username(self.instance, value)
+        if self.instance.username != value:
+            # make sure you don't change username to a net id
+            return validate_username(self.instance, value)
+        else:
+            return value
 
     def update(self, instance, validated_data):
         # Update the Profile
