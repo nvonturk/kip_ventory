@@ -2019,15 +2019,15 @@ class BackupEmail(generics.GenericAPIView):
                 html_content = text_content
                 to_emails = []
                 sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
-                return Response(data={}, status=status.HTTP_200_OK)
+                return Response(data={"backup" : "success"}, status=status.HTTP_200_OK)
             elif backup_status == "failure":
                 subject = "Backup Failure"
                 text_content = "ERROR Backup was a failure."
                 html_content = text_content
                 to_emails = []
                 sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
-                return Response(data={}, status=status.HTTP_200_OK)
+                return Response(data={"backup" : "failure"}, status=status.HTTP_200_OK)
             else:
-                return Response(data={}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={"backup" : "incorrect status code"}, status=status.HTTP_400_BAD_REQUEST)
         except:
-            return Response(data={}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data={"backup" : "exception raised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
