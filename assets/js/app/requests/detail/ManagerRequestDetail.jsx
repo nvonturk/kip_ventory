@@ -330,7 +330,7 @@ const ManagerRequestsDetail = React.createClass({
           </FormGroup>
           <FormGroup bsSize="small">
             <Col xs={4} xsOffset={4} style={{textAlign: "center"}}>
-              <Button block disabled={this.state.request.closed_comment.length == 0} bsStyle="info" bsSize="small" onClick={this.approveRequest}>Approve</Button>
+              <Button block bsStyle="info" bsSize="small" onClick={this.approveRequest}>Approve</Button>
               <Button block bsStyle="danger" bsSize="small" onClick={this.denyRequest}>Deny</Button>
             </Col>
           </FormGroup>
