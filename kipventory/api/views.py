@@ -1550,9 +1550,21 @@ class BulkImport(generics.GenericAPIView):
     def get_queryset(self):
         return models.BulkImport.Objects.all()
 
+# class DisburseFilter(BaseFilterBackend):
+#   def get_schema_fields(self, view):
+#     fields = [
+#       coreapi.Field(name="requester", description="Request username", required=True, location='body'),
+#       coreapi.Field(name="closed_comment", description="Admin comment", required=True, location='body'),
+#       coreapi.Field(name="items", description="list of disbursed items", required=True, location='body'),
+#       coreapi.Field(name="types", description="index correlated request type", required=True, location='body'),
+#       coreapi.Field(name="quantities", description="index correlated item quantity", required=True, location='body'),
+#     ]
+#
+#     return fields
 
 class DisburseCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    # filter_backends = (DisburseFilter,)
     queryset = models.Request.objects.all()
 
     def get_serializer_class(self):
@@ -2013,9 +2025,17 @@ class SubjectTagGetModify(generics.GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class BackupEmailFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="status", description="Status of backup (success/failure)", required=True, location='query'),
+    ]
+
+    return fields
+
 class BackupEmail(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-
+    filter_backends = (BackupEmailFilter,)
     def get_queryset(self):
         return User.objects.filter(is_superuser=True)
 

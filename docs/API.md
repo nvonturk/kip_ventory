@@ -77,10 +77,137 @@ REST Endpoints
 
 The following is a list of all REST endpoints in the web app. Under each endpoint, the available actions are listed. If an action is not listed, it is not supported by the API. If permissions are not listed, any user can access that endpoint. If parameters are not listed, no data needs to be included with the HTTP request.
 
+#### Items
 * `/items/`
   * GET: get all items
-* `/items/[id]/`
-  * GET: get the item with the specified id
+  * POST: create a new item
+  | Parameter   | Type             | Purpose                          | Required? |
+  |-------------|------------------|----------------------------------|-----------|
+  | model_no    | string           | the id of the item               | yes       |
+  | description | string           | description of item              | yes       |
+  | quantity    | positive integer | amount of item in inventory      | yes       |
+  | name        | string           | colloquial name of item          | yes       |
+  | tags        | string array     | tags associated with item        | yes       |
+
+* `/items/{item_name}/`
+  * GET: get the item with the specified item name
+  * DELETE: delete the item with the specified item name
+  * PUT: modify the values of a currently existing item
+  | Parameter   | Type             | Purpose                          | Required? |
+  |-------------|------------------|----------------------------------|-----------|
+  | model_no    | string           | the id of the item               | yes       |
+  | description | string           | description of item              | yes       |
+  | quantity    | positive integer | amount of item in inventory      | yes       |
+  | name        | string           | colloquial name of item          | yes       |
+  | tags        | string array     | tags associated with item        | yes       |
+* `/items/{item_name}/addtocart`
+  * POST: add an item to the logged in user's cart.
+  | Parameter    | Type             | Purpose                                                     | Required? |
+  |--------------|------------------|-------------------------------------------------------------|-----------|
+  | quantity     | positive integer | number of items requested                                   | yes       |
+  | request type | string           | delineates whether item is request for loan or disbursement | yes       |
+* `/items/{item_name}/fields`
+  * GET: get the values of all custom fields for an item
+* `/items/{item_name}/fields/{field_name}`
+  * GET: get the value of a specified custom field for an item
+  * PUT: modify the value of a specified custom field for an item
+  | Parameter | Type   | Purpose                                                        | Required? |
+  |-----------|--------|----------------------------------------------------------------|-----------|
+  | value     | string | custom field value, parsed into required field type on backend | yes       |
+* `/items/{item_name}/loans`
+  * GET: get all loans associated with an item.
+  | Parameter | Type   | Purpose                 | Required? |
+  |-----------|--------|-------------------------|-----------|
+  | user      | string | filter loans by user    | no        |
+* `/items/{item_name}/requests`
+  * GET: get all requests associated with an item
+  | Parameter | Type   | Purpose                         | Required? |
+  |-----------|--------|---------------------------------|-----------|
+  | type      | string | fitler requests by request type | no        |
+  | user      | string | filter requests by user         | no        |
+* `/items/{item_name}/stacks`
+  * GET: get item stack values for a specified item
+* `/items/{item_name}/transactions`
+  * GET: get all transactions associated with a specified item
+  | Parameter     | Type   | Purpose                                       | Required? |
+  |---------------|--------|-----------------------------------------------|-----------|
+  | category      | string | filter transactions by transaction category   | no        |
+  | administrator | string | filter transactions by administrator username | no        |
+#### API Token
+* '/apitoken'
+  * GET: get an API token (must be logged in via application interface)
+
+#### Backup Email
+* '/backupemail/'
+  * GET: initiate the sending of emails to administrative users notifying of backup results
+  | Parameter | Type   | Purpose                                | Required? |
+  |-----------|--------|----------------------------------------|-----------|
+  | status    | string | backup result status (success/failure) | yes       |
+#### Cart
+* '/cart/'
+  * GET: get the cart for the logged in user
+* '/cart/{item_name}'
+  * GET: get the number of a specified item in the user's cart
+  * DELETE: delete a specified item from the user's cart
+  * PUT: modify quantity of item in user's cart or whether item is requested for loan/disbursement
+  | Parameter    | Type   | Purpose                                              | Required? |
+  |--------------|--------|------------------------------------------------------|-----------|
+  | quantity     | string | number of item to be requested                       | yes       |
+  | request type | string | specify whether request will be loan or disbursement | yes       |
+#### Disburse
+* 'disburse'
+  * POST: create approved disbursals from an admin user to a regular user, logged in user defaults to admin user
+  | Parameter      | Type          | Purpose                                                                      | Required? |
+  |----------------|---------------|------------------------------------------------------------------------------|-----------|
+  | requester      | string        | filter logs by user associated with entries                                  | yes       |
+  | items          | string array  | array of item names being disbursed                                          | yes       |
+  | types          | string array  | index related to items field, request type (loan/disbursement) for each item | yes       |
+  | quantities     | integer array | index related to items field, requested quantity of each item                | yes       |
+  | closed_comment | string        | administrator comment explaining action                                      | yes       |
+  | open_comment   | string        | comment on opening of requests                                               | yes       |
+
+#### Logs
+* '/logs/'
+  * GET: get logs in system
+  | Parameter | Type   | Purpose                                     | Required? |
+  |-----------|--------|---------------------------------------------|-----------|
+  | user      | string | filter logs by user associated with entries | no        |
+  | item      | string | filter logs by item associated with entries | no        |
+  | endDate   | string | filter logs by an end date                  | no        |
+  | startDate | string | filter logs by start date                   | no        |
+
+#### NetId Token
+* '/netidtoken/'
+  * GET: get a NetId Token from the OAuth server
+  | Parameter | Type   | Purpose                                  | Required? |
+  |-----------|--------|------------------------------------------|-----------|
+  | code      | string | temporary validated code from Duke OAuth | yes       |
+
+#### Fields
+* '/fields/'
+  * GET: get all custom fields in system
+  * POST: create a new custom field
+  | Parameter  | Type    | Purpose                                                   | Required? |
+  |------------|---------|-----------------------------------------------------------|-----------|
+  | private    | boolean | whether or not field is hidden to non-admin/manager users | yes       |
+  | name       | string  | the name of the custom field                              | yes       |
+  | field_type | string  | one of four custom field types (Single/Multi/Float/Int)   | yes       |
+* '/fields/{field_name}'
+  * DELETE: delete a specified custom field
+  * GET: get the information associated with a specified custom field
+#### Import
+* '/import/'
+  * POST: initiate a bulk import, a files is included with this request
+  | Parameter     | Type   | Purpose                         | Required? |
+  |---------------|--------|---------------------------------|-----------|
+  | administrator | string | administrator initiating import | yes       |
+* '/import/tempalte/'
+  * GET: get the CSV bulk import template
+
+
+
+
+
 * `/requests/`
   * GET: get all requests made by the current user
   * POST: create a request
