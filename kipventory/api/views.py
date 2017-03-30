@@ -392,11 +392,16 @@ class CustomFieldListCreate(generics.GenericAPIView):
         return models.CustomField.objects.all()
 
     def get(self, request, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            d = {"error": "Manager permissions required."}
-            return Response(d, status=status.HTTP_403_FORBIDDEN)
-
         queryset = self.get_queryset()
+
+        if not (request.user.is_staff or request.user.is_superuser):
+            queryset = queryset.filter(private=False)
+
+        all_fields = request.query_params.get('all', None)
+        if all_fields is not None:
+            serializer = self.get_serializer(instance=queryset, many=True)
+            return Response({"count": 1, "num_pages": 1, "results": serializer.data})
+
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -1497,6 +1502,7 @@ class BulkImport(generics.GenericAPIView):
                     name_errors.append("An item with name '{}' (row {}) already exists.".format(name, i))
                 except models.Item.DoesNotExist:
                     pass
+                nameset.add(name)
 
             # check valid (positive) integer quantities
             quantity_errors = []

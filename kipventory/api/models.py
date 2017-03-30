@@ -40,7 +40,7 @@ STATUS_CHOICES = (
 
 # Create your models here.
 class Tag(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=128, unique=True)
 
     class Meta:
         ordering = ('name',)
@@ -49,18 +49,11 @@ class Tag(models.Model):
         return self.name
 
 
-class NewUserRequest(models.Model):
-    username   = models.CharField(max_length=150, unique=True)
-    first_name = models.CharField(max_length=30)
-    last_name  = models.CharField(max_length=30)
-    email      = models.CharField(max_length=150, unique=True)
-    comment    = models.CharField(max_length=300, blank=True)
-
 class Item(models.Model):
-    name        = models.CharField(max_length=100, unique=True)
+    name        = models.CharField(max_length=256, unique=True)
     quantity    = models.PositiveIntegerField(default=0)
-    model_no    = models.CharField(default='', max_length=100, blank=True)
-    description = models.TextField(default='', max_length=500, blank=True)
+    model_no    = models.CharField(default='', max_length=256, blank=True)
+    description = models.TextField(default='', max_length=1024, blank=True)
     tags        = models.ManyToManyField(Tag, blank=True)
 
     class Meta:
@@ -99,7 +92,7 @@ class CartItem(models.Model):
         ordering = ('item__name',)
 
 class CustomField(models.Model):
-    name        = models.CharField(max_length=100, unique=True)
+    name        = models.CharField(max_length=128, unique=True)
     private     = models.BooleanField(default=False)
     field_type  = models.CharField(max_length=10, choices=FIELD_TYPES, default='Single')
 
@@ -127,8 +120,8 @@ class CustomField(models.Model):
 class CustomValue(models.Model):
     field  = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="values", to_field="name")
     item   = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="values")
-    Single = models.CharField(default='', max_length=100, blank=True)
-    Multi  = models.TextField(default='', max_length=500, blank=True)
+    Single = models.CharField(default='', max_length=256, blank=True)
+    Multi  = models.TextField(default='', max_length=1024, blank=True)
     Int    = models.IntegerField(default=0, blank=True)
     Float  = models.FloatField(default=0.0, blank=True)
 
@@ -144,9 +137,9 @@ class CustomValue(models.Model):
 class Request(models.Model):
     requester      = models.ForeignKey(User, on_delete=models.CASCADE, related_name="requests")
     date_open      = models.DateTimeField(blank=True, auto_now_add=True)
-    open_comment   = models.TextField(default='', max_length=500, blank=True)
+    open_comment   = models.TextField(default='', max_length=1024, blank=True)
     date_closed    = models.DateTimeField(blank=True, null=True)
-    closed_comment = models.TextField(max_length=500, blank=True)
+    closed_comment = models.TextField(max_length=1024, blank=True)
     status         = models.CharField(max_length=15, choices=STATUS_CHOICES, default=OUTSTANDING)
     administrator  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
@@ -214,7 +207,7 @@ class Transaction(models.Model):
     )
     category      = models.CharField(max_length=20, choices=category_choices)
     quantity      = models.PositiveIntegerField()
-    comment       = models.CharField(max_length=100, blank=True, null=True)
+    comment       = models.CharField(max_length=1024, blank=True, null=True)
     date          = models.DateTimeField(blank=True, auto_now_add=True)
     administrator = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -229,12 +222,12 @@ class Log(models.Model):
     initiating_user         = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='initiating_user', null=True)
     affected_user           = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='affected_user', blank=True, null=True)
     date_created            = models.DateTimeField(blank=True, auto_now_add=True)
-    message                 = models.CharField(max_length=500, blank=True, null=True)
+    message                 = models.CharField(max_length=1024, blank=True, null=True)
     request                 = models.ForeignKey(Request, on_delete=models.SET_NULL, blank=True, null=True)
     # default values for the foreignkeys in the event those items are deleted or users etc.
-    default_item            = models.CharField(max_length=100, blank=True, null=True)
-    default_initiating_user = models.CharField(max_length=100, blank=True, null=True)
-    default_affected_user   = models.CharField(max_length=100, blank=True, null=True)
+    default_item            = models.CharField(max_length=256, blank=True, null=True)
+    default_initiating_user = models.CharField(max_length=256, blank=True, null=True)
+    default_affected_user   = models.CharField(max_length=256, blank=True, null=True)
 
     # The following categories detail what type of inventory change occurred
     ITEM_CREATION                   = "Item Creation"
@@ -304,10 +297,10 @@ def delete_profile_for_user(sender, instance=None, **kwargs):
 
 class LoanReminder(models.Model):
     date = models.DateField()
-    body = models.TextField(max_length=500)
-    subject = models.CharField(max_length=100, default="")
+    body = models.TextField(max_length=1024)
+    subject = models.CharField(max_length=128, default="")
     sent = models.BooleanField(default=False)
 
 # Todo only allow one object. maybe use django-solo
 class SubjectTag(models.Model):
-    text = models.CharField(max_length=100, unique=True)
+    text = models.CharField(max_length=128, unique=True)

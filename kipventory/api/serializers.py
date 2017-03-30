@@ -5,11 +5,14 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 import dateutil.parser
 from datetime import datetime
+
 import re, json
+
+from rest_framework.utils.serializer_helpers import BindingDict
 
 
 class CustomFieldSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(required=True)
+    name = serializers.CharField(max_length=128, required=True)
     private = serializers.BooleanField(default=False)
     field_type = serializers.ChoiceField(choices=models.FIELD_TYPES)
 
@@ -69,130 +72,115 @@ class CustomValueSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-class ItemSerializer(serializers.ModelSerializer):
-    name          = serializers.CharField(max_length=None, min_length=None)
-    quantity      = serializers.IntegerField(min_value=0, max_value=None)
-    model_no      = serializers.CharField(max_length=None, min_length=None, allow_blank=True)
-    description   = serializers.CharField(max_length=None, min_length=None, allow_blank=True)
-    tags          = serializers.SlugRelatedField(slug_field="name", read_only=False, many=True, queryset=models.Tag.objects.all())
-    custom_fields = serializers.SerializerMethodField(method_name="get_custom_fields_by_permission")
-    in_cart       = serializers.SerializerMethodField(method_name="is_item_in_cart")
+class ItemSerializer(serializers.Serializer):
+    name          = serializers.CharField(max_length=256,  required=True,  allow_blank=False)
+    quantity      = serializers.IntegerField(min_value=0,  required=True)
+    model_no      = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
+    description   = serializers.CharField(max_length=1024, required=False, allow_blank=True, default="")
+    tags          = serializers.ListField(child=serializers.CharField(max_length=128), required=False, default=None)
 
-    class Meta:
-        model  = models.Item
-        fields = ['name', 'quantity', 'model_no', 'description', 'tags', 'custom_fields', 'in_cart']
-
-    def get_custom_fields_by_permission(self, item):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         user = self.context['request'].user
-        if user.is_staff:
-            return [{"name": cv.field.name, "value": cv.get_value(), "field_type": cv.field.field_type, "private": cv.field.private} for cv in item.values.all()]
+        custom_fields = []
+        if user.is_staff or user.is_superuser:
+            custom_fields = models.CustomField.objects.all()
         else:
-            return [{"name": cv.field.name, "value": cv.get_value(), "field_type": cv.field.field_type} for cv in item.values.all().filter(field__private=False)]
+            custom_fields = models.CustomField.objects.filter(private=False)
+        for custom_field in custom_fields:
+            ft = custom_field.field_type
+            if ft == "Single":
+                self.fields[custom_field.name] = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
+            elif ft == "Multi":
+                self.fields[custom_field.name] = serializers.CharField(max_length=8192, required=False, allow_blank=True, default="")
+            elif ft == "Int":
+                self.fields[custom_field.name] = serializers.IntegerField(required=False, default=0)
+            elif ft == "Float":
+                self.fields[custom_field.name] = serializers.FloatField(required=False, default=0.0)
 
-    def is_item_in_cart(self, item):
-        user = self.context['request'].user
-        try:
-            cartitem = models.CartItem.objects.filter(owner__pk=user.pk).get(item__name=item.name)
-            return cartitem.quantity
-        except models.CartItem.DoesNotExist:
-            return 0
+    def to_representation(self, item):
+        d = {
+            "name": item.name,
+            "quantity": item.quantity,
+            "description": item.description,
+            "model_no": item.model_no,
+            "tags": [tag.name for tag in item.tags.all()]
+        }
+
+        for cv in item.values.all():
+            field_name = cv.field.name
+            val = cv.get_value()
+            d[field_name] = val
+
+        return d
 
     def to_internal_value(self, data):
-        errors = {}
+        data = super(ItemSerializer, self).to_internal_value(data)
 
         name = data.get('name', None)
-        if name is None or name == "":
-            errors.update({"name": ["This field is required."]})
-        else:
+        if name is not None:
             if self.context['request'].method == "POST":
                 try:
                     other_item = models.Item.objects.get(name=name)
-                    errors.update({"name": ["An object with this name already exists."]})
+                    raise ValidationError({"name": ["An object with this name already exists."]})
                 except models.Item.DoesNotExist:
                     # We know this a new item name, and is therefore valid
                     pass
-        quantity = data.get('quantity', None)
-        if quantity is None:
-            errors.update({"quantity": ["This field is required."]})
-        else:
-            try:
-                quantity = int(quantity)
-                if quantity < 0:
-                    errors.update({"quantity": ["This value must be greater than or equal to 0."]})
-            except:
-                errors.update({"quantity": ["This value must be a positive integer."]})
 
-        data.update({"quantity": quantity})
-
-        # validate custom fields
-        custom_field_data = {}
-        custom_fields = data.get('custom_fields', None)
-        if custom_fields is not None:
-            for cf in custom_fields:
-                name = cf['name']
-                ft = cf['field_type']
-                val = cf['value']
+        tag_names = data.pop('tags', None)
+        if tag_names is not None:
+            tags = []
+            for tag_name in tag_names:
+                tag = None
                 try:
-                    cf = models.CustomField.objects.get(name=name)
-                    if val != None and val != "":
-                        try:
-                            val = models.FIELD_TYPE_DICT[ft](val)
-                            custom_field_data[name] = val
-                        except:
-                            errors.update({name: ["Value '{}' is not of type '{}'.".format(val, models.FIELD_TYPE_DICT[ft].__name__)]})
-                except:
-                    errors.update({name: ["Custom field with name '{}' does not exist.".format(cf['name'])]})
+                    tag = models.Tag.objects.get(name=tag_name)
+                except models.Tag.DoesNotExist:
+                    tag = models.Tag.objects.create(name=tag_name)
+                tags.append(tag)
+        else:
+            tags = None
 
-        # validate tags
-        tags = data.get('tags', [])
-        for tag in tags:
-            try:
-                tag = models.Tag.objects.all()
-            except models.Tag.DoesNotExist:
-                tag = models.Tag.objects.create(name=tag)
-
-        if errors:
-            raise ValidationError(errors)
-
-        data.update({"custom_fields": custom_field_data})
+        data.update({"tags": tags})
         return data
 
     def create(self, validated_data):
-        custom_fields = validated_data.pop('custom_fields')
-        tags = validated_data.pop('tags')
+        # Get all the intrinsic data fields on the Item model
+        name = validated_data.pop('name', "")
+        quantity = validated_data.pop('quantity', "")
+        model_no = validated_data.pop('model_no', "")
+        description = validated_data.pop('description', "")
 
-        item = super(ItemSerializer, self).create(validated_data)
+        item = models.Item.objects.create(name=name, model_no=model_no, quantity=quantity, description=description)
 
-        for tag in tags:
-            try:
-                tag = models.Tag.objects.all().get(name=tag)
-            except models.Tag.DoesNotExist:
-                tag = models.Tag.objects.create(name=tag)
-            item.tags.add(tag)
+        tags = validated_data.pop('tags', None)
+        if tags is not None:
+            for tag in tags:
+                item.tags.add(tag)
 
-        for (name, value) in custom_fields.items():
-            cv = item.values.get(field__name=name)
+        for field_name, value in validated_data.items():
+            cv = item.values.get(field__name=field_name)
             setattr(cv, cv.field.field_type, value)
             cv.save()
 
         item.save()
         return item
 
-    def update(self, instance, validated_data):
-        custom_fields = validated_data.pop('custom_fields')
-        tags = validated_data.pop('tags')
+    def update(self, item, validated_data):
+        # Get all the intrinsic data fields on the Item model
+        item.name        = validated_data.pop('name',        item.name)
+        item.quantity    = validated_data.pop('quantity',    item.quantity)
+        item.model_no    = validated_data.pop('model_no',    item.model_no)
+        item.description = validated_data.pop('description', item.description)
 
-        item = super(ItemSerializer, self).update(instance, validated_data)
+        # only overwrite tags if they were explicitly passed in the request
+        tags = validated_data.pop('tags', None)
+        if tags is not None:
+            item.tags.clear()
+            for tag in tags:
+                item.tags.add(tag)
 
-        for tag in tags:
-            try:
-                tag = models.Tag.objects.all().get(name=tag)
-            except models.Tag.DoesNotExist:
-                tag = models.Tag.objects.create(name=tag)
-            item.tags.add(tag)
-
-        for (name, value) in custom_fields.items():
-            cv = item.values.get(field__name=name)
+        for field_name, value in validated_data.items():
+            cv = item.values.get(field__name=field_name)
             setattr(cv, cv.field.field_type, value)
             cv.save()
 
@@ -202,7 +190,10 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    item         = ItemSerializer(read_only=True, many=False)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
+
     quantity     = serializers.IntegerField(min_value=0, max_value=None, required=True)
     request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES, default=models.LOAN)
 
@@ -407,7 +398,7 @@ class RequestSerializer(serializers.ModelSerializer):
     requester        = serializers.SlugRelatedField(read_only=True, slug_field="username")
     requested_items  = RequestedItemSerializer(read_only=True, many=True)
     date_open        = serializers.ReadOnlyField()
-    open_comment     = serializers.CharField(max_length=500, default='', allow_blank=True)
+    open_comment     = serializers.CharField(max_length=1024, default='', allow_blank=True)
     date_closed      = serializers.ReadOnlyField()
     closed_comment   = serializers.ReadOnlyField()
     administrator    = serializers.SlugRelatedField(read_only=True, slug_field="username")
@@ -448,7 +439,7 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     open_comment    = serializers.CharField(read_only=True)
     administrator   = serializers.SlugRelatedField(read_only=True, slug_field="username")
     date_closed     = serializers.DateTimeField(read_only=True)
-    closed_comment  = serializers.CharField(max_length=500, allow_blank=True, default="")
+    closed_comment  = serializers.CharField(max_length=1024, allow_blank=True, default="")
     status          = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
 
     class Meta:
@@ -467,7 +458,10 @@ class RequestPUTSerializer(serializers.ModelSerializer):
         return instance
 
 class LoanSerializer(serializers.ModelSerializer):
-    item    = ItemSerializer(read_only=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
+
     request = serializers.SerializerMethodField(method_name="get_request_representation")
 
     class Meta:
@@ -490,7 +484,9 @@ class LoanSerializer(serializers.ModelSerializer):
         return loan
 
 class LoanSerializerNoRequest(serializers.ModelSerializer):
-    item    = ItemSerializer(read_only=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
 
     class Meta:
         model = models.Loan
@@ -498,7 +494,10 @@ class LoanSerializerNoRequest(serializers.ModelSerializer):
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date_loaned']
 
 class DisbursementSerializer(serializers.ModelSerializer):
-    item    = ItemSerializer(read_only=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
+
     request = serializers.SerializerMethodField(method_name="get_request_representation")
 
     class Meta:
@@ -513,7 +512,9 @@ class DisbursementSerializer(serializers.ModelSerializer):
         return request_json
 
 class DisbursementSerializerNoRequest(serializers.ModelSerializer):
-    item    = ItemSerializer(read_only=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
 
     class Meta:
         model = models.Disbursement
