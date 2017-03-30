@@ -95,6 +95,7 @@ class CustomField(models.Model):
     name        = models.CharField(max_length=128, unique=True)
     private     = models.BooleanField(default=False)
     field_type  = models.CharField(max_length=10, choices=FIELD_TYPES, default='Single')
+    asset_only  = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('name',)

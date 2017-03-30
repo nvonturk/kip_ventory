@@ -13,12 +13,11 @@ from rest_framework.utils.serializer_helpers import BindingDict
 
 class CustomFieldSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=128, required=True)
-    private = serializers.BooleanField(default=False)
     field_type = serializers.ChoiceField(choices=models.FIELD_TYPES)
 
     class Meta:
         model = models.CustomField
-        fields = ('name', 'private', 'field_type',)
+        fields = ('name', 'field_type')
 
     def validate(self, data):
         name = data.get('name', None)
@@ -33,11 +32,7 @@ class CustomValueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CustomValue
-        fields = ('field', 'value',)
-
-    def to_representation(self, cv):
-        d = {'name': cv.field.name, 'value': cv.get_value(), 'field_type': cv.field.field_type}
-        return d
+        fields = ('field', 'value', 'field_type')
 
     def to_internal_value(self, data):
         validated_data = {}
