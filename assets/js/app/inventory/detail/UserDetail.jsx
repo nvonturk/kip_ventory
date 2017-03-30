@@ -24,6 +24,7 @@ const ManagerDetail = React.createClass({
       addToCartQuantity: 1,
 
       stacks: {},
+      custom_fields: [],
 
       item: {
         name: "",
@@ -40,10 +41,25 @@ const ManagerDetail = React.createClass({
 
   componentWillMount() {
     var user = this.props.route.user
+    this.getCustomFields();
     this.getItem();
     this.getOutstandingRequests();
     this.getStacks();
     this.getLoans();
+  },
+
+  getCustomFields() {
+    var url = "/api/fields/"
+    var _this = this
+    var params = {"all": true}
+    getJSON(url, params, function(data) {
+      var custom_fields = data.results.map( (field, i) => {
+        return ({"name": field.name, "value": "", "field_type": field.field_type})
+      });
+      _this.setState({
+        custom_fields: custom_fields
+      })
+    })
   },
 
   getStacks() {
@@ -141,7 +157,7 @@ const ManagerDetail = React.createClass({
       },
       success:function(response){
         var new_url = "/app/inventory/" + _this.state.item.name + "/"
-        window.location.assign(new_url)
+        browserHistory.push(new_url)
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
@@ -192,11 +208,11 @@ const ManagerDetail = React.createClass({
               <td style={{border: "1px solid #596a7b"}}>{this.state.item.tags.join(", ")}</td>
             </tr>
 
-            {this.state.item.custom_fields.map( (cf, i) => {
+            {this.state.custom_fields.map( (cf, i) => {
               return (
                 <tr key={i}>
                   <th style={{paddingRight:"10px", border: "1px solid #596a7b"}}>{cf.name}</th>
-                  <td style={{border: "1px solid #596a7b"}}>{cf.value}</td>
+                  <td style={{border: "1px solid #596a7b"}}>{this.state.item[cf.name]}</td>
                 </tr>
               )
             })}

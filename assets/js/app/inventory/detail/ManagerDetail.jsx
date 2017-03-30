@@ -31,6 +31,7 @@ const ManagerDetail = React.createClass({
 
       users: [],
       admins: [],
+      custom_fields: [],
 
       addToCartQuantity: 0,
 
@@ -46,7 +47,6 @@ const ManagerDetail = React.createClass({
         quantity: 0,
         tags: [],
         description: "",
-        custom_fields: []
       },
 
       modifiedItem: {
@@ -55,7 +55,6 @@ const ManagerDetail = React.createClass({
         quantity: 0,
         tags: [],
         description: "",
-        custom_fields: []
       },
 
       itemExists: true,
@@ -73,6 +72,7 @@ const ManagerDetail = React.createClass({
   componentWillMount() {
     var user = this.props.route.user
     this.getItem();
+    this.getCustomFields();
     this.getOutstandingRequests();
     if (user.is_staff || user.is_superuser) {
       this.getTransactions();
@@ -80,6 +80,20 @@ const ManagerDetail = React.createClass({
     this.getStacks();
     this.getLoans();
     this.getUsers();
+  },
+
+  getCustomFields() {
+    var url = "/api/fields/"
+    var _this = this
+    var params = {"all": true}
+    getJSON(url, params, function(data) {
+      var custom_fields = data.results.map( (field, i) => {
+        return ({"name": field.name, "value": "", "field_type": field.field_type})
+      });
+      _this.setState({
+        custom_fields: custom_fields
+      })
+    })
   },
 
   getStacks() {
@@ -210,7 +224,6 @@ const ManagerDetail = React.createClass({
     var url = "/api/items/" + this.props.params.item_name + "/"
     var data = this.state.modifiedItem
     var _this = this
-    console.log("submitting", this.state.errorNodes)
     ajax({
       url: url,
       contentType: "application/json",
@@ -324,9 +337,9 @@ const ManagerDetail = React.createClass({
       <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <ControlLabel>{presentation_name}</ControlLabel>
         <FormControl type="text"
-                     value={this.state.modifiedItem.custom_fields[i].value}
+                     value={this.state.modifiedItem[field_name]}
                      name={field_name}
-                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                     onChange={this.handleItemFormChange} />
         { this.state.errorNodes[field_name] }
       </FormGroup>
     )
@@ -339,9 +352,9 @@ const ManagerDetail = React.createClass({
           <FormControl type="text"
                        style={{resize: "vertical", height:"100px"}}
                        componentClass={"textarea"}
-                       value={this.state.modifiedItem.custom_fields[i].value}
+                       value={this.state.modifiedItem[field_name]}
                        name={field_name}
-                       onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                       onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
       </FormGroup>
     )
@@ -354,9 +367,9 @@ const ManagerDetail = React.createClass({
         <FormControl type="number"
                      min={min}
                      step={step}
-                     value={this.state.modifiedItem.custom_fields[i].value}
+                     value={this.state.modifiedItem[field_name]}
                      name={field_name}
-                     onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                     onChange={this.handleItemFormChange} />
         { this.state.errorNodes[field_name] }
       </FormGroup>
     )
@@ -367,20 +380,12 @@ const ManagerDetail = React.createClass({
       <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <ControlLabel>{presentation_name} </ControlLabel>
         <FormControl type="number"
-                   value={this.state.modifiedItem.custom_fields[i].value}
-                   name={field_name}
-                   onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                     value={this.state.modifiedItem[field_name]}
+                     name={field_name}
+                     onChange={this.handleItemFormChange} />
         { this.state.errorNodes[field_name] }
       </FormGroup>
     )
-  },
-
-  handleCustomFieldChange(i, name, e) {
-    var item = this.state.modifiedItem
-    item.custom_fields[i].value = e.target.value
-    this.setState({
-      modifiedItem: item
-    })
   },
 
   getQuantityAndModelNoForm() {
@@ -413,7 +418,7 @@ const ManagerDetail = React.createClass({
   },
 
   getCustomFieldForms() {
-    return this.state.modifiedItem.custom_fields.map( (field, i) => {
+    return this.state.custom_fields.map( (field, i) => {
 
       var field_name = field.name
       var is_private = field.private
@@ -538,23 +543,23 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
           <tbody>
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Name</th>
-              <td >{this.state.item.name}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Name</th>
+              <td style={{border: "1px solid #596a7b"}}>{this.state.item.name}</td>
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Model No.</th>
-              <td >{this.state.item.model_no}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Model No.</th>
+              <td style={{border: "1px solid #596a7b"}}>{this.state.item.model_no}</td>
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Quantity</th>
-              <td >{this.state.item.quantity}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Quantity</th>
+              <td style={{border: "1px solid #596a7b"}}>{this.state.item.quantity}</td>
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Description</th>
-              <td >
+              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Description</th>
+              <td style={{border: "1px solid #596a7b"}}>
                 <pre style={{fontFamily: '"Lato","Helvetica Neue",Helvetica,Arial,sans-serif',
                              color:"white",
                              fontSize:"12px",
@@ -568,15 +573,15 @@ const ManagerDetail = React.createClass({
             </tr>
 
             <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", }}>Tags</th>
-              <td >{this.state.item.tags.join(", ")}</td>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Tags</th>
+              <td style={{border: "1px solid #596a7b"}}>{this.state.item.tags.join(", ")}</td>
             </tr>
 
-            {this.state.item.custom_fields.map( (cf, i) => {
+            {this.state.custom_fields.map( (cf, i) => {
               return (
                 <tr key={i}>
-                  <th style={{paddingRight:"10px", }}>{cf.name}</th>
-                  <td >{cf.value}</td>
+                  <th style={{paddingRight:"10px", border: "1px solid #596a7b"}}>{cf.name}</th>
+                  <td style={{border: "1px solid #596a7b"}}>{this.state.item[cf.name]}</td>
                 </tr>
               )
             })}

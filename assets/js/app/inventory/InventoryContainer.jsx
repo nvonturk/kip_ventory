@@ -21,15 +21,16 @@ const InventoryContainer = React.createClass({
   getInitialState() {
     return {
       items:[],
+      tags: [],
+      custom_fields: [],
+
       tagsSelected: [],
       excludeTagsSelected: [],
       searchText: "",
+
       page: 1,
       pageCount: 1,
-      tags: [],
-      showItemCreationModal: false,
-      showBulkImportModal: false,
-      custom_fields: [],
+
       item: {
         name: "",
         model_no: "",
@@ -38,6 +39,9 @@ const InventoryContainer = React.createClass({
         description: "",
         custom_fields: []
       },
+
+      showItemCreationModal: false,
+      showBulkImportModal: false,
 
       errorNodes: {},
       bulkImportErrorNodes: {},
@@ -48,39 +52,28 @@ const InventoryContainer = React.createClass({
   },
 
   componentWillMount() {
-    this.getAllItems(); //maybe move to componentDidMount()
+    this.getCustomFields();
+    this.getItems(); //maybe move to componentDidMount()
     this.getAllTags();
   },
 
-  getItems(params) {
-    var url = "/api/items/";
-    var thisobj = this;
+  getCustomFields() {
+    var url = "/api/fields/"
+    var _this = this
+    var params = {"all": true}
     getJSON(url, params, function(data) {
-      var item = thisobj.state.item
-      if (data.results.length > 0) {
-        var cf = data.results[0].custom_fields
-        item.custom_fields = cf.map((c, i) => {
-          c.value = ""
-          return c
-        })
-      }
-      thisobj.setState({
-        item: item,
-        items: data.results,
-        pageCount: Math.ceil(data.num_pages),
+      var custom_fields = data.results.map( (field, i) => {
+        return ({"name": field.name, "value": "", "field_type": field.field_type})
       });
-    });
+      _this.setState({
+        custom_fields: custom_fields
+      })
+    })
   },
 
-  getAllItems() {
-    var params = {
-      page: this.state.page,
-      itemsPerPage: ITEMS_PER_PAGE
-    }
-    this.getItems(params);
-  },
-
-  filterItems() {
+  getItems() {
+    var url = "/api/items/";
+    var _this = this;
     var params = {
       search: this.state.searchText,
       tags: this.state.tagsSelected,
@@ -88,7 +81,14 @@ const InventoryContainer = React.createClass({
       page: this.state.page,
       itemsPerPage: ITEMS_PER_PAGE
     }
-    this.getItems(params);
+    getJSON(url, params, function(data) {
+      var item = _this.state.item
+      _this.setState({
+        item: item,
+        items: data.results,
+        pageCount: Math.ceil(data.num_pages),
+      });
+    });
   },
 
   getAllTags() {
@@ -104,7 +104,7 @@ const InventoryContainer = React.createClass({
   handleSearch(e) {
     e.preventDefault()
     this.setState({page: 1}, () => {
-      this.filterItems();
+      this.getItems();
     });
   },
 
@@ -125,19 +125,7 @@ const InventoryContainer = React.createClass({
       success: function(response) {
         // Show success message
         var itemURL = "/app/inventory/" + response.name + "/"
-        _this.setState({
-          item: {
-            name: "",
-            model_no: "",
-            quantity: 0,
-            tags: [],
-            description: "",
-            custom_fields: []
-          },
-          showItemCreationModal: false,
-          nameErrorNode: null,
-          quantityErrorNode: null,
-        }, () => {browserHistory.push(itemURL)})
+        browserHistory.push(itemURL)
       },
       // TODO : BETTER ERROR HANDLING. PARSE THE RESULT, AND ASSOCIATE WITH THE CORRECT FORM FIELD
       // USE THE <HelpBlock /> component to add subtext to the forms that failed the test.
@@ -161,12 +149,12 @@ const InventoryContainer = React.createClass({
 
   handleIncludeTagSelection(tagsSelected) {
     tagsSelected = tagsSelected.map((tag, i) => {return tag.value}).join(",")
-    this.setState({tagsSelected: tagsSelected, page: 1}, this.filterItems);
+    this.setState({tagsSelected: tagsSelected, page: 1}, this.getItems);
   },
 
   handleExcludeTagSelection(excludeTagsSelected) {
     excludeTagsSelected = excludeTagsSelected.map((tag, i) => {return tag.value}).join(",")
-    this.setState({excludeTagsSelected: excludeTagsSelected, page: 1}, this.filterItems);
+    this.setState({excludeTagsSelected: excludeTagsSelected, page: 1}, this.getItems);
   },
 
   handlePageSelect(activeKey) {
@@ -210,9 +198,9 @@ const InventoryContainer = React.createClass({
         </Col>
         <Col xs={8}>
           <FormControl type="text"
-                       value={this.state.item.custom_fields[i].value}
+                       value={this.state.item[field_name]}
                        name={field_name}
-                       onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                       onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
@@ -229,9 +217,9 @@ const InventoryContainer = React.createClass({
           <FormControl type="text"
                        style={{resize: "vertical", height:"100px"}}
                        componentClass={"textarea"}
-                       value={this.state.item.custom_fields[i].value}
+                       value={this.state.item[field_name]}
                        name={field_name}
-                       onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                       onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
@@ -248,9 +236,9 @@ const InventoryContainer = React.createClass({
           <FormControl type="number"
                        min={min}
                        step={step}
-                       value={this.state.item.custom_fields[i].value}
+                       value={this.state.item[field_name]}
                        name={field_name}
-                       onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                       onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
@@ -265,24 +253,13 @@ const InventoryContainer = React.createClass({
         </Col>
         <Col xs={8}>
           <FormControl type="number"
-                       value={this.state.item.custom_fields[i].value}
+                       value={Number(this.state.item[field_name])}
                        name={field_name}
-                       onChange={this.handleCustomFieldChange.bind(this, i, field_name)} />
+                       onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
         </Col>
       </FormGroup>
     )
-  },
-
-  handleCustomFieldChange(i, name, e) {
-    var item = this.state.item
-    item.custom_fields[i].value = e.target.value
-    var errNodes = this.state.errorNodes
-    errNodes[name] = null
-    this.setState({
-      item: item,
-      errorNodes: errNodes
-    })
   },
 
   getFormValidationState(field_name) {
@@ -325,7 +302,7 @@ const InventoryContainer = React.createClass({
   },
 
   getCustomFieldForms() {
-    return this.state.item.custom_fields.map( (field, i) => {
+    return this.state.custom_fields.map( (field, i) => {
 
       var field_name = field.name
       var is_private = field.private
@@ -450,14 +427,7 @@ const InventoryContainer = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        _this.getAllItems()
-        _this.setState({
-          importFile: null,
-          importResults: response,
-          importSuccess: "File imported successfully",
-          bulkImportErrorNodes: {},
-          errorNodes: {}
-        })
+        browserHistory.push("/app/inventory/")
       },
       error:function (xhr, textStatus, thrownError){
         var response = xhr.responseJSON
@@ -500,7 +470,6 @@ const InventoryContainer = React.createClass({
         importFile: file,
       });
     }
-
     reader.readAsDataURL(file)
   },
 
