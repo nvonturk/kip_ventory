@@ -36,6 +36,10 @@ pip install -r requirements.txt
 pip install psycopg2 gunicorn
 ```
 
+##### Update settings.py
+```
+TODO: allowed hosts ifconfig
+```
 
 ###### Install node.js dependencies
 ```
@@ -54,8 +58,6 @@ ALTER ROLE [your_username_here] SET timezone TO 'EST';
 GRANT ALL PRIVILEGES ON DATABASE [your_database_name] TO [your_username_here];
 \q
 ```
-
-
 
 ###### Make Django migrations
 Use the included script to remove any old database files, create migrations, and migrate.
