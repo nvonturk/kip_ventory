@@ -40,7 +40,6 @@ const ManagerLoansContainer = React.createClass({
       user: this.state.userSearch,
       status: this.state.status
     }
-    console.log(params)
     var _this = this;
     getJSON(url, params, function(data) {
       _this.setState({
@@ -100,12 +99,48 @@ const ManagerLoansContainer = React.createClass({
         { this.state.loanGroups.map( (lg, i) => {
           return (
             <ManagerLoanPanel getLoanGroups={this.getLoanGroups}
-                            toggleExpanded={this.handleLoanGroupExpand.bind(this, i)}
-                            index={i} expanded={this.state.expandedLoanGroup}
-                            key={lg.request.request_id} loanGroup={lg} />
+                              toggleExpanded={this.handleLoanGroupExpand.bind(this, i)}
+                              index={i} expanded={this.state.expandedLoanGroup}
+                              key={lg.request.request_id} loanGroup={lg} />
           )
         })}
       </ListGroup>
+      // <Table condensed hover style={{marginBottom: "0px"}}>
+      //   <thead>
+      //     <tr style={{borderBottom: "1px solid white"}}>
+      //       <th style={{width: "35%"}} className="text-left">Item</th>
+      //       <th style={{width: "15%"}} className="text-center">Request</th>
+      //       <th style={{width: "15%"}} className="text-center">Type</th>
+      //       <th style={{width: "10%"}} className="text-center">Quantity</th>
+      //       <th style={{width: "25%"}} className="text-center">Modify</th>
+      //     </tr>
+      //   </thead>
+      //   <tbody>
+      //     { this.state.loanGroups.map( (lg, i) => {
+      //       return (
+      //         <tr key={lg.id}>
+      //           <td data-th="Item" className="text-left">
+      //             <h6 style={{color: "#df691a"}}>{ lg.item.name }</h6>
+      //           </td>
+      //           <td data-th="Request" className="text-center">
+      //             <span className="clickable"
+      //                   style={{color: "#5bc0de", fontSize: "12px", textDecoration: "underline"}}
+      //                   onClick={e => {browserHistory.push("/app/requests/" + lg.request.request_id + "/")}}>
+      //               View Request
+      //             </span>
+      //           </td>
+      //           <td data-th="Type" className="text-center">
+      //             Loan
+      //           </td>
+      //           <td data-th="Quantity" className="text-center">
+      //             Loan
+      //           </td>
+      //
+      //         </tr>
+      //       )
+      //     })}
+      //   </tbody>
+      // </Table>
     ) : (
       <Grid fluid>
         <Row>

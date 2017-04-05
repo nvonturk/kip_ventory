@@ -19,6 +19,7 @@ const UserRequestsDetail = React.createClass({
         date_closed: "",
         status: "",
         requested_items: [],
+        approved_items: [],
         loans: [],
         disbursements: []
       },
@@ -122,6 +123,43 @@ const UserRequestsDetail = React.createClass({
     }
   },
 
+  getApprovedItemsPanel() {
+    if (this.state.request.approved_items.length > 0) {
+      return (
+        <Panel header={"Approved Items"}>
+          <Table hover style={{marginBottom:"0px"}}>
+            <thead>
+              <tr>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Type</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              { this.state.request.approved_items.map( (ai, i) => {
+                return (
+                  <tr key={ai.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ai.item + "/")}}>
+                    <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
+                      <span style={{color: "#df691a", fontSize:"12px"}}>{ai.item}</span>
+                    </td>
+                    <td style={{verticalAlign:"middle"}} className="text-center">{ai.request_type}</td>
+                    <td style={{verticalAlign:"middle"}} className="text-center">{ai.quantity}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </Panel>
+      )
+    } else {
+      return (
+        <Panel header={"Approved Items"}>
+          <Well bsSize="small" className="text-center">There are no approved items in this request.</Well>
+        </Panel>
+      )
+    }
+  },
+
   getRequestInfoPanel() {
     var administrator = null
     var date_closed = null
@@ -187,20 +225,14 @@ const UserRequestsDetail = React.createClass({
   },
 
   getReadOnlyRequestedItems() {
-    var type_header = "Approved For:"
-    var quantity_header = "Quantity Approved:"
-    if (this.state.request.status == "D" || this.state.request.status == "O") {
-      type_header = "Requested For:"
-      quantity_header = "Quantity Requested:"
-    }
     if (this.state.request.requested_items.length > 0) {
       return (
         <Table hover style={{marginBottom:"0px"}}>
           <thead>
             <tr>
               <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
-              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">{type_header}</th>
-              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">{quantity_header}</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Type</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Quantity</th>
             </tr>
           </thead>
           <tbody>
@@ -370,6 +402,28 @@ const UserRequestsDetail = React.createClass({
     } else if (!this.state.requestExists) {
       return this.get404NotFound()
     } else {
+      var toprow = (this.state.request.status == "A") ? (
+        <Row>
+          <Col md={4} xs={12}>
+            { this.getRequestInfoPanel() }
+          </Col>
+          <Col md={4} xs={12}>
+            { this.getRequestedItemsPanel() }
+          </Col>
+          <Col md={4} xs={12}>
+            { this.getApprovedItemsPanel() }
+          </Col>
+        </Row>
+      ) : (
+        <Row>
+          <Col md={5} xs={12}>
+            { this.getRequestInfoPanel() }
+          </Col>
+          <Col md={7} xs={12}>
+            { this.getRequestedItemsPanel() }
+          </Col>
+        </Row>
+      )
       return (
         <Grid>
           <Row>
@@ -387,14 +441,7 @@ const UserRequestsDetail = React.createClass({
             </Col>
           </Row>
 
-          <Row>
-            <Col md={5} xs={12}>
-              { this.getRequestInfoPanel() }
-            </Col>
-            <Col md={7} xs={12}>
-              { this.getRequestedItemsPanel() }
-            </Col>
-          </Row>
+          { toprow }
 
           <hr />
 
