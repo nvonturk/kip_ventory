@@ -361,14 +361,6 @@ const ManagerDetail = React.createClass({
     )
   },
 
-  getLoanFilterPanel() {
-    return (
-      <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
-        <p style={{fontSize:"12px"}}>View all of your current outstanding loans in the panel to the right.</p>
-      </Panel>
-    )
-  },
-
   getStatusSymbol(loan, fs) {
     return (loan.quantity_returned === loan.quantity_loaned) ? (
       <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-circle" />
@@ -595,7 +587,6 @@ const ManagerDetail = React.createClass({
                       <Tab.Pane eventKey={2} style={{padding: "15px"}}>
                         <Row>
                           <Col xs={3} style={{paddingLeft: "0px"}}>
-                            { this.getLoanFilterPanel() }
                             { this.getLoanLegendPanel() }
                           </Col>
                           <Col xs={9} style={{paddingRight: "0px"}}>

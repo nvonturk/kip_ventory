@@ -19,13 +19,13 @@ const ManagerRequestsDetail = React.createClass({
         date_closed: "",
         status: "",
         requested_items: [],
+        approved_items: [],
         loans: [],
         disbursements: []
       },
 
       itemQuantities: {},
 
-      original_items: [],
       requestExists: true,
       forbidden: false,
 
@@ -55,15 +55,10 @@ const ManagerRequestsDetail = React.createClass({
       success:function(response){
         if (response.status == "O") {
           var ris = JSON.parse(JSON.stringify(response.requested_items))
-          var original_items = JSON.parse(JSON.stringify(ris))
-          for (var i=0; i<ris.length; i++) {
-            ris[i].quantity = 0
-          }
-          response.requested_items = ris
+          response.approved_items = ris
         }
         _this.setState({
-          request: response,
-          original_items: original_items
+          request: response
         })
         for (var i=0; i<response.requested_items.length; i++) {
           var item = response.requested_items[i].item
@@ -125,7 +120,7 @@ const ManagerRequestsDetail = React.createClass({
     var url = "/api/requests/" + this.state.request.request_id + "/"
     var _this = this
     var data = {
-      requested_items: this.state.request.requested_items,
+      approved_items: this.state.request.approved_items,
       closed_comment: this.state.request.closed_comment,
       status: "A"
     }
@@ -171,7 +166,7 @@ const ManagerRequestsDetail = React.createClass({
 
   handleRequestItemTypeChange(i, e) {
     var request = JSON.parse(JSON.stringify(this.state.request))
-    request.requested_items[i].request_type = e.target.value
+    request.approved_items[i].request_type = e.target.value
     this.setState({
       request: request
     })
@@ -180,9 +175,9 @@ const ManagerRequestsDetail = React.createClass({
   handleRequestItemQuantityChange(i, e) {
     var q = Number(e.target.value)
     var request = JSON.parse(JSON.stringify(this.state.request))
-    var item_name = request.requested_items[i].item
+    var item_name = request.approved_items[i].item
     if (q <= this.state.itemQuantities[item_name]) {
-      request.requested_items[i].quantity = Number(e.target.value)
+      request.approved_items[i].quantity = Number(e.target.value)
       this.setState({
         request: request
       })
@@ -391,22 +386,21 @@ const ManagerRequestsDetail = React.createClass({
           </thead>
           <tbody>
             { this.state.request.requested_items.map( (ri, i) => {
-              var ri_original = this.state.original_items[i]
               return (
                 <tr key={ri.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ri.item + "/")}}>
                   <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
                     <span style={{fontSize:"12px", color: "#df691a"}}>{ri.item}</span>
                   </td>
                   <td style={{verticalAlign:"middle"}} data-th="Stock:" className="text-center">{this.state.itemQuantities[ri.item]}</td>
-                  <td style={{verticalAlign:"middle"}} data-th="Requested For:" className="text-center">{ri_original.request_type}</td>
-                  <td style={{verticalAlign:"middle"}} data-th="Requested Quantity:" className="text-center">{ri_original.quantity}</td>
+                  <td style={{verticalAlign:"middle"}} data-th="Requested For:" className="text-center">{ri.request_type}</td>
+                  <td style={{verticalAlign:"middle"}} data-th="Requested Quantity:" className="text-center">{ri.quantity}</td>
                   <td style={{verticalAlign:"middle"}} data-th="" className="spacer" />
                   <td style={{verticalAlign:"middle", zIndex:9999}} onClick={e => {e.stopPropagation()}} data-th="Approved For:" className="text-center">
                     <FormGroup style={{marginBottom: "0px"}}>
                       <FormControl className="text-center"
                                    style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
                                    componentClass="select"
-                                   value={this.state.request.requested_items[i].request_type}
+                                   value={this.state.request.approved_items[i].request_type}
                                    onChange={this.handleRequestItemTypeChange.bind(this, i)}>
                         <option value="disbursement">Disbursement</option>
                         <option value="loan">Loan</option>
@@ -417,7 +411,7 @@ const ManagerRequestsDetail = React.createClass({
                     <FormGroup bsSize="small" style={{marginBottom: "0px"}} validationState={this.getValidationState(ri.item)}>
                       <FormControl type="number" min={0} className="text-center"
                                    style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
-                                   value={this.state.request.requested_items[i].quantity}
+                                   value={this.state.request.approved_items[i].quantity}
                                    onChange={this.handleRequestItemQuantityChange.bind(this, i)}>
                       </FormControl>
                     </FormGroup>
@@ -431,26 +425,20 @@ const ManagerRequestsDetail = React.createClass({
       )
     } else {
       return (
-        <Well bsSize="small" className="text-center">There are no items in this request.</Well>
+        <Well style={{fontSize:"12px"}} bsSize="small" className="text-center">No items have been requested.</Well>
       )
     }
   },
 
   getReadOnlyRequestedItems() {
-    var type_header = "Approved For:"
-    var quantity_header = "Quantity Approved:"
-    if (this.state.request.status == "D") {
-      type_header = "Requested For:"
-      quantity_header = "Quantity Requested:"
-    }
     if (this.state.request.requested_items.length > 0) {
       return (
         <Table hover style={{marginBottom:"0px"}}>
           <thead>
             <tr>
               <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
-              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">{type_header}</th>
-              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">{quantity_header}</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Type</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Quantity</th>
             </tr>
           </thead>
           <tbody>
@@ -470,7 +458,7 @@ const ManagerRequestsDetail = React.createClass({
       )
     } else {
       return (
-        <Well bsSize="small" className="text-center">There are no items in this request.</Well>
+        <Well style={{fontSize:"12px"}} bsSize="small" className="text-center">No items have been requested.</Well>
       )
     }
   },
@@ -490,6 +478,43 @@ const ManagerRequestsDetail = React.createClass({
       )
     } else {
       return null
+    }
+  },
+
+  getApprovedItemsPanel() {
+    if (this.state.request.approved_items.length > 0) {
+      return (
+        <Panel header={"Approved Items"}>
+          <Table hover style={{marginBottom:"0px"}}>
+            <thead>
+              <tr>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Type</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              { this.state.request.approved_items.map( (ai, i) => {
+                return (
+                  <tr key={ai.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ai.item + "/")}}>
+                    <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
+                      <span style={{color: "#df691a", fontSize:"12px"}}>{ai.item}</span>
+                    </td>
+                    <td style={{verticalAlign:"middle"}} className="text-center">{ai.request_type}</td>
+                    <td style={{verticalAlign:"middle"}} className="text-center">{ai.quantity}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </Panel>
+      )
+    } else {
+      return (
+        <Panel header={"Approved Items"}>
+          <Well bsSize="small" className="text-center">There are no approved items in this request.</Well>
+        </Panel>
+      )
     }
   },
 
@@ -636,6 +661,28 @@ const ManagerRequestsDetail = React.createClass({
     } else if (!this.state.requestExists) {
       return this.get404NotFound()
     } else {
+      var toprow = (this.state.request.status == "A") ? (
+        <Row>
+          <Col md={4} xs={12}>
+            { this.getRequestInfoPanel() }
+          </Col>
+          <Col md={4} xs={12}>
+            { this.getRequestedItemsPanel() }
+          </Col>
+          <Col md={4} xs={12}>
+            { this.getApprovedItemsPanel() }
+          </Col>
+        </Row>
+      ) : (
+        <Row>
+          <Col md={5} xs={12}>
+            { this.getRequestInfoPanel() }
+          </Col>
+          <Col md={7} xs={12}>
+            { this.getRequestedItemsPanel() }
+          </Col>
+        </Row>
+      )
       return (
         <Grid>
           <Row>
@@ -653,14 +700,7 @@ const ManagerRequestsDetail = React.createClass({
             </Col>
           </Row>
 
-          <Row>
-            <Col md={5} xs={12}>
-              { this.getRequestInfoPanel() }
-            </Col>
-            <Col md={7} xs={12}>
-              { this.getRequestedItemsPanel() }
-            </Col>
-          </Row>
+          { toprow }
 
           <hr />
 

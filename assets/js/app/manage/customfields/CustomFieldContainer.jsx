@@ -25,7 +25,10 @@ const CustomFieldContainer = React.createClass({
               Custom fields are administrator-defined fields that will be tracked for all items.
             </p>
             <p>
-              Fields marked private are hidden from non-managerial users, and are explicitly for administrative use.
+              Fields marked "private" are hidden from non-managerial users, and are explicitly for administrative use.
+            </p>
+            <p>
+              Fields marked "asset-tracked" are only tracked for specific instances of an item (ie. a specific oscilloscope).
             </p>
             <br />
           </Col>

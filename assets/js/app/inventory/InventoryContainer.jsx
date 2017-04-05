@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Grid, Row, Col, Table, Image, Button, Panel, Label, Modal, HelpBlock,
          Glyphicon, Form, Pagination, FormGroup, FieldGroup, FormControl, Well,
-        ControlLabel, InputGroup } from 'react-bootstrap'
+        ControlLabel, InputGroup, Checkbox } from 'react-bootstrap'
 import InventoryItem from './InventoryItem'
 import InventoryGridHeader from './InventoryGridHeader'
 import Paginator from '../Paginator'
@@ -27,6 +27,7 @@ const InventoryContainer = React.createClass({
       tagsSelected: [],
       excludeTagsSelected: [],
       searchText: "",
+      lowStock: false,
 
       page: 1,
       pageCount: 1,
@@ -76,8 +77,9 @@ const InventoryContainer = React.createClass({
     var _this = this;
     var params = {
       search: this.state.searchText,
-      tags: this.state.tagsSelected,
-      excludeTags: this.state.excludeTagsSelected,
+      include_tags: this.state.tagsSelected,
+      exclude_tags: this.state.excludeTagsSelected,
+      low_stock: this.state.lowStock,
       page: this.state.page,
       itemsPerPage: ITEMS_PER_PAGE
     }
@@ -158,18 +160,15 @@ const InventoryContainer = React.createClass({
   },
 
   handlePageSelect(activeKey) {
-    this.setState({page: activeKey}, () => {
-      this.filterItems();
-    })
+    this.setState({
+      page: activeKey
+    }, this.getItems);
   },
 
-  handleChangeQuantity(index, quantity) {
-    this.setState(function(prevState, props) {
-      prevState.items[index].quantity = parseInt(prevState.items[index].quantity) + parseInt(quantity);
-      return {
-        items: prevState.items
-      };
-    });
+  handleLowStockSelection(e) {
+    this.setState({
+      lowStock: e.target.checked
+    }, this.getItems);
   },
 
   handleChange(e) {
@@ -517,6 +516,20 @@ const InventoryContainer = React.createClass({
         </Col>
       </Row>
     ) : "Current Inventory"
+    var minimumStockFilter = (this.props.route.user.is_staff || this.props.route.user.is_superuser) ? (
+      <Form horizontal>
+      <FormGroup bsSize="small">
+        <Col xs={7} componentClass={ControlLabel} style={{textAlign: "left"}}>
+          Show Low-Stock Items:
+        </Col>
+        <Col xs={2}>
+          <Checkbox style={{paddingTop: "6px"}} onChange={this.handleLowStockSelection} />
+        </Col>
+      </FormGroup>
+      </Form>
+    ) : (
+      null
+    )
     return (
       <Grid>
         <Row>
@@ -570,6 +583,9 @@ const InventoryContainer = React.createClass({
                                     onChange={this.handleExcludeTagSelection}
                             />
                           </FormGroup>
+
+                          { minimumStockFilter }
+
                         </Col>
                       </Row>
                     </Panel>

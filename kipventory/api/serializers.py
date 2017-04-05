@@ -17,7 +17,7 @@ class CustomFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CustomField
-        fields = ('name', 'field_type')
+        fields = ('name', 'field_type', 'private', 'asset_tracked', )
 
     def validate(self, data):
         name = data.get('name', None)
@@ -26,62 +26,18 @@ class CustomFieldSerializer(serializers.ModelSerializer):
             raise ValidationError({"name": ["A field with name \'{}\' already exists.".format(name)]})
         return data
 
-class CustomValueSerializer(serializers.ModelSerializer):
-    field = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    value = serializers.CharField(max_length=None, min_length=None, required=True, source='*', allow_blank=True)
-
-    class Meta:
-        model = models.CustomValue
-        fields = ('field', 'value', 'field_type')
-
-    def to_internal_value(self, data):
-        validated_data = {}
-        errors = {}
-        # get value type specified in CustomField
-        name = data.get('name')
-        ft = models.CustomField.objects.get(name=name).field_type
-        value = data.get('value')
-        if value == None or value == "":
-            if ft == "Integer":
-                value = 0
-            elif ft == "Float":
-                value = 0.0
-            else:
-                value = ""
-        else:
-            # convert value to correct type
-            try:
-                value = models.FIELD_TYPE_DICT[ft](value)
-                validated_data['value'] = value
-            except:
-                errors.update({'value': ['Field \'{}\' requires values of type \'{}\'.'.format(name, models.FIELD_TYPE_DICT[ft].__name__)]})
-
-        if errors:
-            raise ValidationError(errors)
-
-        return validated_data
-
-    def update(self, instance, validated_data):
-        ft = instance.field.field_type
-        setattr(instance, ft, validated_data.get('value', getattr(instance, ft)))
-        instance.save()
-        return instance
-
-class ItemSerializer(serializers.Serializer):
-    name          = serializers.CharField(max_length=256,  required=True,  allow_blank=False)
-    quantity      = serializers.IntegerField(min_value=0,  required=True)
-    model_no      = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
-    description   = serializers.CharField(max_length=1024, required=False, allow_blank=True, default="")
-    tags          = serializers.ListField(child=serializers.CharField(max_length=128), required=False, default=None)
-
+class AssetSerializer(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        custom_fields = None
         user = self.context['request'].user
-        custom_fields = []
         if user.is_staff or user.is_superuser:
-            custom_fields = models.CustomField.objects.all()
+            custom_fields = models.CustomField.objects.filter(asset_tracked=True)
         else:
-            custom_fields = models.CustomField.objects.filter(private=False)
+            custom_fields = models.CustomField.objects.filter(asset_tracked=True, private=False)
+
+        self.fields['tag'] = serializers.CharField(max_length=256, required=False)
+
         for custom_field in custom_fields:
             ft = custom_field.field_type
             if ft == "Single":
@@ -93,13 +49,75 @@ class ItemSerializer(serializers.Serializer):
             elif ft == "Float":
                 self.fields[custom_field.name] = serializers.FloatField(required=False, default=0.0)
 
+    def to_representation(self, asset):
+        d = {
+            "tag": asset.tag
+        }
+        for cv in asset.values.all():
+            field_name = cv.field.name
+            val = cv.get_value()
+            d[field_name] = val
+        return d
+
+    def update(self, asset, validated_data):
+        asset.tag = validated_data.pop('tag', asset.tag)
+
+        for field_name, value in validated_data.items():
+            cv = asset.values.get(field__name=field_name)
+            setattr(cv, cv.field.field_type, value)
+            cv.save()
+
+        asset.save()
+        return asset
+
+class ItemSerializer(serializers.Serializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        custom_fields = None
+        user = self.context['request'].user
+
+        if user.is_staff or user.is_superuser:
+            custom_fields = models.CustomField.objects.all()
+        else:
+            custom_fields = models.CustomField.objects.filter(private=False)
+
+        for custom_field in custom_fields:
+            ft = custom_field.field_type
+            if ft == "Single":
+                self.fields[custom_field.name] = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
+            elif ft == "Multi":
+                self.fields[custom_field.name] = serializers.CharField(max_length=8192, required=False, allow_blank=True, default="")
+            elif ft == "Int":
+                self.fields[custom_field.name] = serializers.IntegerField(required=False, default=0)
+            elif ft == "Float":
+                self.fields[custom_field.name] = serializers.FloatField(required=False, default=0.0)
+
+    name          = serializers.CharField(max_length=256,  required=True,  allow_blank=False)
+    quantity      = serializers.IntegerField(min_value=0,  required=True)
+    model_no      = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
+    description   = serializers.CharField(max_length=1024, required=False, allow_blank=True, default="")
+    tags          = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True), required=False, default=None)
+    has_assets    = serializers.BooleanField(required=False, default=False)
+    minimum_stock = serializers.IntegerField(min_value=0, required=False)
+
     def to_representation(self, item):
+        in_cart = 0
+        try:
+            ci = models.CartItem.objects.get(item__pk=item.pk)
+            in_cart = ci.quantity
+        except:
+            pass
+
         d = {
             "name": item.name,
             "quantity": item.quantity,
             "description": item.description,
             "model_no": item.model_no,
-            "tags": [tag.name for tag in item.tags.all()]
+            "tags": [tag.name for tag in item.tags.all()],
+            "has_assets": item.has_assets,
+            "in_cart": in_cart,
+            "minimum_stock": item.minimum_stock
         }
 
         for cv in item.values.all():
@@ -114,24 +132,28 @@ class ItemSerializer(serializers.Serializer):
 
         name = data.get('name', None)
         if name is not None:
-            if self.context['request'].method == "POST":
-                try:
-                    other_item = models.Item.objects.get(name=name)
+            try:
+                other_item = models.Item.objects.get(name=name)
+                if self.instance:
+                    if self.instance.name != name:
+                        raise ValidationError({"name": ["An object with this name already exists."]})
+                else:
                     raise ValidationError({"name": ["An object with this name already exists."]})
-                except models.Item.DoesNotExist:
-                    # We know this a new item name, and is therefore valid
-                    pass
+            except models.Item.DoesNotExist:
+                # We know this a new item name, and is therefore valid
+                pass
 
         tag_names = data.pop('tags', None)
         if tag_names is not None:
             tags = []
             for tag_name in tag_names:
-                tag = None
-                try:
-                    tag = models.Tag.objects.get(name=tag_name)
-                except models.Tag.DoesNotExist:
-                    tag = models.Tag.objects.create(name=tag_name)
-                tags.append(tag)
+                if len(tag_name) > 0:
+                    tag = None
+                    try:
+                        tag = models.Tag.objects.get(name=tag_name)
+                    except models.Tag.DoesNotExist:
+                        tag = models.Tag.objects.create(name=tag_name)
+                    tags.append(tag)
         else:
             tags = None
 
@@ -144,8 +166,15 @@ class ItemSerializer(serializers.Serializer):
         quantity = validated_data.pop('quantity', "")
         model_no = validated_data.pop('model_no', "")
         description = validated_data.pop('description', "")
+        has_assets  = validated_data.pop('has_assets', False)
+        minimum_stock = validated_data.pop('minimum_stock', 0)
 
-        item = models.Item.objects.create(name=name, model_no=model_no, quantity=quantity, description=description)
+        item = models.Item.objects.create(name=name,
+                                          model_no=model_no,
+                                          quantity=quantity,
+                                          description=description,
+                                          has_assets=has_assets,
+                                          minimum_stock=minimum_stock)
 
         tags = validated_data.pop('tags', None)
         if tags is not None:
@@ -162,10 +191,12 @@ class ItemSerializer(serializers.Serializer):
 
     def update(self, item, validated_data):
         # Get all the intrinsic data fields on the Item model
-        item.name        = validated_data.pop('name',        item.name)
-        item.quantity    = validated_data.pop('quantity',    item.quantity)
-        item.model_no    = validated_data.pop('model_no',    item.model_no)
-        item.description = validated_data.pop('description', item.description)
+        item.name        = validated_data.pop('name',            item.name)
+        item.quantity    = validated_data.pop('quantity',        item.quantity)
+        item.model_no    = validated_data.pop('model_no',        item.model_no)
+        item.description = validated_data.pop('description',     item.description)
+        item.has_assets  = validated_data.pop('has_assets',      item.has_assets)
+        item.minimum_stock = validated_data.pop('minimum_stock', item.minimum_stock)
 
         # only overwrite tags if they were explicitly passed in the request
         tags = validated_data.pop('tags', None)
@@ -196,10 +227,6 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = models.CartItem
         fields = ['item', 'quantity', 'request_type']
 
-    def is_future_date(self, date):
-        now = timezone.now()
-        return date > now
-
     def to_internal_value(self, data):
         item = data.get('item', None)
         owner = data.get('owner', None)
@@ -224,16 +251,6 @@ class CartItemSerializer(serializers.ModelSerializer):
             raise ValidationError({"request_type": ["Request type must be one of 'disbursement', 'loan'."]})
 
         return data
-
-    def create(self, validated_data):
-        ci = super(CartItemSerializer, self).create(validated_data)
-        ci.save()
-        return ci
-
-    def update(self, ci, validated_data):
-        ci = super(CartItemSerializer, self).update(ci, validated_data)
-        ci.save()
-        return ci
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -350,42 +367,22 @@ class UserPUTSerializer(serializers.ModelSerializer):
         return instance
 
 class RequestedItemSerializer(serializers.ModelSerializer):
-    item         = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    quantity     = serializers.IntegerField(required=True)
+    item         = serializers.SlugRelatedField(read_only=False, queryset=models.Item.objects.all(), slug_field="name")
+    quantity     = serializers.IntegerField(min_value=1, required=True)
     request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES)
 
     class Meta:
         model = models.RequestedItem
         fields = ['item', 'quantity', 'request_type']
 
-    def is_future_date(self, date):
-        return True
+class ApprovedItemSerializer(serializers.ModelSerializer):
+    item         = serializers.SlugRelatedField(read_only=False, queryset=models.Item.objects.all(), slug_field="name")
+    quantity     = serializers.IntegerField(min_value=1, required=True)
+    request_type = serializers.ChoiceField(choices=models.ITEM_REQUEST_TYPES)
 
-    def validate(self, data):
-        # request_type = data.get('request_type', None)
-        # due_date = data.get('due_date', None)
-        # if request_type == models.LOAN:
-        #     if due_date is None:
-        #         raise ValidationError({"due_date": ["Must provide a due date for a loan request."]})
-        #     else:
-        #         if not self.is_future_date(due_date):
-        #             raise ValidationError({"due_date": ["Only future dates are allowed."]})
-        data = super(RequestedItemSerializer, self).validate(data)
-        return data
-
-    def create(self, validated_data):
-        ri = super(RequestedItemSerializer, self).create(validated_data)
-        # if ri.request_type == models.DISBURSEMENT:
-        #     ri.due_date = None
-        ri.save()
-        return ri
-
-    def update(self, ri, validated_data):
-        ri = super(RequestedItemSerializer, self).update(ri, validated_data)
-        # if ri.request_type == models.DISBURSEMENT:
-        #     ri.due_date = None
-        ri.save()
-        return ri
+    class Meta:
+        model = models.RequestedItem
+        fields = ['item', 'quantity', 'request_type']
 
 
 class RequestSerializer(serializers.ModelSerializer):
@@ -394,17 +391,29 @@ class RequestSerializer(serializers.ModelSerializer):
     requested_items  = RequestedItemSerializer(read_only=True, many=True)
     date_open        = serializers.ReadOnlyField()
     open_comment     = serializers.CharField(max_length=1024, default='', allow_blank=True)
-    date_closed      = serializers.ReadOnlyField()
     closed_comment   = serializers.ReadOnlyField()
+    date_closed      = serializers.ReadOnlyField()
     administrator    = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    status           = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
+    approved_items   = ApprovedItemSerializer(read_only=True, many=True)
     loans            = serializers.SerializerMethodField(method_name="get_loan_representations")
     disbursements    = serializers.SerializerMethodField(method_name="get_disbursement_representations")
+    status           = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
 
     class Meta:
         model = models.Request
-        fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment',
-                  'date_closed', 'closed_comment', 'administrator', 'status', 'loans', 'disbursements']
+        fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment', 'date_closed',
+                  'closed_comment', 'administrator', 'approved_items', 'loans', 'disbursements', 'status']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.status == "A":
+            data.pop('approved_items')
+            data.pop('closed_comment')
+            data.pop('date_closed')
+            data.pop('loans')
+            data.pop('disbursements')
+            data.pop('administrator')
+        return data
 
     def get_loan_representations(self, request):
         loans = []
@@ -436,10 +445,13 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     date_closed     = serializers.DateTimeField(read_only=True)
     closed_comment  = serializers.CharField(max_length=1024, allow_blank=True, default="")
     status          = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
+    approved_items  = ApprovedItemSerializer(many=True)
 
     class Meta:
         model = models.Request
-        fields = ['request_id', 'requester', 'requested_items', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'administrator', 'status']
+        fields = ['request_id', 'requester', 'requested_items', 'approved_items',
+                  'date_open', 'open_comment', 'date_closed', 'closed_comment',
+                  'administrator', 'status']
 
     def to_internal_value(self, data):
         date_closed = timezone.now()
@@ -449,8 +461,57 @@ class RequestPUTSerializer(serializers.ModelSerializer):
         return validated_data
 
     def update(self, instance, data):
-        instance = super(RequestPUTSerializer, self).update(instance, data)
-        return instance
+        approved_items = data.pop('approved_items', [])
+
+        if data.get('status', None) == "A":
+            ai_instances = []
+            if len(approved_items) == 0:
+                for ri in instance.requested_items.all():
+                    ai = models.ApprovedItem(item=ri.item,
+                                             quantity=ri.quantity,
+                                             request_type=ri.request_type)
+                    ai_instances.append(ai)
+            else:
+                for approved_item in approved_items:
+                    item = approved_item.get('item', None)
+                    quantity = approved_item.get('quantity', 0)
+                    request_type = approved_item.get('request_type', models.LOAN)
+                    try:
+                        item = models.Item.objects.get(name=item)
+                    except:
+                        raise serializers.ValidationError({"item": ["Item '{}' not found.".format(item)]})
+
+                    ai = models.ApprovedItem(item=item,
+                                             quantity=quantity,
+                                             request_type=request_type)
+                    ai_instances.append(ai)
+
+            request = super().update(instance, data)
+            for ai in ai_instances:
+                ai.request = request
+                ai.save()
+        else:
+            request = super().update(instance, data)
+
+        return request
+
+class RequestLoanDisbursementSerializer(serializers.Serializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['loans'] = LoanSerializerNoRequest(context=self.context, many=True, read_only=True)
+        self.fields['disbursements'] = DisbursementSerializerNoRequest(context=self.context, many=True, read_only=True)
+
+    def to_representation(self, request):
+        request_json = RequestSerializer(context=self.context, instance=request).data
+        loans = request_json.pop('loans')
+        disbursements = request_json.pop('disbursements')
+        d = {
+            "disbursements": disbursements,
+            "loans": loans,
+            "request": request_json
+        }
+        return d
+
 
 class LoanSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
@@ -464,8 +525,8 @@ class LoanSerializer(serializers.ModelSerializer):
         fields = ['id', 'request', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date_loaned']
 
-    def get_request_representation(self, loangroup):
-        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
+    def get_request_representation(self, loan):
+        request_json = RequestSerializer(instance=loan.request, context=self.context).data
         request_json.pop('loans')
         request_json.pop('disbursements')
         return request_json
@@ -481,6 +542,7 @@ class LoanSerializer(serializers.ModelSerializer):
 class LoanSerializerNoRequest(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        print("LOAN NO REQUEST: ", self.context)
         self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
 
     class Meta:
@@ -491,6 +553,7 @@ class LoanSerializerNoRequest(serializers.ModelSerializer):
 class DisbursementSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        print("DISBURSEMENT NO REQUEST: ", self.context)
         self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
 
     request = serializers.SerializerMethodField(method_name="get_request_representation")
@@ -515,35 +578,6 @@ class DisbursementSerializerNoRequest(serializers.ModelSerializer):
         model = models.Disbursement
         fields = ['id', 'item', 'quantity', 'date']
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date']
-
-class LoanGroupSerializer(serializers.ModelSerializer):
-    request = serializers.SerializerMethodField(method_name="get_request_representation")
-    loans   = serializers.SerializerMethodField(method_name="get_loan_representations")
-    disbursements   = serializers.SerializerMethodField(method_name="get_disbursement_representations")
-
-    class Meta:
-        model = models.LoanGroup
-        fields = ['request', 'loans', 'disbursements']
-
-    def get_request_representation(self, loangroup):
-        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
-        request_json.pop('loans')
-        request_json.pop('disbursements')
-        return request_json
-
-    def get_loan_representations(self, loangroup):
-        loans = []
-        for loan in loangroup.loans.all():
-            loan_json = LoanSerializerNoRequest(instance=loan, context=self.context).data
-            loans.append(loan_json)
-        return loans
-
-    def get_disbursement_representations(self, loangroup):
-        disbursements = []
-        for disbursement in loangroup.disbursements.all():
-            disbursement_json = DisbursementSerializerNoRequest(instance=disbursement, context=self.context).data
-            disbursements.append(disbursement_json)
-        return disbursements
 
 
 class ConversionSerializer(serializers.Serializer):

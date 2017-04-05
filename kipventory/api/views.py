@@ -66,8 +66,11 @@ class ItemListCreate(generics.GenericAPIView):
     def filter_queryset(self, queryset, request):
         # Search and Tag Filtering
         search = self.request.query_params.get("search")
-        tags = self.request.query_params.get("tags")
-        excludeTags = self.request.query_params.get("excludeTags")
+        include_tags = self.request.query_params.get("include_tags")
+        exclude_tags = self.request.query_params.get("exclude_tags")
+        low_stock = self.request.query_params.get("low_stock", False)
+        low_stock = True if low_stock == "true" else False
+
         q_objs = Q()
 
         # Search filter
@@ -76,16 +79,22 @@ class ItemListCreate(generics.GenericAPIView):
             queryset = queryset.filter(q_objs).order_by('name')
 
         # Tags filter
-        if tags is not None and tags != '':
-            tagsArray = tags.split(",")
+        if include_tags is not None and include_tags != '':
+            tagsArray = include_tags.split(",")
             for tag in tagsArray:
                 queryset = queryset.filter(tags__name=tag)
 
         # Exclude tags filter
-        if excludeTags is not None and excludeTags != '':
-            excludeTagsArray = excludeTags.split(",")
+        if exclude_tags is not None and exclude_tags != '':
+            excludeTagsArray = exclude_tags.split(",")
             for tag in excludeTagsArray:
                 queryset = queryset.exclude(tags__name=tag)
+
+        # Low stock filter
+        if low_stock:
+            print(low_stock)
+            queryset = queryset.filter(quantity__lte=F('minimum_stock'))
+
 
         return queryset
 
@@ -173,6 +182,107 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         itemDeletionLog(item_name, request.user.pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class AssetList(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        item_name = self.kwargs['item_name']
+        return models.Asset.objects.filter(item__name=item_name)
+
+    def get_serializer_class(self):
+        return serializers.AssetSerializer
+
+    def get(self, request, item_name, format=None):
+        try:
+            item = models.Item.objects.get(name=item_name)
+            if not item.has_assets:
+                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            raise NotFound("Item '{}' not found.".format(item_name))
+
+        # CHECK PERMISSION
+        queryset = self.get_queryset()
+
+        all_assets = request.query_params.get('all', False)
+        if all_assets:
+            serializer = self.get_serializer(instance=queryset, many=True)
+            d = {"count": len(serializer.data), 'num_pages': 1, "results": serializer.data}
+            return Response(d)
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class AssetDetailModifyDelete(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get_instance(self, asset_tag):
+        try:
+            return models.Asset.objects.get(tag=asset_tag)
+        except models.Asset.DoesNotExist:
+            raise NotFound('Asset {} not found.'.format(asset_tag))
+
+    def get_serializer_class(self):
+        return serializers.AssetSerializer
+
+    def get_queryset(self):
+        return models.Asset.objects.all()
+
+    def get(self, request, item_name, asset_tag, format=None):
+        try:
+            item = models.Item.objects.get(name=item_name)
+            if not item.has_assets:
+                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            raise NotFound("Item '{}' not found.".format(item_name))
+
+        asset = self.get_instance(asset_tag=asset_tag)
+        serializer = self.get_serializer(instance=asset)
+        return Response(serializer.data)
+
+    # manager restricted
+    def put(self, request, item_name, asset_tag, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            item = models.Item.objects.get(name=item_name)
+            if not item.has_assets:
+                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            raise NotFound("Item '{}' not found.".format(item_name))
+
+        data = request.data.copy()
+        asset = self.get_instance(asset_tag=asset_tag)
+
+        serializer = self.get_serializer(instance=asset, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, item_name, asset_tag, format=None):
+        if not (request.user.is_staff or request.user.is_superuser):
+            d = {"error": "Manager permissions required."}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            item = models.Item.objects.get(name=item_name)
+            if not item.has_assets:
+                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            raise NotFound("Item '{}' not found.".format(item_name))
+
+        asset = self.get_instance(asset_tag=asset_tag)
+        asset.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
 class AddItemToCart(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
@@ -225,7 +335,7 @@ class GetOutstandingRequestsByItem(generics.GenericAPIView):
     filter_backends = (GetOutstandingRequestsByItemFilter,)
 
     def get_queryset(self):
-        return models.Request.objects.filter(status='O')
+        return models.Request.objects.filter(status=models.OUTSTANDING)
 
     def get_serializer_class(self):
         return serializers.RequestSerializer
@@ -465,7 +575,6 @@ class CartItemList(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
         serializer = self.get_serializer(instance=queryset, many=True)
-
         return Response(serializer.data)
 
 
@@ -533,7 +642,7 @@ class RequestListAll(generics.GenericAPIView):
 
     def get(self, request, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
-            d = {"error": "Manager permissions required."}
+            d = {"error": ["Manager permissions required."]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         queryset = self.get_queryset()
@@ -574,9 +683,14 @@ class RequestListCreate(generics.GenericAPIView):
         if not (status is None or status=="All" or status==""):
             queryset = queryset.filter(status=status)
 
+        # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(instance=paginated_queryset, many=True)
-        response = self.get_paginated_response(serializer.data)
+        data = []
+        for req in paginated_queryset:
+            data.append(self.get_serializer(instance=req).data)
+
+        # serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(data)
         return response
 
     # generate a request that contains all items currently in your cart.
@@ -635,7 +749,7 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # if user, only see your requests
         is_owner = (instance.requester.pk == request.user.pk)
         if not (request.user.is_staff or request.user.is_superuser or is_owner):
-            d = {"error": "Manager or owner permissions required."}
+            d = {"error": ["Manager or owner permissions required."]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(instance=instance)
@@ -644,67 +758,19 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
     # MANAGER LOCKED - only admins may change the fields on a request
     def put(self, request, request_pk, format=None):
         if not (request.user.is_staff or request.user.is_superuser):
-            d = {"error": "Manager permissions required."}
+            d = {"error": ["Manager permissions required."]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
+        instance = self.get_instance(request_pk)
         data = request.data.copy()
         data.update({'administrator': request.user})
-        instance = self.get_instance(request_pk)
 
         if not (instance.status == 'O'):
-            return Response({"error": "Only outstanding requests may be modified."})
+            return Response({"status": ["Only outstanding requests may be modified."]})
 
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
-            # check integrity of approval operation
-            if data['status'] == 'D':
-                # Insert Create Log
-                # Need {serializer.data, initiating_user_pk, 'Request Approved'}
-                for ri in instance.requested_items.all():
-                    requestItemDenial(ri, request.user.pk, instance)
-                sendEmailForRequestStatusUpdate(instance)
-            # need to check that we're not giving out more instances than currently exist
-            elif data['status'] == 'A':
-                errors = {}
-                ri_data = data.get('requested_items', [])
-                ri_instances = []
-                for ri_instance, ri_dict in zip(instance.requested_items.all(), ri_data):
-                    # ri_instance = instance.requested_items.all().get(item__name=ri_data.get('item'))
-                    ri_instances.append(ri_instance)
-                    if (ri_instance.item.quantity < int(ri_dict.get('quantity'))):
-                        errors.update({ri_instance.item.name: ["Cannot approve a request for more instances than are currently in stock (requested: {}, in stock: {}).".format(int(ri_dict.get('quantity')), ri_instance.item.quantity)]})
-                    elif (int(ri_dict.get('quantity')) <= 0):
-                        errors.update({ri_instance.item.name: ["Cannot approve a request for less than 1 instance ({}).".format(int(ri_dict.get('quantity')))]})
-
-
-                if errors:
-                    return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-
-                else:
-                    loangroup = models.LoanGroup.objects.create(request=instance)
-                    for ri_instance, ri_dict in zip(ri_instances, ri_data):
-                        new_quantity = int(ri_dict.get('quantity'))
-                        new_type = ri_dict.get('request_type')
-                        ri_instance.request_type = new_type
-                        ri_instance.quantity = new_quantity
-                        ri_instance.save()
-
-                        if ri_instance.request_type == models.LOAN:
-                            loan = models.createLoanFromRequestItem(ri_instance)
-                            # requestItemApproval(ri_instance.item, request.user.pk, data)
-                            loan.loan_group = loangroup
-                            loan.save()
-                            requestItemApprovalLoan(ri_instance, request.user.pk, instance)
-
-                        elif ri_instance.request_type == models.DISBURSEMENT:
-                            disbursement = models.createDisbursementFromRequestItem(ri_instance)
-                            disbursement.loan_group = loangroup
-                            disbursement.save()
-                            requestItemApprovalDisburse(ri_instance, request.user.pk, instance)
-
-                        sendEmailForRequestStatusUpdate(instance)
-
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -714,11 +780,13 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         instance = self.get_instance(request_pk)
         is_owner = (request.user.pk == instance.requester.pk)
         if not (is_owner):
-            d = {"error": "Owner permissions required"}
+            d = {"error": ["Owner permissions required"]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
+
         if not (instance.status == 'O'):
-            d = {"error": "Cannot delete an approved/denied request."}
+            d = {"error": ["Cannot delete an approved/denied request."]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
+
         instance.delete()
         #sendEmailForDeletedOutstandingRequest? Probably not
         # Don't post log here since its as if it never happened
@@ -741,61 +809,19 @@ class LoanListAll(generics.GenericAPIView):
     filter_backends = (LoanListAllFilter,)
 
     def get_queryset(self):
-        return models.LoanGroup.objects.all();
+        return models.Request.objects.filter(status=models.APPROVED);
 
     def get_serializer_class(self):
-        return serializers.LoanGroupSerializer
+        return serializers.RequestLoanDisbursementSerializer
 
     def get(self, request, format=None):
-        queryset = self.get_queryset()
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({"error": ["Manager permissions required."]}, status=status.HTTP_403_FORBIDDEN)
 
-        # filter by user who requested these loans
-        user = request.query_params.get('user', None)
-        if user != None and user != "":
-            q = Q(request__requester__username__icontains=user)
-            queryset = queryset.filter(q)
-
-        serializer = self.get_serializer(instance=queryset, many=True)
-        data = serializer.data
-
-        status = request.query_params.get('status', None)
-        item = request.query_params.get('item', None)
-
-        results = []
-        for d in data:
-            request = d.get('request')
-            loans = d.get('loans')
-            disbursements = d.get('disbursements')
-            keep_result = False
-            if (status == None or status == "") and (item == None or item == ""):
-                results.append({"request": request, "loans": loans, "disbursements": disbursements})
-            else:
-                if status != None and status != "":
-                    status = status.lower()
-                    if status == "outstanding":
-                        for loan in loans:
-                            if (int(loan['quantity_returned']) != int(loan['quantity_loaned'])):
-                                keep_result = True
-                                break
-
-                    if status == "returned":
-                        for loan in loans:
-                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
-                                keep_result = True
-                                break
-
-                if not keep_result and (item != None and item != ""):
-                    item = item.lower()
-                    for loan in loans:
-                        if item in loan['item']['name'].lower():
-                            keep_result = True
-                            break
-
-                if keep_result:
-                    results.append({"request": request, "loans": loans, "disbursements": disbursements})
-
-        results = self.paginate_queryset(results)
-        response = self.get_paginated_response(results)
+        requests = self.get_queryset()
+        requests = self.paginate_queryset(requests)
+        serializer = self.get_serializer(instance=requests, many=True)
+        response = self.get_paginated_response(serializer.data)
         return response
 
 class LoanListFilter(BaseFilterBackend):
@@ -814,55 +840,16 @@ class LoanList(generics.GenericAPIView):
     filter_backends = (LoanListFilter,)
 
     def get_queryset(self):
-        return models.LoanGroup.objects.filter(request__requester=self.request.user);
+        return models.Request.objects.filter(requester=self.request.user, status=models.APPROVED);
 
     def get_serializer_class(self):
-        return serializers.LoanGroupSerializer
+        return serializers.RequestLoanDisbursementSerializer
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
-
+        queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=queryset, many=True)
-        data = serializer.data
-
-        status = request.query_params.get('status', None)
-        item = request.query_params.get('item', None)
-
-        results = []
-        for d in data:
-            request = d.get('request')
-            loans = d.get('loans')
-            disbursements = d.get('disbursements')
-            keep_result = False
-            if (status == None or status == "") and (item == None or item == ""):
-                results.append({"request": request, "loans": loans, "disbursements": disbursements})
-            else:
-                if status != None and status != "":
-                    status = status.lower()
-                    if status == "outstanding":
-                        for loan in loans:
-                            if (int(loan['quantity_returned']) != int(loan['quantity_loaned'])):
-                                keep_result = True
-                                break
-
-                    if status == "returned":
-                        for loan in loans:
-                            if (int(loan['quantity_returned']) == int(loan['quantity_loaned'])):
-                                keep_result = True
-                                break
-
-                if not keep_result and (item != None and item != ""):
-                    item = item.lower()
-                    for loan in loans:
-                        if item in loan['item']['name'].lower():
-                            keep_result = True
-                            break
-
-                if keep_result:
-                    results.append({"request": request, "loans": loans, "disbursements": disbursements})
-
-        results = self.paginate_queryset(results)
-        response = self.get_paginated_response(results)
+        response = self.get_paginated_response(serializer.data)
         return response
 
 
@@ -946,14 +933,14 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             quantity = data.get('quantity')
             loan.quantity_loaned -= quantity
 
-            disbursements = loan.loan_group.disbursements.filter(item__name=loan.item.name)
+            disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
             # add to existing disbursement or create a new one
             if disbursements.count() > 0:
                 disbursement = disbursements.first()
                 disbursement.quantity += quantity
                 disbursement.save()
             else:
-                disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity, loan_group=loan.loan_group)
+                disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
                 disbursement.save()
             loan.save()
             #todo can only mangers do this? send email?
@@ -1593,23 +1580,10 @@ class DisburseCreate(generics.GenericAPIView):
             request_instance.status = 'A'
             request_instance.save()
 
-            loangroup = models.LoanGroup.objects.create(request=request_instance)
             for item, quantity, request_type in zip(items, quantities, types):
                 # Create request item
-                req_item = models.RequestedItem.objects.create(item=item, quantity=quantity, request_type=request_type, request=request_instance)
+                req_item = models.ApprovedItem.objects.create(item=item, quantity=quantity, request_type=request_type, request=request_instance)
                 req_item.save()
-
-                if (request_type == "loan"):
-                    # Create the loan from this request item
-                    loan = models.createLoanFromRequestItem(req_item)
-                    loan.loan_group = loangroup
-                    loan.save()
-
-                elif (request_type == "disbursement"):
-                    # Create the disbursement from this request item
-                    disbursement = models.createDisbursementFromRequestItem(req_item)
-                    disbursement.loan_group = loangroup
-                    disbursement.save()
 
                 # Decrement the quantity remaining on the Item
                 item.quantity -= quantity
@@ -1621,7 +1595,6 @@ class DisburseCreate(generics.GenericAPIView):
                 requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
 
             sendEmailForNewDisbursement(requester, request_instance)
-            loangroup.save()
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

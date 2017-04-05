@@ -8,13 +8,15 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
 
     # ITEM ENDPOINTS
-    url(r'^items/?$',                                 views.ItemListCreate.as_view()),
-    url(r'^items/(?P<item_name>.+?)/requests/?$',     views.GetOutstandingRequestsByItem.as_view()),
-    url(r'^items/(?P<item_name>.+?)/stacks/?$',       views.GetItemStacks.as_view()),
-    url(r'^items/(?P<item_name>.+?)/loans/?$',        views.GetLoansByItem.as_view()),
-    url(r'^items/(?P<item_name>.+?)/transactions/?$', views.GetTransactionsByItem.as_view()),
-    url(r'^items/(?P<item_name>.+?)/addtocart/?$',    views.AddItemToCart.as_view()),
-    url(r'^items/(?P<item_name>.+?)/?$',              views.ItemDetailModifyDelete.as_view()),
+    url(r'^items/?$',                                               views.ItemListCreate.as_view()),
+    url(r'^items/(?P<item_name>.+?)/assets/(?P<asset_tag>.+?)/?$',   views.AssetDetailModifyDelete.as_view()),
+    url(r'^items/(?P<item_name>.+?)/assets/?$',                     views.AssetList.as_view()),
+    url(r'^items/(?P<item_name>.+?)/requests/?$',                   views.GetOutstandingRequestsByItem.as_view()),
+    url(r'^items/(?P<item_name>.+?)/stacks/?$',                     views.GetItemStacks.as_view()),
+    url(r'^items/(?P<item_name>.+?)/loans/?$',                      views.GetLoansByItem.as_view()),
+    url(r'^items/(?P<item_name>.+?)/transactions/?$',               views.GetTransactionsByItem.as_view()),
+    url(r'^items/(?P<item_name>.+?)/addtocart/?$',                  views.AddItemToCart.as_view()),
+    url(r'^items/(?P<item_name>.+?)/?$',                            views.ItemDetailModifyDelete.as_view()),
 
     url(r'^import/?$',          views.BulkImport.as_view()),
     url(r'^import/template/?$', views.BulkImportTemplate.as_view()),

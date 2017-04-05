@@ -29,6 +29,10 @@ const ManagerDetail = React.createClass({
       loansPageCount: 1,
       loansFilterUser: "",
 
+      assets: [],
+      assetsPage: 1,
+      assetsPageCount: 1,
+
       users: [],
       admins: [],
       custom_fields: [],
@@ -146,7 +150,7 @@ const ManagerDetail = React.createClass({
         _this.setState({
           item: response,
           modifiedItem: responseCopy
-        })
+        }, _this.getAssets)
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
@@ -169,6 +173,7 @@ const ManagerDetail = React.createClass({
     }
     var _this = this;
     getJSON(url, params, function(data) {
+      console.log(data)
       _this.setState({
         requests: data.results,
         requestsPageCount: Number(data.num_pages)
@@ -207,6 +212,23 @@ const ManagerDetail = React.createClass({
         loansPageCount: Number(data.num_pages),
       })
     })
+  },
+
+  getAssets() {
+    var url = "/api/items/" + this.state.item.name + "/assets/"
+    var params = {
+      page: this.state.assetsPage,
+      itemsPerPage: ITEMS_PER_PAGE
+    }
+    var _this = this;
+    if (this.state.item.has_assets) {
+      getJSON(url, params, function(data) {
+        _this.setState({
+          assets: data.results,
+          assetsPageCount: Number(data.num_pages),
+        })
+      })
+    }
   },
 
   handleItemFormChange(e) {
@@ -532,7 +554,7 @@ const ManagerDetail = React.createClass({
       deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={e => {this.setState({showDeleteModal: true})}}/>
     }
     return (
-      <Panel style={{marginBottom: "0px"}} header={
+      <Panel header={
         <div>
           <span style={{fontSize:"15px"}}>Item Details</span>
           <span className="clickable" style={{float: "right"}}>
@@ -725,7 +747,7 @@ const ManagerDetail = React.createClass({
                       <span style={{fontSize:"11px"}}>{ request.open_comment }</span>
                     </td>
                     <td data-th="Link" className="text-center" >
-                      <a style={{fontSize:"11px", color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
+                      <a style={{fontSize:"11px", color: "#5bc0de"}} className="clickable" href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
                     </td>
                   </tr>
                 )
@@ -1161,6 +1183,59 @@ const ManagerDetail = React.createClass({
     )
   },
 
+  getItemInstancePanel() {
+    return (this.state.item.has_assets) ? (
+      <div className="panel panel-default">
+
+        <div className="panel-heading">
+          <span style={{fontSize:"15px"}}>
+            Tracked Instances
+          </span>
+        </div>
+
+        <div className="panel-body" style={{minHeight:"220px"}}>
+          <Table condensed hover>
+            <thead>
+              <tr>
+                <th style={{width: "80%"}} className="text-left">Asset ID</th>
+                <th style={{width: "20%"}} className="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              { this.state.assets.map( (asset, i) => {
+                return (
+                  <tr key={asset.tag}>
+                    <td data-th="Asset ID" className="text-left">
+                      <h6 style={{color: "#df691a"}}>{asset.tag}</h6>
+                    </td>
+                    <td data-th="Status" className="text-center">
+
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </div>
+
+        <div className="panel-footer">
+          <Row>
+            <Col md={12}>
+              <Pagination first last next prev maxButtons={3}
+                          ellipsis style={{float:"right", margin: "0px"}}
+                          bsSize="small" items={this.state.assetsPageCount}
+                          activePage={this.state.assetsPage}
+                          onSelect={activeKey => {this.setState({assetsPage: activeKey}, this.getAssets)}}/>
+            </Col>
+          </Row>
+        </div>
+
+      </div>
+    ) : (
+      null
+    )
+  },
+
   render() {
     if (this.state.itemExists) {
       var request = (this.state.loanToShow == null) ? null : this.state.loanToShow.request
@@ -1176,7 +1251,7 @@ const ManagerDetail = React.createClass({
               </Row>
 
               <Row>
-                <Col md={6} xs={12}>
+                <Col md={4} xs={12}>
                   { this.getItemInfoPanel() }
                 </Col>
                 <Col md={4} xs={12}>
@@ -1185,6 +1260,9 @@ const ManagerDetail = React.createClass({
                     <hr className="xs-hidden" style={{margin: "40px 0px"}} />
 
                   { this.getAddToCartForm() }
+                </Col>
+                <Col md={4} xs={12}>
+                  { this.getItemInstancePanel() }
                 </Col>
               </Row>
 

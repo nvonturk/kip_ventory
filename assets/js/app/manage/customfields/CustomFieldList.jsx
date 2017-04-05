@@ -17,10 +17,13 @@ const CustomFieldList = React.createClass({
 
   getInitialState() {
     return {
-      existing_fields: [],
       name: "",
       field_type: 'Single',
       private: false,
+      asset_tracked: false,
+
+      existing_fields: [],
+
       showCreatedSuccess: false,
       showErrorMessage: false,
       errorMessage: "",
@@ -73,7 +76,8 @@ const CustomFieldList = React.createClass({
       data: JSON.stringify({
         name: _this.state.name,
         field_type: _this.state.field_type,
-        private: _this.state.private
+        private: _this.state.private,
+        asset_tracked: _this.state.asset_tracked
       }),
       success:function(response){
         _this.getExistingFields();
@@ -81,6 +85,7 @@ const CustomFieldList = React.createClass({
           name: "",
           field_type: 'Single',
           private: false,
+          asset_tracked: false,
           showCreatedSuccess: true,
           showErrorMessage: false,
           showCreationModal: false,
@@ -128,6 +133,7 @@ const CustomFieldList = React.createClass({
       name: "",
       field_type: 'Single',
       private: false,
+      asset_tracked: false
     })
   },
 
@@ -137,6 +143,7 @@ const CustomFieldList = React.createClass({
       name: "",
       field_type: 'Single',
       private: false,
+      asset_tracked: false
     })
   },
 
@@ -172,7 +179,7 @@ const CustomFieldList = React.createClass({
     return (
       <Form horizontal onSubmit={this.createField}>
         <FormGroup bsSize="small">
-          <Col componentClass={ControlLabel} sm={2}>
+          <Col componentClass={ControlLabel} sm={3}>
             Field Name
           </Col>
           <Col sm={6}>
@@ -180,7 +187,7 @@ const CustomFieldList = React.createClass({
           </Col>
         </FormGroup>
         <FormGroup bsSize="small">
-          <Col componentClass={ControlLabel} sm={2}>
+          <Col componentClass={ControlLabel} sm={3}>
             Field Type
           </Col>
           <Col sm={6}>
@@ -193,11 +200,19 @@ const CustomFieldList = React.createClass({
           </Col>
         </FormGroup>
         <FormGroup bsSize="small">
-          <Col componentClass={ControlLabel} sm={2}>
+          <Col componentClass={ControlLabel} sm={3}>
             Private?
           </Col>
           <Col sm={1}>
             <Checkbox style={{paddingTop: "6px"}} onChange={e => this.setState({private: e.target.checked})} />
+          </Col>
+        </FormGroup>
+        <FormGroup bsSize="small">
+          <Col componentClass={ControlLabel} sm={3}>
+            Asset-Tracked?
+          </Col>
+          <Col sm={1}>
+            <Checkbox style={{paddingTop: "6px"}} onChange={e => this.setState({asset_tracked: e.target.checked})} />
           </Col>
         </FormGroup>
       </Form>
@@ -248,10 +263,11 @@ const CustomFieldList = React.createClass({
             <Table hover condensed >
               <thead>
                 <tr>
-                  <th style={{width:"40%"}} className="text-left">Field Name</th>
-                  <th style={{width:"25%"}} className="text-left">Field Type</th>
-                  <th style={{width:"25%"}} className="text-center">Private?</th>
-                  <th style={{width:"10%"}}></th>
+                  <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-left">Field Name</th>
+                  <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-left">Field Type</th>
+                  <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Private?</th>
+                  <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset-Tracked?</th>
+                  <th style={{width:"10%", borderBottom: "1px solid #596a7b"}}></th>
                 </tr>
               </thead>
               <tbody>
@@ -261,6 +277,7 @@ const CustomFieldList = React.createClass({
                       <td data-th="Field Name" className="text-left">{field.name}</td>
                       <td data-th="Field Type" className="text-left">{FIELD_TYPES[field.field_type]}</td>
                       <td data-th="Private?" className="text-center">{field.private ? "Yes" : "No"}</td>
+                      <td data-th="Asset-Tracked?" className="text-center">{field.asset_tracked ? "Yes" : "No"}</td>
                       <td className="text-center"><Button bsSize="small" bsStyle="danger" onClick={e => this.showDeleteModal(e, field)}>Delete</Button></td>
                     </tr>
                   )
