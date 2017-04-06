@@ -674,3 +674,10 @@ class BulkImportSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.BulkImport
         fields = ['id', 'data', 'administrator']
+
+class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
+    receipt = serializers.FileField()
+
+    class Meta:
+        model = models.BackfillRequest
+        fields = ['id', 'receipt']

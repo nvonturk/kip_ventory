@@ -301,7 +301,6 @@ class Loan(models.Model):
     date_returned      = models.DateTimeField(blank=True, null=True)
     quantity_loaned    = models.PositiveIntegerField(default=0)
     quantity_returned  = models.PositiveIntegerField(default=0)
-    loan_group         = models.ForeignKey(LoanGroup, on_delete=models.CASCADE, related_name='loans', blank=True, null=True)
     #asset_tag
     class Meta:
         ordering = ('id',)
@@ -313,7 +312,6 @@ class Disbursement(models.Model):
     asset      = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="disbursements", blank=True, null=True)
     date       = models.DateTimeField(blank=True, auto_now_add=True)
     quantity   = models.PositiveIntegerField(default=0)
-    loan_group = models.ForeignKey(LoanGroup, on_delete=models.CASCADE, related_name='disbursements', blank=True, null=True)
     #asset_tag
 
     def save(self, *args, **kwargs):
@@ -428,3 +426,7 @@ class LoanReminder(models.Model):
 # Todo only allow one object. maybe use django-solo
 class SubjectTag(models.Model):
     text = models.CharField(max_length=128, unique=True)
+
+
+class BackfillRequest(models.Model):
+    receipt = models.FileField(upload_to="backfill/")
