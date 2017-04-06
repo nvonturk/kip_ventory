@@ -2005,3 +2005,18 @@ class BackupEmail(generics.GenericAPIView):
                 return Response(data={"backup" : "incorrect status code"}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response(data={"backup" : "exception raised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BackfillRequestCreate(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_serializer_class(self):
+        return serializers.BackfillRequestPOSTSerializer
+
+    def post(self, request, format=None):
+        data = request.data.copy()
+
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+
+        return Response(serializer.data)

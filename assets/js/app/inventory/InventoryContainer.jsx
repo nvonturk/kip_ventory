@@ -14,6 +14,8 @@ import FileInput from 'react-file-input'
 import Select from 'react-select';
 import 'react-select/dist/react-select.css';
 
+import FileChooser from '../FileChooser'
+
 
 const ITEMS_PER_PAGE = 10;
 
@@ -472,6 +474,44 @@ const InventoryContainer = React.createClass({
     reader.readAsDataURL(file)
   },
 
+  changePdfFile(e) {
+    e.preventDefault();
+    let reader = new FileReader();
+    let file = e.target.files[0];
+    reader.onloadend = () => {
+      this.setState({
+        backfillFile: file,
+      });
+    }
+    reader.readAsDataURL(file)
+  },
+
+  storePdf(e) {
+    e.preventDefault()
+    e.stopPropagation()
+
+    var data = {
+      receipt: this.state.backfillFile
+    }
+
+    ajax({
+      url: "/api/backfill/uploadpdf",
+      type: "POST",
+      data: JSON.stringify(data),
+      contentType: "application/json",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        
+      },
+      error:function (xhr, textStatus, thrownError){
+       
+      }
+    })
+
+  },
+
   render() {
     var bulkImportPanel = (this.props.route.user.is_superuser) ? (
       <Panel>
@@ -540,7 +580,11 @@ const InventoryContainer = React.createClass({
                 <hr />
               </Col>
             </Row>
-
+            <Row>
+              <Col xs={12}>
+                <FileChooser instructions="Upload pdf" handleFileChange={this.changePdfFile} handleFileSubmit={this.storePdf} />
+              </Col>
+            </Row>
             <Row>
               <Col md={3} sm={12}>
                 <Row>

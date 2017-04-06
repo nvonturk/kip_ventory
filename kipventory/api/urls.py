@@ -70,6 +70,8 @@ urlpatterns = [
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 
     url(r'^backupemail/?$', views.BackupEmail.as_view()),
+
+    url(r'backfill/uploadpdf/?$', views.BackfillRequestCreate.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
