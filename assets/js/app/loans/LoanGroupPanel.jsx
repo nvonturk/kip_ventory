@@ -84,8 +84,8 @@ const LoanGroupPanel = React.createClass({
                   { this.getLoanStatusSymbol(loan, "15px") }
                 </td>
                 <td data-th="Item" className="text-left">
-                  <a href={"/app/inventory/" + loan.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                    { loan.item.name }
+                  <a href={"/app/inventory/" + loan.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+                    { loan.item }
                   </a>
                 </td>
                 <td data-th="Loaned" className="text-center">
@@ -124,8 +124,8 @@ const LoanGroupPanel = React.createClass({
                   <Glyphicon style={{color: "#f0ad4e", fontSize: "15px"}} glyph="log-out" />
                 </td>
                 <td data-th="Item" className="text-left">
-                  <a href={"/app/inventory/" + disbursement.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                    { disbursement.item.name }
+                  <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+                    { disbursement.item }
                   </a>
                 </td>
                 <td data-th="Quantity" className="text-center">
@@ -156,7 +156,7 @@ const LoanGroupPanel = React.createClass({
           </Col>
           <Col xs={10} style={{paddingLeft: "0px"}}>
             <div style={{padding: "10px 0px", fontSize:"15px", color: "#df691a"}}>
-              Request #{request.request_id}
+              Request #{request.id}
             </div>
             <p style={{fontSize: "12px"}}>{ this.getRequestSubtitle() }</p>
           </Col>
@@ -169,7 +169,7 @@ const LoanGroupPanel = React.createClass({
           <Col md={5} xs={12} >
             <Panel style={ this.getPanelStyle() } collapsible defaultExpanded={false} expanded={this.props.expanded === this.props.index}>
               <span style={{fontSize:"15px", margin: "10.5px 0px"}}>Request Detail</span>
-              <a style={{fontSize:"12px", float: "right"}} href={"/app/requests/" + request.request_id + "/"}>Click to view request</a>
+              <a style={{fontSize:"12px", float: "right"}} href={"/app/requests/" + request.id + "/"}>Click to view request</a>
               <hr style={{marginTop: "0px"}}/>
               <Table condensed>
                 <tbody>

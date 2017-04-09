@@ -10,7 +10,7 @@ const ManagerRequestsDetail = React.createClass({
   getInitialState() {
     return {
       request: {
-        request_id: this.props.params.request_id,
+        id: this.props.params.request_id,
         requester: "",
         open_comment: "",
         date_open: "",
@@ -43,7 +43,7 @@ const ManagerRequestsDetail = React.createClass({
   },
 
   getRequest() {
-    var url = "/api/requests/" + this.props.params.request_id + "/";
+    var url = "/api/requests/" + this.state.request.id + "/";
     var _this = this
     ajax({
       url: url,
@@ -87,7 +87,7 @@ const ManagerRequestsDetail = React.createClass({
 
   denyRequest(e) {
     e.preventDefault()
-    var url = "/api/requests/" + this.state.request.request_id + "/"
+    var url = "/api/requests/" + this.state.request.id + "/"
     var _this = this
     var data = {
       closed_comment: this.state.request.closed_comment,
@@ -117,7 +117,7 @@ const ManagerRequestsDetail = React.createClass({
 
   approveRequest(e) {
     e.preventDefault()
-    var url = "/api/requests/" + this.state.request.request_id + "/"
+    var url = "/api/requests/" + this.state.request.id + "/"
     var _this = this
     var data = {
       approved_items: this.state.request.approved_items,
@@ -551,8 +551,8 @@ const ManagerRequestsDetail = React.createClass({
                       { this.getLoanStatusSymbol(loan, "15px") }
                     </td>
                     <td data-th="Item" className="text-left">
-                      <a href={"/app/inventory/" + loan.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                        { loan.item.name }
+                      <a href={"/app/inventory/" + loan.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+                        { loan.item }
                       </a>
                     </td>
                     <td data-th="Loaned" className="text-center">
@@ -604,8 +604,8 @@ const ManagerRequestsDetail = React.createClass({
                       <Glyphicon style={{color: "#f0ad4e", fontSize: "15px"}} glyph="log-out" />
                     </td>
                     <td data-th="Item" className="text-left">
-                      <a href={"/app/inventory/" + disbursement.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                        { disbursement.item.name }
+                      <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+                        { disbursement.item }
                       </a>
                     </td>
                     <td data-th="Quantity" className="text-center">
@@ -647,7 +647,7 @@ const ManagerRequestsDetail = React.createClass({
       <Grid>
         <Row>
           <Col sm={12}>
-            <h3>404 - Request with ID {this.props.params.request_id} not found.</h3>
+            <h3>404 - Request with ID {this.state.request.id} not found.</h3>
             <hr />
           </Col>
         </Row>
@@ -690,7 +690,7 @@ const ManagerRequestsDetail = React.createClass({
               <h3>
                 View Request &nbsp;
                 <span style={{fontSize:"14px"}}>
-                  ID # {this.state.request.request_id}
+                  ID # {this.state.request.id}
                 </span>
                 <span style={{float:"right"}}>
                   {this.getStatusLabel()}

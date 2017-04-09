@@ -7,6 +7,9 @@ import TagMultiSelect from '../../TagMultiSelect'
 import Select from 'react-select'
 import LoanModal from '../../loans/LoanModal'
 
+import ItemInfoPanel from './utils/ItemInfoPanel'
+import ItemStacksPanel from './utils/ItemStacksPanel'
+
 const ITEMS_PER_PAGE = 5;
 
 const ManagerDetail = React.createClass({
@@ -20,8 +23,6 @@ const ManagerDetail = React.createClass({
       loans: [],
       loansPage: 1,
       loansPageCount: 1,
-
-      addToCartQuantity: 1,
 
       stacks: {},
       custom_fields: [],
@@ -129,100 +130,6 @@ const ManagerDetail = React.createClass({
     })
   },
 
-  handleCartQuantityChange(e) {
-    var q = Number(e.target.value)
-    if (q > this.state.item.quantity) {
-      event.stopPropagation()
-    } else {
-      this.setState({
-        addToCartQuantity: q
-      })
-    }
-  },
-
-  addToCart(e) {
-    e.stopPropagation()
-    e.preventDefault()
-    var url = "/api/items/" + this.state.item.name + "/addtocart/"
-    var _this = this
-    ajax({
-      url: url,
-      contentType: "application/json",
-      type: "POST",
-      data: JSON.stringify({
-        quantity: _this.state.addToCartQuantity
-      }),
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      success:function(response){
-        var new_url = "/app/inventory/" + _this.state.item.name + "/"
-        browserHistory.push(new_url)
-      },
-      complete:function(){},
-      error:function (xhr, textStatus, thrownError){
-        console.log(xhr);
-        console.log(textStatus);
-        console.log(thrownError);
-      }
-    });
-  },
-
-  getItemInfoPanel() {
-    return (
-      <Panel style={{marginBottom: "0px"}} header={"Item Details"}>
-        <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
-          <tbody>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Name</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.name}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Model No.</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.model_no}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Quantity</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.quantity}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Description</th>
-              <td style={{border: "1px solid #596a7b"}}>
-                <pre style={{fontFamily: '"Lato","Helvetica Neue",Helvetica,Arial,sans-serif',
-                             color:"white",
-                             fontSize:"12px",
-                             border: "0px",
-                             backgroundColor:"inherit",
-                             margin: "auto", padding: "0px"}}>
-                  {this.state.item.description}
-                </pre>
-              </td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Tags</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.tags.join(", ")}</td>
-            </tr>
-
-            {this.state.custom_fields.map( (cf, i) => {
-              return (
-                <tr key={i}>
-                  <th style={{paddingRight:"10px", border: "1px solid #596a7b"}}>{cf.name}</th>
-                  <td style={{border: "1px solid #596a7b"}}>{this.state.item[cf.name]}</td>
-                </tr>
-              )
-            })}
-
-          </tbody>
-        </Table>
-      </Panel>
-    )
-  },
-
   handleRequestTypeSelection(selectedType) {
     if (selectedType == null) {
       this.setState({
@@ -303,9 +210,9 @@ const ManagerDetail = React.createClass({
                   label = <Label bsStyle="info">Disbursement</Label>
                 }
                 return (
-                  <tr key={request.request_id}>
+                  <tr key={request.id}>
                     <td data-th="ID" className="text-center" >
-                      <span style={{fontSize:"11px"}}>{request.request_id}</span>
+                      <span style={{fontSize:"11px"}}>{request.id}</span>
                     </td>
                     <td data-th="Requester" className="text-center" >
                       <span style={{fontSize:"11px", color: "#df691a"}}>{request.requester}</span>
@@ -323,7 +230,7 @@ const ManagerDetail = React.createClass({
                       <span style={{fontSize:"11px"}}>{ request.open_comment }</span>
                     </td>
                     <td data-th="Link" className="text-center" >
-                      <a style={{fontSize:"11px", color: "#5bc0de"}} href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
+                      <a style={{fontSize:"11px", color: "#5bc0de"}} href={"/app/requests/" + request.id + "/"}>Click to view</a>
                     </td>
                   </tr>
                 )
@@ -429,7 +336,7 @@ const ManagerDetail = React.createClass({
                   <td data-th="Request" className="text-center" >
                     <span className="clickable"
                           style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
-                          onClick={e => {browserHistory.push("/app/requests/" + loan.request.request_id + "/")}}>
+                          onClick={e => {browserHistory.push("/app/requests/" + loan.request.id + "/")}}>
                         Click to view
                     </span>
                   </td>
@@ -543,14 +450,10 @@ const ManagerDetail = React.createClass({
 
             <Row>
               <Col md={6} xs={12}>
-                { this.getItemInfoPanel() }
+                <ItemInfoPanel user={this.props.route.user} item={this.state.item} customFields={this.state.custom_fields} />
               </Col>
               <Col md={4} xs={12}>
-                { this.getItemStacksPanel() }
-
-                  <hr className="xs-hidden" style={{margin: "40px 0px"}} />
-
-                { this.getAddToCartForm() }
+                <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
               </Col>
             </Row>
 
