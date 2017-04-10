@@ -101,46 +101,10 @@ const ManagerLoansContainer = React.createClass({
             <ManagerLoanPanel getLoanGroups={this.getLoanGroups}
                               toggleExpanded={this.handleLoanGroupExpand.bind(this, i)}
                               index={i} expanded={this.state.expandedLoanGroup}
-                              key={lg.request.request_id} loanGroup={lg} />
+                              key={lg.request.id} loanGroup={lg} />
           )
         })}
       </ListGroup>
-      // <Table condensed hover style={{marginBottom: "0px"}}>
-      //   <thead>
-      //     <tr style={{borderBottom: "1px solid white"}}>
-      //       <th style={{width: "35%"}} className="text-left">Item</th>
-      //       <th style={{width: "15%"}} className="text-center">Request</th>
-      //       <th style={{width: "15%"}} className="text-center">Type</th>
-      //       <th style={{width: "10%"}} className="text-center">Quantity</th>
-      //       <th style={{width: "25%"}} className="text-center">Modify</th>
-      //     </tr>
-      //   </thead>
-      //   <tbody>
-      //     { this.state.loanGroups.map( (lg, i) => {
-      //       return (
-      //         <tr key={lg.id}>
-      //           <td data-th="Item" className="text-left">
-      //             <h6 style={{color: "#df691a"}}>{ lg.item.name }</h6>
-      //           </td>
-      //           <td data-th="Request" className="text-center">
-      //             <span className="clickable"
-      //                   style={{color: "#5bc0de", fontSize: "12px", textDecoration: "underline"}}
-      //                   onClick={e => {browserHistory.push("/app/requests/" + lg.request.request_id + "/")}}>
-      //               View Request
-      //             </span>
-      //           </td>
-      //           <td data-th="Type" className="text-center">
-      //             Loan
-      //           </td>
-      //           <td data-th="Quantity" className="text-center">
-      //             Loan
-      //           </td>
-      //
-      //         </tr>
-      //       )
-      //     })}
-      //   </tbody>
-      // </Table>
     ) : (
       <Grid fluid>
         <Row>
@@ -224,7 +188,7 @@ const ManagerLoansContainer = React.createClass({
                   <div className="panel-body">
                     <Row style={{display: "flex"}}>
                       <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-circle" />
+                        <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-sign" />
                       </Col>
                       <Col md={9}>
                         <p style={{marginBottom:"0px", fontSize: "12px"}}>This item has been returned from loan.</p>
@@ -233,7 +197,7 @@ const ManagerLoansContainer = React.createClass({
                     <hr />
                     <Row style={{display: "flex"}}>
                       <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="remove-circle" />
+                        <Glyphicon style={{color: "#f0ad4e", fontSize:"18px"}} glyph="exclamation-sign" />
                       </Col>
                       <Col md={9}>
                         <p style={{marginBottom: "0px", fontSize: "12px"}}>This item is still on loan.</p>
@@ -242,7 +206,7 @@ const ManagerLoansContainer = React.createClass({
                     <hr />
                     <Row style={{display: "flex"}}>
                       <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#f0ad4e", fontSize:"18px"}} glyph="log-out" />
+                        <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="log-out" />
                       </Col>
                       <Col md={9}>
                         <p style={{marginBottom: "0px", fontSize: "12px"}}>This item has been disbursed.</p>

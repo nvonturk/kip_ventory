@@ -368,60 +368,16 @@ const ManagerRequestsDetail = React.createClass({
     )
   },
 
+  modifyRequestedItem(index, newRequestedItem, e) {
+    console.log("NEW ", newRequestedItem)
+    console.log("OLD ", this.state.request.requested_items[index])
+  },
+
   getModifiableRequestedItems() {
     if (this.state.request.requested_items.length > 0) {
       return (
-        <div>
-        <Table hover style={{marginBottom: "0px"}}>
-          <thead>
-            <tr>
-              <th style={{width:"30%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Stock:</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Requested For:</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Requested Quantity:</th>
-              <th style={{width:" 5%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="spacer" />
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Approved For:</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Approved Quantity:</th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.state.request.requested_items.map( (ri, i) => {
-              return (
-                <tr key={ri.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ri.item + "/")}}>
-                  <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
-                    <span style={{fontSize:"12px", color: "#df691a"}}>{ri.item}</span>
-                  </td>
-                  <td style={{verticalAlign:"middle"}} data-th="Stock:" className="text-center">{this.state.itemQuantities[ri.item]}</td>
-                  <td style={{verticalAlign:"middle"}} data-th="Requested For:" className="text-center">{ri.request_type}</td>
-                  <td style={{verticalAlign:"middle"}} data-th="Requested Quantity:" className="text-center">{ri.quantity}</td>
-                  <td style={{verticalAlign:"middle"}} data-th="" className="spacer" />
-                  <td style={{verticalAlign:"middle", zIndex:9999}} onClick={e => {e.stopPropagation()}} data-th="Approved For:" className="text-center">
-                    <FormGroup style={{marginBottom: "0px"}}>
-                      <FormControl className="text-center"
-                                   style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
-                                   componentClass="select"
-                                   value={this.state.request.approved_items[i].request_type}
-                                   onChange={this.handleRequestItemTypeChange.bind(this, i)}>
-                        <option value="disbursement">Disbursement</option>
-                        <option value="loan">Loan</option>
-                      </FormControl>
-                    </FormGroup>
-                  </td>
-                  <td style={{verticalAlign:"middle", zIndex:9999}} onClick={e => {e.stopPropagation()}} data-th="Approved Quantity:" className="text-center">
-                    <FormGroup bsSize="small" style={{marginBottom: "0px"}} validationState={this.getValidationState(ri.item)}>
-                      <FormControl type="number" min={0} className="text-center"
-                                   style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
-                                   value={this.state.request.approved_items[i].quantity}
-                                   onChange={this.handleRequestItemQuantityChange.bind(this, i)}>
-                      </FormControl>
-                    </FormGroup>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </Table>
-        </div>
+        // <RequestedItemsContainer requestedItems={this.state.request.requested_items} modifyItem={this.modifyRequestedItem}>
+        null
       )
     } else {
       return (
@@ -728,5 +684,61 @@ const ManagerRequestsDetail = React.createClass({
     }
   }
 });
+
+
+
+// return (
+//   <div>
+//   <Table hover style={{marginBottom: "0px"}}>
+//     <thead>
+//       <tr>
+//         <th style={{width:"30%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
+//         <th style={{width:" 5%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Stock:</th>
+//         <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Requested For:</th>
+//         <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Requested Quantity:</th>
+//         <th style={{width:" 5%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="spacer" />
+//         <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Approved For:</th>
+//         <th style={{width:"15%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Approved Quantity:</th>
+//       </tr>
+//     </thead>
+//     <tbody>
+//       { this.state.request.requested_items.map( (ri, i) => {
+//         return (
+//           <tr key={ri.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ri.item + "/")}}>
+//             <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
+//               <span style={{fontSize:"12px", color: "#df691a"}}>{ri.item}</span>
+//             </td>
+//             <td style={{verticalAlign:"middle"}} data-th="Stock:" className="text-center">{this.state.itemQuantities[ri.item]}</td>
+//             <td style={{verticalAlign:"middle"}} data-th="Requested For:" className="text-center">{ri.request_type}</td>
+//             <td style={{verticalAlign:"middle"}} data-th="Requested Quantity:" className="text-center">{ri.quantity}</td>
+//             <td style={{verticalAlign:"middle"}} data-th="" className="spacer" />
+//             <td style={{verticalAlign:"middle", zIndex:9999}} onClick={e => {e.stopPropagation()}} data-th="Approved For:" className="text-center">
+//               <FormGroup style={{marginBottom: "0px"}}>
+//                 <FormControl className="text-center"
+//                              style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
+//                              componentClass="select"
+//                              value={this.state.request.approved_items[i].request_type}
+//                              onChange={this.handleRequestItemTypeChange.bind(this, i)}>
+//                   <option value="disbursement">Disbursement</option>
+//                   <option value="loan">Loan</option>
+//                 </FormControl>
+//               </FormGroup>
+//             </td>
+//             <td style={{verticalAlign:"middle", zIndex:9999}} onClick={e => {e.stopPropagation()}} data-th="Approved Quantity:" className="text-center">
+//               <FormGroup bsSize="small" style={{marginBottom: "0px"}} validationState={this.getValidationState(ri.item)}>
+//                 <FormControl type="number" min={0} className="text-center"
+//                              style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
+//                              value={this.state.request.approved_items[i].quantity}
+//                              onChange={this.handleRequestItemQuantityChange.bind(this, i)}>
+//                 </FormControl>
+//               </FormGroup>
+//             </td>
+//           </tr>
+//         )
+//       })}
+//     </tbody>
+//   </Table>
+//   </div>
+// )
 
 export default ManagerRequestsDetail

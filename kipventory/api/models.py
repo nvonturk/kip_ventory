@@ -282,6 +282,7 @@ class ApprovedItem(models.Model):
                 self.item.save()
 
         else:
+            print("OTHER THING")
             if self.request_type == DISBURSEMENT:
                 disbursement = Disbursement.objects.create(request=self.request, item=self.item, quantity=self.quantity)
             elif self.request_type == LOAN:

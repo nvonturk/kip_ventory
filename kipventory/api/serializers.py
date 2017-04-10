@@ -506,29 +506,16 @@ class RequestPUTSerializer(serializers.ModelSerializer):
 
         if data.get('status', None) == "A":
             ai_instances = []
-            if len(approved_items) == 0:
-                for ri in instance.requested_items.all():
-                    if ri.item.has_assets:
-                        # create an ApprovedItem with a list of assets
-                        # randomly choose assets to approve
-                        assets = ri.item.assets.all().order_by('?')[:ri.quantity]
-                        ai = models.ApprovedItem(request=instance, item=ri.item, quantity=ri.quantity, request_type=request_type, assets=assets)
-                    else:
-                        # create an ApprovedItem without a list of assets
-                        ai = models.ApprovedItem(request=instance, item=ri.item, quantity=ri.quantity, request_type=ri.request_type)
-                    ai_instances.append(ai)
+            for approved_item in approved_items:
+                item = approved_item.get('item', None)
+                quantity = approved_item.get('quantity', 0)
+                request_type = approved_item.get('request_type', models.LOAN)
+                assets = approved_item.get('assets', [])
 
-            else:
-                for approved_item in approved_items:
-                    item = approved_item.get('item', None)
-                    quantity = approved_item.get('quantity', 0)
-                    request_type = approved_item.get('request_type', models.LOAN)
-                    assets = approved_item.get('assets', [])
+                ai = models.ApprovedItem(request=instance, item=item, quantity=quantity, request_type=request_type)
+                ai.save(assets=assets)
 
-                    ai = models.ApprovedItem(request=instance, item=item, quantity=quantity, request_type=request_type)
-                    ai.save(assets=assets)
-
-                    ai_instances.append(ai)
+                ai_instances.append(ai)
 
         return super().update(instance, data)
 

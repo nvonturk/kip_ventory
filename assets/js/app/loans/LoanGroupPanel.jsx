@@ -34,9 +34,9 @@ const LoanGroupPanel = React.createClass({
 
   getRequestStatusSymbol(fs) {
     return (this.isAllReturned()) ? (
-      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-circle" />
+      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
     ) : (
-      <Glyphicon style={{color: "#d9534f", fontSize: fs}} glyph="remove-circle" />
+      <Glyphicon style={{color: "#f0ad4e", fontSize: fs}} glyph="exclamation-sign" />
     )
   },
 
@@ -50,9 +50,9 @@ const LoanGroupPanel = React.createClass({
 
   getLoanStatusSymbol(loan, fs) {
     return (loan.quantity_returned === loan.quantity_loaned) ? (
-      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-circle" />
+      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
     ) : (
-      <Glyphicon style={{color: "#d9534f", fontSize: fs}} glyph="remove-circle" />
+      <Glyphicon style={{color: "#f0ad4e", fontSize: fs}} glyph="exclamation-sign" />
     )
   },
 
