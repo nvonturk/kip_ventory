@@ -956,40 +956,53 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             data = serializer.data
-
-            # Standard loan - no asset to handle
-            if (loan.asset == None):
-                quantity = data.get('quantity')
-                loan.quantity_loaned -= quantity
-
-                disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
-                # add to existing disbursement or create a new one
-                if disbursements.count() > 0:
-                    disbursement = disbursements.first()
-                    disbursement.quantity += quantity
-                    disbursement.save()
-                else:
-                    disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
-                    disbursement.save()
-                loan.save()
-                #todo can only mangers do this? send email?
-                sendEmailForLoanToDisbursementConversion(loan)
-                requestItemLoantoDisburse(loan, request.user, quantity)
-                if loan.quantity_loaned == 0:
-                    loan.delete()
-
-            else:
-                quantity = data.get('quantity')
-                disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
-                disbursement.save()
-                sendEmailForLoanToDisbursementConversion(loan)
-                requestItemLoantoDisburse(loan, request.user, quantity)
+            quantity = data.get('quantity')
+            convertLoanToDisbursement(loan, quantity)
+            sendEmailForLoanToDisbursementConversion(loan)
+            requestItemLoantoDisburse(loan, request.user, quantity)  
+            if loan.quantity_loaned == 0:
                 loan.delete()
 
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+def approveBackfillRequest(backfill_request):
+    loan = backfill_request.loan
+    quantity = loan.quantity_loaned - loan.quantity_returned # change this if want to implement partial backfills
+    convertLoanToBackfill(loan, backfill_request, quantity)
+    convertLoanToDisbursement(loan, quantity) 
+    #todo send email
+
+    #todo what happens if some of the loan was already returned before it was requested backfilled? - loan remains, but backfill requests still deleted
+    if loan.quantity_loaned == 0:
+        loan.delete() # also deletes backfill_request
+    else: 
+        backfill_request.delete()
+
+def convertLoanToBackfill(loan, backfill_request, quantity):
+    backfill = models.Backfill.objects.create(request=loan.request, item=loan.item, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
+
+def convertLoanToDisbursement(loan, quantity):
+
+    # Standard loan - no asset to handle
+    if (loan.asset == None):
+        loan.quantity_loaned -= quantity
+
+        disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
+        # add to existing disbursement or create a new one
+        if disbursements.count() > 0:
+            disbursement = disbursements.first()
+            disbursement.quantity += quantity
+            disbursement.save()
+        else:
+            disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
+            disbursement.save()
+        loan.save()
+
+    else:
+        disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
+        disbursement.save()
 
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
@@ -2097,7 +2110,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
-        data.update({'user': request.user})
+        #data.update({'user': request.user})
 
         if not (instance.status == 'O'):
             return Response({"status": ["Only outstanding backfill requests may be modified."]})
@@ -2106,6 +2119,9 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
 
         if serializer.is_valid():
             serializer.save()
+            if serializer.data.get('status', None) == "A":
+                approveBackfillRequest(instance)
+
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

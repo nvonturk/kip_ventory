@@ -416,12 +416,15 @@ class RequestSerializer(serializers.ModelSerializer):
     approved_items   = ApprovedItemSerializer(read_only=True, many=True)
     loans            = serializers.SerializerMethodField(method_name="get_loan_representations")
     disbursements    = serializers.SerializerMethodField(method_name="get_disbursement_representations")
+    backfill_requests = serializers.SerializerMethodField(method_name="get_backfill_request_representations")
+    backfills        = serializers.SerializerMethodField(method_name="get_backfill_representations")
+
     status           = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
 
     class Meta:
         model = models.Request
         fields = ['id', 'requester', 'administrator', 'status', 'requested_items', 'approved_items', 'date_open', 'open_comment', 'date_closed',
-                  'closed_comment', 'loans', 'disbursements']
+                  'closed_comment', 'loans', 'disbursements', 'backfill_requests', 'backfills']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -447,6 +450,22 @@ class RequestSerializer(serializers.ModelSerializer):
             disbursement_json = DisbursementSerializerNoRequest(instance=disbursement, context=self.context).data
             disbursements.append(disbursement_json)
         return disbursements
+
+    def get_backfill_representations(self, request):
+        backfills = []
+        for backfill in request.backfills.all():
+            backfill_json = BackfillGETSerializer(instance=backfill, context=self.context).data
+            backfills.append(backfill_json)
+        return backfills
+
+    def get_backfill_request_representations(self, request):
+        backfill_requests_json = []
+        for loan in request.loans.all():
+            backfill_requests = loan.backfill_requests
+            for backfill_request in backfill_requests.all():
+                backfill_request_json = BackfillRequestGETSerializer(instance=backfill_request, context=self.context).data
+                backfill_requests_json.append(backfill_request_json)
+        return backfill_requests_json
 
     def to_internal_value(self, data):
         requester = data.get('requester', None)
@@ -675,6 +694,13 @@ class BulkImportSerializer(serializers.ModelSerializer):
         model = models.BulkImport
         fields = ['id', 'data', 'administrator']
 
+class BackfillGETSerializer(serializers.ModelSerializer):
+    receipt = serializers.FileField()
+    #loan = # todo change loan serializer to something other than id?
+    class Meta: 
+        model = models.Backfill
+        fields = ['id', 'request', 'date_created', 'date_satisfied', 'status', 'requester_comment', 'receipt', 'admin_comment']
+
 class BackfillRequestGETSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
     #loan = # todo change loan serializer to something other than id?
@@ -697,6 +723,7 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
         model = models.BackfillRequest
         fields = ['id', 'receipt', 'status', 'admin_comment']
 
+    '''
     def to_internal_value(self, data):
         user = data.pop("user", None)
         data = super(BackfillRequestPUTSerializer, self).to_internal_value(data)
@@ -708,6 +735,7 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
 
     def update(self, backfill_request, validated_data):
         user = validated_data.pop("user", None)
+        
         print("user", user)
         print("userpk", user.pk)
         print("requester pk", backfill_request.loan.request.requester.pk)
@@ -715,7 +743,7 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
         is_manager = (user.is_superuser or user.is_staff)
         print("owner?", is_owner)
         print("manager", is_manager)
-      
+        
         if is_owner and not is_manager:
             for key in validated_data.keys():
                 if key not in set({"receipt"}):
@@ -728,4 +756,5 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
 
         backfill_request = super(BackfillRequestPUTSerializer, self).update(backfill_request, validated_data)
         return backfill_request
+    '''
 
