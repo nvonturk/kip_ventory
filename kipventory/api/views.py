@@ -2058,3 +2058,70 @@ class BackfillRequestCreate(generics.GenericAPIView):
             serializer.save()
 
         return Response(serializer.data)
+
+class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self, pk):
+        try:
+            return models.BackfillRequest.objects.get(pk=pk)
+        except models.BackfillRequest.DoesNotExist:
+            raise NotFound('BackfillRequest with ID {} not found.'.format(pk))
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.BackfillRequestPUTSerializer
+        return serializers.BackfillRequestGETSerializer
+
+    # MANAGER/OWNER LOCKED
+    def get(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        # if manager, see any backfill request.
+        # if user, only see your backfill requests
+        is_owner = (instance.loan.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.get_serializer(instance=instance)
+        return Response(serializer.data)
+
+    # MANAGER/OWNER LOCKED
+    #  - only admins may change the status or admin_comment fields on a BackfillRequest
+    #  - only owners may change the receipt on a BackfillRequests
+    def put(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        is_owner = (instance.loan.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        data.update({'user': request.user})
+
+        if not (instance.status == 'O'):
+            return Response({"status": ["Only outstanding backfill requests may be modified."]})
+
+        serializer = self.get_serializer(instance=instance, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # OWNER LOCKED
+    def delete(self, request, request_pk, format=None):
+        instance = self.get_instance(pk)
+        is_owner =  (instance.loan.request.requester.pk == request.user.pk)
+        if not (is_owner):
+            d = {"error": ["Owner permissions required"]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        if not (instance.status == 'O'):
+            d = {"error": ["Cannot delete an approved/denied request."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        instance.delete()
+        #sendEmailForDeletedOutstandingBackfillRequest? Probably not
+        # Don't post log here since its as if it never happened?
+        return Response(status=status.HTTP_204_NO_CONTENT)

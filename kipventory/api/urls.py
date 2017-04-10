@@ -36,6 +36,10 @@ urlpatterns = [
     url(r'^loans/all/?$',                    views.LoanListAll.as_view()),
     url(r'^loans/(?P<pk>[\d]+?)/?$',         views.LoanDetailModify.as_view()),
     url(r'^loans/(?P<pk>[\d]+?)/convert/?$', views.ConvertLoanToDisbursement.as_view()),
+    url(r'^loans/(?P<pk>[\d]+?)/requestforbackfill/?$', views.BackfillRequestCreate.as_view()),
+
+    #url(r'^backfillrequests/all/?$',                    views.BackfillRequestListAll.as_view()),
+    url(r'^backfillrequests/(?P<pk>[\d]+?)/?$', views.BackfillRequestDetailModifyCancel.as_view()),
 
     # url(r'^disbursements/?$',                views.DisbursementList.as_view()),
     # url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
@@ -70,8 +74,6 @@ urlpatterns = [
     url(r'^netidtoken/?$',    views.GetNetIDToken.as_view()),
 
     url(r'^backupemail/?$', views.BackupEmail.as_view()),
-
-    url(r'backfill/uploadpdf/?$', views.BackfillRequestCreate.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

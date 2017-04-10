@@ -675,9 +675,57 @@ class BulkImportSerializer(serializers.ModelSerializer):
         model = models.BulkImport
         fields = ['id', 'data', 'administrator']
 
+class BackfillRequestGETSerializer(serializers.ModelSerializer):
+    receipt = serializers.FileField()
+    #loan = # todo change loan serializer to something other than id?
+    class Meta: 
+        model = models.BackfillRequest
+        fields = ['id', 'requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
+
 class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
+    receipt = serializers.FileField()
+    #loan = # todo change loan serializer to something other than id?
+   
+    class Meta:
+        model = models.BackfillRequest
+        fields = ['requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
+
+class BackfillRequestPUTSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
 
     class Meta:
         model = models.BackfillRequest
-        fields = ['id', 'receipt']
+        fields = ['id', 'receipt', 'status', 'admin_comment']
+
+    def to_internal_value(self, data):
+        user = data.pop("user", None)
+        data = super(BackfillRequestPUTSerializer, self).to_internal_value(data)
+        data.update({"user": user})
+        print("user", user)
+
+
+        return data
+
+    def update(self, backfill_request, validated_data):
+        user = validated_data.pop("user", None)
+        print("user", user)
+        print("userpk", user.pk)
+        print("requester pk", backfill_request.loan.request.requester.pk)
+        is_owner = (backfill_request.loan.request.requester.pk == user.pk)
+        is_manager = (user.is_superuser or user.is_staff)
+        print("owner?", is_owner)
+        print("manager", is_manager)
+      
+        if is_owner and not is_manager:
+            for key in validated_data.keys():
+                if key not in set({"receipt"}):
+                    raise ValidationError({key: ["Need manager privileges to edit field with name \'{}\'.".format(key)]})
+
+        elif is_manager and not is_owner:
+            for key in validated_data.keys():
+                if key not in set({"status", "admin_comment"}):
+                    raise ValidationError({key: ["Need owner privileges to edit field with name \'{}\'.".format(key)]})
+
+        backfill_request = super(BackfillRequestPUTSerializer, self).update(backfill_request, validated_data)
+        return backfill_request
+

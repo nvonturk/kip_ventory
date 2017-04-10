@@ -49,7 +49,7 @@ CATEGORY_CHOICES = (
 OUTSTANDING = 'O'
 APPROVED = 'A'
 DENIED = 'D'
-### Status Choices ###
+### Status Choices - used for Requests and BackfillRequests ###
 STATUS_CHOICES = (
     (OUTSTANDING, 'Outstanding'),
     (APPROVED, 'Approved'),
@@ -427,6 +427,9 @@ class LoanReminder(models.Model):
 class SubjectTag(models.Model):
     text = models.CharField(max_length=128, unique=True)
 
-
 class BackfillRequest(models.Model):
-    receipt = models.FileField(upload_to="backfill/")
+    loan = models.ForeignKey('Loan', on_delete=models.CASCADE, related_name="backfill_request")
+    requester_comment = models.TextField(max_length=1024)
+    receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=OUTSTANDING)
+    admin_comment = models.TextField(default='', max_length=1024, blank=True)
