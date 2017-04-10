@@ -140,7 +140,7 @@ const KipNav = React.createClass({
             <Nav pullRight>
               {this.getLink("/app/cart/", <Glyphicon glyph="shopping-cart" />)}
               {this.getAPIDropdown()}
-              {this.getUserLink(this.props.route.user)} 
+              {this.getUserLink(this.props.route.user)}
             </Nav>
           </Navbar.Collapse>
         </Navbar>
