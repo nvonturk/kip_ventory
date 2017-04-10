@@ -62,7 +62,8 @@ class AssetSerializer(serializers.Serializer):
                                              instance=asset.loans.filter(quantity_loaned__gt=F('quantity_returned')).get(asset=asset.pk)).data})
 
         if asset.status == models.DISBURSED:
-            d.update({"disbursement": DisbursementSerializer(context=self.context, instance=asset.disbursements.first()).data})
+            d.update({"disbursement": DisbursementSerializer(context=self.context,
+                                                             instance=asset.disbursements.first()).data})
 
         for cv in asset.values.all():
             field_name = cv.field.name

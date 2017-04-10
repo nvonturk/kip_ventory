@@ -16,9 +16,11 @@ const ItemAssetPanel = React.createClass({
       item: {},
       assets: [],
 
+      assetToShow: null,
+
       assetsPage: 1,
       assetsPageCount: 1,
-      
+
       assetFilterStatus: "",
       assetTagSearch: ""
     }
@@ -65,11 +67,16 @@ const ItemAssetPanel = React.createClass({
     })
   },
 
-  closeAssetModal(asset, index) {
+  closeAssetModal() {
     this.setState({
       showAssetModal: false,
       assetToShow: null
     })
+  },
+
+  refreshAssets(e) {
+    this.getAssets()
+    this.closeAssetModal()
   },
 
   handleAssetStatusSelection(e) {
@@ -85,6 +92,32 @@ const ItemAssetPanel = React.createClass({
   },
 
   getItemAssetPanel() {
+    var assetTableView = (this.state.assets.length > 0) ? (
+      <Table condensed hover>
+        <thead>
+          <tr>
+            <th style={{width: "80%", borderBottom: "1px solid #596a7b"}} className="text-left">Tag</th>
+            <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          { this.state.assets.map( (asset, i) => {
+            return (
+              <tr key={asset.tag} className="clickable" onClick={this.showAssetModal.bind(this, asset, i)}>
+                <td data-th="Asset ID" className="text-left">
+                  <h6 style={{color: "#df691a"}}>{asset.tag}</h6>
+                </td>
+                <td data-th="Status" className="text-center">
+                  { this.getAssetStatus(asset) }
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </Table>
+    ) : (
+      <Well bsSize="small" className="text-center" style={{fontSize:"12px"}}>No results.</Well>
+    )
     return (this.state.item.has_assets) ? (
       <div className="panel panel-default">
 
@@ -94,7 +127,7 @@ const ItemAssetPanel = React.createClass({
           </span>
         </div>
 
-        <div className="panel-body" style={{minHeight:"220px"}}>
+        <div className="panel-body" style={{minHeight:"317px"}}>
           <Row>
             <Col xs={12}>
               <Form horizontal>
@@ -130,32 +163,9 @@ const ItemAssetPanel = React.createClass({
             </Col>
           </Row>
 
-          <br />
-
           <Row>
             <Col xs={12}>
-              <Table condensed hover>
-                <thead>
-                  <tr>
-                    <th style={{width: "80%", borderBottom: "1px solid #596a7b"}} className="text-left">Tag</th>
-                    <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  { this.state.assets.map( (asset, i) => {
-                    return (
-                      <tr key={asset.tag} className="clickable" onClick={this.showAssetModal.bind(this, asset, i)}>
-                        <td data-th="Asset ID" className="text-left">
-                          <h6 style={{color: "#df691a"}}>{asset.tag}</h6>
-                        </td>
-                        <td data-th="Status" className="text-center">
-                          { this.getAssetStatus(asset) }
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </Table>
+              { assetTableView }
             </Col>
           </Row>
         </div>
@@ -174,7 +184,8 @@ const ItemAssetPanel = React.createClass({
 
         <AssetModal show={this.state.showAssetModal}
                     onHide={this.closeAssetModal}
-                    asset={this.state.assetToShow} />
+                    asset={this.state.assetToShow}
+                    refresh={this.refreshAssets} />
 
       </div>
     ) : (
@@ -183,7 +194,6 @@ const ItemAssetPanel = React.createClass({
   },
 
   render() {
-    console.log(this.state)
     return this.getItemAssetPanel()
   }
 })

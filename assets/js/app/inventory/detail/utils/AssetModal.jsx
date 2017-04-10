@@ -42,7 +42,7 @@ const AssetModal = React.createClass({
                      request={this.props.asset.loan.request}
                      show={this.state.showLoanModal}
                      onHide={e => {this.setState({showLoanModal: false})}}
-                     refresh={e => {this.setState({showLoanModal: false})}}/>
+                     refresh={this.props.refresh}/>
         )
       } else if (this.props.asset.status == "Disbursed") {
         assetStatus = <Label bsSize="small" bsStyle="danger">Disbursed</Label>
