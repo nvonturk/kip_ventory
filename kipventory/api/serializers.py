@@ -701,6 +701,17 @@ class BackfillGETSerializer(serializers.ModelSerializer):
         model = models.Backfill
         fields = ['id', 'request', 'date_created', 'date_satisfied', 'status', 'requester_comment', 'receipt', 'admin_comment']
 
+class BackfillPUTSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = models.Backfill
+        fields = ['status', 'date_satisfied']
+
+    def to_internal_value(self, data):
+        date_satisfied = timezone.now()
+        validated_data = super(BackfillPUTSerializer, self).to_internal_value(data)
+        validated_data.update({"date_satisfied": date_satisfied})
+        return validated_data
+
 class BackfillRequestGETSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
     #loan = # todo change loan serializer to something other than id?
@@ -723,6 +734,7 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
         model = models.BackfillRequest
         fields = ['id', 'receipt', 'status', 'admin_comment']
 
+    # uncomment and fix to deal with permissioning on a field-level basis in serializer
     '''
     def to_internal_value(self, data):
         user = data.pop("user", None)

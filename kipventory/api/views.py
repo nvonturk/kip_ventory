@@ -1936,6 +1936,7 @@ class LoanReminderListFilter(BaseFilterBackend):
     return fields
 
 class LoanReminderListCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
     filter_backends = (LoanReminderListFilter,)
@@ -2057,7 +2058,58 @@ class BackupEmail(generics.GenericAPIView):
         except:
             return Response(data={"backup" : "exception raised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class BackfillDetailModify(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self, pk):
+        try:
+            return models.Backfill.objects.get(pk=pk)
+        except models.Backfill.DoesNotExist:
+            raise NotFound('Backfill with ID {} not found.'.format(pk))
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.BackfillPUTSerializer
+        return serializers.BackfillGETSerializer
+
+    # MANAGER/OWNER LOCKED
+    def get(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        # if manager, see any backfill.
+        # if user, only see your backfill.
+        is_owner = (instance.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.get_serializer(instance=instance)
+        return Response(serializer.data)
+
+    # MANAGER LOCKED
+    #  - only managers may change the status of a Backfill
+    def put(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        is_owner = (instance.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        
+        if not (instance.status == models.AWAITING_ITEMS):
+            return Response({"status": ["Only backfills with status 'Awaiting Items' can be modified."]})
+        
+        serializer = self.get_serializer(instance=instance, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+        
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class BackfillRequestCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_serializer_class(self):
@@ -2073,6 +2125,7 @@ class BackfillRequestCreate(generics.GenericAPIView):
         return Response(serializer.data)
 
 class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_instance(self, pk):
@@ -2110,7 +2163,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
-        #data.update({'user': request.user})
+        #data.update({'user': request.user}) # add back in to deal with permissioning on a field-level basis in serializer
 
         if not (instance.status == 'O'):
             return Response({"status": ["Only outstanding backfill requests may be modified."]})

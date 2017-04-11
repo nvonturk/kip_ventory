@@ -41,6 +41,8 @@ urlpatterns = [
     #url(r'^backfillrequests/all/?$',                    views.BackfillRequestListAll.as_view()),
     url(r'^backfillrequests/(?P<pk>[\d]+?)/?$', views.BackfillRequestDetailModifyCancel.as_view()),
 
+    url(r'^backfills/(?P<pk>[\d]+?)/?$', views.BackfillDetailModify.as_view()),
+
     # url(r'^disbursements/?$',                views.DisbursementList.as_view()),
     # url(r'^disbursements/(?P<pk>[\d]+?)/?$', views.DisbursementDetail.as_view()),
 
