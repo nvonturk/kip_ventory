@@ -49,6 +49,12 @@ const InventoryContainer = React.createClass({
       importSuccess: null,
 
       importFile: null,
+
+      showMinQuants: false,
+      itemsMinQuants: [],
+      showMinQuantsModal: false,
+      newMinimumQuantity: 0,
+      showMinQuantsErrorModal: false,
     }
   },
 
@@ -169,6 +175,35 @@ const InventoryContainer = React.createClass({
     this.setState({
       lowStock: e.target.checked
     }, this.getItems);
+  },
+
+  handleMinQuantsSelection(e, item){
+    var status = e.target.checked
+    var newArray = this.state.itemsMinQuants.slice()
+    var i = newArray.length
+    while(i--){
+      if(newArray[i].name == item.name && status == false){
+        newArray.splice(i,1)
+      } else if(newArray[i].name == item.name && status == true){
+        //saying select item but item is already selected
+        newArray.splice(i,1)
+      }
+    }
+
+    if(status == true){
+      newArray.push(item)
+    }
+
+    this.setState({
+      itemsMinQuants: newArray,
+    })
+  },
+
+  handleMinQuantsChange(e){
+    e.preventDefault()
+    this.setState({
+      newMinimumQuantity: e.target.value,
+    })
   },
 
   handleChange(e) {
@@ -396,6 +431,20 @@ const InventoryContainer = React.createClass({
     })
   },
 
+  openMinQuants(e){
+    e.preventDefault();
+    this.setState({
+      showMinQuants: true
+    })
+  },
+
+  hideMinQuants(e){
+    e.preventDefault();
+    this.setState({
+      showMinQuants: false
+    })
+  },
+
   displayBulkImportErrors(){
     var message = ""
     for (var key in this.state.bulkImportErrorNodes){
@@ -472,6 +521,75 @@ const InventoryContainer = React.createClass({
     reader.readAsDataURL(file)
   },
 
+
+  //ditch this
+  modifyMinQuants(e){
+    e.preventDefault();
+    if(this.state.itemsMinQuants.length == 0){
+      this.setState({
+        showMinQuantsErrorModal: true,
+      })
+    } else{
+      this.setState({
+        showMinQuantsModal: true,
+      })
+    }
+
+  },
+
+  implementMinQuantsMod(e){
+    e.preventDefault();
+    var newMin = parseInt(this.state.newMinimumQuantity)
+
+    for (var i = 0 ; i < this.state.itemsMinQuants.length ; i++){
+      var newItem = this.state.itemsMinQuants[i]
+      newItem.minimum_stock = newMin;
+      var url = "/api/items/" + newItem.name + "/"
+      var data = newItem
+      var _this = this
+      var closeModal = true
+      ajax({
+        url: url,
+        contentType: "application/json",
+        type: "PUT",
+        data: JSON.stringify(data),
+        beforeSend: function(request) {
+          request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        },
+        success: function(response) {
+          //this actively causes a race condition
+          if(i == _this.state.itemsMinQuants.length){
+            _this.setState({
+              showMinQuantsModal : false
+            })
+          }
+        },
+        error: function(xhr, textStatus, thrownError) {
+          i = _this.state.itemsMinQuants.length
+          closeModal = false
+          _this.setState({
+            showMinQuantsModal : true
+          })
+          if (xhr.status == 400) {
+            var response = xhr.responseJSON
+            var errNodes = {}
+            for (var key in response) {
+              if (response.hasOwnProperty(key)) {
+                var node = <span key={key} className="help-block">{response[key][0]}</span>
+                errNodes[key] = node
+              }
+            }
+            _this.setState({
+              errorNodes: errNodes
+            })
+          }
+        }
+      })
+
+    }
+
+  },
+
   render() {
     var bulkImportPanel = (this.props.route.user.is_superuser) ? (
       <Panel>
@@ -503,16 +621,36 @@ const InventoryContainer = React.createClass({
         </Row>
       </Panel>
     ) : null
+
+    var inventoryPanelHeaderButtons = (this.state.showMinQuants)   ? (
+      <div>
+        <span className="panel-title" style={{fontSize:"15px"}}>Current Inventory</span>
+        <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.modifyMinQuants}>
+        Modify Minimum Quantity
+        </Button>
+        <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.hideMinQuants}>
+        Done
+        </Button>
+      </div>
+    ) : (
+      <div>
+        <span className="panel-title" style={{fontSize:"15px"}}>Current Inventory</span>
+        <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showCreateItemForm}>
+          Add Item &nbsp; <Glyphicon glyph="plus" />
+        </Button>
+        <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showBulkImportForm}>
+          Bulk Import &nbsp; <Glyphicon glyph="plus" /> <Glyphicon glyph="plus" />
+        </Button>
+        <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.openMinQuants}>
+        Set Minimum Quantities
+        </Button>
+      </div>
+    )
+
     var inventoryPanelHeader = (this.props.route.user.is_staff || this.props.route.user.is_superuser) ? (
       <Row>
         <Col xs={12} >
-          <span className="panel-title" style={{fontSize:"15px"}}>Current Inventory</span>
-          <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showCreateItemForm}>
-            Add Item &nbsp; <Glyphicon glyph="plus" />
-          </Button>
-          <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.showBulkImportForm}>
-            Bulk Import &nbsp; <Glyphicon glyph="plus" /> <Glyphicon glyph="plus" />
-          </Button>
+          {inventoryPanelHeaderButtons}
         </Col>
       </Row>
     ) : "Current Inventory"
@@ -529,6 +667,31 @@ const InventoryContainer = React.createClass({
       </Form>
     ) : (
       null
+    )
+
+    var tableHeaders = (this.state.showMinQuants) ? (
+      <tr>
+        <th style={{width:"25%"}} className="text-left">Item</th>
+        <th style={{width:"10%"}} className="text-center">Model No.</th>
+        <th style={{width:"10%"}} className="text-center">In Stock</th>
+        <th style={{width:"10%"}} className="text-center">Tags</th>
+        <th style={{width:"10%"}} className="text-center"/>
+        <th style={{width:"10%"}} className="text-center">Status</th>
+        <th style={{width:"5%"}}  className="spacer" />
+        <th style={{width:"20%" }} className="text-center">Modify Minimum Quantity</th>
+      </tr>
+    ) : (
+      <tr>
+        <th style={{width:"25%"}} className="text-left">Item</th>
+        <th style={{width:"10%"}} className="text-center">Model No.</th>
+        <th style={{width:"10%"}} className="text-center">In Stock</th>
+        <th style={{width:"10%"}} className="text-center">Tags</th>
+        <th style={{width:"10%"}} className="text-center"/>
+        <th style={{width:"10%"}} className="text-center">Status</th>
+        <th style={{width:"5%"}}  className="spacer" />
+        <th style={{width:"8%" }} className="text-center">Quantity</th>
+        <th style={{width:"12%"}} className="text-center"></th>
+      </tr>
     )
     return (
       <Grid>
@@ -603,17 +766,9 @@ const InventoryContainer = React.createClass({
 
                     <Table condensed hover style={{marginBottom: "0px"}}>
                       <thead>
-                        <tr>
-                          <th style={{width:"25%"}} className="text-left">Item</th>
-                          <th style={{width:"10%"}} className="text-center">Model No.</th>
-                          <th style={{width:"10%"}} className="text-center">In Stock</th>
-                          <th style={{width:"10%"}} className="text-center">Tags</th>
-                          <th style={{width:"10%"}} className="text-center"/>
-                          <th style={{width:"10%"}} className="text-center">Status</th>
-                          <th style={{width:"5%"}}  className="spacer" />
-                          <th style={{width:"8%" }} className="text-center">Quantity</th>
-                          <th style={{width:"12%"}} className="text-center"></th>
-                        </tr>
+
+                        {tableHeaders}
+
                         <tr>
                           <th colSpan={9}>
                             <hr style={{margin: "auto"}} />
@@ -622,7 +777,7 @@ const InventoryContainer = React.createClass({
                       </thead>
                       <tbody>
                         {this.state.items.map( (item, i) => {
-                          return (<InventoryItem key={item.name} item={item} />)
+                          return (<InventoryItem key={item.name} item={item} minQuants={this.state.showMinQuants} boxChange={this.handleMinQuantsSelection} />)
                         })}
                       </tbody>
                     </Table>
@@ -665,6 +820,38 @@ const InventoryContainer = React.createClass({
           <Modal.Footer>
             <Button bsSize="small" onClick={e => {this.setState({showBulkImportModal: false, errorNodes: {}, importSuccess: null, importFile: null, bulkImportErrorNodes:{}})}}>Cancel</Button>
           </Modal.Footer>
+        </Modal>
+
+        <Modal show={this.state.showMinQuantsModal} onHide={e => {this.setState({showMinQuantsModal: false})}}>
+          <Modal.Header closeButton>
+            <Modal.Title>Set The Minimum Quantity of Selected Items</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <FormGroup bsSize="small" controlId="minimumquantity" validationState={this.getFormValidationState("minimum_stock")}>
+              <Col xs={2} componentClass={ControlLabel}>
+                Minimum Quantity <span style={{color: "red"}}>*</span>
+              </Col>
+              <Col xs={8}>
+                <FormControl type="number" min={0} step={1}
+                             name="newMinimumQuantity"
+                             value={this.state.newMinimumQuantity}
+                             onChange={e => this.handleMinQuantsChange(e)}/>
+                { this.state.errorNodes["minimum_stock"] }
+              </Col>
+            </FormGroup>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button bsSize="small" onClick={e => {this.implementMinQuantsMod(e);}}>Modify Minimum Quantities</Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal show={this.state.showMinQuantsErrorModal} onHide={e => {this.setState({showMinQuantsErrorModal: false})}}>
+          <Modal.Header closeButton>
+            <Modal.Title>Set The Minimum Quantity of Selected Items</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Please select items to modify their minimum stock quantity.
+          </Modal.Body>
         </Modal>
 
       </Grid>
