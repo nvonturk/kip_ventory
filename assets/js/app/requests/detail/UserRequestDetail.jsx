@@ -10,7 +10,7 @@ const UserRequestsDetail = React.createClass({
   getInitialState() {
     return {
       request: {
-        request_id: this.props.params.request_id,
+        id: this.props.params.request_id,
         requester: "",
         open_comment: "",
         date_open: "",
@@ -35,7 +35,7 @@ const UserRequestsDetail = React.createClass({
   },
 
   getRequest() {
-    var url = "/api/requests/" + this.props.params.request_id + "/";
+    var url = "/api/requests/" + this.state.request.id + "/";
     var _this = this
     ajax({
       url: url,
@@ -388,7 +388,7 @@ const UserRequestsDetail = React.createClass({
       <Grid>
         <Row>
           <Col sm={12}>
-            <h3>404 - Request with ID {this.props.params.request_id} not found.</h3>
+            <h3>404 - Request with ID {this.state.request.id} not found.</h3>
             <hr />
           </Col>
         </Row>
@@ -431,7 +431,7 @@ const UserRequestsDetail = React.createClass({
               <h3>
                 View Request &nbsp;
                 <span style={{fontSize:"14px"}}>
-                  ID # {this.state.request.request_id}
+                  ID # {this.state.request.id}
                 </span>
                 <span style={{float:"right"}}>
                   {this.getStatusLabel()}

@@ -210,6 +210,22 @@ class AssetList(generics.GenericAPIView):
             d = {"count": len(serializer.data), 'num_pages': 1, "results": serializer.data}
             return Response(d)
 
+        tag_name = request.query_params.get('search', False)
+        if tag_name:
+            print(tag_name)
+            queryset = queryset.filter(tag__icontains=tag_name)
+
+        status = request.query_params.get('status', False)
+        if status:
+            status = status.lower().strip().replace(" ", "")
+            if status == "instock":
+                queryset = queryset.filter(status=models.IN_STOCK)
+            elif status == "loaned":
+                queryset = queryset.filter(status=models.LOANED)
+            elif status == "disbursed":
+                queryset = queryset.filter(status=models.DISBURSED)
+
+
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
@@ -431,7 +447,7 @@ class GetTransactionsByItem(generics.GenericAPIView):
         # Filter by category (acquisition, loss)
         category = request.query_params.get('category', None)
         if category != None and category != "":
-            if category in set(['Acquisition', 'Loss']):
+            if category in set([models.ACQUISITION, models.LOSS]):
                 transactions = transactions.filter(category=category)
 
         administrator = request.query_params.get('administrator', None)
@@ -460,6 +476,12 @@ class GetItemStacks(generics.GenericAPIView):
         return serializers.RequestSerializer
 
     def get(self, request, item_name, format=None):
+        item = None
+        try:
+            item = models.Item.objects.get(name=item_name)
+        except models.Item.DoesNotExist:
+            raise NotFound("Item '{}' not found.".format(item_name))
+
         requests = models.Request.objects.filter(requester=request.user.pk, status='O', requested_items__item__name=item_name)
         rq = 0
         for r in requests.all():
@@ -483,6 +505,7 @@ class GetItemStacks(generics.GenericAPIView):
             cq += c.quantity
 
         data = {
+            "in_stock": item.quantity,
             "requested": rq,
             "loaned": lq,
             "disbursed": dq,
@@ -506,6 +529,10 @@ class CustomFieldListCreate(generics.GenericAPIView):
 
         if not (request.user.is_staff or request.user.is_superuser):
             queryset = queryset.filter(private=False)
+
+        asset_tracked = request.query_params.get('asset_tracked', None)
+        if asset_tracked:
+            queryset = queryset.filter(asset_tracked=True)
 
         all_fields = request.query_params.get('all', None)
         if all_fields is not None:
@@ -930,24 +957,35 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
         if serializer.is_valid():
             data = serializer.data
 
-            quantity = data.get('quantity')
-            loan.quantity_loaned -= quantity
+            # Standard loan - no asset to handle
+            if (loan.asset == None):
+                quantity = data.get('quantity')
+                loan.quantity_loaned -= quantity
 
-            disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
-            # add to existing disbursement or create a new one
-            if disbursements.count() > 0:
-                disbursement = disbursements.first()
-                disbursement.quantity += quantity
-                disbursement.save()
+                disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
+                # add to existing disbursement or create a new one
+                if disbursements.count() > 0:
+                    disbursement = disbursements.first()
+                    disbursement.quantity += quantity
+                    disbursement.save()
+                else:
+                    disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
+                    disbursement.save()
+                loan.save()
+                #todo can only mangers do this? send email?
+                sendEmailForLoanToDisbursementConversion(loan)
+                requestItemLoantoDisburse(loan, request.user, quantity)
+                if loan.quantity_loaned == 0:
+                    loan.delete()
+
             else:
-                disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
+                quantity = data.get('quantity')
+                disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
                 disbursement.save()
-            loan.save()
-            #todo can only mangers do this? send email?
-            sendEmailForLoanToDisbursementConversion(loan)
-            requestItemLoantoDisburse(loan, request.user, quantity)
-            if loan.quantity_loaned == 0:
+                sendEmailForLoanToDisbursementConversion(loan)
+                requestItemLoantoDisburse(loan, request.user, quantity)
                 loan.delete()
+
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

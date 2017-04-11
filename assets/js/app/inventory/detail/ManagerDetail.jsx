@@ -7,6 +7,10 @@ import TagMultiSelect from '../../TagMultiSelect'
 import Select from 'react-select'
 import LoanModal from '../../loans/LoanModal'
 
+import ItemInfoPanel from './utils/ItemInfoPanel'
+import ItemStacksPanel from './utils/ItemStacksPanel'
+import ItemAssetPanel from './utils/ItemAssetPanel'
+
 const ITEMS_PER_PAGE = 5;
 
 const ManagerDetail = React.createClass({
@@ -29,15 +33,10 @@ const ManagerDetail = React.createClass({
       loansPageCount: 1,
       loansFilterUser: "",
 
-      assets: [],
-      assetsPage: 1,
-      assetsPageCount: 1,
-
       users: [],
       admins: [],
       custom_fields: [],
 
-      addToCartQuantity: 0,
 
       transactionQuantity: 0,
       transactionCategory: "Acquisition",
@@ -49,26 +48,19 @@ const ManagerDetail = React.createClass({
         name: "",
         model_no: "",
         quantity: 0,
+        minimum_stock: 0,
         tags: [],
         description: "",
-      },
-
-      modifiedItem: {
-        name: "",
-        model_no: "",
-        quantity: 0,
-        tags: [],
-        description: "",
+        has_assets: false
       },
 
       itemExists: true,
 
-      showModifyModal: false,
-      showDeleteModal: false,
       showCreateTransactionModal: false,
 
       showLoanModal: false,
       loanToShow: null,
+
       errorNodes: {}
     }
   },
@@ -150,7 +142,7 @@ const ManagerDetail = React.createClass({
         _this.setState({
           item: response,
           modifiedItem: responseCopy
-        }, _this.getAssets)
+        })
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
@@ -173,7 +165,6 @@ const ManagerDetail = React.createClass({
     }
     var _this = this;
     getJSON(url, params, function(data) {
-      console.log(data)
       _this.setState({
         requests: data.results,
         requestsPageCount: Number(data.num_pages)
@@ -211,68 +202,6 @@ const ManagerDetail = React.createClass({
         loans: data.results,
         loansPageCount: Number(data.num_pages),
       })
-    })
-  },
-
-  getAssets() {
-    var url = "/api/items/" + this.state.item.name + "/assets/"
-    var params = {
-      page: this.state.assetsPage,
-      itemsPerPage: ITEMS_PER_PAGE
-    }
-    var _this = this;
-    if (this.state.item.has_assets) {
-      getJSON(url, params, function(data) {
-        _this.setState({
-          assets: data.results,
-          assetsPageCount: Number(data.num_pages),
-        })
-      })
-    }
-  },
-
-  handleItemFormChange(e) {
-    e.preventDefault()
-    var item = this.state.modifiedItem
-    item[e.target.name] = e.target.value
-    this.setState({
-      modifiedItem: item
-    })
-  },
-
-  handleSubmit(e) {
-    e.preventDefault()
-    e.stopPropagation()
-    var url = "/api/items/" + this.props.params.item_name + "/"
-    var data = this.state.modifiedItem
-    var _this = this
-    ajax({
-      url: url,
-      contentType: "application/json",
-      type: "PUT",
-      data: JSON.stringify(data),
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      success: function(response) {
-        var new_url = "/app/inventory/" + response.name + "/"
-        window.location.assign(new_url)
-      },
-      error: function(xhr, textStatus, thrownError) {
-        if (xhr.status == 400) {
-          var response = xhr.responseJSON
-          var errNodes = {}
-          for (var key in response) {
-            if (response.hasOwnProperty(key)) {
-              var node = <span key={key} className="help-block">{response[key][0]}</span>
-              errNodes[key] = node
-            }
-          }
-          _this.setState({
-            errorNodes: errNodes
-          })
-        }
-      }
     })
   },
 
@@ -342,276 +271,8 @@ const ManagerDetail = React.createClass({
     });
   },
 
-  handleTagSelection(tagsSelected) {
-    var item = this.state.modifiedItem
-    var tags = tagsSelected.split(",")
-    if (tags.length == 1) {
-      if (tags[0] == "") {
-        tags = []
-      }
-    }
-    item.tags = tags
-    this.setState({modifiedItem: item});
-  },
-
-  getShortTextField(field_name, presentation_name, i) {
-    return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <ControlLabel>{presentation_name}</ControlLabel>
-        <FormControl type="text"
-                     value={this.state.modifiedItem[field_name]}
-                     name={field_name}
-                     onChange={this.handleItemFormChange} />
-        { this.state.errorNodes[field_name] }
-      </FormGroup>
-    )
-  },
-
-  getLongTextField(field_name, presentation_name, i) {
-    return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-          <ControlLabel>{presentation_name}</ControlLabel>
-          <FormControl type="text"
-                       style={{resize: "vertical", height:"100px"}}
-                       componentClass={"textarea"}
-                       value={this.state.modifiedItem[field_name]}
-                       name={field_name}
-                       onChange={this.handleItemFormChange} />
-          { this.state.errorNodes[field_name] }
-      </FormGroup>
-    )
-  },
-
-  getIntegerField(field_name, presentation_name, min, step, i) {
-    return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <ControlLabel>{presentation_name}</ControlLabel>
-        <FormControl type="number"
-                     min={min}
-                     step={step}
-                     value={this.state.modifiedItem[field_name]}
-                     name={field_name}
-                     onChange={this.handleItemFormChange} />
-        { this.state.errorNodes[field_name] }
-      </FormGroup>
-    )
-  },
-
-  getFloatField(field_name, presentation_name, i){
-    return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <ControlLabel>{presentation_name} </ControlLabel>
-        <FormControl type="number"
-                     value={this.state.modifiedItem[field_name]}
-                     name={field_name}
-                     onChange={this.handleItemFormChange} />
-        { this.state.errorNodes[field_name] }
-      </FormGroup>
-    )
-  },
-
-  getQuantityAndModelNoForm() {
-    return (
-      <Row>
-        <Col xs={8} xs={12}>
-          <FormGroup bsSize="small" controlId="model_no" validationState={this.getValidationState('model_no')}>
-            <ControlLabel>Model No.</ControlLabel>
-            <FormControl disabled={!this.props.route.user.is_superuser && !this.props.route.user.is_staff}
-                         type="text"
-                         name="model_no"
-                         value={this.state.modifiedItem.model_no}
-                         onChange={this.handleItemFormChange}/>
-            { this.state.errorNodes['model_no'] }
-          </FormGroup>
-        </Col>
-        <Col xs={4} xs={12}>
-          <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('quantity')}>
-            <ControlLabel>Quantity<span style={{color:"red"}}>*</span></ControlLabel>
-            <FormControl disabled={!this.props.route.user.is_superuser}
-                         type="number"
-                         name="quantity"
-                         value={this.state.modifiedItem.quantity}
-                         onChange={this.handleItemFormChange}/>
-            { this.state.errorNodes['quantity'] }
-          </FormGroup>
-        </Col>
-      </Row>
-    )
-  },
-
-  getCustomFieldForms() {
-    return this.state.custom_fields.map( (field, i) => {
-
-      var field_name = field.name
-      var is_private = field.private
-      var field_type = field.field_type
-
-      switch(field_type) {
-        case "Single":
-          return this.getShortTextField(field_name, field_name, i)
-          break;
-        case "Multi":
-          return this.getLongTextField(field_name, field_name, i)
-          break;
-        case "Int":
-          return this.getIntegerField(field_name, field_name, 0, 1, i)
-          break;
-        case "Float":
-          return this.getFloatField(field_name, field_name, i)
-          break
-        default:
-          return null
-      }
-    })
-  },
-
-  handleCartQuantityChange(e) {
-    var q = Number(e.target.value)
-    if (q > this.state.item.quantity) {
-      event.stopPropagation()
-    } else {
-      this.setState({
-        addToCartQuantity: q
-      })
-    }
-  },
-
-  addToCart(e) {
-    e.stopPropagation()
-    e.preventDefault()
-    var url = "/api/items/" + this.state.item.name + "/addtocart/"
-    var _this = this
-    ajax({
-      url: url,
-      contentType: "application/json",
-      type: "POST",
-      data: JSON.stringify({
-        quantity: _this.state.addToCartQuantity
-      }),
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      success:function(response){
-        var new_url = "/app/inventory/" + _this.state.item.name + "/"
-        window.location.assign(new_url)
-      },
-      complete:function(){},
-      error:function (xhr, textStatus, thrownError){
-        console.log(xhr);
-        console.log(textStatus);
-        console.log(thrownError);
-      }
-    });
-  },
-
   getValidationState(key) {
     return (this.state.errorNodes[key] == null) ? null : "error"
-  },
-
-  showEditModal(e) {
-    var itemCopy = JSON.parse(JSON.stringify(this.state.item))
-    this.setState({
-      modifiedItem: itemCopy,
-      showModifyModal: true,
-      errorNodes: {}
-    })
-  },
-
-  closeEditModal(e) {
-    var itemCopy = JSON.parse(JSON.stringify(this.state.item))
-    this.setState({
-      modifiedItem: itemCopy,
-      showModifyModal: false,
-      errorNodes: {}
-    })
-  },
-
-  deleteItem(e) {
-    e.preventDefault()
-    var url = "/api/items/" + this.props.params.item_name + "/"
-    ajax({
-      url: url,
-      type: "DELETE",
-      beforeSend: function(request) {
-        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-      },
-      success:function(response){
-        var new_url = "/app/inventory/"
-        browserHistory.push(new_url)
-      },
-      complete:function(){},
-      error:function (xhr, textStatus, thrownError){
-        console.log(xhr);
-        console.log(textStatus);
-        console.log(thrownError);
-      }
-    });
-  },
-
-  getItemInfoPanel() {
-    var deleteIcon = null
-    if (this.props.route.user.is_superuser) {
-      deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={e => {this.setState({showDeleteModal: true})}}/>
-    }
-    return (
-      <Panel header={
-        <div>
-          <span style={{fontSize:"15px"}}>Item Details</span>
-          <span className="clickable" style={{float: "right"}}>
-            <Glyphicon glyph="pencil" onClick={this.showEditModal}/>
-            { deleteIcon }
-          </span>
-        </div>} >
-        <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
-          <tbody>
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Name</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.name}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Model No.</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.model_no}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Quantity</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.quantity}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Description</th>
-              <td style={{border: "1px solid #596a7b"}}>
-                <pre style={{fontFamily: '"Lato","Helvetica Neue",Helvetica,Arial,sans-serif',
-                             color:"white",
-                             fontSize:"12px",
-                             border: "0px",
-                             backgroundColor:"inherit",
-                             margin: "auto", padding: "0px",
-                             whiteSpace:"inherit"}}>
-                  {this.state.item.description}
-                </pre>
-              </td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Tags</th>
-              <td style={{border: "1px solid #596a7b"}}>{this.state.item.tags.join(", ")}</td>
-            </tr>
-
-            {this.state.custom_fields.map( (cf, i) => {
-              return (
-                <tr key={i}>
-                  <th style={{paddingRight:"10px", border: "1px solid #596a7b"}}>{cf.name}</th>
-                  <td style={{border: "1px solid #596a7b"}}>{this.state.item[cf.name]}</td>
-                </tr>
-              )
-            })}
-
-          </tbody>
-        </Table>
-      </Panel>
-    )
   },
 
   handleRequestUserSelection(selectedUser) {
@@ -727,9 +388,9 @@ const ManagerDetail = React.createClass({
                   label = <Label bsStyle="info">Disbursement</Label>
                 }
                 return (
-                  <tr key={request.request_id}>
+                  <tr key={request.id}>
                     <td data-th="ID" className="text-center" >
-                      <span style={{fontSize:"11px"}}>{request.request_id}</span>
+                      <span style={{fontSize:"11px"}}>{request.id}</span>
                     </td>
                     <td data-th="Requester" className="text-center" >
                       <span style={{fontSize:"11px", color: "#df691a"}}>{request.requester}</span>
@@ -747,7 +408,7 @@ const ManagerDetail = React.createClass({
                       <span style={{fontSize:"11px"}}>{ request.open_comment }</span>
                     </td>
                     <td data-th="Link" className="text-center" >
-                      <a style={{fontSize:"11px", color: "#5bc0de"}} className="clickable" href={"/app/requests/" + request.request_id + "/"}>Click to view</a>
+                      <a style={{fontSize:"11px", color: "#5bc0de"}} className="clickable" href={"/app/requests/" + request.id + "/"}>Click to view</a>
                     </td>
                   </tr>
                 )
@@ -884,7 +545,7 @@ const ManagerDetail = React.createClass({
                   <td data-th="Request" className="text-center" >
                     <span className="clickable"
                           style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
-                          onClick={e => {browserHistory.push("/app/requests/" + loan.request.request_id + "/")}}>
+                          onClick={e => {browserHistory.push("/app/requests/" + loan.request.id + "/")}}>
                         Click to view
                     </span>
                   </td>
@@ -898,11 +559,9 @@ const ManagerDetail = React.createClass({
                     <span style={{fontSize: "12px"}}>{loan.quantity_returned}</span>
                   </td>
                   <td data-th="" className="text-center" >
-                    <span className="clickable"
-                          style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
-                          onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}}>
-                        Click to modify
-                    </span>
+                    <Glyphicon glyph="edit" className="clickable"
+                          style={{fontSize: "14px", color: "#5bc0de"}}
+                          onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}} />
                   </td>
                 </tr>
               )
@@ -931,32 +590,6 @@ const ManagerDetail = React.createClass({
         </div>
 
       </div>
-    )
-  },
-
-  getAddToCartForm() {
-    return (
-          <Row>
-            <Col xs={12}>
-              <Form horizontal onSubmit={this.addToCart} style={{marginBottom: "0px"}}>
-                <FormGroup bsSize="small">
-                  <Col xs={3} componentClass={ControlLabel}>
-                    Quantity:
-                  </Col>
-                  <Col xs={4}>
-                    <FormControl type="number"
-                                 min={1} max={this.state.item.quantity} step={1}
-                                 name="addToCartQuantity"
-                                 value={this.state.addToCartQuantity}
-                                 onChange={this.handleCartQuantityChange} />
-                  </Col>
-                  <Col xs={4}>
-                    <Button disabled={this.state.addToCartQuantity == 0} bsStyle="info" bsSize="small" type="submit">Add to cart</Button>
-                  </Col>
-                </FormGroup>
-              </Form>
-            </Col>
-          </Row>
     )
   },
 
@@ -1153,89 +786,6 @@ const ManagerDetail = React.createClass({
     )
   },
 
-  getItemStacksPanel() {
-    return (
-      <Panel header={"Item Tracking"}>
-        <Table style={{marginBottom: "0px", borderCollapse: "collapse"}}>
-          <tbody>
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Requested</th>
-              <td style={{border: "1px solid #596a7b"}} className="text-center">{this.state.stacks.requested}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Loaned</th>
-              <td style={{border: "1px solid #596a7b"}} className="text-center">{this.state.stacks.loaned}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Disbursed</th>
-              <td style={{border: "1px solid #596a7b"}} className="text-center">{this.state.stacks.disbursed}</td>
-            </tr>
-
-            <tr>
-              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>In Cart</th>
-              <td style={{border: "1px solid #596a7b"}} className="text-center">{this.state.stacks.in_cart}</td>
-            </tr>
-          </tbody>
-        </Table>
-      </Panel>
-    )
-  },
-
-  getItemInstancePanel() {
-    return (this.state.item.has_assets) ? (
-      <div className="panel panel-default">
-
-        <div className="panel-heading">
-          <span style={{fontSize:"15px"}}>
-            Tracked Instances
-          </span>
-        </div>
-
-        <div className="panel-body" style={{minHeight:"220px"}}>
-          <Table condensed hover>
-            <thead>
-              <tr>
-                <th style={{width: "80%"}} className="text-left">Asset ID</th>
-                <th style={{width: "20%"}} className="text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              { this.state.assets.map( (asset, i) => {
-                return (
-                  <tr key={asset.tag}>
-                    <td data-th="Asset ID" className="text-left">
-                      <h6 style={{color: "#df691a"}}>{asset.tag}</h6>
-                    </td>
-                    <td data-th="Status" className="text-center">
-
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </div>
-
-        <div className="panel-footer">
-          <Row>
-            <Col md={12}>
-              <Pagination first last next prev maxButtons={3}
-                          ellipsis style={{float:"right", margin: "0px"}}
-                          bsSize="small" items={this.state.assetsPageCount}
-                          activePage={this.state.assetsPage}
-                          onSelect={activeKey => {this.setState({assetsPage: activeKey}, this.getAssets)}}/>
-            </Col>
-          </Row>
-        </div>
-
-      </div>
-    ) : (
-      null
-    )
-  },
-
   render() {
     if (this.state.itemExists) {
       var request = (this.state.loanToShow == null) ? null : this.state.loanToShow.request
@@ -1252,17 +802,13 @@ const ManagerDetail = React.createClass({
 
               <Row>
                 <Col md={4} xs={12}>
-                  { this.getItemInfoPanel() }
+                  <ItemInfoPanel user={this.props.route.user} item={this.state.item} customFields={this.state.custom_fields} />
                 </Col>
-                <Col md={4} xs={12}>
-                  { this.getItemStacksPanel() }
-
-                    <hr className="xs-hidden" style={{margin: "40px 0px"}} />
-
-                  { this.getAddToCartForm() }
+                <Col md={3} xs={12}>
+                  <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
                 </Col>
-                <Col md={4} xs={12}>
-                  { this.getItemInstancePanel() }
+                <Col md={5} xs={12}>
+                  <ItemAssetPanel item={this.state.item} />
                 </Col>
               </Row>
 
@@ -1331,19 +877,6 @@ const ManagerDetail = React.createClass({
             </Col>
           </Row>
 
-          <Modal show={this.state.showDeleteModal} onHide={e => this.setState({showDeleteModal: false})}>
-            <Modal.Header closeButton>
-              <Modal.Title>Delete Item</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <p style={{fontSize: "14px"}}>Are you sure you want to delete this item?</p>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button bsSize="small" onClick={e => this.setState({showDeleteModal: false})}>Cancel</Button>
-              <Button bsStyle="danger" bsSize="small" onClick={this.deleteItem}>Delete</Button>
-            </Modal.Footer>
-          </Modal>
-
           <Modal show={this.state.showCreateTransactionModal} onHide={e => this.setState({showCreateTransactionModal: false})}>
             <Modal.Header closeButton>
               <Modal.Title>Log an Acquisition or Loss of Instances</Modal.Title>
@@ -1357,77 +890,11 @@ const ManagerDetail = React.createClass({
             </Modal.Footer>
           </Modal>
 
-          <Modal show={this.state.showModifyModal} onHide={this.closeEditModal}>
-            <Modal.Header closeButton>
-              <Modal.Title>Modify Item</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-            <Form onSubmit={this.handleSubmit}>
-              <Row>
-                <Col xs={12}>
-                  <FormGroup bsSize="small" controlId="name" validationState={this.getValidationState("name")}>
-                    <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
-                    <FormControl type="text" name="name" value={this.state.modifiedItem.name} onChange={this.handleItemFormChange}/>
-                    { this.state.errorNodes['name'] }
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {this.getQuantityAndModelNoForm()}
-
-              <Row>
-                <Col xs={12}>
-                  <FormGroup bsSize="small" controlId="description">
-                    <ControlLabel>Description</ControlLabel>
-                    <FormControl type="text"
-                                 style={{resize: "vertical", height:"100px"}}
-                                 componentClass={"textarea"}
-                                 name="description"
-                                 value={this.state.modifiedItem.description}
-                                 onChange={this.handleItemFormChange}/>
-                    { this.state.errorNodes['description'] }
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              <Row>
-                <Col xs={12}>
-                  <FormGroup bsSize="small" controlId="tags">
-                    <ControlLabel>Tags</ControlLabel>
-                    <TagMultiSelect tagsSelected={this.state.modifiedItem.tags} tagHandler={this.handleTagSelection}/>
-                    { this.state.errorNodes['tags'] }
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {this.getCustomFieldForms()}
-
-            </Form>
-            </Modal.Body>
-            <Modal.Footer>
-              <span style={{float:"right"}}>
-                <Col xs={6}>
-                  <Button type="submit" bsSize="small" bsStyle="default" style={{float:"right",fontSize:"10px"}} onClick={this.closeEditModal}>
-                    Cancel
-                  </Button>
-                </Col>
-                <Col xs={6}>
-                  <Button type="submit" bsSize="small" bsStyle="info" style={{float:"right",fontSize:"10px"}}
-                          onClick={this.handleSubmit}>
-                    Save
-                  </Button>
-                </Col>
-              </span>
-            </Modal.Footer>
-          </Modal>
-
           <LoanModal show={this.state.showLoanModal}
                      loan={this.state.loanToShow}
                      request={request}
                      onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
                      refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.getLoans(); this.getItem();}}/>
-
-
 
         </Grid>
       )

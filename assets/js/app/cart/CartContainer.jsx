@@ -69,8 +69,8 @@ const CartContainer = React.createClass({
   getRequestConfirmationNode(request) {
     return (
       <Well style={{marginBottom: "0px"}} bsSize="small" className="text-center">
-        <p style={{margin:"5px 0px"}}>Successfully generated request with ID # {request.request_id}</p>
-        <p style={{margin:"5px 0px"}}><a href={"/app/requests/" + request.request_id + "/"}>Click here to view your request.</a></p>
+        <p style={{margin:"5px 0px"}}>Successfully generated request with ID # {request.id}</p>
+        <p style={{margin:"5px 0px"}}><a href={"/app/requests/" + request.id + "/"}>Click here to view your request.</a></p>
       </Well>)
   },
 

@@ -8,10 +8,21 @@ import uuid
 
 LOAN = 'loan'
 DISBURSEMENT = 'disbursement'
+
+LOANED = "Loaned"
+DISBURSED = "Disbursed"
+IN_STOCK = 'In Stock'
+
 # Types of item requests
 ITEM_REQUEST_TYPES = (
     (LOAN, 'Loan'),
     (DISBURSEMENT, 'Disbursement'),
+)
+
+ASSET_STATUS_TYPES = (
+    (IN_STOCK, 'In Stock'),
+    (LOANED, "Loaned"),
+    (DISBURSED, "Disbursed"),
 )
 
 FIELD_TYPES = (
@@ -27,6 +38,13 @@ FIELD_TYPE_DICT = {
     'Int': int,
     'Float': float
 }
+
+ACQUISITION      = 'Acquisition'
+LOSS             = 'Loss'
+CATEGORY_CHOICES = (
+    (ACQUISITION, ACQUISITION),
+    (LOSS, LOSS),
+)
 
 OUTSTANDING = 'O'
 APPROVED = 'A'
@@ -96,14 +114,15 @@ def uuid_to_str():
     return str(uuid.uuid4())
 
 class Asset(models.Model):
-    tag = models.CharField(unique=True, max_length=256, default=uuid_to_str)
+    tag = models.AutoField(primary_key=True)
     item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name="assets")
+    status = models.CharField(max_length=15, choices=ASSET_STATUS_TYPES, default=IN_STOCK)
 
     class Meta:
         ordering = ('tag',)
 
     def __str__(self):
-        return "{}: {}".format(self.item.name, self.id)
+        return "{}: {}".format(self.item.name, self.pk)
 
     def save(self, *args, **kwargs):
         print("SAVING")
@@ -229,6 +248,7 @@ class RequestedItem(models.Model):
 class ApprovedItem(models.Model):
     request      = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='approved_items', blank=True, null=True)
     item         = models.ForeignKey(Item,    on_delete=models.CASCADE)
+    assets       = models.ManyToManyField(Asset, blank=True)
     quantity     = models.PositiveIntegerField(default=0)
     request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=LOAN)
 
@@ -239,20 +259,44 @@ class ApprovedItem(models.Model):
         is_creation = False
         if not self.pk:
             is_creation = True
+        assets = kwargs.pop('assets', [])
         super().save(*args, **kwargs)
+        for asset in assets:
+            self.assets.add(asset)
 
         if is_creation:
+            self.createLoansAndDisbursements()
+
+    def createLoansAndDisbursements(self):
+        if (self.assets.all().count() > 0):
+            for asset in self.assets.all():
+                if self.request_type == DISBURSEMENT:
+                    disbursement = Disbursement.objects.create(request=self.request, item=self.item, asset=asset, quantity=1)
+                    asset.status = DISBURSED
+                elif self.request_type == LOAN:
+                    loan = Loan.objects.create(request=self.request, item=self.item, asset=asset, quantity_loaned=1)
+                    asset.status = LOANED
+
+                asset.save()
+                self.item.quantity -= 1
+                self.item.save()
+
+        else:
+            print("OTHER THING")
             if self.request_type == DISBURSEMENT:
                 disbursement = Disbursement.objects.create(request=self.request, item=self.item, quantity=self.quantity)
             elif self.request_type == LOAN:
                 loan = Loan.objects.create(request=self.request, item=self.item, quantity_loaned=self.quantity)
             self.item.quantity -= self.quantity
             self.item.save()
-            print("CREATING:\n\tRequest:\t{}\n\tItem:\t\t{}\n\tQuantity:\t{}\n\t\tTYPE:\t{}".format(repr(self.request), repr(self.item), self.quantity, self.request_type))
+
+
+
 
 class Loan(models.Model):
     request            = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loans', blank=True, null=True)
     item               = models.ForeignKey(Item, on_delete=models.CASCADE)
+    asset              = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="loans", blank=True, null=True)
     date_loaned        = models.DateTimeField(blank=True, auto_now_add=True)
     date_returned      = models.DateTimeField(blank=True, null=True)
     quantity_loaned    = models.PositiveIntegerField(default=0)
@@ -265,36 +309,24 @@ class Loan(models.Model):
 class Disbursement(models.Model):
     request    = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursements', blank=True, null=True)
     item       = models.ForeignKey(Item, on_delete=models.CASCADE)
+    asset      = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="disbursements", blank=True, null=True)
     date       = models.DateTimeField(blank=True, auto_now_add=True)
     quantity   = models.PositiveIntegerField(default=0)
 
-def createLoanFromRequestedItem(ri):
-    instance = Loan.objects.create(request=ri.request,
-                                   item=ri.item,
-                                   quantity_loaned=ri.quantity,
-                                   quantity_returned=0)
-    ri.item.quantity -= ri.quantity
-    ri.item.save()
-    instance.save()
-    return instance
-
-def createDisbursementFromRequestedItem(ri):
-    instance = Disbursement.objects.create(request=ri.request, item=ri.item, quantity=ri.quantity)
-    ri.item.quantity -= ri.quantity
-    ri.item.save()
-    instance.save()
-    return instance
+    def save(self, *args, **kwargs):
+        is_creation = False
+        if not self.pk:
+            is_creation = True
+        super().save(*args, **kwargs)
+        if is_creation:
+            if self.asset:
+                self.asset.status = DISBURSED
+                self.asset.save()
 
 
 class Transaction(models.Model):
     item             = models.ForeignKey(Item, on_delete=models.CASCADE)
-    ACQUISITION      = 'Acquisition'
-    LOSS             = 'Loss'
-    category_choices = (
-        (ACQUISITION, ACQUISITION),
-        (LOSS, LOSS),
-    )
-    category      = models.CharField(max_length=20, choices=category_choices)
+    category      = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     quantity      = models.PositiveIntegerField()
     comment       = models.CharField(max_length=1024, blank=True, null=True)
     date          = models.DateTimeField(blank=True, auto_now_add=True)
@@ -330,7 +362,7 @@ class Log(models.Model):
     REQUEST_ITEM_DENIAL             = "Request Item Denial"
     USER_CREATION                   = "User Creation"
     TRANSACTION_CREATION            = "Transaction Creation"
-    category_choices    = (
+    category_choices2    = (
         (ITEM_MODIFICATION, ITEM_MODIFICATION),
         (ITEM_CREATION, ITEM_CREATION),
         (ITEM_DELETION, ITEM_DELETION),
@@ -343,7 +375,7 @@ class Log(models.Model):
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),
     )
-    category            = models.CharField(max_length=50, choices=category_choices)
+    category            = models.CharField(max_length=50, choices=category_choices2)
 
     class Meta:
         ordering = ('-date_created',)
