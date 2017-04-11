@@ -197,8 +197,8 @@ class AssetList(generics.GenericAPIView):
         try:
             item = models.Item.objects.get(name=item_name)
             if not item.has_assets:
-                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
-        except:
+                raise NotFound("Item '{}' has no tracked instances.".format(item_name))
+        except models.Item.DoesNotExist:
             raise NotFound("Item '{}' not found.".format(item_name))
 
         # CHECK PERMISSION
@@ -482,19 +482,25 @@ class GetItemStacks(generics.GenericAPIView):
         except models.Item.DoesNotExist:
             raise NotFound("Item '{}' not found.".format(item_name))
 
-        requests = models.Request.objects.filter(requester=request.user.pk, status='O', requested_items__item__name=item_name)
+        requests = models.Request.objects.filter(status='O', requested_items__item__name=item_name)
+        if not (request.user.is_staff or request.user.is_superuser):
+            requests = requests.filter(requester=request.user.pk)
         rq = 0
         for r in requests.all():
             for ri in r.requested_items.all():
                 if (ri.item.name == item_name):
                     rq += ri.quantity
 
-        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
+        loans = models.Loan.objects.filter(item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
+        if not (request.user.is_staff or request.user.is_superuser):
+            loans = loans.filter(request__requester=request.user.pk)
         lq = 0
         for l in loans.all():
             lq += (l.quantity_loaned - l.quantity_returned)
 
-        disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
+        disbursements = models.Disbursement.objects.filter(item__name=item_name)
+        if not (request.user.is_staff or request.user.is_superuser):
+            disbursements = disbursements.filter(request__requester=request.user.pk)
         dq = 0
         for d in disbursements.all():
             dq += d.quantity
@@ -958,7 +964,7 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             data = serializer.data
 
             # Standard loan - no asset to handle
-            if (loan.asset == None):
+            if (loan.asset == None and loan.item.has_assets == False):
                 quantity = data.get('quantity')
                 loan.quantity_loaned -= quantity
 
@@ -978,12 +984,21 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
                 if loan.quantity_loaned == 0:
                     loan.delete()
 
-            else:
+            elif (loan.asset == None and loan.item.has_assets == True):
                 quantity = data.get('quantity')
-                disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
+                for i in range(quantity):
+                    asset = models.Asset.objects.create(item=loan.item)
+                    disbursement = models.Disbursement.objects.create(item=loan.item, asset=asset, request=loan.request, quantity=1)
+                    loan.quantity_loaned -= 1
+                    loan.save()
+                    if loan.quantity_loaned == 0:
+                        loan.delete()
+
+            else:
+                disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=1)
                 disbursement.save()
                 sendEmailForLoanToDisbursementConversion(loan)
-                requestItemLoantoDisburse(loan, request.user, quantity)
+                requestItemLoantoDisburse(loan, request.user, 1)
                 loan.delete()
 
             return Response(serializer.data)

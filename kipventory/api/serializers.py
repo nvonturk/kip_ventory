@@ -110,7 +110,7 @@ class ItemSerializer(serializers.Serializer):
     model_no      = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
     description   = serializers.CharField(max_length=1024, required=False, allow_blank=True, default="")
     tags          = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True), required=False, default=None)
-    has_assets    = serializers.BooleanField(required=False, default=False)
+    has_assets    = serializers.BooleanField(required=False)
     minimum_stock = serializers.IntegerField(min_value=0, required=False)
 
     def to_representation(self, item):
@@ -140,7 +140,9 @@ class ItemSerializer(serializers.Serializer):
         return d
 
     def to_internal_value(self, data):
+        print(data)
         data = super(ItemSerializer, self).to_internal_value(data)
+        print(data)
 
         name = data.get('name', None)
         if name is not None:
@@ -203,6 +205,9 @@ class ItemSerializer(serializers.Serializer):
 
     def update(self, item, validated_data):
         # Get all the intrinsic data fields on the Item model
+        has_assets_old = item.has_assets
+        has_assets_new = validated_data.get('has_assets', item.has_assets)
+
         item.name        = validated_data.pop('name',            item.name)
         item.quantity    = validated_data.pop('quantity',        item.quantity)
         item.model_no    = validated_data.pop('model_no',        item.model_no)
@@ -221,6 +226,43 @@ class ItemSerializer(serializers.Serializer):
             cv = item.values.get(field__name=field_name)
             setattr(cv, cv.field.field_type, value)
             cv.save()
+
+        # Converting an item from asset-tracked to non-asset-tracked.
+        # Delete every asset instance.
+        # If any foreign key relations to an Asset exist, they should be set to null.
+        # This ensures that any loans/disbursements/backfills may proceed as intended.
+        if has_assets_old == True and has_assets_new == False:
+            for asset in item.assets.all():
+                asset.delete()
+            # # We will also group any loans for individual item assets.
+            # # That is, if Susan has 3 loans for 3 different assets of this item,
+            # # we will merge them into one loan for 3 instances (no assets) of the item.
+            # requests = models.Request.objects.all()
+            # for request in requests:
+            #     loans = request.loans.filter(item__name=item.name, asset=None)
+            #     disbursements = request.disbursements.filter(item__name=item.name, asset=None)
+            #     total_loaned = 0
+            #     total_returned = 0
+            #     total_disbursed = 0
+            #     for loan in loans:
+            #         total_loaned += loan.quantity_loaned
+            #         total_returned += loan.quantity_returned
+            #         loan.delete()
+            #     for disbursement in disbursements:
+            #         total_disbursed += disbursement.quantity
+            #         disbursement.delete()
+            #     new_loan = models.Loan.objects.create(request=request, item=item, quantity_loaned=total_loaned, quantity_returned=total_returned)
+            #     new_disb = models.Disbursement.objects.create(request=request, item=item, quantity=quantity, date=)
+            #     new_loan.save()
+            #     request.save()
+
+        # Converting an item from non-asset-tracked to asset-tracked.
+        # Create {item.quantity} Asset instances.
+        # Do not modify existing loans/disbursements/backfills.
+        # When we return a loan, we should make a new Asset.
+        elif has_assets_old == False and has_assets_new == True:
+                for i in range(item.quantity):
+                    asset = models.Asset.objects.create(item=item)
 
         item.save()
         return item
@@ -555,12 +597,42 @@ class LoanSerializer(serializers.ModelSerializer):
         old_quantity = instance.quantity_returned
         loan = super(LoanSerializer, self).update(instance, validated_data)
         new_quantity = instance.quantity_returned
+
         loan.item.quantity += (new_quantity - old_quantity)
         loan.item.save()
+
+        # Loan was fully returned.
         if loan.quantity_returned == loan.quantity_loaned:
             if (loan.asset):
                 loan.asset.status = models.IN_STOCK
                 loan.asset.save()
+            # This loan was created, then the item became non-asset-tracked, then
+            # the item was switched back to asset tracked. As a result, we stopped tracking
+            # this specific asset, and we will need to create a new one when it is returned to the
+            # inventory.
+            elif (loan.item.has_assets and loan.asset == None):
+                # we returned a single instance. simply add a new asset to this loan.
+                if (loan.quantity_returned == 1):
+                    asset = models.Asset.objects.create(item=loan.item)
+                    loan.asset = asset
+                    loan.save()
+                # we returned several untracked instances. delete this loan object, and instead
+                # create one new loan object for each instance we are returning.
+                else:
+                    for i in range(loan.quantity_returned):
+                        asset = models.Asset.objects.create(item=loan.item)
+                        new_loan = models.Loan.objects.create(request=loan.request, item=loan.item, asset=asset, quantity_loaned=1, quantity_returned=1)
+                    loan.delete()
+                    loan = None
+        # Loan was partially returned.
+        else:
+            if (loan.item.has_assets and loan.asset == None):
+                for i in range(new_quantity - old_quantity):
+                    asset = models.Asset.objects.create(item=loan.item)
+                    new_loan = models.Loan.objects.create(request=loan.request, item=loan.item, asset=asset, quantity_loaned=1, quantity_returned=1)
+                    loan.quantity_loaned -= 1
+                    loan.quantity_returned -= 1
+                    loan.save()
         return loan
 
 

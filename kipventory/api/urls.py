@@ -9,7 +9,7 @@ urlpatterns = [
 
     # ITEM ENDPOINTS
     url(r'^items/?$',                                               views.ItemListCreate.as_view()),
-    url(r'^items/(?P<item_name>.+?)/assets/(?P<asset_tag>.+?)/?$',   views.AssetDetailModifyDelete.as_view()),
+    url(r'^items/(?P<item_name>.+?)/assets/(?P<asset_tag>.+?)/?$',  views.AssetDetailModifyDelete.as_view()),
     url(r'^items/(?P<item_name>.+?)/assets/?$',                     views.AssetList.as_view()),
     url(r'^items/(?P<item_name>.+?)/requests/?$',                   views.GetOutstandingRequestsByItem.as_view()),
     url(r'^items/(?P<item_name>.+?)/stacks/?$',                     views.GetItemStacks.as_view()),
