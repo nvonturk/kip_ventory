@@ -81,13 +81,15 @@ const ItemAssetPanel = React.createClass({
 
   handleAssetStatusSelection(e) {
     this.setState({
-      assetFilterStatus: e.target.value
+      assetFilterStatus: e.target.value,
+      assetsPage: 1
     }, this.getAssets)
   },
 
   handleTagSearch(e) {
     this.setState({
-      assetTagSearch: e.target.value
+      assetTagSearch: e.target.value,
+      assetsPage: 1
     }, this.getAssets)
   },
 
@@ -153,6 +155,7 @@ const ItemAssetPanel = React.createClass({
                                    placeholder="Filter by asset status"
                                    value={this.state.assetFilterStatus}
                                    onChange={this.handleAssetStatusSelection}>
+                        <option value=''>Show all assets</option>
                         <option value="In Stock">In Stock</option>
                         <option value="Loaned">Loaned</option>
                         <option value="Disbursed">Disbursed</option>

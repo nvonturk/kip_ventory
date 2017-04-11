@@ -511,6 +511,10 @@ const ManagerRequestsDetail = React.createClass({
             </thead>
             <tbody>
               { this.state.request.loans.map( (loan, i) => {
+                var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
+                  <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                          onClick={this.showModal.bind(this, loan)} />
+                ) : null
                 return (
                   <tr key={loan.id}>
                     <td data-th="" className="text-center">
@@ -528,8 +532,7 @@ const ManagerRequestsDetail = React.createClass({
                       { loan.quantity_returned }
                     </td>
                     <td data-th="" className="text-center">
-                      <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
-                              onClick={this.showModal.bind(this, loan)} />
+                      { editGlyph }
                     </td>
                   </tr>
                 )

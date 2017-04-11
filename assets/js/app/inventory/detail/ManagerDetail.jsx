@@ -218,9 +218,9 @@ const ManagerDetail = React.createClass({
 
   getStatusSymbol(loan, fs) {
     return (loan.quantity_returned === loan.quantity_loaned) ? (
-      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-circle" />
+      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
     ) : (
-      <Glyphicon style={{color: "#d9534f", fontSize: fs}} glyph="remove-circle" />
+      <Glyphicon style={{color: "rgb(240, 173, 78)", fontSize: fs}} glyph="exclamation-sign" />
     )
   },
 
@@ -484,7 +484,7 @@ const ManagerDetail = React.createClass({
       <hr />
         <Row style={{display: "flex"}}>
           <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-            <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="remove-circle" />
+            <Glyphicon style={{color: "rgb(240, 173, 78)", fontSize:"18px"}} glyph="exclamation-sign" />
           </Col>
           <Col md={9}>
             <p style={{marginBottom: "0px", fontSize: "12px"}}>This loan is outstanding.</p>
