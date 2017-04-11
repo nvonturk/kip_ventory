@@ -1,5 +1,5 @@
 import React from 'react'
-import { Row, Col, Label, Button, FormGroup, FormControl, Glyphicon, OverlayTrigger, Popover, Badge } from 'react-bootstrap'
+import { Row, Col, Label, Button, FormGroup, FormControl, Checkbox, Glyphicon, OverlayTrigger, Popover, Badge } from 'react-bootstrap'
 import { browserHistory } from 'react-router'
 import { ajax } from 'jquery'
 import { getCookie } from '../../csrf/DjangoCSRFToken'
@@ -130,6 +130,38 @@ const InventoryItem = React.createClass({
   },
 
   render() {
+    var quantityInput = (this.props.minQuants) ? (
+      null
+    ) : (
+      <td data-th="Quantity" style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
+        <FormGroup bsSize="small" style={{margin:"auto"}}>
+          <FormControl style={{fontSize: "10px"}} type="number" min={0} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onQuantityChange} />
+        </FormGroup>
+      </td>
+    )
+
+    var addToCartButton = (this.props.minQuants) ? (
+      null
+    ) : (
+      <td className="text-center" style={{zIndex:"9999"}} onClick={e => e.stopPropagation()}>
+        { this.getCartButton() }
+      </td>
+    )
+
+    var minQuantsCheckbox  = (this.props.minQuants) ? (
+      <td data-th="Modify Minimum Quantity" style={{fontSize:"10px", zIndex:"9999"}}  onClick={e => e.stopPropagation()}>
+        <Checkbox style={{paddingTop: "6px", textAlign: "center"}} onChange={e => this.props.boxChange(e, this.props.item)} />
+      </td>
+    ) : (
+      null
+    )
+    var nullPlaceHolder  = (this.props.minQuants) ? (
+      <td  style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
+      </td>
+    ) : (
+      null
+    )
+
     return (
       <tr style={{height: "40px"}} className="clickable" onClick={this.viewItemDetail}>
         <td data-th="Item">
@@ -149,14 +181,9 @@ const InventoryItem = React.createClass({
           { this.getItemStatus(this.props.item) }
         </td>
         <td className="spacer" />
-        <td data-th="Quantity" style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
-          <FormGroup bsSize="small" style={{margin:"auto"}}>
-            <FormControl style={{fontSize: "10px"}} type="number" min={0} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onQuantityChange} />
-          </FormGroup>
-        </td>
-        <td className="text-center" style={{zIndex:"9999"}} onClick={e => e.stopPropagation()}>
-          { this.getCartButton() }
-        </td>
+        {quantityInput}
+        {addToCartButton}
+        {minQuantsCheckbox}
       </tr>
     )
   }
