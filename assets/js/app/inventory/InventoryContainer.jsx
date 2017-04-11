@@ -191,7 +191,7 @@ const InventoryContainer = React.createClass({
 
   getShortTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -208,7 +208,7 @@ const InventoryContainer = React.createClass({
 
   getLongTextField(field_name, presentation_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -227,7 +227,7 @@ const InventoryContainer = React.createClass({
 
   getIntegerField(field_name, presentation_name, min, step, i) {
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -246,7 +246,7 @@ const InventoryContainer = React.createClass({
 
   getFloatField(field_name, presentation_name, i){
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getFormValidationState(field_name)}>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
         <Col xs={2} componentClass={ControlLabel}>
           {presentation_name}
         </Col>
@@ -261,43 +261,8 @@ const InventoryContainer = React.createClass({
     )
   },
 
-  getFormValidationState(field_name) {
+  getValidationState(field_name) {
     return (this.state.errorNodes[field_name] == null) ? null : "error"
-  },
-
-  getQuantityAndModelNoForm() {
-    return (
-      <Row>
-        <Col xs={12}>
-          <FormGroup bsSize="small" controlId="model_no">
-            <Col xs={2} componentClass={ControlLabel}>
-              Model No.
-            </Col>
-            <Col xs={8}>
-              <FormControl type="text"
-                           name="model_no"
-                           value={this.state.item.model_no}
-                           onChange={this.handleItemFormChange}/>
-              { this.state.errorNodes["model_no"] }
-            </Col>
-          </FormGroup>
-        </Col>
-        <Col xs={12}>
-          <FormGroup bsSize="small" controlId="quantity" validationState={this.getFormValidationState("quantity")}>
-            <Col xs={2} componentClass={ControlLabel}>
-              Quantity <span style={{color: "red"}}>*</span>
-            </Col>
-            <Col xs={8}>
-              <FormControl type="number" min={0} step={1}
-                           name="quantity"
-                           value={this.state.item.quantity}
-                           onChange={this.handleItemFormChange}/>
-              { this.state.errorNodes["quantity"] }
-            </Col>
-          </FormGroup>
-        </Col>
-      </Row>
-    )
   },
 
   getCustomFieldForms() {
@@ -336,47 +301,77 @@ const InventoryContainer = React.createClass({
 
   getItemCreationForm() {
     return (
-      <Form horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation()}}>
+      <Form onSubmit={this.createItem}>
+        <Row>
+          <Col xs={12}>
+            <FormGroup bsSize="small" controlId="name" validationState={this.getValidationState("name")}>
+              <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
+              <FormControl type="text"
+                           name="name"
+                           value={this.state.item.name}
+                           onChange={this.handleItemFormChange}/>
+              { this.state.errorNodes['name'] }
+            </FormGroup>
+          </Col>
+        </Row>
 
-        <FormGroup bsSize="small" controlId="name" validationState={this.getFormValidationState("name")}>
-          <Col xs={2} componentClass={ControlLabel}>
-            Name <span style={{color:"red"}}>*</span>
+        <Row>
+          <Col md={6} xs={12}>
+            <FormGroup bsSize="small" controlId="model_no" validationState={this.getValidationState('model_no')}>
+              <ControlLabel>Model No.</ControlLabel>
+              <FormControl type="text"
+                           name="model_no"
+                           value={this.state.item.model_no}
+                           onChange={this.handleItemFormChange}/>
+              { this.state.errorNodes['model_no'] }
+            </FormGroup>
           </Col>
-          <Col xs={8}>
-            <FormControl type="text"
-                         name="name"
-                         value={this.state.item.name}
-                         onChange={this.handleItemFormChange}/>
-            { this.state.errorNodes["name"] }
+          <Col md={3} xs={12}>
+            <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('quantity')}>
+              <ControlLabel>Quantity<span style={{color:"red"}}>*</span></ControlLabel>
+              <FormControl type="number"
+                           name="quantity"
+                           value={this.state.item.quantity}
+                           onChange={this.handleItemFormChange}/>
+              { this.state.errorNodes['quantity'] }
+            </FormGroup>
           </Col>
-        </FormGroup>
+          <Col md={3} xs={12}>
+            <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('minimum_stock')}>
+              <ControlLabel>Min Stock</ControlLabel>
+              <FormControl type="number"
+                           name="minimum_stock"
+                           value={this.state.item.minimum_stock}
+                           onChange={this.handleItemFormChange}/>
+              { this.state.errorNodes['minimum_stock'] }
+            </FormGroup>
+          </Col>
+        </Row>
 
-        {this.getQuantityAndModelNoForm()}
+        <Row>
+          <Col xs={12}>
+            <FormGroup bsSize="small" controlId="description">
+              <ControlLabel>Description</ControlLabel>
+              <FormControl type="text"
+                           style={{resize: "vertical", height:"100px"}}
+                           componentClass={"textarea"}
+                           name="description"
+                           value={this.state.item.description}
+                           onChange={this.handleItemFormChange}/>
+              { this.state.errorNodes['description'] }
+            </FormGroup>
+          </Col>
+        </Row>
 
-        <FormGroup bsSize="small" controlId="description">
-          <Col xs={2} componentClass={ControlLabel}>
-            Description
+        <Row>
+          <Col xs={12}>
+            <FormGroup bsSize="small" controlId="tags">
+              <ControlLabel>Tags</ControlLabel>
+              <TagMultiSelect tagsSelected={this.state.item.tags} tagHandler={this.handleTagSelection}/>
+              { this.state.errorNodes['tags'] }
+            </FormGroup>
           </Col>
-          <Col xs={8}>
-            <FormControl type="text"
-                         style={{resize: "vertical", height:"100px"}}
-                         componentClass={"textarea"}
-                         name="description"
-                         value={this.state.item.description}
-                         onChange={this.handleItemFormChange}/>
-            { this.state.errorNodes["description"] }
-          </Col>
-        </FormGroup>
-
-        <FormGroup bsSize="small" controlId="tags" validationState={this.getFormValidationState("tags")}>
-          <Col xs={2} componentClass={ControlLabel}>
-            Tags
-          </Col>
-          <Col xs={8}>
-            <TagMultiSelect tagsSelected={this.state.item.tags} tagHandler={this.handleTagSelection}/>
-            { this.state.errorNodes["tags"] }
-          </Col>
-        </FormGroup>
+        </Row>
 
         {this.getCustomFieldForms()}
 

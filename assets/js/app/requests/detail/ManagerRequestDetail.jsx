@@ -6,6 +6,9 @@ import { getCookie } from '../../../csrf/DjangoCSRFToken'
 
 import LoanModal from '../../loans/LoanModal'
 
+import RequestedItemsContainer from './utils/RequestedItemsContainer'
+
+
 const ManagerRequestsDetail = React.createClass({
   getInitialState() {
     return {
@@ -25,6 +28,7 @@ const ManagerRequestsDetail = React.createClass({
       },
 
       itemQuantities: {},
+      itemAssets: {},
 
       requestExists: true,
       forbidden: false,
@@ -65,8 +69,13 @@ const ManagerRequestsDetail = React.createClass({
           var url = "/api/items/" + item + "/"
           getJSON(url, function(data) {
             var itemQuantities = JSON.parse(JSON.stringify(_this.state.itemQuantities))
+            var itemAssets = JSON.parse(JSON.stringify(_this.state.itemAssets))
             itemQuantities[data.name] = Number(data.quantity)
-            _this.setState({itemQuantities: itemQuantities})
+            itemAssets[data.name] = data.has_assets
+            _this.setState({
+              itemQuantities: itemQuantities,
+              itemAssets: itemAssets
+            })
           })
         }
       },
@@ -234,7 +243,7 @@ const ManagerRequestsDetail = React.createClass({
           <div className="panel-body">
             <Row style={{display: "flex"}}>
               <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-circle" />
+                <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-sign" />
               </Col>
               <Col md={9}>
                 <p style={{marginBottom:"0px", fontSize: "12px"}}>This item has been returned from loan.</p>
@@ -243,7 +252,7 @@ const ManagerRequestsDetail = React.createClass({
             <hr />
             <Row style={{display: "flex"}}>
               <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="remove-circle" />
+                <Glyphicon style={{color: "#f0ad4e", fontSize:"18px"}} glyph="exclamation-sign" />
               </Col>
               <Col md={9}>
                 <p style={{marginBottom: "0px", fontSize: "12px"}}>This item is still on loan.</p>
@@ -252,7 +261,7 @@ const ManagerRequestsDetail = React.createClass({
             <hr />
             <Row style={{display: "flex"}}>
               <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                <Glyphicon style={{color: "#f0ad4e", fontSize:"18px"}} glyph="log-out" />
+                <Glyphicon style={{color: "rgb(217, 83, 79)", fontSize:"18px"}} glyph="log-out" />
               </Col>
               <Col md={9}>
                 <p style={{marginBottom: "0px", fontSize: "12px"}}>This item has been disbursed.</p>
@@ -368,22 +377,26 @@ const ManagerRequestsDetail = React.createClass({
     )
   },
 
-  modifyRequestedItem(index, newRequestedItem, e) {
-    console.log("NEW ", newRequestedItem)
-    console.log("OLD ", this.state.request.requested_items[index])
+  modifyApprovedItem(index, approved_item, assets) {
+    if (assets != null) {
+      approved_item['assets'] = assets
+    }
+    var approved_items = JSON.parse(JSON.stringify(this.state.request.approved_items))
+    var request = JSON.parse(JSON.stringify(this.state.request))
+    approved_items[index] = approved_item
+    request['approved_items'] = approved_items
+    this.setState({
+      request: request
+    }, () => {console.log(this.state.request.approved_items)})
   },
 
   getModifiableRequestedItems() {
-    if (this.state.request.requested_items.length > 0) {
-      return (
-        // <RequestedItemsContainer requestedItems={this.state.request.requested_items} modifyItem={this.modifyRequestedItem}>
-        null
-      )
-    } else {
-      return (
-        <Well style={{fontSize:"12px"}} bsSize="small" className="text-center">No items have been requested.</Well>
-      )
-    }
+    return (
+      <RequestedItemsContainer requestedItems={this.state.request.requested_items}
+                               itemAssets={this.state.itemAssets}
+                               itemQuantities={this.state.itemQuantities}
+                               handleModification={this.modifyApprovedItem}/>
+    )
   },
 
   getReadOnlyRequestedItems() {
@@ -475,13 +488,10 @@ const ManagerRequestsDetail = React.createClass({
   },
 
   getLoanStatusSymbol(loan, fs) {
-    if (loan.is_disbursement) {
-      return (<Glyphicon style={{color: "#f0ad4e", fontSize: fs}} glyph="log-out" />)
-    }
     return (loan.quantity_returned === loan.quantity_loaned) ? (
-      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-circle" />
+      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
     ) : (
-      <Glyphicon style={{color: "#d9534f", fontSize: fs}} glyph="remove-circle" />
+      <Glyphicon style={{color: "#f0ad4e", fontSize: fs}} glyph="exclamation-sign" />
     )
   },
 
@@ -493,10 +503,10 @@ const ManagerRequestsDetail = React.createClass({
             <thead>
               <tr>
                 <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-                <th style={{width:"40%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+                <th style={{width:"60%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
                 <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
                 <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-                <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-center"></th>
+                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center"></th>
               </tr>
             </thead>
             <tbody>
@@ -517,10 +527,9 @@ const ManagerRequestsDetail = React.createClass({
                     <td data-th="Returned" className="text-center">
                       { loan.quantity_returned }
                     </td>
-                    <td data-th="Returned" className="text-center">
-                      <span className="clickable" style={{color: "#5bc0de", fontSize: "12px", textDecoration: "underline"}} onClick={this.showModal.bind(this, loan)}>
-                        Click to modify loan
-                      </span>
+                    <td data-th="" className="text-center">
+                      <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                              onClick={this.showModal.bind(this, loan)} />
                     </td>
                   </tr>
                 )
@@ -557,7 +566,7 @@ const ManagerRequestsDetail = React.createClass({
                 return (
                   <tr key={disbursement.id}>
                     <td data-th="Status" className="text-center">
-                      <Glyphicon style={{color: "#f0ad4e", fontSize: "15px"}} glyph="log-out" />
+                      <Glyphicon style={{color: "rgb(217, 83, 79)", fontSize: "15px"}} glyph="log-out" />
                     </td>
                     <td data-th="Item" className="text-left">
                       <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>

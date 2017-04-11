@@ -100,6 +100,13 @@ const ManagerLoanPanel = React.createClass({
         </thead>
         <tbody>
           { loans.map( (loan, i) => {
+            var modifyIfOutstanding = null
+            if (loan.quantity_loaned > loan.quantity_returned) {
+              modifyIfOutstanding = (
+                <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                           onClick={this.showModal.bind(this, loan)} />
+              )
+            }
             return (
               <tr key={loan.id}>
                 <td data-th="" className="text-center">
@@ -116,10 +123,8 @@ const ManagerLoanPanel = React.createClass({
                 <td data-th="Returned" className="text-center">
                   { loan.quantity_returned }
                 </td>
-                <td data-th="Returned" className="text-center">
-                  <span className="clickable" style={{color: "#5bc0de", fontSize: "12px", textDecoration: "underline"}} onClick={this.showModal.bind(this, loan)}>
-                    Modify
-                  </span>
+                <td data-th="" className="text-center">
+                  { modifyIfOutstanding }
                 </td>
               </tr>
             )
@@ -148,7 +153,7 @@ const ManagerLoanPanel = React.createClass({
             return (
               <tr key={disbursement.id}>
                 <td data-th="Status" className="text-center">
-                  <Glyphicon style={{color: "#f0ad4e", fontSize: "15px"}} glyph="log-out" />
+                  <Glyphicon style={{color: "rgb(217, 83, 79)", fontSize: "15px"}} glyph="log-out" />
                 </td>
                 <td data-th="Item" className="text-left">
                   <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
@@ -181,14 +186,17 @@ const ManagerLoanPanel = React.createClass({
           <Col xs={1} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             { this.getRequestStatusSymbol("18px") }
           </Col>
-          <Col xs={6} style={{paddingLeft: "0px"}}>
-            <div style={{padding: "10px 0px", fontSize:"15px", color: "#df691a"}}>
-              Request #{request.id}
+          <Col xs={3} style={{paddingLeft: "0px"}}>
+            <div style={{padding: "5px 0px", fontSize:"15px"}}>
+              <span style={{fontSize:"15px"}}>Request #{request.id}</span>
             </div>
-            <p style={{fontSize: "12px"}}>{ this.getRequestSubtitle() }</p>
-          </Col>
-          <Col xs={4} style={{padding:"10px 0px"}}>
+            <a style={{fontSize:"12px"}} href={"/app/requests/" + request.id + "/"} onClick={e => {e.stopPropagation()}}>Click to view request</a>
             <p style={{fontSize: "12px"}}>Requested by: <span style={{color:"#df691a"}}>{ request.requester }</span></p>
+          </Col>
+          <Col xs={7} style={{display: "flex", flexDirection:"column", justifyContent: "center"}}>
+            <span style={{fontSize:"12px", float: "right"}}>
+              { this.getRequestSubtitle() }
+            </span>
           </Col>
           <Col xs={1} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             { this.getExpandChevron() }
@@ -196,48 +204,7 @@ const ManagerLoanPanel = React.createClass({
         </Row>
 
         <Row>
-          <Col md={5} xs={12} >
-            <Panel style={ this.getPanelStyle() } collapsible defaultExpanded={false} expanded={this.props.expanded === this.props.index}>
-              <span style={{fontSize:"15px", margin: "10.5px 0px"}}>Request Detail</span>
-              <a style={{fontSize:"12px", float: "right"}} href={"/app/requests/" + request.id + "/"}>Click to view request</a>
-              <hr style={{marginTop: "0px"}}/>
-              <Table condensed>
-                <tbody>
-                  <tr>
-                    <th style={{width:"40%", verticalAlign:"middle"}}>Date Requested:</th>
-                    <td style={{width:"60%", verticalAlign:"middle"}}>{new Date(request.date_open).toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <th style={{width:"40%", verticalAlign:"middle"}}>Requested by:</th>
-                    <td style={{width:"60%", verticalAlign:"middle"}}>{request.requester}</td>
-                  </tr>
-                  <tr>
-                    <th style={{width:"40%", verticalAlign:"middle"}}>Justification</th>
-                    <td style={{width:"60%", verticalAlign:"middle"}}>{request.open_comment}</td>
-                  </tr>
-                  <tr>
-                    <td colSpan={2} style={{verticalAlign: "middle"}}>
-                      <hr style={{marginTop: "10px", marginBottom:"10px"}}/>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={{width:"40%", verticalAlign:"middle"}}>Date Approved:</th>
-                    <td style={{width:"60%", verticalAlign:"middle"}}>{new Date(request.date_closed).toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <th style={{width:"40%", verticalAlign:"middle"}}>Approved by:</th>
-                    <td style={{width:"60%", verticalAlign:"middle"}}>{request.administrator}</td>
-                  </tr>
-                  <tr>
-                    <th style={{width:"40%", verticalAlign:"middle"}}>Comments</th>
-                    <td style={{width:"60%", verticalAlign:"middle"}}>{request.closed_comment}</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </Panel>
-          </Col>
-
-          <Col md={7} xs={12} >
+          <Col md={6} xs={12} >
             <Panel style={ this.getPanelStyle() } collapsible defaultExpanded={false} expanded={this.props.expanded === this.props.index}>
               <span style={{fontSize:"15px", margin: "10.5px 0px"}}>Loans</span>
               <hr style={{marginTop: "0px"}}/>
@@ -245,7 +212,7 @@ const ManagerLoanPanel = React.createClass({
             </Panel>
           </Col>
 
-          <Col md={7} xs={12} >
+          <Col md={6} xs={12} >
             <Panel style={ this.getPanelStyle() } collapsible defaultExpanded={false} expanded={this.props.expanded === this.props.index}>
               <span style={{fontSize:"15px", margin: "10.5px 0px"}}>Disbursements</span>
               <hr style={{marginTop: "0px"}}/>

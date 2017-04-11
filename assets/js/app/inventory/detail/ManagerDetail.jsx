@@ -559,11 +559,9 @@ const ManagerDetail = React.createClass({
                     <span style={{fontSize: "12px"}}>{loan.quantity_returned}</span>
                   </td>
                   <td data-th="" className="text-center" >
-                    <span className="clickable"
-                          style={{fontSize: "11px", textDecoration: "underline", color: "#5bc0de"}}
-                          onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}}>
-                        Click to modify
-                    </span>
+                    <Glyphicon glyph="edit" className="clickable"
+                          style={{fontSize: "14px", color: "#5bc0de"}}
+                          onClick={e => {this.setState({showLoanModal: true, loanToShow: loan})}} />
                   </td>
                 </tr>
               )

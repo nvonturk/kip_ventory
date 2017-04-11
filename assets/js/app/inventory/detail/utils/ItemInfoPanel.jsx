@@ -22,9 +22,12 @@ const ItemInfoPanel = React.createClass({
   handleItemFormChange(e) {
     e.preventDefault()
     var item = this.state.modifiedItem
+    var errorNodes = this.state.errorNodes
+    errorNodes[e.target.name] = null
     item[e.target.name] = e.target.value
     this.setState({
-      modifiedItem: item
+      modifiedItem: item,
+      errorNodes: errorNodes
     })
   },
 
@@ -208,7 +211,7 @@ const ItemInfoPanel = React.createClass({
       deleteIcon = <Glyphicon glyph="trash" style={{paddingLeft: "20px"}} onClick={e => {this.setState({showDeleteModal: true})}}/>
     }
     if (this.props.user.is_staff || this.props.user.is_superuser) {
-      editIcon = <Glyphicon glyph="pencil" onClick={this.showEditModal}/>
+      editIcon = <Glyphicon glyph="edit" onClick={this.showEditModal}/>
       minStock = (
         <tr>
           <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Minimum Stock</th>
@@ -299,79 +302,79 @@ const ItemInfoPanel = React.createClass({
               <Modal.Title>Modify Item</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-            <Form onSubmit={this.handleSubmit}>
-              <Row>
-                <Col xs={12}>
-                  <FormGroup bsSize="small" controlId="name" validationState={this.getValidationState("name")}>
-                    <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
-                    <FormControl type="text" name="name" value={this.state.modifiedItem.name} onChange={this.handleItemFormChange}/>
-                    { this.state.errorNodes['name'] }
-                  </FormGroup>
-                </Col>
-              </Row>
+              <Form onSubmit={this.handleSubmit}>
+                <Row>
+                  <Col xs={12}>
+                    <FormGroup bsSize="small" controlId="name" validationState={this.getValidationState("name")}>
+                      <ControlLabel>Name<span style={{color:"red"}}>*</span></ControlLabel>
+                      <FormControl type="text" name="name" value={this.state.modifiedItem.name} onChange={this.handleItemFormChange}/>
+                      { this.state.errorNodes['name'] }
+                    </FormGroup>
+                  </Col>
+                </Row>
 
-              <Row>
-                <Col md={6} xs={12}>
-                  <FormGroup bsSize="small" controlId="model_no" validationState={this.getValidationState('model_no')}>
-                    <ControlLabel>Model No.</ControlLabel>
-                    <FormControl type="text"
-                                 name="model_no"
-                                 value={this.state.modifiedItem.model_no}
-                                 onChange={this.handleItemFormChange}/>
-                    { this.state.errorNodes['model_no'] }
-                  </FormGroup>
-                </Col>
-                <Col md={3} xs={12}>
-                  <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('quantity')}>
-                    <ControlLabel>Quantity<span style={{color:"red"}}>*</span></ControlLabel>
-                    <FormControl disabled={!this.props.user.is_superuser}
-                                 type="number"
-                                 name="quantity"
-                                 value={this.state.modifiedItem.quantity}
-                                 onChange={this.handleItemFormChange}/>
-                    { this.state.errorNodes['quantity'] }
-                  </FormGroup>
-                </Col>
-                <Col md={3} xs={12}>
-                  <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('quantity')}>
-                    <ControlLabel>Min Stock</ControlLabel>
-                    <FormControl type="number"
-                                 name="minimum_stock"
-                                 value={this.state.modifiedItem.minimum_stock}
-                                 onChange={this.handleItemFormChange}/>
-                    { this.state.errorNodes['minimum_stock'] }
-                  </FormGroup>
-                </Col>
-              </Row>
+                <Row>
+                  <Col md={6} xs={12}>
+                    <FormGroup bsSize="small" controlId="model_no" validationState={this.getValidationState('model_no')}>
+                      <ControlLabel>Model No.</ControlLabel>
+                      <FormControl type="text"
+                                   name="model_no"
+                                   value={this.state.modifiedItem.model_no}
+                                   onChange={this.handleItemFormChange}/>
+                      { this.state.errorNodes['model_no'] }
+                    </FormGroup>
+                  </Col>
+                  <Col md={3} xs={12}>
+                    <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('quantity')}>
+                      <ControlLabel>Quantity<span style={{color:"red"}}>*</span></ControlLabel>
+                      <FormControl disabled={!this.props.user.is_superuser}
+                                   type="number"
+                                   name="quantity"
+                                   value={this.state.modifiedItem.quantity}
+                                   onChange={this.handleItemFormChange}/>
+                      { this.state.errorNodes['quantity'] }
+                    </FormGroup>
+                  </Col>
+                  <Col md={3} xs={12}>
+                    <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('minimum_stock')}>
+                      <ControlLabel>Min Stock</ControlLabel>
+                      <FormControl type="number"
+                                   name="minimum_stock"
+                                   value={this.state.modifiedItem.minimum_stock}
+                                   onChange={this.handleItemFormChange}/>
+                      { this.state.errorNodes['minimum_stock'] }
+                    </FormGroup>
+                  </Col>
+                </Row>
 
-              <Row>
-                <Col xs={12}>
-                  <FormGroup bsSize="small" controlId="description">
-                    <ControlLabel>Description</ControlLabel>
-                    <FormControl type="text"
-                                 style={{resize: "vertical", height:"100px"}}
-                                 componentClass={"textarea"}
-                                 name="description"
-                                 value={this.state.modifiedItem.description}
-                                 onChange={this.handleItemFormChange}/>
-                    { this.state.errorNodes['description'] }
-                  </FormGroup>
-                </Col>
-              </Row>
+                <Row>
+                  <Col xs={12}>
+                    <FormGroup bsSize="small" controlId="description">
+                      <ControlLabel>Description</ControlLabel>
+                      <FormControl type="text"
+                                   style={{resize: "vertical", height:"100px"}}
+                                   componentClass={"textarea"}
+                                   name="description"
+                                   value={this.state.modifiedItem.description}
+                                   onChange={this.handleItemFormChange}/>
+                      { this.state.errorNodes['description'] }
+                    </FormGroup>
+                  </Col>
+                </Row>
 
-              <Row>
-                <Col xs={12}>
-                  <FormGroup bsSize="small" controlId="tags">
-                    <ControlLabel>Tags</ControlLabel>
-                    <TagMultiSelect tagsSelected={this.state.modifiedItem.tags} tagHandler={this.handleTagSelection}/>
-                    { this.state.errorNodes['tags'] }
-                  </FormGroup>
-                </Col>
-              </Row>
+                <Row>
+                  <Col xs={12}>
+                    <FormGroup bsSize="small" controlId="tags">
+                      <ControlLabel>Tags</ControlLabel>
+                      <TagMultiSelect tagsSelected={this.state.modifiedItem.tags} tagHandler={this.handleTagSelection}/>
+                      { this.state.errorNodes['tags'] }
+                    </FormGroup>
+                  </Col>
+                </Row>
 
-              {this.getCustomFieldForms()}
+                {this.getCustomFieldForms()}
 
-            </Form>
+              </Form>
             </Modal.Body>
             <Modal.Footer>
               <span style={{float:"right"}}>

@@ -11,13 +11,21 @@ const LoanModal = React.createClass({
   getInitialState() {
     return {
       disburseQuantity: 0,
-      returnQuantity: 0
+      returnQuantity: 0,
+    }
+  },
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.loan != null) {
+      this.setState({
+        returnQuantity: nextProps.loan.quantity_returned
+      })
     }
   },
 
   handleReturnQuantityChange(e) {
     var q = Number(e.target.value)
-    if ((q >= 0) && (q <= (this.props.loan.quantity_loaned))) {
+    if ((q >= this.props.loan.quantity_returned) && (q <= (this.props.loan.quantity_loaned))) {
       this.setState({
         returnQuantity: q
       })
@@ -102,7 +110,7 @@ const LoanModal = React.createClass({
       var statusLabel = (this.props.loan.quantity_loaned == this.props.loan.quantity_returned) ? (
         <Label bsSize="small" bsStyle="success">Returned</Label>
       ) : (
-        <Label bsSize="small" bsStyle="danger">Outstanding</Label>
+        <Label bsSize="small" bsStyle="warning">Outstanding</Label>
       )
       var assetTag = (this.props.loan.asset != null) ? (
         <tr>
@@ -172,16 +180,16 @@ const LoanModal = React.createClass({
 
                     <Form horizontal>
                       <FormGroup bsSize="small">
-                        <Col xs={2} componentClass={ControlLabel}>
+                        <Col xs={4} componentClass={ControlLabel}>
                           Quantity Returned:
                         </Col>
                         <Col xs={4}>
                           <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
-                                       onChange={this.handleReturnQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned} />
+                                       onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
                         </Col>
                         <Col xs={4}>
                           <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleReturn}>
-                            Update Quantity Returned
+                            Log Return
                           </Button>
                         </Col>
                       </FormGroup>
@@ -199,7 +207,7 @@ const LoanModal = React.createClass({
 
                     <Form horizontal>
                       <FormGroup bsSize="small">
-                        <Col xs={2} componentClass={ControlLabel}>
+                        <Col xs={4} componentClass={ControlLabel}>
                           Quantity to Disburse
                         </Col>
                         <Col xs={4}>
