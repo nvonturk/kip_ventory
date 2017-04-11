@@ -822,7 +822,7 @@ const InventoryContainer = React.createClass({
             <Modal.Title>Set The Minimum Quantity of Selected Items</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <FormGroup bsSize="small" controlId="minimumquantity" validationState={this.getFormValidationState("minimum_stock")}>
+            <FormGroup bsSize="small" controlId="minimumquantity" validationState={this.getValidationState("minimum_stock")}>
               <Col xs={2} componentClass={ControlLabel}>
                 Minimum Quantity <span style={{color: "red"}}>*</span>
               </Col>
