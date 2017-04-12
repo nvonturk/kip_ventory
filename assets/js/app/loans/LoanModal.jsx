@@ -108,15 +108,7 @@ const LoanModal = React.createClass({
     if (this.props.loan == null) {
       return null
     } else {
-      var assetTableEntry = null
-      if(this.props.loan.asset != null){
-        assetTableEntry = (
-          <tr>
-            <th style={{width:"30%", verticalAlign: "middle"}}>Asset:</th>
-            <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.asset}</td>
-          </tr>
-        )
-      }
+
       var statusLabel = (this.props.loan.quantity_loaned == this.props.loan.quantity_returned) ? (
         <Label bsSize="small" bsStyle="success">Returned</Label>
       ) : (
@@ -159,11 +151,6 @@ const LoanModal = React.createClass({
                           <th style={{width:"30%", verticalAlign: "middle"}}>Justification:</th>
                           <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.open_comment}</td>
                         </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Item:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.item}</td>
-                        </tr>
-                        {assetTableEntry}
                         <tr>
                         <th style={{width:"30%", verticalAlign: "middle"}}>Approval date:</th>
                         <td style={{width:"70%", verticalAlign: "middle"}}>{new Date(this.props.loan.date_loaned).toLocaleString()}</td>
