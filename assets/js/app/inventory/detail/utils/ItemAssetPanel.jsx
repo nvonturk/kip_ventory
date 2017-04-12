@@ -77,6 +77,7 @@ const ItemAssetPanel = React.createClass({
   refreshAssets(e) {
     this.getAssets()
     this.closeAssetModal()
+    this.props.refresh()
   },
 
   handleAssetStatusSelection(e) {

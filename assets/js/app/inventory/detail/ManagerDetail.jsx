@@ -66,6 +66,10 @@ const ManagerDetail = React.createClass({
   },
 
   componentWillMount() {
+    this.refresh()
+  },
+
+  refresh() {
     var user = this.props.route.user
     this.getItem();
     this.getCustomFields();
@@ -251,6 +255,7 @@ const ManagerDetail = React.createClass({
         }, function() {
           _this.getItem();
           _this.getTransactions();
+          _this.getStacks();
         });
       },
       error:function (xhr, textStatus, thrownError){
@@ -808,7 +813,7 @@ const ManagerDetail = React.createClass({
                   <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
                 </Col>
                 <Col md={5} xs={12}>
-                  <ItemAssetPanel item={this.state.item} />
+                  <ItemAssetPanel item={this.state.item} refresh={this.refresh}/>
                 </Col>
               </Row>
 

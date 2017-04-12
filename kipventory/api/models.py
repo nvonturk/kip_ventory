@@ -326,11 +326,15 @@ class Disbursement(models.Model):
 
 class Transaction(models.Model):
     item          = models.ForeignKey(Item, on_delete=models.CASCADE)
+    assets        = models.ManyToManyField(Asset, blank=True)
     category      = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     quantity      = models.PositiveIntegerField()
     comment       = models.CharField(max_length=1024, blank=True, null=True)
     date          = models.DateTimeField(blank=True, auto_now_add=True)
     administrator = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('-id',)
 
 class BulkImport(models.Model):
     administrator   = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 import dateutil.parser
 from datetime import datetime
-from django.db.models import Q, F
+from django.db.models import Q, F, Count
 
 import re, json
 
@@ -315,10 +315,11 @@ class TagSerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     item          = serializers.SlugRelatedField(queryset=models.Item.objects.all(), slug_field="name")
     administrator = serializers.SlugRelatedField(queryset=User.objects.filter(is_staff=True), slug_field="username")
+    assets        = serializers.SlugRelatedField(queryset=models.Asset.objects.filter(status=models.IN_STOCK), slug_field="tag", many=True, required=False)
 
     class Meta:
         model = models.Transaction
-        fields = ["id", 'item', 'category', 'quantity', 'date', 'comment', 'administrator']
+        fields = ["id", 'item', 'assets', 'category', 'quantity', 'date', 'comment', 'administrator']
 
     def validate(self, data):
         errors = {}
@@ -330,21 +331,41 @@ class TransactionSerializer(serializers.ModelSerializer):
                 errors.update({"quantity": ["Quantity be a positive integer"]})
         except:
             errors.update({"quantity": ["Quantity be a positive integer"]})
-
         try:
             item = models.Item.objects.get(name=data['item'])
         except models.Item.DoesNotExist:
             errors.update({"item": ["Item with name '{}' does not exist.".format(data['item'])]})
 
         category = data.get('category', "")
+        assets = data.get('assets', [])
         if category.lower() == "loss":
             if quantity > item.quantity:
                 errors.update({"quantity": ["You may not remove more instances than are currently in stock."]})
+            if item.has_assets:
+                if (len(assets) != quantity):
+                    errors.update({"assets": ["Expected {} assets tags, got {}.".format(quantity, len(assets))]})
 
         if errors:
             raise ValidationError(errors)
-
         return data
+
+    def create(self, validated_data):
+        transaction = super().create(validated_data)
+
+        if transaction.item.has_assets:
+            if transaction.category == models.LOSS:
+                for asset in transaction.assets.all():
+                    asset.delete()
+
+            elif transaction.category == models.ACQUISITION:
+                for i in range(transaction.quantity):
+                    asset = models.Asset.objects.create(item=transaction.item)
+                    transaction.assets.add(asset)
+
+        transaction.save()
+        return transaction
+
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:

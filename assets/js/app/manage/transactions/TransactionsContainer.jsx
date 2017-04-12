@@ -103,12 +103,13 @@ const TransactionsContainer = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
+              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
               <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
               <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">Category</th>
               <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
               <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
               <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">Administrator</th>
-              <th style={{width: "30%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
             </tr>
           </thead>
           <tbody>
@@ -120,6 +121,9 @@ const TransactionsContainer = React.createClass({
               )
               return (
                 <tr key={transaction.id}>
+                  <td data-th="ID" className="text-center" >
+                    { transaction.id }
+                  </td>
                   <td data-th="Item" className="text-left" >
                     <a href={"/app/inventory/" + transaction.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
                       { transaction.item }
@@ -159,7 +163,7 @@ const TransactionsContainer = React.createClass({
         <div className="panel-heading">
           <Row>
             <Col xs={12} >
-              <span className="panel-title" style={{fontSize:"15px"}}>View Item Acquisitions and Losses</span>
+              <span className="panel-title" style={{fontSize:"15px"}}>View Acquisitions and Losses</span>
               <span style={{float: "right"}}>
                 <CreateTransactionsContainer handleTransactionCreated={this.getTransactions} />
               </span>
