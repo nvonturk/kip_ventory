@@ -54,7 +54,7 @@ const ManagerRequestsContainer = React.createClass({
   deleteRequest(request) {
     var _this = this
     ajax({
-      url:"/api/requests/" + request.request_id + "/",
+      url:"/api/requests/" + request.id + "/",
       type: "DELETE",
       beforeSend: function(request) {
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
@@ -80,7 +80,7 @@ const ManagerRequestsContainer = React.createClass({
   },
 
   viewRequest(request) {
-    browserHistory.push("/app/requests/" + request.request_id);
+    browserHistory.push("/app/requests/" + request.id);
   },
 
   handleStatusSelect(status) {
@@ -141,8 +141,8 @@ const ManagerRequestsContainer = React.createClass({
               {this.state.requests.map( (request, i) => {
                 var d = new Date(request.date_open)
                 return (
-                  <tr key={request.request_id} style={{height: "41px"}}>
-                    <td data-th="ID" className="text-center">{request.request_id}</td>
+                  <tr key={request.id} style={{height: "41px"}}>
+                    <td data-th="ID" className="text-center">{request.id}</td>
                     <td data-th="Requester" className="text-left">{request.requester}</td>
                     <td data-th="Date Open" className="text-left">{d.toLocaleString()}</td>
                     <td data-th="Comment" className="text-left">
