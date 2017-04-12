@@ -197,7 +197,7 @@ const RequestedItemPanel = React.createClass({
                     <FormControl className="text-center"
                                  style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
                                  componentClass="select"
-                                 value={this.state.approvedType}
+                                 value={this.state.approved_item.request_type}
                                  onChange={this.handleTypeChange}
                                  onClick={e => {e.stopPropagation()}}>
                       <option value="disbursement">Disbursement</option>
@@ -313,7 +313,7 @@ const RequestedItemPanel = React.createClass({
                   <FormControl className="text-center"
                                style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
                                componentClass="select"
-                               value={this.state.approvedType}
+                               value={this.state.approved_item.request_type}
                                onChange={this.handleTypeChange}
                                onClick={e => {e.stopPropagation()}}>
                     <option value="disbursement">Disbursement</option>

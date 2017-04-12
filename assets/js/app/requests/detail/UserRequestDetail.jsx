@@ -298,7 +298,7 @@ const UserRequestsDetail = React.createClass({
                       { this.getLoanStatusSymbol(loan, "15px") }
                     </td>
                     <td data-th="Item" className="text-left">
-                      <a href={"/app/inventory/" + loan.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+                      <a href={"/app/inventory/" + loan.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
                         { loan.item }
                       </a>
                     </td>
@@ -356,7 +356,7 @@ const UserRequestsDetail = React.createClass({
                       <Glyphicon style={{color: "#f0ad4e", fontSize: "15px"}} glyph="log-out" />
                     </td>
                     <td data-th="Item" className="text-left">
-                      <a href={"/app/inventory/" + disbursement.item.name + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+                      <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
                         { disbursement.item }
                       </a>
                     </td>
