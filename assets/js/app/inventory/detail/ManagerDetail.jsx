@@ -899,7 +899,7 @@ const ManagerDetail = React.createClass({
                      loan={this.state.loanToShow}
                      request={request}
                      onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
-                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.getLoans(); this.getItem();}}/>
+                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.refresh();}}/>
 
         </Grid>
       )
