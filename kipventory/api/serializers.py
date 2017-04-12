@@ -617,10 +617,14 @@ class RequestLoanDisbursementSerializer(serializers.Serializer):
         request_json = RequestSerializer(context=self.context, instance=request).data
         loans = request_json.pop('loans')
         disbursements = request_json.pop('disbursements')
+        backfill_requests = request_json.pop('backfill_requests')
+        backfills = request_json.pop('backfills')
         d = {
             "disbursements": disbursements,
             "loans": loans,
-            "request": request_json
+            "request": request_json,
+            "backfill_requests": backfill_requests,
+            "backfills": backfills
         }
         return d
 
@@ -798,12 +802,12 @@ class BulkImportSerializer(serializers.ModelSerializer):
 class BackfillGETSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
     #loan = # todo change loan serializer to something other than id?
-    class Meta: 
+    class Meta:
         model = models.Backfill
         fields = ['id', 'request', 'date_created', 'date_satisfied', 'status', 'requester_comment', 'receipt', 'admin_comment']
 
 class BackfillPUTSerializer(serializers.ModelSerializer):
-    class Meta: 
+    class Meta:
         model = models.Backfill
         fields = ['status', 'date_satisfied']
 
@@ -816,14 +820,14 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
 class BackfillRequestGETSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
     #loan = # todo change loan serializer to something other than id?
-    class Meta: 
+    class Meta:
         model = models.BackfillRequest
         fields = ['id', 'requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
 
 class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
     #loan = # todo change loan serializer to something other than id?
-   
+
     class Meta:
         model = models.BackfillRequest
         fields = ['requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
@@ -848,7 +852,7 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
 
     def update(self, backfill_request, validated_data):
         user = validated_data.pop("user", None)
-        
+
         print("user", user)
         print("userpk", user.pk)
         print("requester pk", backfill_request.loan.request.requester.pk)
@@ -856,7 +860,7 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
         is_manager = (user.is_superuser or user.is_staff)
         print("owner?", is_owner)
         print("manager", is_manager)
-        
+
         if is_owner and not is_manager:
             for key in validated_data.keys():
                 if key not in set({"receipt"}):
@@ -870,4 +874,3 @@ class BackfillRequestPUTSerializer(serializers.ModelSerializer):
         backfill_request = super(BackfillRequestPUTSerializer, self).update(backfill_request, validated_data)
         return backfill_request
     '''
-
