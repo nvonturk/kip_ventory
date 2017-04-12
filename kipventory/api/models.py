@@ -92,14 +92,6 @@ class Item(models.Model):
 
         super(Item, self).save(*args, **kwargs)
 
-        # create a list of auto-generated tags for each asset
-        if self.has_assets:
-            num_assets = self.assets.all().count()
-            diff = self.quantity - num_assets
-            if diff > 0:
-                for i in range(diff):
-                    asset = Asset.objects.create(item=self)
-
         # If this call to `save` is creating a new Item, then we must also create
         # a CustomValue for each CustomField that currently exists.
         # Note that this block won't run if we're simply updating this Item via
@@ -109,6 +101,9 @@ class Item(models.Model):
             for cf in CustomField.objects.all():
                 cv = CustomValue(field=cf, item=self)
                 cv.save()
+            if self.has_assets:
+                for i in range(self.quantity):
+                    asset = Asset.objects.create(item=self)
 
 def uuid_to_str():
     return str(uuid.uuid4())

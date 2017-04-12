@@ -74,9 +74,19 @@ const ItemAssetPanel = React.createClass({
     })
   },
 
+  updateCurrentAsset() {
+    var url = "/api/items/" + this.state.assetToShow.item + "/assets/" + this.state.assetToShow.tag + "/"
+    var _this = this
+    getJSON(url, null, function(data) {
+      _this.setState({
+        assetToShow: data
+      })
+    })
+  },
+
   refreshAssets(e) {
     this.getAssets()
-    this.closeAssetModal()
+    this.updateCurrentAsset()
     this.props.refresh()
   },
 

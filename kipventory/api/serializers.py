@@ -623,7 +623,7 @@ class LoanSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         old_quantity = instance.quantity_returned
         loan = super(LoanSerializer, self).update(instance, validated_data)
-        new_quantity = instance.quantity_returned
+        new_quantity = loan.quantity_returned
 
         loan.item.quantity += (new_quantity - old_quantity)
         loan.item.save()
@@ -649,8 +649,10 @@ class LoanSerializer(serializers.ModelSerializer):
                     for i in range(loan.quantity_returned):
                         asset = models.Asset.objects.create(item=loan.item)
                         new_loan = models.Loan.objects.create(request=loan.request, item=loan.item, asset=asset, quantity_loaned=1, quantity_returned=1)
-                    loan.delete()
-                    loan = None
+                        loan.quantity_returned -= 1
+                        loan.quantity_loaned -= 1
+                    loan.save()
+
         # Loan was partially returned.
         else:
             if (loan.item.has_assets and loan.asset == None):
@@ -659,7 +661,7 @@ class LoanSerializer(serializers.ModelSerializer):
                     new_loan = models.Loan.objects.create(request=loan.request, item=loan.item, asset=asset, quantity_loaned=1, quantity_returned=1)
                     loan.quantity_loaned -= 1
                     loan.quantity_returned -= 1
-                    loan.save()
+                loan.save()
         return loan
 
 

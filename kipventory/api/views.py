@@ -852,6 +852,22 @@ class LoanListAll(generics.GenericAPIView):
             return Response({"error": ["Manager permissions required."]}, status=status.HTTP_403_FORBIDDEN)
 
         requests = self.get_queryset()
+
+        item_search = request.query_params.get('item', "")
+        if item_search != "":
+            requests = requests.filter(loans__item__name__icontains=item_search).distinct()
+
+        status = request.query_params.get('status', "")
+        if status != "":
+            if (status.lower().strip() == "returned"):
+                requests = requests.exclude(loans__quantity_loaned__gt=F('loans__quantity_returned')).distinct()
+            elif (status.lower().strip() == "outstanding"):
+                requests = requests.exclude(loans__quantity_loaned__lte=F('loans__quantity_returned')).distinct()
+
+        user = request.query_params.get('user', "")
+        if user != "":
+            requests = requests.filter(requester__username=user).distinct()
+
         requests = self.paginate_queryset(requests)
         serializer = self.get_serializer(instance=requests, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -880,6 +896,22 @@ class LoanList(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
+
+        item_search = request.query_params.get('item', "")
+        if item_search != "":
+            queryset = queryset.filter(loans__item__name__icontains=item_search).distinct()
+
+        status = request.query_params.get('status', "")
+        if status != "":
+            if (status.lower().strip() == "returned"):
+                queryset = queryset.filter(loans__quantity_loaned__lte=F('loans__quantity_returned')).distinct()
+            elif (status.lower().strip() == "outstanding"):
+                queryset = queryset.filter(loans__quantity_loaned__gt=F('loans__quantity_returned')).distinct()
+
+        user = request.query_params.get('user', "")
+        if user != "":
+            queryset = queryset.filter(requester__username=user).distinct()
+
         queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -984,6 +1016,7 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
                 if loan.quantity_loaned == 0:
                     loan.delete()
 
+            # loan with no asset, but the item has assets
             elif (loan.asset == None and loan.item.has_assets == True):
                 quantity = data.get('quantity')
                 for i in range(quantity):
@@ -994,6 +1027,7 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
                     if loan.quantity_loaned == 0:
                         loan.delete()
 
+            # loan with asset, item has assets
             else:
                 disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=1)
                 disbursement.save()
