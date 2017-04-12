@@ -49,12 +49,28 @@ CATEGORY_CHOICES = (
 OUTSTANDING = 'O'
 APPROVED = 'A'
 DENIED = 'D'
-### Status Choices ###
+
+### Status Choices - used for Requests  ###
 STATUS_CHOICES = (
     (OUTSTANDING, 'Outstanding'),
     (APPROVED, 'Approved'),
     (DENIED, 'Denied'),
 )
+
+BACKFILL_REQUEST_STATUS_CHOICES = (
+    (OUTSTANDING, 'Outstanding'),
+    (APPROVED, 'Approved'),
+    (DENIED, 'Denied'),
+)
+
+AWAITING_ITEMS = 'awaiting_items'
+SATISFIED = 'satisfied'
+
+BACKFILL_STATUS_CHOICES = (
+    (AWAITING_ITEMS, 'Awaiting Items'),
+    (SATISFIED, 'Satisfied'),
+)
+
 
 # Create your models here.
 class Tag(models.Model):
@@ -301,7 +317,6 @@ class Loan(models.Model):
     date_returned      = models.DateTimeField(blank=True, null=True)
     quantity_loaned    = models.PositiveIntegerField(default=0)
     quantity_returned  = models.PositiveIntegerField(default=0)
-
     class Meta:
         ordering = ('id',)
 
@@ -425,3 +440,24 @@ class LoanReminder(models.Model):
 # Todo only allow one object. maybe use django-solo
 class SubjectTag(models.Model):
     text = models.CharField(max_length=128, unique=True)
+
+class BackfillRequest(models.Model):
+    loan = models.ForeignKey('Loan', on_delete=models.CASCADE, related_name="backfill_requests")
+    requester_comment = models.TextField(max_length=1024)
+    receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
+    status = models.CharField(max_length=15, choices=BACKFILL_REQUEST_STATUS_CHOICES, default=OUTSTANDING)
+    admin_comment = models.TextField(default='', max_length=1024, blank=True)
+
+class Backfill(models.Model):
+    request            = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='backfills', blank=True, null=True)
+    item               = models.ForeignKey(Item, on_delete=models.CASCADE)
+    date_created       = models.DateTimeField(blank=True, auto_now_add=True)
+    date_satisfied      = models.DateTimeField(blank=True, null=True)
+    status = models.CharField(max_length=15, choices=BACKFILL_STATUS_CHOICES, default=AWAITING_ITEMS)
+    quantity = models.PositiveIntegerField(default=0)
+    # to add partial per-item backfill, replace status with quantity_backfilled and quantity_returned
+    # backfillrequest fields
+    requester_comment = models.TextField(max_length=1024)
+    receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
+    admin_comment = models.TextField(default='', max_length=1024, blank=True)
+
