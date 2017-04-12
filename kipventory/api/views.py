@@ -530,6 +530,10 @@ class CustomFieldListCreate(generics.GenericAPIView):
         if not (request.user.is_staff or request.user.is_superuser):
             queryset = queryset.filter(private=False)
 
+        asset_tracked = request.query_params.get('asset_tracked', None)
+        if asset_tracked:
+            queryset = queryset.filter(asset_tracked=True)
+
         all_fields = request.query_params.get('all', None)
         if all_fields is not None:
             serializer = self.get_serializer(instance=queryset, many=True)
@@ -953,24 +957,35 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
         if serializer.is_valid():
             data = serializer.data
 
-            quantity = data.get('quantity')
-            loan.quantity_loaned -= quantity
+            # Standard loan - no asset to handle
+            if (loan.asset == None):
+                quantity = data.get('quantity')
+                loan.quantity_loaned -= quantity
 
-            disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
-            # add to existing disbursement or create a new one
-            if disbursements.count() > 0:
-                disbursement = disbursements.first()
-                disbursement.quantity += quantity
-                disbursement.save()
+                disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
+                # add to existing disbursement or create a new one
+                if disbursements.count() > 0:
+                    disbursement = disbursements.first()
+                    disbursement.quantity += quantity
+                    disbursement.save()
+                else:
+                    disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
+                    disbursement.save()
+                loan.save()
+                #todo can only mangers do this? send email?
+                sendEmailForLoanToDisbursementConversion(loan)
+                requestItemLoantoDisburse(loan, request.user, quantity)
+                if loan.quantity_loaned == 0:
+                    loan.delete()
+
             else:
-                disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
+                quantity = data.get('quantity')
+                disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
                 disbursement.save()
-            loan.save()
-            #todo can only mangers do this? send email?
-            sendEmailForLoanToDisbursementConversion(loan)
-            requestItemLoantoDisburse(loan, request.user, quantity)
-            if loan.quantity_loaned == 0:
+                sendEmailForLoanToDisbursementConversion(loan)
+                requestItemLoantoDisburse(loan, request.user, quantity)
                 loan.delete()
+
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

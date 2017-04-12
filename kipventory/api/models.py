@@ -114,7 +114,7 @@ def uuid_to_str():
     return str(uuid.uuid4())
 
 class Asset(models.Model):
-    tag = models.CharField(unique=True, max_length=256, default=uuid_to_str)
+    tag = models.AutoField(primary_key=True)
     item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name="assets")
     status = models.CharField(max_length=15, choices=ASSET_STATUS_TYPES, default=IN_STOCK)
 
@@ -282,6 +282,7 @@ class ApprovedItem(models.Model):
                 self.item.save()
 
         else:
+            print("OTHER THING")
             if self.request_type == DISBURSEMENT:
                 disbursement = Disbursement.objects.create(request=self.request, item=self.item, quantity=self.quantity)
             elif self.request_type == LOAN:
@@ -311,6 +312,16 @@ class Disbursement(models.Model):
     asset      = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="disbursements", blank=True, null=True)
     date       = models.DateTimeField(blank=True, auto_now_add=True)
     quantity   = models.PositiveIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        is_creation = False
+        if not self.pk:
+            is_creation = True
+        super().save(*args, **kwargs)
+        if is_creation:
+            if self.asset:
+                self.asset.status = DISBURSED
+                self.asset.save()
 
 
 class Transaction(models.Model):

@@ -187,7 +187,7 @@ const LoansContainer = React.createClass({
                   <div className="panel-body">
                     <Row style={{display: "flex"}}>
                       <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-circle" />
+                        <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-sign" />
                       </Col>
                       <Col md={9}>
                         <p style={{marginBottom:"0px", fontSize: "12px"}}>This item has been returned from loan.</p>
@@ -196,7 +196,7 @@ const LoansContainer = React.createClass({
                     <hr />
                     <Row style={{display: "flex"}}>
                       <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="remove-circle" />
+                        <Glyphicon style={{color: "#f0ad4e", fontSize:"18px"}} glyph="exclamation-sign" />
                       </Col>
                       <Col md={9}>
                         <p style={{marginBottom: "0px", fontSize: "12px"}}>This item is still on loan.</p>
@@ -205,7 +205,7 @@ const LoansContainer = React.createClass({
                     <hr />
                     <Row style={{display: "flex"}}>
                       <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#f0ad4e", fontSize:"18px"}} glyph="log-out" />
+                        <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="log-out" />
                       </Col>
                       <Col md={9}>
                         <p style={{marginBottom: "0px", fontSize: "12px"}}>This item has been disbursed.</p>

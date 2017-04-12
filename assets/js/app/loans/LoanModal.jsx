@@ -11,13 +11,21 @@ const LoanModal = React.createClass({
   getInitialState() {
     return {
       disburseQuantity: 0,
-      returnQuantity: 0
+      returnQuantity: 0,
+    }
+  },
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.loan != null) {
+      this.setState({
+        returnQuantity: nextProps.loan.quantity_returned
+      })
     }
   },
 
   handleReturnQuantityChange(e) {
     var q = Number(e.target.value)
-    if ((q >= 0) && (q <= (this.props.loan.quantity_loaned))) {
+    if ((q >= this.props.loan.quantity_returned) && (q <= (this.props.loan.quantity_loaned))) {
       this.setState({
         returnQuantity: q
       })
@@ -104,16 +112,22 @@ const LoanModal = React.createClass({
       if(this.props.loan.asset != null){
         assetTableEntry = (
           <tr>
-            <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Asset:</th>
-            <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.asset}</td>
+            <th style={{width:"30%", verticalAlign: "middle"}}>Asset:</th>
+            <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.asset}</td>
           </tr>
         )
       }
       var statusLabel = (this.props.loan.quantity_loaned == this.props.loan.quantity_returned) ? (
         <Label bsSize="small" bsStyle="success">Returned</Label>
       ) : (
-        <Label bsSize="small" bsStyle="danger">Outstanding</Label>
+        <Label bsSize="small" bsStyle="warning">Outstanding</Label>
       )
+      var assetTag = (this.props.loan.asset != null) ? (
+        <tr>
+          <th style={{width:"20%"}}>Asset Tag:</th>
+          <td style={{width:"80%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.props.loan.asset}</span></td>
+        </tr>
+      ) : null
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
@@ -124,47 +138,48 @@ const LoanModal = React.createClass({
             <Row>
               <Col xs={12}>
                 <Row>
-                  <Col xs={6}>
-                    <h5 style={{marginTop: "0px", color: "rgb(223, 105, 26)"}}>
-                      { this.props.loan.item.name }
-                    </h5>
-                  </Col>
-                  <Col xs={6}>
+                  <Col xs={12}>
                     <span style={{float:"right", fontSize:"12px"}}>Status: &nbsp; &nbsp; {statusLabel}</span>
                   </Col>
                 </Row>
                 <Row>
                   <Col md={12} xs={12}>
-                    <Table>
+                    <Table condensed style={{fontSize:"14px"}}>
                       <tbody>
                         <tr>
-                          <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Loaned to:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b", color: "rgb(223, 105, 26)"}}>{this.props.request.requester}</td>
+                          <th style={{width:"30%"}}>Item:</th>
+                          <td style={{width:"70%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.props.loan.item}</span></td>
+                        </tr>
+                        { assetTag }
+                        <tr>
+                          <th style={{width:"30%", verticalAlign: "middle"}}>Loaned to:</th>
+                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.requester}</td>
                         </tr>
                         <tr>
-                          <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Justification:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.request.open_comment}</td>
+                          <th style={{width:"30%", verticalAlign: "middle"}}>Justification:</th>
+                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.open_comment}</td>
                         </tr>
                         <tr>
-                          <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Item:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.item}</td>
+                          <th style={{width:"30%", verticalAlign: "middle"}}>Item:</th>
+                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.item}</td>
                         </tr>
                         {assetTableEntry}
                         <tr>
-                          <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Approval date:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{new Date(this.props.loan.date_loaned).toLocaleString()}</td>
+                        <th style={{width:"30%", verticalAlign: "middle"}}>Approval date:</th>
+                        <td style={{width:"70%", verticalAlign: "middle"}}>{new Date(this.props.loan.date_loaned).toLocaleString()}</td>
+
                         </tr>
                         <tr>
-                          <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Admin comments:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.request.closed_comment}</td>
+                          <th style={{width:"30%", verticalAlign: "middle"}}>Admin comments:</th>
+                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.closed_comment}</td>
                         </tr>
                         <tr>
-                          <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Number Loaned:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.quantity_loaned} instance(s)</td>
+                          <th style={{width:"30%", verticalAlign: "middle"}}>Number Loaned:</th>
+                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.quantity_loaned} instance(s)</td>
                         </tr>
                         <tr>
-                          <th style={{width:"40%", verticalAlign: "middle", border: "1px solid #596a7b"}}>Number Returned:</th>
-                          <td style={{width:"60%", verticalAlign: "middle", border: "1px solid #596a7b"}}>{this.props.loan.quantity_returned} instance(s)</td>
+                          <th style={{width:"30%", verticalAlign: "middle"}}>Number Returned:</th>
+                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.quantity_returned} instance(s)</td>
                         </tr>
                       </tbody>
                     </Table>
@@ -181,16 +196,16 @@ const LoanModal = React.createClass({
 
                     <Form horizontal>
                       <FormGroup bsSize="small">
-                        <Col xs={2} componentClass={ControlLabel}>
+                        <Col xs={4} componentClass={ControlLabel}>
                           Quantity Returned:
                         </Col>
                         <Col xs={4}>
                           <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
-                                       onChange={this.handleReturnQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned} />
+                                       onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
                         </Col>
                         <Col xs={4}>
                           <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleReturn}>
-                            Update Quantity Returned
+                            Log Return
                           </Button>
                         </Col>
                       </FormGroup>
@@ -208,7 +223,7 @@ const LoanModal = React.createClass({
 
                     <Form horizontal>
                       <FormGroup bsSize="small">
-                        <Col xs={2} componentClass={ControlLabel}>
+                        <Col xs={4} componentClass={ControlLabel}>
                           Quantity to Disburse
                         </Col>
                         <Col xs={4}>

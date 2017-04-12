@@ -59,7 +59,7 @@ class AssetSerializer(serializers.Serializer):
 
         if asset.status == models.LOANED:
             d.update({"loan": LoanSerializer(context=self.context,
-                                             instance=asset.loans.filter(quantity_loaned__gt=F('quantity_returned')).get(asset=asset.pk)).data})
+                                             instance=asset.loans.filter(quantity_loaned__gt=F('quantity_returned')).get(asset=asset.tag)).data})
 
         if asset.status == models.DISBURSED:
             d.update({"disbursement": DisbursementSerializer(context=self.context,
@@ -506,29 +506,16 @@ class RequestPUTSerializer(serializers.ModelSerializer):
 
         if data.get('status', None) == "A":
             ai_instances = []
-            if len(approved_items) == 0:
-                for ri in instance.requested_items.all():
-                    if ri.item.has_assets:
-                        # create an ApprovedItem with a list of assets
-                        # randomly choose assets to approve
-                        assets = ri.item.assets.all().order_by('?')[:ri.quantity]
-                        ai = models.ApprovedItem(request=instance, item=ri.item, quantity=ri.quantity, request_type=request_type, assets=assets)
-                    else:
-                        # create an ApprovedItem without a list of assets
-                        ai = models.ApprovedItem(request=instance, item=ri.item, quantity=ri.quantity, request_type=ri.request_type)
-                    ai_instances.append(ai)
+            for approved_item in approved_items:
+                item = approved_item.get('item', None)
+                quantity = approved_item.get('quantity', 0)
+                request_type = approved_item.get('request_type', models.LOAN)
+                assets = approved_item.get('assets', [])
 
-            else:
-                for approved_item in approved_items:
-                    item = approved_item.get('item', None)
-                    quantity = approved_item.get('quantity', 0)
-                    request_type = approved_item.get('request_type', models.LOAN)
-                    assets = approved_item.get('assets', [])
+                ai = models.ApprovedItem(request=instance, item=item, quantity=quantity, request_type=request_type)
+                ai.save(assets=assets)
 
-                    ai = models.ApprovedItem(request=instance, item=item, quantity=quantity, request_type=request_type)
-                    ai.save(assets=assets)
-
-                    ai_instances.append(ai)
+                ai_instances.append(ai)
 
         return super().update(instance, data)
 
@@ -592,35 +579,33 @@ class LoanSerializerNoRequest(serializers.ModelSerializer):
         return loan_json
 
 class DisbursementSerializer(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
-        self.fields['asset'] = AssetSerializer(context=self.context, read_only=False, many=False)
-
-    request = serializers.SerializerMethodField(method_name="get_request_representation")
+    item    = serializers.SlugRelatedField(slug_field="name", read_only=True)
+    request = BaseRequestSerializer(read_only=True)
 
     class Meta:
         model = models.Disbursement
-        fields = ['id', 'request', 'item', 'quantity', 'date', 'asset']
+        fields = ['id', 'request', 'item', 'quantity', 'date']
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date']
 
-    def get_request_representation(self, loangroup):
-        request_json = RequestSerializer(instance=loangroup.request, context=self.context).data
-        request_json.pop('loans')
-        request_json.pop('disbursements')
-        return request_json
+    def to_representation(self, disbursement):
+        disbursement_json = super().to_representation(disbursement)
+        if disbursement.asset != None:
+            disbursement_json.update({"asset": disbursement.asset.tag})
+        return disbursement_json
 
 class DisbursementSerializerNoRequest(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['item'] = ItemSerializer(context=self.context, read_only=True, many=False)
-        self.fields['asset'] = AssetSerializer(context=self.context, read_only=False, many=False)
+    item    = serializers.SlugRelatedField(slug_field="name", read_only=True)
 
     class Meta:
         model = models.Disbursement
-        fields = ['id', 'item', 'quantity', 'date', 'asset']
+        fields = ['id', 'item', 'quantity', 'date']
         read_only_fields = ['id', 'item', 'quantity_loaned', 'date']
 
+    def to_representation(self, disbursement):
+        disbursement_json = super().to_representation(disbursement)
+        if disbursement.asset != None:
+            disbursement_json.update({"asset": disbursement.asset.tag})
+        return disbursement_json
 
 class ConversionSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(required=True)
@@ -646,7 +631,6 @@ class LoanReminderSerializer(serializers.ModelSerializer):
         fields = ['id', 'body', 'subject', 'date']
 
     def to_internal_value(self, data):
-        print("to interval value")
         validated_data = data.copy()
         today = datetime.now().date()
         errors = {}
