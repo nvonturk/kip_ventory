@@ -27,7 +27,7 @@ const RequestedItemPanel = React.createClass({
       search: "",
 
       hasAssets: this.props.hasAssets,
-      stock: this.props.stock
+      stock: this.props.stock,
     }
   },
 
@@ -35,7 +35,7 @@ const RequestedItemPanel = React.createClass({
     var _this = this
     this.setState({
       hasAssets: nextProps.hasAssets,
-      stock: nextProps.stock
+      stock: nextProps.stock,
     }, _this.getAssets)
   },
 
@@ -86,8 +86,8 @@ const RequestedItemPanel = React.createClass({
       ai['quantity'] = q
       this.setState({
         approved_item: ai,
-        selectedAssets: newAssets
-      }, () => {this.props.handleModification(this.props.index, this.state.approved_item, assets)})
+        selectedAssets: newAssets,
+      }, () => {this.props.clearErrors(this.state.approved_item.item); this.props.handleModification(this.props.index, this.state.approved_item, assets);})
     }
   },
 
@@ -98,7 +98,7 @@ const RequestedItemPanel = React.createClass({
     ai['request_type'] = e.target.value
     this.setState({
       approved_item: ai,
-    }, () => {this.props.handleModification(this.props.index, this.state.approved_item, assets)})
+    }, () => {this.props.clearErrors(this.state.approved_item.item); this.props.handleModification(this.props.index, this.state.approved_item, assets)})
   },
 
   getExpandChevron() {
@@ -133,7 +133,7 @@ const RequestedItemPanel = React.createClass({
       selectedAssets.push(asset.tag)
       this.setState({
         selectedAssets: selectedAssets
-      }, () => {this.props.handleModification(this.props.index, this.state.approved_item, this.state.selectedAssets)})
+      }, () => {this.props.clearErrors(this.state.approved_item.item); this.props.handleModification(this.props.index, this.state.approved_item, this.state.selectedAssets)})
     }
   },
 
@@ -147,7 +147,7 @@ const RequestedItemPanel = React.createClass({
     }
     this.setState({
       selectedAssets: newSelected
-    }, () => {this.props.handleModification(this.props.index, this.state.approved_item, this.state.selectedAssets)})
+    }, () => {this.props.clearErrors(this.state.approved_item.item); this.props.handleModification(this.props.index, this.state.approved_item, this.state.selectedAssets)})
   },
 
   showAssetSelectionModal(e) {
@@ -160,6 +160,14 @@ const RequestedItemPanel = React.createClass({
     this.setState({
       showAssetSelectionModal: false
     })
+  },
+
+  getSelectionErrorStyle() {
+    return (this.props.errors[this.state.approved_item.item] == null) ? (
+      {fontSize: "10px", display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}
+    ) : (
+      {fontSize: "10px", display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center", border: "1px solid red"}
+    )
   },
 
   render() {
@@ -207,7 +215,7 @@ const RequestedItemPanel = React.createClass({
                 </Col>
               </Form>
             </Col>
-            <Col xs={2} style={{fontSize: "10px", display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
+            <Col xs={2} style={this.getSelectionErrorStyle()}>
               {this.state.selectedAssets.length} of {this.state.approved_item.quantity} assets selected.
             </Col>
             <Col xs={1} style={{fontSize: "12px", display: "flex", flexDirection:"column", justifyContent: "center"}}>

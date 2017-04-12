@@ -152,7 +152,6 @@ const ManagerRequestsDetail = React.createClass({
           for (var key in response) {
             if (response.hasOwnProperty(key)) {
               var messages = response[key]
-              console.log(key, messages)
               var node = <span key={key} className="help-block">{messages[0]}</span>
               errNodes[key] = node
             }
@@ -387,7 +386,7 @@ const ManagerRequestsDetail = React.createClass({
     request['approved_items'] = approved_items
     this.setState({
       request: request
-    }, () => {console.log(this.state.request.approved_items)})
+    })
   },
 
   getModifiableRequestedItems() {
@@ -395,8 +394,18 @@ const ManagerRequestsDetail = React.createClass({
       <RequestedItemsContainer requestedItems={this.state.request.requested_items}
                                itemAssets={this.state.itemAssets}
                                itemQuantities={this.state.itemQuantities}
-                               handleModification={this.modifyApprovedItem}/>
+                               handleModification={this.modifyApprovedItem}
+                               errors={this.state.errorNodes}
+                               clearErrors={this.clearErrors}/>
     )
+  },
+
+  clearErrors(item_name) {
+    var errors = JSON.parse(JSON.stringify(this.state.errorNodes))
+    errors[item_name] = null
+    this.setState({
+      errorNodes: errors
+    })
   },
 
   getReadOnlyRequestedItems() {
@@ -511,6 +520,10 @@ const ManagerRequestsDetail = React.createClass({
             </thead>
             <tbody>
               { this.state.request.loans.map( (loan, i) => {
+                var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
+                  <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                          onClick={this.showModal.bind(this, loan)} />
+                ) : null
                 return (
                   <tr key={loan.id}>
                     <td data-th="" className="text-center">
@@ -528,8 +541,7 @@ const ManagerRequestsDetail = React.createClass({
                       { loan.quantity_returned }
                     </td>
                     <td data-th="" className="text-center">
-                      <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
-                              onClick={this.showModal.bind(this, loan)} />
+                      { editGlyph }
                     </td>
                   </tr>
                 )

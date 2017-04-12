@@ -14,6 +14,7 @@ const AssetModal = React.createClass({
       showLoanModal: false,
       asset: {},
       fields: [],
+      modifyFields: {},
       errorNodes: {}
     }
   },
@@ -21,10 +22,15 @@ const AssetModal = React.createClass({
   componentWillReceiveProps(nprops) {
     var _this = this
     if (nprops.asset != null) {
-      this.setState({
-        asset: nprops.asset
-      }, _this.getAssetFields)
+      this.updateAsset(nprops.asset)
     }
+  },
+
+  updateAsset(asset) {
+    var _this = this;
+    this.setState({
+      asset: asset
+    }, _this.getAssetFields)
   },
 
   getAssetFields() {
@@ -35,8 +41,15 @@ const AssetModal = React.createClass({
       asset_tracked: true
     }
     getJSON(url, params, function(data) {
+      var modifyFields = {}
+      var fields = data.results
+      for (var i=0; i<fields.length; i++) {
+        var field = fields[i]
+        modifyFields[field.name] = false
+      }
       _this.setState({
-        fields: data.results
+        fields: data.results,
+        modifyFields: modifyFields
       })
     })
   },
@@ -49,101 +62,55 @@ const AssetModal = React.createClass({
     })
   },
 
-  getShortTextField(field_name, presentation_name, i) {
+  getShortTextField(field_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
-          <FormControl type="text"
-                       value={this.state.asset[field_name]}
-                       name={field_name}
-                       onChange={this.handleFieldChange} />
-        </Col>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)} style={{marginBottom: "0px"}}>
+        <FormControl type="text"
+                     value={this.state.asset[field_name]}
+                     name={field_name}
+                     onChange={this.handleFieldChange} />
         { this.state.errorNodes[field_name] }
       </FormGroup>
     )
   },
 
-  getLongTextField(field_name, presentation_name, i) {
+  getLongTextField(field_name, i) {
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
-          <FormControl type="text"
-                       style={{resize: "vertical", height:"100px"}}
-                       componentClass={"textarea"}
-                       value={this.state.asset[field_name]}
-                       name={field_name}
-                       onChange={this.handleFieldChange} />
-        </Col>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)} style={{marginBottom: "0px"}}>
+        <FormControl type="text"
+                     style={{resize: "vertical", height:"100px"}}
+                     componentClass={"textarea"}
+                     value={this.state.asset[field_name]}
+                     name={field_name}
+                     onChange={this.handleFieldChange} />
         { this.state.errorNodes[field_name] }
       </FormGroup>
     )
   },
 
-  getIntegerField(field_name, presentation_name, step, i) {
+  getIntegerField(field_name, step, i) {
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
-          <FormControl type="number"
-                       step={step}
-                       value={this.state.asset[field_name]}
-                       name={field_name}
-                       onChange={this.handleFieldChange} />
-        </Col>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)} style={{marginBottom: "0px"}}>
+        <FormControl type="number"
+                     step={step}
+                     value={this.state.asset[field_name]}
+                     name={field_name}
+                     onChange={this.handleFieldChange} />
         { this.state.errorNodes[field_name] }
       </FormGroup>
     )
   },
 
-  getFloatField(field_name, presentation_name, i){
+  getFloatField(field_name, i){
     return (
-      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
-          <FormControl type="number"
-                       value={this.state.asset[field_name]}
-                       name={field_name}
-                       onChange={this.handleFieldChange} />
-        </Col>
+      <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)} style={{marginBottom: "0px"}}>
+        <FormControl type="number"
+                     value={this.state.asset[field_name]}
+                     name={field_name}
+                     onChange={this.handleFieldChange} />
         { this.state.errorNodes[field_name] }
       </FormGroup>
     )
-  },
-
-  getCustomFieldForms() {
-    return this.state.fields.map( (field, i) => {
-
-      var field_name = field.name
-      var is_private = field.private
-      var field_type = field.field_type
-
-      switch(field_type) {
-        case "Single":
-          return this.getShortTextField(field_name, field_name, i)
-          break;
-        case "Multi":
-          return this.getLongTextField(field_name, field_name, i)
-          break;
-        case "Int":
-          return this.getIntegerField(field_name, field_name, 1, i)
-          break;
-        case "Float":
-          return this.getFloatField(field_name, field_name, i)
-          break
-        default:
-          return null
-      }
-    })
   },
 
   getValidationState(key) {
@@ -165,7 +132,8 @@ const AssetModal = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response) {
-        _this.props.refresh()
+        _this.props.onHide();
+        _this.props.refresh();
       },
       error: function(xhr, textStatus, thrownError) {
         if (xhr.status == 400) {
@@ -185,6 +153,63 @@ const AssetModal = React.createClass({
     })
   },
 
+  enableAssetFieldModify(field_name) {
+    var modifyFields = JSON.parse(JSON.stringify(this.state.modifyFields))
+    modifyFields[field_name] = true
+    this.setState({
+      modifyFields: modifyFields
+    })
+  },
+
+  disableAssetFieldModify(field_name) {
+    var modifyFields = JSON.parse(JSON.stringify(this.state.modifyFields))
+    modifyFields[field_name] = false
+    this.setState({
+      modifyFields: modifyFields
+    })
+  },
+
+  getCustomFieldTable() {
+    return (
+      <Table condensed style={{fontSize:"14px"}}>
+        <tbody>
+
+          { this.state.fields.map ( (field, i) => {
+            var field_name = field.name
+            var is_private = field.private
+            var field_type = field.field_type
+            var value = this.state.asset[field_name]
+            var elem = null
+
+            switch(field_type) {
+              case "Single":
+                elem = this.getShortTextField(field_name, i)
+                break;
+              case "Multi":
+                elem = this.getLongTextField(field_name, i)
+                break;
+              case "Int":
+                elem = this.getIntegerField(field_name, 1, i)
+                break;
+              case "Float":
+                elem = this.getFloatField(field_name, i)
+                break
+              default:
+                return null
+            }
+
+
+            return (
+              <tr>
+                <th style={{width:"20%", verticalAlign: "middle"}}>{field_name}:</th>
+                <td style={{width:"80%", verticalAlign: "middle"}}>{elem}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </Table>
+    )
+  },
 
   render() {
     if (this.state.asset == null) {
@@ -212,7 +237,7 @@ const AssetModal = React.createClass({
                      request={this.state.asset.loan.request}
                      show={this.state.showLoanModal}
                      onHide={e => {this.setState({showLoanModal: false})}}
-                     refresh={this.props.refresh}/>
+                     refresh={this.props.refresh} />
         )
       } else if (this.state.asset.status == "Disbursed") {
         assetStatus = <Label bsSize="small" bsStyle="danger">Disbursed</Label>
@@ -239,7 +264,7 @@ const AssetModal = React.createClass({
             </Row>
 
             <Row>
-              <Col xs={12}>
+              <Col xs={10} xsOffset={1}>
                 <Table condensed style={{fontSize:"14px"}}>
                   <tbody>
                     <tr>
@@ -254,9 +279,7 @@ const AssetModal = React.createClass({
                   </tbody>
                 </Table>
                 <hr />
-                <Form horizontal onSubmit={this.modifyAsset}>
-                  { this.getCustomFieldForms() }
-                </Form>
+                { this.getCustomFieldTable() }
               </Col>
             </Row>
 
@@ -264,7 +287,10 @@ const AssetModal = React.createClass({
 
           </Modal.Body>
           <Modal.Footer>
-
+            <div style={{float: "right"}}>
+              <Button bsSize="small" bsStyle="danger" style={{marginRight: "20px"}} onClick={e => {this.props.onHide();}}>Cancel</Button>
+              <Button bsSize="small" bsStyle="info" onClick={this.modifyAsset}>Save</Button>
+            </div>
           </Modal.Footer>
         </Modal>
       )

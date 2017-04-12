@@ -108,14 +108,6 @@ class Item(models.Model):
 
         super(Item, self).save(*args, **kwargs)
 
-        # create a list of auto-generated tags for each asset
-        if self.has_assets:
-            num_assets = self.assets.all().count()
-            diff = self.quantity - num_assets
-            if diff > 0:
-                for i in range(diff):
-                    asset = Asset.objects.create(item=self)
-
         # If this call to `save` is creating a new Item, then we must also create
         # a CustomValue for each CustomField that currently exists.
         # Note that this block won't run if we're simply updating this Item via
@@ -125,6 +117,9 @@ class Item(models.Model):
             for cf in CustomField.objects.all():
                 cv = CustomValue(field=cf, item=self)
                 cv.save()
+            if self.has_assets:
+                for i in range(self.quantity):
+                    asset = Asset.objects.create(item=self)
 
 def uuid_to_str():
     return str(uuid.uuid4())
@@ -141,12 +136,9 @@ class Asset(models.Model):
         return "{}: {}".format(self.item.name, self.pk)
 
     def save(self, *args, **kwargs):
-        print("SAVING")
         is_creation = False
         if not self.pk:
             is_creation = True
-        print(is_creation)
-        print()
         super().save(*args, **kwargs)
 
         if is_creation:
@@ -159,15 +151,6 @@ class CartItem(models.Model):
     owner        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
     item         = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity     = models.PositiveIntegerField(default=0)
-    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
-
-    class Meta:
-        ordering = ('item__name',)
-
-
-class CartAsset(models.Model):
-    cart        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_assets')
-    asset        = models.ForeignKey(Asset, on_delete=models.CASCADE)
     request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
 
     class Meta:
@@ -298,7 +281,6 @@ class ApprovedItem(models.Model):
                 self.item.save()
 
         else:
-            print("OTHER THING")
             if self.request_type == DISBURSEMENT:
                 disbursement = Disbursement.objects.create(request=self.request, item=self.item, quantity=self.quantity)
             elif self.request_type == LOAN:
@@ -312,7 +294,7 @@ class ApprovedItem(models.Model):
 class Loan(models.Model):
     request            = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='loans', blank=True, null=True)
     item               = models.ForeignKey(Item, on_delete=models.CASCADE)
-    asset              = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="loans", blank=True, null=True)
+    asset              = models.ForeignKey(Asset, on_delete=models.SET_NULL, related_name="loans", blank=True, null=True)
     date_loaned        = models.DateTimeField(blank=True, auto_now_add=True)
     date_returned      = models.DateTimeField(blank=True, null=True)
     quantity_loaned    = models.PositiveIntegerField(default=0)
@@ -320,11 +302,24 @@ class Loan(models.Model):
     class Meta:
         ordering = ('id',)
 
+    def save(self, *args, **kwargs):
+        is_creation = False
+        if not self.pk:
+            is_creation = True
+        super().save(*args, **kwargs)
+        if is_creation:
+            if self.asset:
+                if (self.quantity_loaned > self.quantity_returned):
+                    self.asset.status = LOANED
+                elif (self.quantity_loaned == self.quantity_returned):
+                    self.asset.status = IN_STOCK
+                self.asset.save()
+
 
 class Disbursement(models.Model):
     request    = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='disbursements', blank=True, null=True)
     item       = models.ForeignKey(Item, on_delete=models.CASCADE)
-    asset      = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="disbursements", blank=True, null=True)
+    asset      = models.ForeignKey(Asset, on_delete=models.SET_NULL, related_name="disbursements", blank=True, null=True)
     date       = models.DateTimeField(blank=True, auto_now_add=True)
     quantity   = models.PositiveIntegerField(default=0)
 
@@ -340,12 +335,16 @@ class Disbursement(models.Model):
 
 
 class Transaction(models.Model):
-    item             = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item          = models.ForeignKey(Item, on_delete=models.CASCADE)
+    assets        = models.ManyToManyField(Asset, blank=True)
     category      = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     quantity      = models.PositiveIntegerField()
     comment       = models.CharField(max_length=1024, blank=True, null=True)
     date          = models.DateTimeField(blank=True, auto_now_add=True)
     administrator = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('-id',)
 
 class BulkImport(models.Model):
     administrator   = models.ForeignKey(User, on_delete=models.CASCADE)
