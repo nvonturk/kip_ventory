@@ -543,24 +543,30 @@ class RequestPUTSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         approved_items = data.get('approved_items', [])
+        errors = {}
+        approved_item_errors = {}
         for approved_item in approved_items:
             item = approved_item.get('item')
+            item_errors = []
             if (item.has_assets):
                 assets = approved_item.get('assets', [])
                 quantity = approved_item.get('quantity', 0)
 
-                if (len(assets) != quantity):
-                    raise ValidationError({"approved_items": ["Must specify {} unique asset tag(s).".format(quantity)]})
-
                 asset_set = set(assets)
-                if len(asset_set) != len(assets):
-                    raise ValidationError({"approved_items": ["Must specify {} unique asset tag(s).".format(quantity)]})
+                if (len(assets) != quantity) or (len(asset_set) != len(assets)):
+                    item_errors.append("Must specify {} unique asset tag(s).".format(quantity))
+                else:
+                    for asset in assets:
+                        if asset.status != models.IN_STOCK:
+                            item_errors.append("Asset with tag {} is not in stock.".format(asset.tag))
+                        if asset.item.pk != item.pk:
+                            item_errors.append("Asset with tag {} is not an instance of item {}.".format(asset.tag, item.name))
 
-                for asset in assets:
-                    if asset.status != models.IN_STOCK:
-                        raise ValidationError({"approved_items": ["Asset with tag {} is not in stock.".format(asset.tag)]})
-                    if asset.item.pk != item.pk:
-                        raise ValidationError({"approved_items": ["Asset with tag {} is not an instance of item {}.".format(asset.tag, item.name)]})
+            if len(item_errors) > 0:
+                errors.update({item.name: item_errors})
+
+        if errors:
+            raise ValidationError(errors)
 
         return super().validate(data)
 
