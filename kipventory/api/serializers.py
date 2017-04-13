@@ -13,7 +13,7 @@ from rest_framework.utils.serializer_helpers import BindingDict
 
 
 class CustomFieldSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=128, required=True)
+    name = serializers.CharField(required=True)
     field_type = serializers.ChoiceField(choices=models.FIELD_TYPES)
 
     class Meta:
@@ -37,14 +37,14 @@ class AssetSerializer(serializers.Serializer):
         else:
             custom_fields = models.CustomField.objects.filter(asset_tracked=True, private=False)
 
-        self.fields['tag'] = serializers.CharField(max_length=256, required=False)
+        self.fields['tag'] = serializers.CharField(required=False)
 
         for custom_field in custom_fields:
             ft = custom_field.field_type
             if ft == "Single":
-                self.fields[custom_field.name] = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
+                self.fields[custom_field.name] = serializers.CharField(required=False, allow_blank=True, default="")
             elif ft == "Multi":
-                self.fields[custom_field.name] = serializers.CharField(max_length=8192, required=False, allow_blank=True, default="")
+                self.fields[custom_field.name] = serializers.CharField(required=False, allow_blank=True, default="")
             elif ft == "Int":
                 self.fields[custom_field.name] = serializers.IntegerField(required=False, default=0)
             elif ft == "Float":
@@ -97,19 +97,19 @@ class ItemSerializer(serializers.Serializer):
         for custom_field in custom_fields:
             ft = custom_field.field_type
             if ft == "Single":
-                self.fields[custom_field.name] = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
+                self.fields[custom_field.name] = serializers.CharField(required=False, allow_blank=True, default="")
             elif ft == "Multi":
-                self.fields[custom_field.name] = serializers.CharField(max_length=8192, required=False, allow_blank=True, default="")
+                self.fields[custom_field.name] = serializers.CharField(required=False, allow_blank=True, default="")
             elif ft == "Int":
                 self.fields[custom_field.name] = serializers.IntegerField(required=False, default=0)
             elif ft == "Float":
                 self.fields[custom_field.name] = serializers.FloatField(required=False, default=0.0)
 
-    name          = serializers.CharField(max_length=256,  required=True,  allow_blank=False)
+    name          = serializers.CharField(required=True,  allow_blank=False)
     quantity      = serializers.IntegerField(min_value=0,  required=True)
-    model_no      = serializers.CharField(max_length=256,  required=False, allow_blank=True, default="")
-    description   = serializers.CharField(max_length=1024, required=False, allow_blank=True, default="")
-    tags          = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True), required=False, default=None)
+    model_no      = serializers.CharField(required=False, allow_blank=True, default="")
+    description   = serializers.CharField(required=False, allow_blank=True, default="")
+    tags          = serializers.ListField(child=serializers.CharField(allow_blank=True), required=False, default=None)
     has_assets    = serializers.BooleanField(required=False)
     minimum_stock = serializers.IntegerField(min_value=0, required=False)
 
@@ -468,26 +468,26 @@ class BaseRequestSerializer(serializers.ModelSerializer):
         model = models.Request
         fields = ['id', 'requester', 'administrator', 'date_open', 'open_comment', 'date_closed', 'closed_comment', 'status']
 
+
 class RequestSerializer(serializers.ModelSerializer):
     requester        = serializers.SlugRelatedField(read_only=True, slug_field="username")
     requested_items  = RequestedItemSerializer(read_only=True, many=True)
     date_open        = serializers.ReadOnlyField()
-    open_comment     = serializers.CharField(max_length=1024, default='', allow_blank=True)
+    open_comment     = serializers.CharField(default='', allow_blank=True)
     closed_comment   = serializers.ReadOnlyField()
     date_closed      = serializers.ReadOnlyField()
     administrator    = serializers.SlugRelatedField(read_only=True, slug_field="username")
     approved_items   = ApprovedItemSerializer(read_only=True, many=True)
-    loans            = serializers.SerializerMethodField(method_name="get_loan_representations")
-    disbursements    = serializers.SerializerMethodField(method_name="get_disbursement_representations")
-    backfill_requests = serializers.SerializerMethodField(method_name="get_backfill_request_representations")
-    backfills        = serializers.SerializerMethodField(method_name="get_backfill_representations")
-
+    # loans            = serializers.SerializerMethodField(method_name="get_loan_representations")
+    # disbursements    = serializers.SerializerMethodField(method_name="get_disbursement_representations")
+    # backfill_requests = serializers.SerializerMethodField(method_name="get_backfill_request_representations")
+    # backfills        = serializers.SerializerMethodField(method_name="get_backfill_representations")
     status           = serializers.ChoiceField(read_only=True, choices=models.STATUS_CHOICES)
 
     class Meta:
         model = models.Request
         fields = ['id', 'requester', 'administrator', 'status', 'requested_items', 'approved_items', 'date_open', 'open_comment', 'date_closed',
-                  'closed_comment', 'loans', 'disbursements', 'backfill_requests', 'backfills']
+                  'closed_comment']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -495,40 +495,38 @@ class RequestSerializer(serializers.ModelSerializer):
             data.pop('approved_items')
             data.pop('closed_comment')
             data.pop('date_closed')
-            data.pop('loans')
-            data.pop('disbursements')
             data.pop('administrator')
         return data
 
-    def get_loan_representations(self, request):
-        loans = []
-        for loan in request.loans.all():
-            loan_json = LoanSerializerNoRequest(instance=loan, context=self.context).data
-            loans.append(loan_json)
-        return loans
-
-    def get_disbursement_representations(self, request):
-        disbursements = []
-        for disbursement in request.disbursements.all():
-            disbursement_json = DisbursementSerializerNoRequest(instance=disbursement, context=self.context).data
-            disbursements.append(disbursement_json)
-        return disbursements
-
-    def get_backfill_representations(self, request):
-        backfills = []
-        for backfill in request.backfills.all():
-            backfill_json = BackfillGETSerializer(instance=backfill, context=self.context).data
-            backfills.append(backfill_json)
-        return backfills
-
-    def get_backfill_request_representations(self, request):
-        backfill_requests_json = []
-        for loan in request.loans.all():
-            backfill_requests = loan.backfill_requests
-            for backfill_request in backfill_requests.all():
-                backfill_request_json = BackfillRequestGETSerializer(instance=backfill_request, context=self.context).data
-                backfill_requests_json.append(backfill_request_json)
-        return backfill_requests_json
+    # def get_loan_representations(self, request):
+    #     loans = []
+    #     for loan in request.loans.all():
+    #         loan_json = LoanSerializerNoRequest(instance=loan, context=self.context).data
+    #         loans.append(loan_json)
+    #     return loans
+    #
+    # def get_disbursement_representations(self, request):
+    #     disbursements = []
+    #     for disbursement in request.disbursements.all():
+    #         disbursement_json = DisbursementSerializerNoRequest(instance=disbursement, context=self.context).data
+    #         disbursements.append(disbursement_json)
+    #     return disbursements
+    #
+    # def get_backfill_representations(self, request):
+    #     backfills = []
+    #     for backfill in request.backfills.all():
+    #         backfill_json = BackfillGETSerializer(instance=backfill, context=self.context).data
+    #         backfills.append(backfill_json)
+    #     return backfills
+    #
+    # def get_backfill_request_representations(self, request):
+    #     backfill_requests_json = []
+    #     for loan in request.loans.all():
+    #         backfill_requests = loan.backfill_requests
+    #         for backfill_request in backfill_requests.all():
+    #             backfill_request_json = BackfillRequestGETSerializer(instance=backfill_request, context=self.context).data
+    #             backfill_requests_json.append(backfill_request_json)
+    #     return backfill_requests_json
 
     def to_internal_value(self, data):
         requester = data.get('requester', None)
@@ -543,7 +541,7 @@ class RequestPUTSerializer(serializers.ModelSerializer):
     open_comment    = serializers.CharField(read_only=True)
     administrator   = serializers.SlugRelatedField(read_only=True, slug_field="username")
     date_closed     = serializers.DateTimeField(read_only=True)
-    closed_comment  = serializers.CharField(max_length=1024, allow_blank=True, default="")
+    closed_comment  = serializers.CharField(allow_blank=True, default="")
     status          = serializers.ChoiceField(choices=((models.APPROVED, 'Approved'), (models.DENIED, 'Denied')))
     approved_items  = ApprovedItemSerializer(many=True)
 
@@ -608,23 +606,14 @@ class RequestPUTSerializer(serializers.ModelSerializer):
         return super().update(instance, data)
 
 class RequestLoanDisbursementSerializer(serializers.Serializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['loans'] = LoanSerializerNoRequest(context=self.context, many=True, read_only=True)
-        self.fields['disbursements'] = DisbursementSerializerNoRequest(context=self.context, many=True, read_only=True)
-
     def to_representation(self, request):
         request_json = RequestSerializer(context=self.context, instance=request).data
-        loans = request_json.pop('loans')
-        disbursements = request_json.pop('disbursements')
-        backfill_requests = request_json.pop('backfill_requests')
-        backfills = request_json.pop('backfills')
+        loans = LoanSerializerNoRequest(instance=request.loans.all(), many=True).data
+        disbursements = DisbursementSerializerNoRequest(instance=request.disbursements.all(), many=True).data
         d = {
             "disbursements": disbursements,
             "loans": loans,
-            "request": request_json,
-            "backfill_requests": backfill_requests,
-            "backfills": backfills
+            "request": request_json
         }
         return d
 
@@ -830,14 +819,19 @@ class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.BackfillRequest
-        fields = ['requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
+        fields = ['requester_comment', 'receipt']
+
+    def to_internal_value(self, data):
+        loan = data.get('loan', None)
+        data = super().to_internal_value(data)
+        data.update({"loan": loan})
+        return data
 
 class BackfillRequestPUTSerializer(serializers.ModelSerializer):
-    receipt = serializers.FileField()
-
+    status = serializers.ChoiceField(choices=models.BACKFILL_REQUEST_STATUS_CHOICES)
     class Meta:
         model = models.BackfillRequest
-        fields = ['id', 'receipt', 'status', 'admin_comment']
+        fields = ['status', 'admin_comment']
 
     # uncomment and fix to deal with permissioning on a field-level basis in serializer
     '''

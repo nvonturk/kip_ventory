@@ -199,7 +199,8 @@ const ItemAssetPanel = React.createClass({
         <AssetModal show={this.state.showAssetModal}
                     onHide={this.closeAssetModal}
                     asset={this.state.assetToShow}
-                    refresh={this.refreshAssets} />
+                    refresh={this.refreshAssets}
+                    user={this.props.user}/>
 
       </div>
     ) : (

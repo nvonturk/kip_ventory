@@ -244,7 +244,8 @@ const ManagerLoanPanel = React.createClass({
                    request={request}
                    show={this.state.showModal}
                    onHide={this.hideModal}
-                   refresh={this.props.getLoanGroups} />
+                   refresh={this.props.getLoanGroups}
+                   user={this.props.user}/>
 
       </ListGroupItem>
     );

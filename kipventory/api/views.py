@@ -831,6 +831,188 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class GetBackfillsByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.Backfill.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.BackfillGETSerializer
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        backfills = self.get_queryset().filter(request__pk=instance.pk).distinct()
+
+        # filter by status
+        backfill_status = request.query_params.get('status', "")
+        if backfill_status != "":
+            if (backfill_status == models.AWAITING_ITEMS):
+                backfills = backfills.filter(status=models.AWAITING_ITEMS).distinct()
+            elif (backfill_status == models.SATISFIED):
+                backfills = backfills.filter(status=models.SATISFIED).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(backfills)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetBackFillRequestsByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.BackfillRequest.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.BackfillRequestGETSerializer
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        backfill_requests = self.get_queryset().filter(loan__request__pk=instance.pk).distinct()
+
+        # filter by status
+        status = request.query_params.get('status', "")
+        if status != "":
+            if (status == models.OUTSTANDING):
+                backfill_requests = backfill_requests.filter(status=models.OUTSTANDING).distinct()
+            elif (status == models.APPROVED):
+                backfill_requests = backfill_requests.filter(status=models.APPROVED).distinct()
+            elif (status == models.DENIED):
+                backfill_requests = backfill_requests.filter(status=models.DENIED).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(backfill_requests)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetLoansByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+    filter_backends = (GetLoansByItemFilter,)
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.Loan.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.LoanSerializerNoRequest
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        loans = self.get_queryset().filter(request__pk=instance.pk)
+
+        status = request.query_params.get('status', "").lower().strip()
+        if status != "":
+            if (status == "outstanding"):
+                loans = loans.filter(quantity_loaned__gt=F('quantity_returned')).distinct()
+            elif (status == "returned"):
+                loans = loans.filter(quantity_loaned=F('quantity_returned')).distinct()
+
+        item = request.query_params.get('item', "")
+        if item != "":
+            loans = loans.filter(item__name__icontains=item).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(loans)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetDisbursementsByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+    filter_backends = (GetLoansByItemFilter,)
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.Disbursement.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.DisbursementSerializerNoRequest
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        disbursements = self.get_queryset().filter(request__pk=instance.pk)
+
+        item = request.query_params.get('item', "")
+        if item != "":
+            disbursements = disbursements.filter(item__name__icontains=item).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(disbursements)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+
+
+
+
+
+
 class LoanListAllFilter(BaseFilterBackend):
   def get_schema_fields(self, view):
     fields = [
@@ -1411,7 +1593,7 @@ class BulkImportTemplate(APIView):
     permissions = (permissions.IsAuthenticated,)
 
     def get(self, request, format=None):
-        schema = ["name", "model_no", "quantity", "description", "tags"]
+        schema = ["name", "model_no", "quantity", "description", "tags", "has_assets", "minimum_stock"]
         for cf in models.CustomField.objects.all():
             schema.append(cf.name)
 
@@ -1441,7 +1623,6 @@ class BulkImport(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
 
         if serializer.is_valid():
-            print("HERE")
             inputfile = request.FILES['data']
             fout = open('importtempfile.csv', 'wb')
             for chunk in inputfile.chunks():
@@ -1474,8 +1655,16 @@ class BulkImport(generics.GenericAPIView):
             quantity_index = 0
             description_index = 0
             tags_index = 0
+
+            columns_present = set(['name', 'model_no', 'quantity', 'description', 'tags', 'has_assets', 'minimum_stock'])
             for (i, column_name) in enumerate(header):
                 indices[column_name] = i
+                if column_name in columns_present:
+                    columns_present.remove(column_name)
+            if len(columns_present) > 0:
+                error = {'error': ['Invalid header schema. Missing required columns {}'.format(', '.join(columns_present))]}
+                return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
 
             # Parse all known item fields (intrinsic)
             name_index = indices['name']
@@ -1498,6 +1687,14 @@ class BulkImport(generics.GenericAPIView):
             tags = [row[tags_index] for row in contents]
             indices.pop('tags')
 
+            has_assets_index = indices['has_assets']
+            have_assets = [row[has_assets_index] for row in contents]
+            indices.pop('has_assets')
+
+            minimum_stock_index = indices['minimum_stock']
+            minimum_stocks = [row[minimum_stock_index] for row in contents]
+            indices.pop('minimum_stock')
+
             # Now, indices contains only custom field headers
 
             custom_field_errors = []
@@ -1518,6 +1715,29 @@ class BulkImport(generics.GenericAPIView):
 
                 except models.CustomField.DoesNotExist:
                     custom_field_errors.append({field_name: ["Custom field '{}' does not exist (column {}).".format(field_name, i)]})
+            # check type of has_assets
+            has_assets_errors = []
+            for i, has_assets in enumerate(have_assets):
+                print(has_assets)
+                if (has_assets != "") and (has_assets.lower() != "true") and (has_assets.lower() != "false"):
+                    print((has_assets.lower() != "true"))
+                    print("HERE1")
+                    has_assets_errors.append("has_assets field must be empty or of type boolean (row {}).".format(i))
+                if has_assets.lower() == 'true':
+                    print("HERE2")
+                    have_assets[i] = True
+                if has_assets.lower() == 'false' or has_assets.lower() == '':
+                    print("HERE3")
+                    have_assets[i] = False
+            minimum_stock_errors = []
+            for i, minimum_stock in enumerate(minimum_stocks):
+                if minimum_stock == "" or minimum_stock == None:
+                    minimum_stock_errors.append("Minimum stock must not be blank (row {}).".format(i))
+                try:
+                    minimum_stock = int(minimum_stock)
+                    minimum_stocks[i] = minimum_stock
+                except:
+                    minimum_stock_errors.append("Minimum stock must be an integer (row {}).".format(i))
             # check unique names
             nameset = set()
             name_errors = []
@@ -1554,6 +1774,10 @@ class BulkImport(generics.GenericAPIView):
             if custom_field_errors:
                 for e in custom_field_errors:
                     errors.update(e)
+            if has_assets_errors:
+                errors.update({"has_assets": has_assets_errors})
+            if minimum_stock_errors:
+                errors.update({"minimum_stock": minimum_stock_errors})
             if errors:
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1562,7 +1786,7 @@ class BulkImport(generics.GenericAPIView):
             created_tags  = []
             for i in range(numRows):
                 # create the base item
-                item = models.Item(name=names[i], model_no=model_nos[i], quantity=quantities[i], description=descriptions[i])
+                item = models.Item(name=names[i], model_no=model_nos[i], quantity=quantities[i], description=descriptions[i], minimum_stock=minimum_stocks[i], has_assets=have_assets[i])
                 item.save()
                 itemCreationBILog(item, request.user)
                 # parse and create tags
@@ -2159,12 +2383,20 @@ class BackfillRequestCreate(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
+    def get_loan(self, pk):
+        try:
+            return models.Loan.objects.get(pk=pk)
+        except models.Loan.DoesNotExist:
+            raise NotFound('Loan with ID {} not found.'.format(pk))
+
     def get_serializer_class(self):
         return serializers.BackfillRequestPOSTSerializer
 
-    def post(self, request, format=None):
-        data = request.data.copy()
+    def post(self, request, pk, format=None):
+        loan = self.get_loan(pk=pk)
 
+        data = request.data.copy()
+        data.update({"loan" : loan})
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
