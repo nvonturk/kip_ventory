@@ -32,6 +32,7 @@ const LoansContainer = React.createClass({
   },
 
   getLoanGroups() {
+    console.log("get loan groups");
     var url = "/api/loans/"
     var params = {
       page: this.state.page,
@@ -42,6 +43,7 @@ const LoansContainer = React.createClass({
     }
     var _this = this;
     getJSON(url, params, function(data) {
+      console.log("get loan groups return");
       _this.setState({
         loanGroups: data.results,
         pageCount: Number(data.num_pages)

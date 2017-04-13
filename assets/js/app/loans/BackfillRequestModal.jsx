@@ -61,6 +61,7 @@ const BackfillRequestModal = React.createClass({
       },
       success: function(response) {
         console.log('success');
+        _this.props.createBackfillRequestSuccessHandler()
       
       },
       // TODO : BETTER ERROR HANDLING. PARSE THE RESULT, AND ASSOCIATE WITH THE CORRECT FORM FIELD

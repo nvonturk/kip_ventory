@@ -6,6 +6,8 @@ from django.utils import timezone
 import dateutil.parser
 from datetime import datetime
 from django.db.models import Q, F, Count
+from .validators import validate_file_extension
+
 
 import re, json
 
@@ -839,6 +841,13 @@ class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
         data = super().to_internal_value(data)
         data.update({"loan": loan})
         return data
+
+    def validate_receipt(self, value):
+        print(value)
+        validate_file_extension(value)
+        return value
+
+
 
 class BackfillRequestPUTSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(choices=models.BACKFILL_REQUEST_STATUS_CHOICES)

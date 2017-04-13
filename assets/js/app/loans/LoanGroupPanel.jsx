@@ -42,6 +42,7 @@ const LoanGroupPanel = React.createClass({
   },
 
   hideCreateBackfillRequestModal() {
+    console.log("hide")
     this.setState({
       showCreateBackfillRequestModal: false, 
       backfill_request_loan: null
@@ -54,6 +55,13 @@ const LoanGroupPanel = React.createClass({
     } else{
       return <Button onClick={this.showCreateBackfillRequestModal.bind(this, loan)} block bsSize="small" bsStyle="info">Request For Backfill</Button>
     }
+  },
+
+  createBackfillRequestSuccessHandler() {
+    // todo update loan of interest instead of refreshing all loans
+    // todo use promise
+    this.props.getLoanGroups();
+    this.hideCreateBackfillRequestModal();
   },
 
   isAllReturned() {
@@ -273,6 +281,7 @@ const LoanGroupPanel = React.createClass({
                               request={this.props.loanGroup.request}
                               show={this.state.showCreateBackfillRequestModal}
                               onHide={this.hideCreateBackfillRequestModal}
+                              createBackfillRequestSuccessHandler={this.createBackfillRequestSuccessHandler}
                               user={this.props.user}/>
 
       </ListGroupItem>

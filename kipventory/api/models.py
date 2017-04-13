@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 import copy
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
+from .validators import validate_file_extension
 import uuid
 
 LOAN = 'loan'
@@ -451,7 +452,7 @@ class BackfillRequest(models.Model):
     #request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="backfill_requests")
     loan = models.ForeignKey('Loan', on_delete=models.SET_NULL, related_name="backfill_requests", null=True)
     requester_comment = models.TextField()
-    receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
+    receipt = models.FileField(upload_to="backfill/", validators=[validate_file_extension])
     status = models.TextField(choices=BACKFILL_REQUEST_STATUS_CHOICES, default=OUTSTANDING)
     admin_comment = models.TextField(default='', blank=True)
 
