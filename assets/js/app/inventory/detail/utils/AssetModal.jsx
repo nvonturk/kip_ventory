@@ -145,8 +145,6 @@ const AssetModal = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response) {
-        // _this.props.onHide();
-        // _this.props.refresh();
         _this.props.assetRefresh();
       },
       error: function(xhr, textStatus, thrownError) {
@@ -265,16 +263,7 @@ const AssetModal = React.createClass({
       } else if (this.state.asset.status == "In Stock") {
         assetStatus = <Label bsSize="small" bsStyle="success">In Stock</Label>
       }
-      /*<td style={{width:"80%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.state.asset.tag}</span></td>*/
-      //onChange={e => {this.setState({transactionComment: e.target.value})}}
-      // <FormGroup bsSize="small">
-      //   <FormControl type="text"
-      //                style={{height:"35px"}}
-      //                componentClass={"textarea"}
-      //                value={this.state.asset.tag}
-      //                name="assetTagEntryArea"
-      //                onChange={this.handleFieldChange} />
-      // </FormGroup>
+
 
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
