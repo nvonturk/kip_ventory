@@ -50,6 +50,15 @@ class AssetSerializer(serializers.Serializer):
             elif ft == "Float":
                 self.fields[custom_field.name] = serializers.FloatField(required=False, default=0.0)
 
+    def validate(self, data):
+        tag = data.get("tag",None)
+
+        if tag is not None:
+            if models.Asset.objects.filter(tag=tag).count() > 0 :
+                raise ValidationError({"tag" : ["An Asset with the tag {} already exists".format(tag)]})
+        return data
+
+
     def to_representation(self, asset):
         d = {
             "item": asset.item.name,

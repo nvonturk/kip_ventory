@@ -288,7 +288,7 @@ const AssetModal = React.createClass({
                     <tr>
                       <th style={{width:"20%"}}>Asset Tag:</th>
                       <td style={{width:"80%"}}><FormGroup key={"tag"} bsSize="small" validationState={this.getValidationState("tag")} style={{marginBottom: "0px"}}>
-                        <FormControl type="text"
+                        <FormControl type="number"
                                      value={this.state.newTagName}
                                      name={"tag"}
                                      onChange={this.handleTagNameChange} />
