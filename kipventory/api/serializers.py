@@ -59,7 +59,7 @@ class AssetSerializer(serializers.Serializer):
 
         if asset.status == models.LOANED:
             d.update({"loan": LoanSerializer(context=self.context,
-                                             instance=asset.loans.filter(quantity_loaned__gt=F('quantity_returned')).get(asset=asset.tag)).data})
+                                             instance=asset.loans.filter(quantity_loaned__gt=F('quantity_returned')).get(asset__tag=asset.tag)).data})
 
         if asset.status == models.DISBURSED:
             d.update({"disbursement": DisbursementSerializer(context=self.context,
