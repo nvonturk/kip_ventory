@@ -236,7 +236,7 @@ const ManagerRequestsDetail = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        _this.getRequest()
+        _this.componentWillMount()
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
