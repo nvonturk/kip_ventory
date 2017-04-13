@@ -145,8 +145,9 @@ const AssetModal = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success: function(response) {
-        _this.props.onHide();
-        _this.props.refresh();
+        // _this.props.onHide();
+        // _this.props.refresh();
+        _this.props.assetRefresh();
       },
       error: function(xhr, textStatus, thrownError) {
         if (xhr.status == 400) {
@@ -250,7 +251,8 @@ const AssetModal = React.createClass({
                      request={this.state.asset.loan.request}
                      show={this.state.showLoanModal}
                      onHide={e => {this.setState({showLoanModal: false})}}
-                     refresh={this.props.refresh} />
+                     refresh={this.props.refresh}
+                     user={this.props.user} />
         )
       } else if (this.state.asset.status == "Disbursed") {
         assetStatus = <Label bsSize="small" bsStyle="danger">Disbursed</Label>

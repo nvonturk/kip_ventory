@@ -90,6 +90,13 @@ const ItemAssetPanel = React.createClass({
     this.props.refresh()
   },
 
+  assetEditRefresh(e){
+    this.getAssets()
+    this.props.refresh()
+    this.closeAssetModal()
+  },
+
+
   handleAssetStatusSelection(e) {
     this.setState({
       assetFilterStatus: e.target.value,
@@ -200,6 +207,7 @@ const ItemAssetPanel = React.createClass({
                     onHide={this.closeAssetModal}
                     asset={this.state.assetToShow}
                     refresh={this.refreshAssets}
+                    assetRefresh={this.assetEditRefresh}
                     user={this.props.user}/>
 
       </div>
