@@ -2393,12 +2393,12 @@ class BackfillRequestCreate(generics.GenericAPIView):
     def post(self, request, loan_id, format=None):
         loan = self.get_loan(pk=loan_id)
         data = request.data.copy()
-        data.update({"loan" : loan_id})
+        data.update({"loan" : loan})
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
-
-        return Response(serializer.data)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)

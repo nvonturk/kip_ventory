@@ -49,7 +49,11 @@ const LoanGroupPanel = React.createClass({
   },
 
   getCreateBackfillRequestButton(loan) {
-    return <Button onClick={this.showCreateBackfillRequestModal.bind(this, loan)}>Request For Backfill</Button>
+    if(loan.outstanding_backfill_request != null) {
+      return <Label>Backfill Requested</Label>
+    } else{
+      return <Button onClick={this.showCreateBackfillRequestModal.bind(this, loan)} block bsSize="small" bsStyle="info">Request For Backfill</Button>
+    }
   },
 
   isAllReturned() {
@@ -112,11 +116,13 @@ const LoanGroupPanel = React.createClass({
             <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Actions</th>
+            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Backfill</th>
+            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Modify</th>
           </tr>
         </thead>
         <tbody>
           { loans.map( (loan, i) => {
+            console.log(loan);
             var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
               <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
                       onClick={this.showLoanModal.bind(this, loan)} />
@@ -146,9 +152,11 @@ const LoanGroupPanel = React.createClass({
                 <td data-th="Returned" className="text-center">
                   { loan.quantity_returned }
                 </td>
-                <td data-th="Actions" className="text-center">
-                  { editGlyph }
+                <td data-th="Backfill" className="text-center" style={{fontSize:"12px"}}>
                   { this.getCreateBackfillRequestButton(loan) }
+                </td>
+                <td data-th="Modify" className="text-center">
+                  { editGlyph }
                 </td>
               </tr>
             )
