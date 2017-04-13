@@ -813,7 +813,7 @@ const ManagerDetail = React.createClass({
                   <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
                 </Col>
                 <Col md={5} xs={12}>
-                  <ItemAssetPanel item={this.state.item} refresh={this.refresh}/>
+                  <ItemAssetPanel item={this.state.item} refresh={this.refresh} user={this.props.route.user}/>
                 </Col>
               </Row>
 
@@ -899,7 +899,8 @@ const ManagerDetail = React.createClass({
                      loan={this.state.loanToShow}
                      request={request}
                      onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
-                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.refresh();}}/>
+                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.refresh();}}
+                     user={this.props.route.user}/>
 
         </Grid>
       )

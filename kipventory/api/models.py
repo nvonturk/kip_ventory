@@ -74,7 +74,7 @@ BACKFILL_STATUS_CHOICES = (
 
 # Create your models here.
 class Tag(models.Model):
-    name = models.CharField(max_length=128, unique=True)
+    name = models.TextField(unique=True)
 
     class Meta:
         ordering = ('name',)
@@ -83,11 +83,11 @@ class Tag(models.Model):
         return self.name
 
 class Item(models.Model):
-    name        = models.CharField(max_length=256, unique=True)
+    name        = models.TextField(unique=True)
     minimum_stock = models.PositiveIntegerField(default=0)
     quantity    = models.PositiveIntegerField(default=0)
-    model_no    = models.CharField(default='', max_length=256, blank=True)
-    description = models.TextField(default='', max_length=1024, blank=True)
+    model_no    = models.TextField(default='', blank=True)
+    description = models.TextField(default='', blank=True)
     tags        = models.ManyToManyField(Tag, blank=True)
     has_assets  = models.BooleanField(default=False)
 
@@ -124,10 +124,17 @@ class Item(models.Model):
 def uuid_to_str():
     return str(uuid.uuid4())
 
+def auto_incr_asset():
+    asset = Asset.objects.all().order_by('-pk').first()
+    if (asset is None):
+        return 1
+    return asset.pk + 1
+
+
 class Asset(models.Model):
-    tag = models.AutoField(primary_key=True)
+    tag = models.IntegerField(unique=True, default=auto_incr_asset)
     item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name="assets")
-    status = models.CharField(max_length=15, choices=ASSET_STATUS_TYPES, default=IN_STOCK)
+    status = models.TextField(choices=ASSET_STATUS_TYPES, default=IN_STOCK)
 
     class Meta:
         ordering = ('tag',)
@@ -151,15 +158,15 @@ class CartItem(models.Model):
     owner        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
     item         = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity     = models.PositiveIntegerField(default=0)
-    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
+    request_type = models.TextField(choices=ITEM_REQUEST_TYPES, default=DISBURSEMENT)
 
     class Meta:
         ordering = ('item__name',)
 
 class CustomField(models.Model):
-    name           = models.CharField(max_length=128, unique=True)
+    name           = models.TextField(unique=True)
     private        = models.BooleanField(default=False)
-    field_type     = models.CharField(max_length=10, choices=FIELD_TYPES, default='Single')
+    field_type     = models.TextField(choices=FIELD_TYPES, default='Single')
     asset_tracked  = models.BooleanField(default=False)
 
     class Meta:
@@ -192,8 +199,8 @@ class CustomField(models.Model):
 class CustomValue(models.Model):
     field  = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="item_values", to_field="name")
     item   = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="values")
-    Single = models.CharField(default='', max_length=256, blank=True)
-    Multi  = models.TextField(default='', max_length=1024, blank=True)
+    Single = models.TextField(default='', blank=True)
+    Multi  = models.TextField(default='', blank=True)
     Int    = models.IntegerField(default=0, blank=True)
     Float  = models.FloatField(default=0.0, blank=True)
 
@@ -209,8 +216,8 @@ class CustomValue(models.Model):
 class CustomAssetValue(models.Model):
     field  = models.ForeignKey(CustomField, on_delete=models.CASCADE, related_name="asset_values", to_field="name")
     asset  = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="values")
-    Single = models.CharField(default='', max_length=256, blank=True)
-    Multi  = models.TextField(default='', max_length=1024, blank=True)
+    Single = models.TextField(default='', blank=True)
+    Multi  = models.TextField(default='', blank=True)
     Int    = models.IntegerField(default=0, blank=True)
     Float  = models.FloatField(default=0.0, blank=True)
 
@@ -226,10 +233,10 @@ class CustomAssetValue(models.Model):
 class Request(models.Model):
     requester      = models.ForeignKey(User, on_delete=models.CASCADE, related_name="requests")
     date_open      = models.DateTimeField(blank=True, auto_now_add=True)
-    open_comment   = models.TextField(default='', max_length=1024, blank=True)
+    open_comment   = models.TextField(default='', blank=True)
     date_closed    = models.DateTimeField(blank=True, null=True)
-    closed_comment = models.TextField(max_length=1024, blank=True)
-    status         = models.CharField(max_length=15, choices=STATUS_CHOICES, default=OUTSTANDING)
+    closed_comment = models.TextField(blank=True)
+    status         = models.TextField(choices=STATUS_CHOICES, default=OUTSTANDING)
     administrator  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests_administrated', blank=True, null=True)
 
     class Meta:
@@ -239,7 +246,7 @@ class RequestedItem(models.Model):
     request      = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='requested_items', blank=True, null=True)
     item         = models.ForeignKey(Item,    on_delete=models.CASCADE, related_name='requested_items', blank=True, null=True)
     quantity     = models.PositiveIntegerField(default=0)
-    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=LOAN)
+    request_type = models.TextField(choices=ITEM_REQUEST_TYPES, default=LOAN)
 
     class Meta:
         ordering = ('item__name',)
@@ -249,7 +256,7 @@ class ApprovedItem(models.Model):
     item         = models.ForeignKey(Item,    on_delete=models.CASCADE)
     assets       = models.ManyToManyField(Asset, blank=True)
     quantity     = models.PositiveIntegerField(default=0)
-    request_type = models.CharField(max_length=15, choices=ITEM_REQUEST_TYPES, default=LOAN)
+    request_type = models.TextField(choices=ITEM_REQUEST_TYPES, default=LOAN)
 
     class Meta:
         ordering = ('item__name',)
@@ -337,9 +344,9 @@ class Disbursement(models.Model):
 class Transaction(models.Model):
     item          = models.ForeignKey(Item, on_delete=models.CASCADE)
     assets        = models.ManyToManyField(Asset, blank=True)
-    category      = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    category      = models.TextField(choices=CATEGORY_CHOICES)
     quantity      = models.PositiveIntegerField()
-    comment       = models.CharField(max_length=1024, blank=True, null=True)
+    comment       = models.TextField(blank=True, null=True)
     date          = models.DateTimeField(blank=True, auto_now_add=True)
     administrator = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -357,12 +364,12 @@ class Log(models.Model):
     initiating_user         = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='initiating_user', null=True)
     affected_user           = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='affected_user', blank=True, null=True)
     date_created            = models.DateTimeField(blank=True, auto_now_add=True)
-    message                 = models.CharField(max_length=1024, blank=True, null=True)
+    message                 = models.TextField(blank=True, null=True)
     request                 = models.ForeignKey(Request, on_delete=models.SET_NULL, blank=True, null=True)
     # default values for the foreignkeys in the event those items are deleted or users etc.
-    default_item            = models.CharField(max_length=256, blank=True, null=True)
-    default_initiating_user = models.CharField(max_length=256, blank=True, null=True)
-    default_affected_user   = models.CharField(max_length=256, blank=True, null=True)
+    default_item            = models.TextField(blank=True, null=True)
+    default_initiating_user = models.TextField(blank=True, null=True)
+    default_affected_user   = models.TextField(blank=True, null=True)
 
     # The following categories detail what type of inventory change occurred
     ITEM_CREATION                   = "Item Creation"
@@ -389,7 +396,7 @@ class Log(models.Model):
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),
     )
-    category            = models.CharField(max_length=50, choices=category_choices2)
+    category            = models.TextField(choices=category_choices2)
 
     class Meta:
         ordering = ('-date_created',)
@@ -432,31 +439,31 @@ def delete_profile_for_user(sender, instance=None, **kwargs):
 
 class LoanReminder(models.Model):
     date = models.DateField()
-    body = models.TextField(max_length=1024)
-    subject = models.CharField(max_length=128, default="")
+    body = models.TextField()
+    subject = models.TextField(default="")
     sent = models.BooleanField(default=False)
 
 # Todo only allow one object. maybe use django-solo
 class SubjectTag(models.Model):
-    text = models.CharField(max_length=128, unique=True)
+    text = models.TextField(unique=True)
 
 class BackfillRequest(models.Model):
-    loan = models.ForeignKey('Loan', on_delete=models.CASCADE, related_name="backfill_requests")
-    requester_comment = models.TextField(max_length=1024)
+    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="backfill_requests")
+    loan = models.ForeignKey('Loan', on_delete=models.SET_NULL, related_name="backfill_requests", null=True)
+    requester_comment = models.TextField()
     receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
-    status = models.CharField(max_length=15, choices=BACKFILL_REQUEST_STATUS_CHOICES, default=OUTSTANDING)
-    admin_comment = models.TextField(default='', max_length=1024, blank=True)
+    status = models.TextField(choices=BACKFILL_REQUEST_STATUS_CHOICES, default=OUTSTANDING)
+    admin_comment = models.TextField(default='', blank=True)
 
 class Backfill(models.Model):
     request            = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='backfills', blank=True, null=True)
     item               = models.ForeignKey(Item, on_delete=models.CASCADE)
     date_created       = models.DateTimeField(blank=True, auto_now_add=True)
     date_satisfied      = models.DateTimeField(blank=True, null=True)
-    status = models.CharField(max_length=15, choices=BACKFILL_STATUS_CHOICES, default=AWAITING_ITEMS)
+    status = models.TextField(choices=BACKFILL_STATUS_CHOICES, default=AWAITING_ITEMS)
     quantity = models.PositiveIntegerField(default=0)
     # to add partial per-item backfill, replace status with quantity_backfilled and quantity_returned
     # backfillrequest fields
-    requester_comment = models.TextField(max_length=1024)
+    requester_comment = models.TextField()
     receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
-    admin_comment = models.TextField(default='', max_length=1024, blank=True)
-
+    admin_comment = models.TextField(default='', blank=True)

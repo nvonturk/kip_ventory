@@ -101,7 +101,7 @@ const ManagerLoansContainer = React.createClass({
             <ManagerLoanPanel getLoanGroups={this.getLoanGroups}
                               toggleExpanded={this.handleLoanGroupExpand.bind(this, i)}
                               index={i} expanded={this.state.expandedLoanGroup}
-                              key={lg.request.id} loanGroup={lg} />
+                              key={lg.request.id} loanGroup={lg} user={this.props.route.user}/>
           )
         })}
       </ListGroup>

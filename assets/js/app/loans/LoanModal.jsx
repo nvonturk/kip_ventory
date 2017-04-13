@@ -12,6 +12,8 @@ const LoanModal = React.createClass({
     return {
       disburseQuantity: 0,
       returnQuantity: 0,
+      backfillJustification: "",
+
     }
   },
 
@@ -39,6 +41,12 @@ const LoanModal = React.createClass({
         disburseQuantity: q
       })
     }
+  },
+
+  handleChange(e) {
+    this.setState({
+      [e.target.name]: e.target.value
+    })
   },
 
   handleReturn(e) {
@@ -104,6 +112,7 @@ const LoanModal = React.createClass({
   },
 
   render() {
+    console.log(this.props.user)
     if (this.props.loan == null) {
       return null
     } else {
@@ -117,6 +126,89 @@ const LoanModal = React.createClass({
           <th style={{width:"20%"}}>Asset Tag:</th>
           <td style={{width:"80%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.props.loan.asset}</span></td>
         </tr>
+      ) : null
+      var adminForms = (this.props.user.is_staff || this.props.user.is_superuser) ? (
+        <Row>
+          <Col xs={12}>
+            <hr />
+            <h5>
+              Log a Return
+            </h5>
+
+            <Form horizontal>
+              <FormGroup bsSize="small">
+                <Col xs={4} componentClass={ControlLabel}>
+                  Quantity Returned:
+                </Col>
+                <Col xs={4}>
+                  <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
+                               onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
+                </Col>
+                <Col xs={4}>
+                  <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleReturn}>
+                    Log Return
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+          </Col>
+
+          <Col xs={12}>
+            <hr />
+          </Col>
+
+          <Col xs={12}>
+            <h5>
+              Convert to Disbursement
+            </h5>
+
+            <Form horizontal>
+              <FormGroup bsSize="small">
+                <Col xs={4} componentClass={ControlLabel}>
+                  Quantity to Disburse
+                </Col>
+                <Col xs={4}>
+                  <FormControl type="number" name="disburseQuantity" value={this.state.disburseQuantity}
+                               onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
+                </Col>
+                <Col xs={4}>
+                  <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()} style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
+                    Disburse Instances
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+            <hr />
+          </Col>
+        </Row>
+      ) : null
+      var ownerForms = (this.props.user.username === this.props.request.requester) ? (
+        <Row>
+          <Col xs={12}>
+            <hr />
+            <h5>
+              Request Backfill
+            </h5>
+
+            <Form horizontal>
+              <FormGroup bsSize="small">
+                <Col xs={4} componentClass={ControlLabel}>
+                  Justification
+                </Col>
+                <Col xs={4}>
+                  <FormControl type="text" componentClass="textarea" name="backfillJustification" value={this.state.backfillJustification}
+                               onChange={this.handleChange} />
+                </Col>
+                <Col xs={4}>
+                  <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()} style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
+                    Disburse Instances
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+            <hr />
+          </Col>
+        </Row>
       ) : null
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
@@ -170,60 +262,8 @@ const LoanModal = React.createClass({
                   </Col>
                 </Row>
 
-
-                <Row>
-                  <Col xs={12}>
-                  <hr />
-                    <h5>
-                      Log a Return
-                    </h5>
-
-                    <Form horizontal>
-                      <FormGroup bsSize="small">
-                        <Col xs={4} componentClass={ControlLabel}>
-                          Quantity Returned:
-                        </Col>
-                        <Col xs={4}>
-                          <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
-                                       onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
-                        </Col>
-                        <Col xs={4}>
-                          <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleReturn}>
-                            Log Return
-                          </Button>
-                        </Col>
-                      </FormGroup>
-                    </Form>
-                  </Col>
-
-                  <Col xs={12}>
-                    <hr />
-                  </Col>
-
-                  <Col xs={12}>
-                    <h5>
-                      Convert to Disbursement
-                    </h5>
-
-                    <Form horizontal>
-                      <FormGroup bsSize="small">
-                        <Col xs={4} componentClass={ControlLabel}>
-                          Quantity to Disburse
-                        </Col>
-                        <Col xs={4}>
-                          <FormControl type="number" name="disburseQuantity" value={this.state.disburseQuantity}
-                                       onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
-                        </Col>
-                        <Col xs={4}>
-                          <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()} style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
-                            Disburse Instances
-                          </Button>
-                        </Col>
-                      </FormGroup>
-                    </Form>
-                    <hr />
-                  </Col>
-                </Row>
+                { adminForms }
+                { ownerForms }
 
               </Col>
             </Row>
