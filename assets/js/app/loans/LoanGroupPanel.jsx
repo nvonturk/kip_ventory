@@ -11,7 +11,24 @@ import LoanModal from './LoanModal'
 const LoanGroupPanel = React.createClass({
 
   getInitialState() {
-    return {}
+    return {
+      showLoanModal: false,
+      loanToModify: null,
+    }
+  },
+
+  showLoanModal(loan) {
+    this.setState({
+      showLoanModal: true,
+      loanToModify: loan,
+    })
+  },
+
+  hideModal(e) {
+    this.setState({
+      showLoanModal: false,
+      loanToModify: null,
+    })
   },
 
   isAllReturned() {
@@ -66,8 +83,6 @@ const LoanGroupPanel = React.createClass({
 
 
   getLoansCard(loans, request) {
-
-
     return (loans.length > 0) ? (
       <Table style={{marginBottom: "0px"}}>
         <thead>
@@ -77,10 +92,15 @@ const LoanGroupPanel = React.createClass({
             <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
+            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           { loans.map( (loan, i) => {
+            var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
+              <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                      onClick={this.showLoanModal.bind(this, loan)} />
+            ) : null
             return (
               <tr key={loan.id}>
                 <td data-th="" className="text-center">
@@ -105,6 +125,9 @@ const LoanGroupPanel = React.createClass({
                 </td>
                 <td data-th="Returned" className="text-center">
                   { loan.quantity_returned }
+                </td>
+                <td data-th="Action" className="text-center">
+                  { editGlyph }
                 </td>
               </tr>
             )
@@ -209,6 +232,13 @@ const LoanGroupPanel = React.createClass({
             </Panel>
           </Col>
         </Row>
+
+        <LoanModal loan={this.state.loanToModify}
+                   request={this.props.loanGroup.request}
+                   show={this.state.showLoanModal}
+                   onHide={this.hideModal}
+                   refresh={this.props.getLoanGroups}
+                   user={this.props.user}/>
 
       </ListGroupItem>
     );
