@@ -448,7 +448,7 @@ class SubjectTag(models.Model):
     text = models.TextField(unique=True)
 
 class BackfillRequest(models.Model):
-    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="backfill_requests")
+    #request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="backfill_requests")
     loan = models.ForeignKey('Loan', on_delete=models.SET_NULL, related_name="backfill_requests", null=True)
     requester_comment = models.TextField()
     receipt = models.FileField(upload_to="backfill/", blank=True, null=True)

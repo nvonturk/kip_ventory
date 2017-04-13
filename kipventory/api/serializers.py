@@ -819,13 +819,15 @@ class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.BackfillRequest
-        fields = ['requester_comment', 'receipt']
+        fields = ['requester_comment', 'loan', 'receipt']
 
+    '''
     def to_internal_value(self, data):
         loan = data.get('loan', None)
         data = super().to_internal_value(data)
         data.update({"loan": loan})
         return data
+    '''
 
 class BackfillRequestPUTSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(choices=models.BACKFILL_REQUEST_STATUS_CHOICES)

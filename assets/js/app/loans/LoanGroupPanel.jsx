@@ -7,6 +7,7 @@ import { getCookie } from '../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
 import Select from 'react-select'
 import LoanModal from './LoanModal'
+import BackfillRequestModal from './BackfillRequestModal'
 
 const LoanGroupPanel = React.createClass({
 
@@ -14,6 +15,8 @@ const LoanGroupPanel = React.createClass({
     return {
       showLoanModal: false,
       loanToModify: null,
+      showCreateBackfillRequestModal: false,
+      backfill_request_loan: null, 
     }
   },
 
@@ -29,6 +32,24 @@ const LoanGroupPanel = React.createClass({
       showLoanModal: false,
       loanToModify: null,
     })
+  },
+
+  showCreateBackfillRequestModal(loan) {
+    this.setState({
+      showCreateBackfillRequestModal: true, 
+      backfill_request_loan: loan
+    })
+  },
+
+  hideCreateBackfillRequestModal() {
+    this.setState({
+      showCreateBackfillRequestModal: false, 
+      backfill_request_loan: null
+    })
+  },
+
+  getCreateBackfillRequestButton(loan) {
+    return <Button onClick={this.showCreateBackfillRequestModal.bind(this, loan)}>Request For Backfill</Button>
   },
 
   isAllReturned() {
@@ -81,7 +102,6 @@ const LoanGroupPanel = React.createClass({
     )
   },
 
-
   getLoansCard(loans, request) {
     return (loans.length > 0) ? (
       <Table style={{marginBottom: "0px"}}>
@@ -92,7 +112,7 @@ const LoanGroupPanel = React.createClass({
             <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Action</th>
+            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -126,8 +146,9 @@ const LoanGroupPanel = React.createClass({
                 <td data-th="Returned" className="text-center">
                   { loan.quantity_returned }
                 </td>
-                <td data-th="Action" className="text-center">
+                <td data-th="Actions" className="text-center">
                   { editGlyph }
+                  { this.getCreateBackfillRequestButton(loan) }
                 </td>
               </tr>
             )
@@ -239,6 +260,12 @@ const LoanGroupPanel = React.createClass({
                    onHide={this.hideModal}
                    refresh={this.props.getLoanGroups}
                    user={this.props.user}/>
+
+        <BackfillRequestModal loan={this.state.backfill_request_loan}
+                              request={this.props.loanGroup.request}
+                              show={this.state.showCreateBackfillRequestModal}
+                              onHide={this.hideCreateBackfillRequestModal}
+                              user={this.props.user}/>
 
       </ListGroupItem>
     );

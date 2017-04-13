@@ -2390,11 +2390,10 @@ class BackfillRequestCreate(generics.GenericAPIView):
     def get_serializer_class(self):
         return serializers.BackfillRequestPOSTSerializer
 
-    def post(self, request, pk, format=None):
-        loan = self.get_loan(pk=pk)
-
+    def post(self, request, loan_id, format=None):
+        loan = self.get_loan(pk=loan_id)
         data = request.data.copy()
-        data.update({"loan" : loan})
+        data.update({"loan" : loan_id})
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
