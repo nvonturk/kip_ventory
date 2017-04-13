@@ -466,6 +466,7 @@ const ManagerRequestsDetail = React.createClass({
                   <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
                     <span style={{color: "#df691a", fontSize:"12px"}}>{ri.item}</span>
                   </td>
+
                   <td style={{verticalAlign:"middle"}} className="text-center">{ri.request_type}</td>
                   <td style={{verticalAlign:"middle"}} className="text-center">{ri.quantity}</td>
                 </tr>
@@ -536,16 +537,6 @@ const ManagerRequestsDetail = React.createClass({
     }
   },
 
-  getLoanStatusSymbol(loan, fs) {
-    return (loan.quantity_returned === loan.quantity_loaned) ? (
-      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
-    ) : (
-      <Glyphicon style={{color: "#f0ad4e", fontSize: fs}} glyph="exclamation-sign" />
-    )
-  },
-
-
-
   getDisbursementsPanel() {
     if (this.state.request.status == "A") {
       return (this.state.request.disbursements.length > 0) ? (
@@ -554,7 +545,8 @@ const ManagerRequestsDetail = React.createClass({
             <thead>
               <tr>
                 <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-                <th style={{width:"80%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+                <th style={{width:"70%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
                 <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
               </tr>
             </thead>
@@ -570,6 +562,15 @@ const ManagerRequestsDetail = React.createClass({
                         { disbursement.item }
                       </a>
                     </td>
+                    {(disbursement.asset == null) ? (
+                      <td data-th="Asset" className="text-left">
+
+                      </td>
+                    ) : (
+                      <td data-th="Asset" className="text-left">
+                        { disbursement.asset }
+                      </td>
+                    )}
                     <td data-th="Quantity" className="text-center">
                       { disbursement.quantity }
                     </td>
@@ -935,6 +936,14 @@ const ManagerRequestsDetail = React.createClass({
     )
   },
 
+  getLoanStatusSymbol(loan, fs) {
+    return (loan.quantity_returned === loan.quantity_loaned) ? (
+      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
+    ) : (
+      <Glyphicon style={{color: "#f0ad4e", fontSize: fs}} glyph="exclamation-sign" />
+    )
+  },
+
   handleLoanStatusSelection(status) {
     var _this = this
     if (status == null) {
@@ -1004,17 +1013,17 @@ const ManagerRequestsDetail = React.createClass({
           <thead>
             <tr>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-              <th style={{width:"60%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+              <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            { this.state.loans.map( (loan, i) => {
+            { this.state.request.loans.map( (loan, i) => {
               var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
                 <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
-                        onClick={this.showLoanModal.bind(this, loan)} />
+                        onClick={this.showModal.bind(this, loan)} />
               ) : null
               return (
                 <tr key={loan.id}>
@@ -1026,13 +1035,22 @@ const ManagerRequestsDetail = React.createClass({
                       { loan.item }
                     </a>
                   </td>
+                  {(loan.asset == null) ? (
+                    <td data-th="Asset" className="text-left">
+
+                    </td>
+                  ) : (
+                    <td data-th="Asset" className="text-left">
+                      { loan.asset }
+                    </td>
+                  )}
                   <td data-th="Loaned" className="text-center">
                     { loan.quantity_loaned }
                   </td>
                   <td data-th="Returned" className="text-center">
                     { loan.quantity_returned }
                   </td>
-                  <td data-th="Actions" className="text-center">
+                  <td data-th="" className="text-center">
                     { editGlyph }
                   </td>
                 </tr>

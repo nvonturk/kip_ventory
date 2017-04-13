@@ -325,9 +325,11 @@ const UserRequestsDetail = React.createClass({
           <Table hover style={{marginBottom:"0px"}}>
             <thead>
               <tr>
-                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
-                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Type</th>
-                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Quantity</th>
+                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
+                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+                <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
+                <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
+                <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
               </tr>
             </thead>
             <tbody>
@@ -373,7 +375,8 @@ const UserRequestsDetail = React.createClass({
             <thead>
               <tr>
                 <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-                <th style={{width:"80%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+                <th style={{width:"70%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
                 <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
               </tr>
             </thead>
@@ -389,6 +392,15 @@ const UserRequestsDetail = React.createClass({
                         { disbursement.item }
                       </a>
                     </td>
+                    {(disbursement.asset == null) ? (
+                      <td data-th="Asset" className="text-left">
+
+                      </td>
+                    ) : (
+                      <td data-th="Asset" className="text-left">
+                        { disbursement.asset }
+                      </td>
+                    )}
                     <td data-th="Quantity" className="text-center">
                       { disbursement.quantity }
                     </td>
@@ -823,7 +835,8 @@ const UserRequestsDetail = React.createClass({
           <thead>
             <tr>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-              <th style={{width:"60%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+              <th style={{width:"40%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Actions</th>
@@ -845,6 +858,15 @@ const UserRequestsDetail = React.createClass({
                       { loan.item }
                     </a>
                   </td>
+                  {(loan.asset == null) ? (
+                    <td data-th="Asset" className="text-left">
+
+                    </td>
+                  ) : (
+                    <td data-th="Asset" className="text-left">
+                      { loan.asset }
+                    </td>
+                  )}
                   <td data-th="Loaned" className="text-center">
                     { loan.quantity_loaned }
                   </td>
