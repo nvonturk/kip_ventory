@@ -370,7 +370,7 @@ const UserRequestsDetail = React.createClass({
   getDisbursementsPanel() {
     if (this.state.request.status == "A") {
       return (this.state.request.disbursements.length > 0) ? (
-        <Panel header={"Disbursements"}>
+        <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
           <Table style={{marginBottom: "0px"}}>
             <thead>
               <tr>
@@ -411,7 +411,7 @@ const UserRequestsDetail = React.createClass({
           </Table>
         </Panel>
       ) : (
-        <Panel header={"Disbursements"}>
+        <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
           <Well bsSize="small" style={{fontSize: "12px"}} className="text-center">
             This request has no associated disbursements.
           </Well>

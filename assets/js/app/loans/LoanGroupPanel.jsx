@@ -83,8 +83,6 @@ const LoanGroupPanel = React.createClass({
 
 
   getLoansCard(loans, request) {
-
-
     return (loans.length > 0) ? (
       <Table style={{marginBottom: "0px"}}>
         <thead>

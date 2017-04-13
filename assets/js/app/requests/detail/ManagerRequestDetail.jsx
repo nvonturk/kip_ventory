@@ -122,7 +122,8 @@ const ManagerRequestsDetail = React.createClass({
     var params = {
       item: this.state.loanSearchText,
       status: this.state.loanStatus,
-      page: this.state.loanPage
+      page: this.state.loanPage,
+      itemsPerPage: 5
     }
     var _this = this
     getJSON(url, params, function(data) {
@@ -138,7 +139,8 @@ const ManagerRequestsDetail = React.createClass({
     var url = "/api/requests/" + this.state.request.id + "/disbursements/"
     var params = {
       item: this.state.disbursementSearchText,
-      page: this.state.disbursementPage
+      page: this.state.disbursementPage,
+      itemsPerPage: 5
     }
     var _this = this
     getJSON(url, params, function(data) {
@@ -155,7 +157,8 @@ const ManagerRequestsDetail = React.createClass({
     var params = {
       item: this.state.backfillSearchText,
       status: this.state.backfillStatus,
-      page: this.state.backfillPage
+      page: this.state.backfillPage,
+      itemsPerPage: 5
     }
     var _this = this
     getJSON(url, params, function(data) {
@@ -172,7 +175,8 @@ const ManagerRequestsDetail = React.createClass({
     var params = {
       item: this.state.backfillRequestSearchText,
       status: this.state.backfillRequestStatus,
-      page: this.state.backfillRequestPage
+      page: this.state.backfillRequestPage,
+      itemsPerPage: 5
     }
     var _this = this
     getJSON(url, params, function(data) {
@@ -537,61 +541,6 @@ const ManagerRequestsDetail = React.createClass({
     }
   },
 
-  getDisbursementsPanel() {
-    if (this.state.request.status == "A") {
-      return (this.state.request.disbursements.length > 0) ? (
-        <Panel header={"Disbursements"}>
-          <Table style={{marginBottom: "0px"}}>
-            <thead>
-              <tr>
-                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-                <th style={{width:"70%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
-                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              { this.state.request.disbursements.map( (disbursement, i) => {
-                return (
-                  <tr key={disbursement.id}>
-                    <td data-th="Status" className="text-center">
-                      <Glyphicon style={{color: "rgb(217, 83, 79)", fontSize: "15px"}} glyph="log-out" />
-                    </td>
-                    <td data-th="Item" className="text-left">
-                      <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                        { disbursement.item }
-                      </a>
-                    </td>
-                    {(disbursement.asset == null) ? (
-                      <td data-th="Asset" className="text-left">
-
-                      </td>
-                    ) : (
-                      <td data-th="Asset" className="text-left">
-                        { disbursement.asset }
-                      </td>
-                    )}
-                    <td data-th="Quantity" className="text-center">
-                      { disbursement.quantity }
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </Panel>
-      ) : (
-        <Panel header={"Disbursements"}>
-          <Well bsSize="small" style={{fontSize: "12px"}} className="text-center">
-            This request has no associated disbursements.
-          </Well>
-        </Panel>
-      )
-    } else {
-      return null
-    }
-  },
-
   get403Forbidden() {
     return (
       <Grid>
@@ -873,67 +822,58 @@ const ManagerRequestsDetail = React.createClass({
   },
 
   getDisbursementsPanel() {
-    var disbursementTable = null;
-    if (this.state.disbursements.length == 0) {
-      disbursementTable = (
-        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
-          No results.
-        </Well>
+    if (this.state.request.status == "A") {
+      return (this.state.disbursements.length > 0) ? (
+        <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
+          <Table style={{marginBottom: "0px"}}>
+            <thead>
+              <tr>
+                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+                <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
+                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              { this.state.disbursements.map( (disbursement, i) => {
+                return (
+                  <tr key={disbursement.id}>
+                    <td data-th="Status" className="text-center">
+                      <Glyphicon style={{color: "rgb(217, 83, 79)", fontSize: "15px"}} glyph="log-out" />
+                    </td>
+                    <td data-th="Item" className="text-left">
+                      <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
+                        { disbursement.item }
+                      </a>
+                    </td>
+                    {(disbursement.asset == null) ? (
+                      <td data-th="Asset" className="text-left">
+
+                      </td>
+                    ) : (
+                      <td data-th="Asset" className="text-left">
+                        { disbursement.asset }
+                      </td>
+                    )}
+                    <td data-th="Quantity" className="text-center">
+                      { disbursement.quantity }
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </Panel>
+      ) : (
+        <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
+          <Well bsSize="small" style={{fontSize: "12px"}} className="text-center">
+            This request has no associated disbursements.
+          </Well>
+        </Panel>
       )
     } else {
-      disbursementTable = (
-        <Table style={{marginBottom: "0px"}}>
-          <thead>
-            <tr>
-              <th style={{width:"45%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"45%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset Tag</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.state.disbursements.map( (disbursement, i) => {
-              var tag = (disbursement.asset != null) ? (disbursement.asset.tag) : null
-              return (
-                <tr key={disbursement.id}>
-                  <td data-th="Item" className="text-left">
-                    <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                      { disbursement.item }
-                    </a>
-                  </td>
-                  <td data-th="Asset Tag" className="text-left">
-                    { tag }
-                  </td>
-                  <td data-th="Quantity" className="text-center">
-                    { disbursement.quantity }
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </Table>
-      )
+      return null
     }
-    return (
-      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
-
-        <div className="panel-body" style={{minHeight:"220px"}}>
-          { disbursementTable }
-        </div>
-
-        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
-          <Row>
-            <Col md={12}>
-              <Pagination next prev maxButtons={10} boundaryLinks
-                          ellipsis style={{float:"right", margin: "0px"}}
-                          bsSize="small" items={this.state.disbursementPageCount}
-                          activePage={this.state.disbursementPage}
-                          onSelect={activeKey => {this.setState({disbursementPage: activeKey}, this.getDisbursements)}}/>
-            </Col>
-          </Row>
-        </div>
-
-      </div>
-    )
   },
 
   getLoanStatusSymbol(loan, fs) {
@@ -1020,10 +960,10 @@ const ManagerRequestsDetail = React.createClass({
             </tr>
           </thead>
           <tbody>
-            { this.state.request.loans.map( (loan, i) => {
+            { this.state.loans.map( (loan, i) => {
               var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
                 <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
-                        onClick={this.showModal.bind(this, loan)} />
+                        onClick={this.showLoanModal.bind(this, loan)} />
               ) : null
               return (
                 <tr key={loan.id}>
