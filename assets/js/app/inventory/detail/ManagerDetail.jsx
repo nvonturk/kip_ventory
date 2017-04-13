@@ -66,6 +66,10 @@ const ManagerDetail = React.createClass({
   },
 
   componentWillMount() {
+    this.refresh()
+  },
+
+  refresh() {
     var user = this.props.route.user
     this.getItem();
     this.getCustomFields();
@@ -218,9 +222,9 @@ const ManagerDetail = React.createClass({
 
   getStatusSymbol(loan, fs) {
     return (loan.quantity_returned === loan.quantity_loaned) ? (
-      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-circle" />
+      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
     ) : (
-      <Glyphicon style={{color: "#d9534f", fontSize: fs}} glyph="remove-circle" />
+      <Glyphicon style={{color: "rgb(240, 173, 78)", fontSize: fs}} glyph="exclamation-sign" />
     )
   },
 
@@ -251,6 +255,7 @@ const ManagerDetail = React.createClass({
         }, function() {
           _this.getItem();
           _this.getTransactions();
+          _this.getStacks();
         });
       },
       error:function (xhr, textStatus, thrownError){
@@ -484,7 +489,7 @@ const ManagerDetail = React.createClass({
       <hr />
         <Row style={{display: "flex"}}>
           <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-            <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="remove-circle" />
+            <Glyphicon style={{color: "rgb(240, 173, 78)", fontSize:"18px"}} glyph="exclamation-sign" />
           </Col>
           <Col md={9}>
             <p style={{marginBottom: "0px", fontSize: "12px"}}>This loan is outstanding.</p>
@@ -821,7 +826,7 @@ const ManagerDetail = React.createClass({
                   <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
                 </Col>
                 <Col md={5} xs={12}>
-                  <ItemAssetPanel item={this.state.item} />
+                  <ItemAssetPanel item={this.state.item} refresh={this.refresh}/>
                 </Col>
               </Row>
 
@@ -907,7 +912,7 @@ const ManagerDetail = React.createClass({
                      loan={this.state.loanToShow}
                      request={request}
                      onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
-                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.getLoans(); this.getItem();}}/>
+                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.refresh();}}/>
 
         </Grid>
       )

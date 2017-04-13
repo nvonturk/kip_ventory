@@ -197,8 +197,8 @@ class AssetList(generics.GenericAPIView):
         try:
             item = models.Item.objects.get(name=item_name)
             if not item.has_assets:
-                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
-        except:
+                raise NotFound("Item '{}' has no tracked instances.".format(item_name))
+        except models.Item.DoesNotExist:
             raise NotFound("Item '{}' not found.".format(item_name))
 
         # CHECK PERMISSION
@@ -482,19 +482,25 @@ class GetItemStacks(generics.GenericAPIView):
         except models.Item.DoesNotExist:
             raise NotFound("Item '{}' not found.".format(item_name))
 
-        requests = models.Request.objects.filter(requester=request.user.pk, status='O', requested_items__item__name=item_name)
+        requests = models.Request.objects.filter(status='O', requested_items__item__name=item_name)
+        if not (request.user.is_staff or request.user.is_superuser):
+            requests = requests.filter(requester=request.user.pk)
         rq = 0
         for r in requests.all():
             for ri in r.requested_items.all():
                 if (ri.item.name == item_name):
                     rq += ri.quantity
 
-        loans = models.Loan.objects.filter(request__requester=request.user.pk, item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
+        loans = models.Loan.objects.filter(item__name=item_name, quantity_loaned__gt=F('quantity_returned'))
+        if not (request.user.is_staff or request.user.is_superuser):
+            loans = loans.filter(request__requester=request.user.pk)
         lq = 0
         for l in loans.all():
             lq += (l.quantity_loaned - l.quantity_returned)
 
-        disbursements = models.Disbursement.objects.filter(request__requester=request.user.pk, item__name=item_name)
+        disbursements = models.Disbursement.objects.filter(item__name=item_name)
+        if not (request.user.is_staff or request.user.is_superuser):
+            disbursements = disbursements.filter(request__requester=request.user.pk)
         dq = 0
         for d in disbursements.all():
             dq += d.quantity
@@ -846,6 +852,22 @@ class LoanListAll(generics.GenericAPIView):
             return Response({"error": ["Manager permissions required."]}, status=status.HTTP_403_FORBIDDEN)
 
         requests = self.get_queryset()
+
+        item_search = request.query_params.get('item', "")
+        if item_search != "":
+            requests = requests.filter(loans__item__name__icontains=item_search).distinct()
+
+        status = request.query_params.get('status', "")
+        if status != "":
+            if (status.lower().strip() == "returned"):
+                requests = requests.exclude(loans__quantity_loaned__gt=F('loans__quantity_returned')).distinct()
+            elif (status.lower().strip() == "outstanding"):
+                requests = requests.exclude(loans__quantity_loaned__lte=F('loans__quantity_returned')).distinct()
+
+        user = request.query_params.get('user', "")
+        if user != "":
+            requests = requests.filter(requester__username=user).distinct()
+
         requests = self.paginate_queryset(requests)
         serializer = self.get_serializer(instance=requests, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -874,6 +896,22 @@ class LoanList(generics.GenericAPIView):
 
     def get(self, request, format=None):
         queryset = self.get_queryset()
+
+        item_search = request.query_params.get('item', "")
+        if item_search != "":
+            queryset = queryset.filter(loans__item__name__icontains=item_search).distinct()
+
+        status = request.query_params.get('status', "")
+        if status != "":
+            if (status.lower().strip() == "returned"):
+                queryset = queryset.filter(loans__quantity_loaned__lte=F('loans__quantity_returned')).distinct()
+            elif (status.lower().strip() == "outstanding"):
+                queryset = queryset.filter(loans__quantity_loaned__gt=F('loans__quantity_returned')).distinct()
+
+        user = request.query_params.get('user', "")
+        if user != "":
+            queryset = queryset.filter(requester__username=user).distinct()
+
         queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=queryset, many=True)
         response = self.get_paginated_response(serializer.data)
@@ -956,39 +994,55 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             data = serializer.data
-
-            # Standard loan - no asset to handle
-            if (loan.asset == None):
-                quantity = data.get('quantity')
-                loan.quantity_loaned -= quantity
-
-                disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
-                # add to existing disbursement or create a new one
-                if disbursements.count() > 0:
-                    disbursement = disbursements.first()
-                    disbursement.quantity += quantity
-                    disbursement.save()
-                else:
-                    disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
-                    disbursement.save()
-                loan.save()
-                #todo can only mangers do this? send email?
-                sendEmailForLoanToDisbursementConversion(loan)
-                requestItemLoantoDisburse(loan, request.user, quantity)
-                if loan.quantity_loaned == 0:
-                    loan.delete()
-
-            else:
-                quantity = data.get('quantity')
-                disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
-                disbursement.save()
-                sendEmailForLoanToDisbursementConversion(loan)
-                requestItemLoantoDisburse(loan, request.user, quantity)
+            quantity = data.get('quantity')
+            convertLoanToDisbursement(loan, quantity)
+            sendEmailForLoanToDisbursementConversion(loan)
+            requestItemLoantoDisburse(loan, request.user, quantity)
+            if loan.quantity_loaned == 0:
                 loan.delete()
 
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def approveBackfillRequest(backfill_request):
+    loan = backfill_request.loan
+    quantity = loan.quantity_loaned - loan.quantity_returned # change this if want to implement partial backfills
+    convertLoanToBackfill(loan, backfill_request, quantity)
+    convertLoanToDisbursement(loan, quantity)
+    #todo send email
+
+    #todo what happens if some of the loan was already returned before it was requested backfilled? - loan remains, but backfill requests still deleted
+    if loan.quantity_loaned == 0:
+        loan.delete() # also deletes backfill_request
+    else:
+        backfill_request.delete()
+
+def convertLoanToBackfill(loan, backfill_request, quantity):
+    backfill = models.Backfill.objects.create(request=loan.request, item=loan.item, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
+
+def convertLoanToDisbursement(loan, quantity):
+    # Standard loan - no asset to handle
+    if (loan.asset == None and loan.item.has_assets == False):
+        loan.quantity_loaned -= quantity
+
+        disbursements = loan.request.disbursements.filter(item__name=loan.item.name)
+        # add to existing disbursement or create a new one
+        if disbursements.count() > 0:
+            disbursement = disbursements.first()
+            disbursement.quantity += quantity
+            disbursement.save()
+        else:
+            disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
+            disbursement.save()
+        loan.save()
+
+    # loan with asset, item has assets
+    else:
+        disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
+        disbursement.save()
+        loan.quantity_loaned -= quantity
+        loan.save()
 
 
 @api_view(['POST'])
@@ -1923,6 +1977,7 @@ class LoanReminderListFilter(BaseFilterBackend):
     return fields
 
 class LoanReminderListCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     pagination_class = CustomPagination
     filter_backends = (LoanReminderListFilter,)
@@ -2043,3 +2098,140 @@ class BackupEmail(generics.GenericAPIView):
                 return Response(data={"backup" : "incorrect status code"}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response(data={"backup" : "exception raised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BackfillDetailModify(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self, pk):
+        try:
+            return models.Backfill.objects.get(pk=pk)
+        except models.Backfill.DoesNotExist:
+            raise NotFound('Backfill with ID {} not found.'.format(pk))
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.BackfillPUTSerializer
+        return serializers.BackfillGETSerializer
+
+    # MANAGER/OWNER LOCKED
+    def get(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        # if manager, see any backfill.
+        # if user, only see your backfill.
+        is_owner = (instance.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.get_serializer(instance=instance)
+        return Response(serializer.data)
+
+    # MANAGER LOCKED
+    #  - only managers may change the status of a Backfill
+    def put(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        is_owner = (instance.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+
+        if not (instance.status == models.AWAITING_ITEMS):
+            return Response({"status": ["Only backfills with status 'Awaiting Items' can be modified."]})
+
+        serializer = self.get_serializer(instance=instance, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class BackfillRequestCreate(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_serializer_class(self):
+        return serializers.BackfillRequestPOSTSerializer
+
+    def post(self, request, format=None):
+        data = request.data.copy()
+
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+
+        return Response(serializer.data)
+
+class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
+    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_instance(self, pk):
+        try:
+            return models.BackfillRequest.objects.get(pk=pk)
+        except models.BackfillRequest.DoesNotExist:
+            raise NotFound('BackfillRequest with ID {} not found.'.format(pk))
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return serializers.BackfillRequestPUTSerializer
+        return serializers.BackfillRequestGETSerializer
+
+    # MANAGER/OWNER LOCKED
+    def get(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        # if manager, see any backfill request.
+        # if user, only see your backfill requests
+        is_owner = (instance.loan.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.get_serializer(instance=instance)
+        return Response(serializer.data)
+
+    # MANAGER/OWNER LOCKED
+    #  - only admins may change the status or admin_comment fields on a BackfillRequest
+    #  - only owners may change the receipt on a BackfillRequests
+    def put(self, request, pk, format=None):
+        instance = self.get_instance(pk)
+        is_owner = (instance.loan.request.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        #data.update({'user': request.user}) # add back in to deal with permissioning on a field-level basis in serializer
+
+        if not (instance.status == 'O'):
+            return Response({"status": ["Only outstanding backfill requests may be modified."]})
+
+        serializer = self.get_serializer(instance=instance, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            if serializer.data.get('status', None) == "A":
+                approveBackfillRequest(instance)
+
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # OWNER LOCKED
+    def delete(self, request, request_pk, format=None):
+        instance = self.get_instance(pk)
+        is_owner =  (instance.loan.request.requester.pk == request.user.pk)
+        if not (is_owner):
+            d = {"error": ["Owner permissions required"]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        if not (instance.status == 'O'):
+            d = {"error": ["Cannot delete an approved/denied request."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        instance.delete()
+        #sendEmailForDeletedOutstandingBackfillRequest? Probably not
+        # Don't post log here since its as if it never happened?
+        return Response(status=status.HTTP_204_NO_CONTENT)

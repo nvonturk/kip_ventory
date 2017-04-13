@@ -12,7 +12,6 @@ const RequestedItemsContainer = React.createClass({
   getInitialState() {
     return {
       requestedItems: this.props.requestedItems,
-
       expandedItem: null,
     }
   },
@@ -40,7 +39,9 @@ const RequestedItemsContainer = React.createClass({
                                 hasAssets={this.props.itemAssets[ri.item]}
                                 stock={this.props.itemQuantities[ri.item]}
                                 handleModification={this.props.handleModification}
-                                index={i}/>
+                                index={i}
+                                errors={this.props.errors}
+                                clearErrors={this.props.clearErrors}/>
           )
         })}
       </ListGroup>

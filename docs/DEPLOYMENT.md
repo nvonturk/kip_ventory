@@ -36,6 +36,10 @@ pip install -r requirements.txt
 pip install psycopg2 gunicorn
 ```
 
+##### Update settings.py
+```
+TODO: allowed hosts ifconfig
+```
 
 ###### Install node.js dependencies
 ```
@@ -54,8 +58,6 @@ ALTER ROLE [your_username_here] SET timezone TO 'EST';
 GRANT ALL PRIVILEGES ON DATABASE [your_database_name] TO [your_username_here];
 \q
 ```
-
-
 
 ###### Make Django migrations
 Use the included script to remove any old database files, create migrations, and migrate.
@@ -288,13 +290,18 @@ sudo rabbitmq-server -detached # runs in background (sudo "rabbitmq-server" to r
 
 ###### Install and run Celery
 ```
-# Make sure celery is installed
+# Make sure celery is installed in your virtual environment
+# If you're not already in your virtual env run the following:
+cd /home/bitnami/kip_ventory
+source env/bin/activate
+
+# Then run the following to make sure celery is installed
 pip install -r requirements.txt 
 ```
 ```
 # Run celery (make sure you are within kipventory directory)
 cd /home/bitnami/kip_ventory/kipventory
-celery -A kipventory worker -l info --detached
+celery -A kipventory worker -l info --detach
 # Check that it's running with `ps aux | grep "celery"`. You should see 3 workers
 ```
 

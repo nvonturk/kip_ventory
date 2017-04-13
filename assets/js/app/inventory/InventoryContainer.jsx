@@ -14,7 +14,6 @@ import FileInput from 'react-file-input'
 import Select from 'react-select';
 import 'react-select/dist/react-select.css';
 
-
 const ITEMS_PER_PAGE = 10;
 
 const InventoryContainer = React.createClass({
@@ -516,7 +515,6 @@ const InventoryContainer = React.createClass({
     reader.readAsDataURL(file)
   },
 
-
   //ditch this
   modifyMinQuants(e){
     e.preventDefault();
@@ -582,7 +580,6 @@ const InventoryContainer = React.createClass({
       })
 
     }
-
   },
 
   render() {
@@ -698,7 +695,6 @@ const InventoryContainer = React.createClass({
                 <hr />
               </Col>
             </Row>
-
             <Row>
               <Col md={3} sm={12}>
                 <Row>
