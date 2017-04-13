@@ -469,9 +469,10 @@ const InventoryContainer = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        browserHistory.push("/app/inventory/")
+        window.location.assign("/app/inventory/")
       },
       error:function (xhr, textStatus, thrownError){
+        console.log(xhr)
         var response = xhr.responseJSON
         var bulkErrNodes = JSON.parse(JSON.stringify(_this.state.bulkImportErrorNodes))
         var errNodes = JSON.parse(JSON.stringify(_this.state.errorNodes))
@@ -788,7 +789,7 @@ const InventoryContainer = React.createClass({
           </Col>
         </Row>
 
-        <Modal show={this.state.showItemCreationModal} onHide={e => {this.setState({showItemCreationModal: false})}}>
+        <Modal show={this.state.showItemCreationModal} onHide={e => {this.setState({showItemCreationModal: false, bulkImportErrorNodes:{}})}}>
           <Modal.Header closeButton>
             <Modal.Title>Add Item to Inventory</Modal.Title>
           </Modal.Header>
@@ -796,7 +797,7 @@ const InventoryContainer = React.createClass({
             { this.getItemCreationForm() }
           </Modal.Body>
           <Modal.Footer>
-            <Button bsSize="small" onClick={e => {this.setState({showItemCreationModal: false})}}>Cancel</Button>
+            <Button bsSize="small" onClick={e => {this.setState({showItemCreationModal: false, bulkImportErrorNodes:{}})}}>Cancel</Button>
             <Button bsStyle="info" bsSize="small" onClick={this.createItem}>Create</Button>
           </Modal.Footer>
         </Modal>
