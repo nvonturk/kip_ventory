@@ -176,7 +176,6 @@ const ItemInfoPanel = React.createClass({
 
   showEditModal(e) {
     var itemCopy = JSON.parse(JSON.stringify(this.props.item))
-    console.log(itemCopy)
     this.setState({
       modifiedItem: itemCopy,
       showModifyModal: true,

@@ -272,8 +272,14 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
         except:
             raise NotFound("Item '{}' not found.".format(item_name))
 
+
+
         data = request.data.copy()
         asset = self.get_instance(asset_tag=asset_tag)
+
+        print(data)
+        print(asset)
+        
 
         serializer = self.get_serializer(instance=asset, data=data, partial=True)
         if serializer.is_valid():

@@ -15,7 +15,8 @@ const AssetModal = React.createClass({
       asset: {},
       fields: [],
       modifyFields: {},
-      errorNodes: {}
+      errorNodes: {},
+      newTagName: "",
     }
   },
 
@@ -23,6 +24,9 @@ const AssetModal = React.createClass({
     var _this = this
     if (nprops.asset != null) {
       this.updateAsset(nprops.asset)
+      this.setState({
+        newTagName: nprops.asset.tag
+      })
     }
   },
 
@@ -61,6 +65,14 @@ const AssetModal = React.createClass({
       asset: asset
     })
   },
+
+  handleTagNameChange(e){
+    this.setState({
+      newTagName: e.target.value,
+    })
+  },
+
+
 
   getShortTextField(field_name, i) {
     return (
@@ -122,6 +134,7 @@ const AssetModal = React.createClass({
     e.preventDefault()
     var url = "/api/items/" + this.state.asset.item + "/assets/" + this.state.asset.tag + "/"
     var data = this.state.asset
+    data.tag = this.state.newTagName
     var _this = this
     ajax({
       url: url,
@@ -250,11 +263,21 @@ const AssetModal = React.createClass({
       } else if (this.state.asset.status == "In Stock") {
         assetStatus = <Label bsSize="small" bsStyle="success">In Stock</Label>
       }
+      /*<td style={{width:"80%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.state.asset.tag}</span></td>*/
+      //onChange={e => {this.setState({transactionComment: e.target.value})}}
+      // <FormGroup bsSize="small">
+      //   <FormControl type="text"
+      //                style={{height:"35px"}}
+      //                componentClass={"textarea"}
+      //                value={this.state.asset.tag}
+      //                name="assetTagEntryArea"
+      //                onChange={this.handleFieldChange} />
+      // </FormGroup>
 
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
-            <Modal.Title>{this.state.asset.item}, &nbsp; &nbsp; Asset tag: {this.state.asset.tag}</Modal.Title>
+            <Modal.Title>{this.state.asset.item}, &nbsp; &nbsp; Asset tag: {this.state.newTagName}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Row>
@@ -273,7 +296,13 @@ const AssetModal = React.createClass({
                     </tr>
                     <tr>
                       <th style={{width:"20%"}}>Asset Tag:</th>
-                      <td style={{width:"80%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.state.asset.tag}</span></td>
+                      <td style={{width:"80%"}}><FormGroup key={"tag"} bsSize="small" validationState={this.getValidationState("tag")} style={{marginBottom: "0px"}}>
+                        <FormControl type="text"
+                                     value={this.state.newTagName}
+                                     name={"tag"}
+                                     onChange={this.handleTagNameChange} />
+                        { this.state.errorNodes["tag"] }
+                      </FormGroup></td>
                     </tr>
                     { loanOrDisbursementOrBackfillView }
                   </tbody>
