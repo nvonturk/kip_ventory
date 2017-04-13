@@ -223,6 +223,14 @@ const InventoryContainer = React.createClass({
     })
   },
 
+  handleItemFormCheckbox(e){
+    var item = this.state.item
+    item.has_assets = e.target.checked
+    this.setState({
+      item: item,
+    })
+  },
+
   getShortTextField(field_name, presentation_name, i) {
     return (
       <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
@@ -398,11 +406,17 @@ const InventoryContainer = React.createClass({
         </Row>
 
         <Row>
-          <Col xs={12}>
+          <Col xs={8}>
             <FormGroup bsSize="small" controlId="tags">
               <ControlLabel>Tags</ControlLabel>
               <TagMultiSelect tagsSelected={this.state.item.tags} tagHandler={this.handleTagSelection}/>
               { this.state.errorNodes['tags'] }
+            </FormGroup>
+          </Col>
+          <Col xs={4}>
+            <FormGroup bsSize="small" controlId="has_assets">
+              <ControlLabel>Has Assets</ControlLabel>
+              <Checkbox style={{paddingLeft: "6px"}} onChange={this.handleItemFormCheckbox} checked={this.state.item.has_assets} />
             </FormGroup>
           </Col>
         </Row>

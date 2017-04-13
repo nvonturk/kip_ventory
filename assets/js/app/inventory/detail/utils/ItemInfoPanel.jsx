@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Tabs, Tab, Nav, NavItem, Button, Modal, Table, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
+import { Grid, Row, Col, Tabs, Tab, Nav, NavItem, Button, Modal, Table, Checkbox, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../../csrf/DjangoCSRFToken'
 import {browserHistory} from 'react-router'
@@ -25,9 +25,18 @@ const ItemInfoPanel = React.createClass({
     var errorNodes = this.state.errorNodes
     errorNodes[e.target.name] = null
     item[e.target.name] = e.target.value
+
     this.setState({
       modifiedItem: item,
       errorNodes: errorNodes
+    })
+  },
+
+  handleItemFormCheckbox(e){
+    var item = this.state.modifiedItem
+    item.has_assets = e.target.checked
+    this.setState({
+      modifiedItem: item,
     })
   },
 
@@ -167,6 +176,7 @@ const ItemInfoPanel = React.createClass({
 
   showEditModal(e) {
     var itemCopy = JSON.parse(JSON.stringify(this.props.item))
+    console.log(itemCopy)
     this.setState({
       modifiedItem: itemCopy,
       showModifyModal: true,
@@ -363,11 +373,17 @@ const ItemInfoPanel = React.createClass({
                 </Row>
 
                 <Row>
-                  <Col xs={12}>
+                  <Col xs={8}>
                     <FormGroup bsSize="small" controlId="tags">
                       <ControlLabel>Tags</ControlLabel>
                       <TagMultiSelect tagsSelected={this.state.modifiedItem.tags} tagHandler={this.handleTagSelection}/>
                       { this.state.errorNodes['tags'] }
+                    </FormGroup>
+                  </Col>
+                  <Col xs={4}>
+                    <FormGroup bsSize="small" controlId="has_assets">
+                      <ControlLabel>Has Assets</ControlLabel>
+                      <Checkbox style={{paddingLeft: "6px"}} onChange={this.handleItemFormCheckbox} checked={this.state.modifiedItem.has_assets}  />
                     </FormGroup>
                   </Col>
                 </Row>
