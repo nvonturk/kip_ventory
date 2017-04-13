@@ -6,6 +6,8 @@ from django.utils import timezone
 import dateutil.parser
 from datetime import datetime
 from django.db.models import Q, F, Count
+from .validators import validate_file_extension
+
 
 import re, json
 
@@ -630,6 +632,12 @@ class LoanSerializer(serializers.ModelSerializer):
         loan_json = super().to_representation(loan)
         if loan.asset != None:
             loan_json.update({"asset": loan.asset.tag})
+
+        outstanding_backfill_request = None
+        for backfill_request in loan.backfill_requests.all():
+            if backfill_request.status == models.OUTSTANDING:
+                outstanding_backfill_request = BackfillRequestGETSerializer(instance=backfill_request).data
+        loan_json.update({"outstanding_backfill_request": outstanding_backfill_request})
         return loan_json
 
     def update(self, instance, validated_data):
@@ -674,6 +682,7 @@ class LoanSerializer(serializers.ModelSerializer):
                     loan.quantity_loaned -= 1
                     loan.quantity_returned -= 1
                 loan.save()
+
         return loan
 
 
@@ -689,6 +698,12 @@ class LoanSerializerNoRequest(serializers.ModelSerializer):
         loan_json = super().to_representation(loan)
         if loan.asset != None:
             loan_json.update({"asset": loan.asset.tag})
+
+        outstanding_backfill_request = None
+        for backfill_request in loan.backfill_requests.all():
+            if backfill_request.status == models.OUTSTANDING:
+                outstanding_backfill_request = BackfillRequestGETSerializer(instance=backfill_request).data
+        loan_json.update({"outstanding_backfill_request": outstanding_backfill_request})
         return loan_json
 
 class DisbursementSerializer(serializers.ModelSerializer):
@@ -826,6 +841,13 @@ class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
         data = super().to_internal_value(data)
         data.update({"loan": loan})
         return data
+
+    def validate_receipt(self, value):
+        print(value)
+        validate_file_extension(value)
+        return value
+
+
 
 class BackfillRequestPUTSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(choices=models.BACKFILL_REQUEST_STATUS_CHOICES)

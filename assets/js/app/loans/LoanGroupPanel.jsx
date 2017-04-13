@@ -7,6 +7,7 @@ import { getCookie } from '../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
 import Select from 'react-select'
 import LoanModal from './LoanModal'
+import BackfillRequestModal from './BackfillRequestModal'
 
 const LoanGroupPanel = React.createClass({
 
@@ -14,6 +15,8 @@ const LoanGroupPanel = React.createClass({
     return {
       showLoanModal: false,
       loanToModify: null,
+      showCreateBackfillRequestModal: false,
+      backfill_request_loan: null, 
     }
   },
 
@@ -29,6 +32,36 @@ const LoanGroupPanel = React.createClass({
       showLoanModal: false,
       loanToModify: null,
     })
+  },
+
+  showCreateBackfillRequestModal(loan) {
+    this.setState({
+      showCreateBackfillRequestModal: true, 
+      backfill_request_loan: loan
+    })
+  },
+
+  hideCreateBackfillRequestModal() {
+    console.log("hide")
+    this.setState({
+      showCreateBackfillRequestModal: false, 
+      backfill_request_loan: null
+    })
+  },
+
+  getCreateBackfillRequestButton(loan) {
+    if(loan.outstanding_backfill_request != null) {
+      return <Label>Backfill Requested</Label>
+    } else{
+      return <Button onClick={this.showCreateBackfillRequestModal.bind(this, loan)} block bsSize="small" bsStyle="info">Request For Backfill</Button>
+    }
+  },
+
+  createBackfillRequestSuccessHandler() {
+    // todo update loan of interest instead of refreshing all loans
+    // todo use promise
+    this.props.getLoanGroups();
+    this.hideCreateBackfillRequestModal();
   },
 
   isAllReturned() {
@@ -81,7 +114,6 @@ const LoanGroupPanel = React.createClass({
     )
   },
 
-
   getLoansCard(loans, request) {
     return (loans.length > 0) ? (
       <Table style={{marginBottom: "0px"}}>
@@ -92,11 +124,13 @@ const LoanGroupPanel = React.createClass({
             <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
             <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Action</th>
+            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Backfill</th>
+            <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Modify</th>
           </tr>
         </thead>
         <tbody>
           { loans.map( (loan, i) => {
+            console.log(loan);
             var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
               <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
                       onClick={this.showLoanModal.bind(this, loan)} />
@@ -126,7 +160,10 @@ const LoanGroupPanel = React.createClass({
                 <td data-th="Returned" className="text-center">
                   { loan.quantity_returned }
                 </td>
-                <td data-th="Action" className="text-center">
+                <td data-th="Backfill" className="text-center" style={{fontSize:"12px"}}>
+                  { this.getCreateBackfillRequestButton(loan) }
+                </td>
+                <td data-th="Modify" className="text-center">
                   { editGlyph }
                 </td>
               </tr>
@@ -239,6 +276,13 @@ const LoanGroupPanel = React.createClass({
                    onHide={this.hideModal}
                    refresh={this.props.getLoanGroups}
                    user={this.props.user}/>
+
+        <BackfillRequestModal loan={this.state.backfill_request_loan}
+                              request={this.props.loanGroup.request}
+                              show={this.state.showCreateBackfillRequestModal}
+                              onHide={this.hideCreateBackfillRequestModal}
+                              createBackfillRequestSuccessHandler={this.createBackfillRequestSuccessHandler}
+                              user={this.props.user}/>
 
       </ListGroupItem>
     );

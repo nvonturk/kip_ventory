@@ -5,6 +5,7 @@ import { Grid, Row, Col, Button, Modal, Table, Form, Glyphicon, Pagination,
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
+import LoanInfoView from './LoanInfoView'
 import Select from 'react-select'
 
 const LoanModal = React.createClass({
@@ -12,8 +13,6 @@ const LoanModal = React.createClass({
     return {
       disburseQuantity: 0,
       returnQuantity: 0,
-      backfillJustification: "",
-
     }
   },
 
@@ -115,18 +114,6 @@ const LoanModal = React.createClass({
     if (this.props.loan == null) {
       return null
     } else {
-
-      var statusLabel = (this.props.loan.quantity_loaned == this.props.loan.quantity_returned) ? (
-        <Label bsSize="small" bsStyle="success">Returned</Label>
-      ) : (
-        <Label bsSize="small" bsStyle="warning">Outstanding</Label>
-      )
-      var assetTag = (this.props.loan.asset != null) ? (
-        <tr>
-          <th style={{width:"20%"}}>Asset Tag:</th>
-          <td style={{width:"80%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.props.loan.asset}</span></td>
-        </tr>
-      ) : null
       var adminForms = (this.props.user.is_staff || this.props.user.is_superuser) ? (
         <Row>
           <Col xs={12}>
@@ -182,93 +169,18 @@ const LoanModal = React.createClass({
           </Col>
         </Row>
       ) : null
-      var ownerForms = (this.props.user.username === this.props.request.requester) ? (
-        <Row>
-          <Col xs={12}>
-            <hr />
-            <h5>
-              Request Backfill
-            </h5>
-
-            <Form horizontal>
-              <FormGroup bsSize="small">
-                <Col xs={4} componentClass={ControlLabel}>
-                  Justification
-                </Col>
-                <Col xs={4}>
-                  <FormControl type="text" componentClass="textarea" name="backfillJustification" value={this.state.backfillJustification}
-                               onChange={this.handleChange} />
-                </Col>
-                <Col xs={4}>
-                  <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()} style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
-                    Disburse Instances
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
-            <hr />
-          </Col>
-        </Row>
-      ) : null
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
             <Modal.Title>Viewing Loan #{this.props.loan.id}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-
             <Row>
               <Col xs={12}>
-                <Row>
-                  <Col xs={12}>
-                    <span style={{float:"right", fontSize:"12px"}}>Status: &nbsp; &nbsp; {statusLabel}</span>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={12} xs={12}>
-                    <Table condensed style={{fontSize:"14px"}}>
-                      <tbody>
-                        <tr>
-                          <th style={{width:"30%"}}>Item:</th>
-                          <td style={{width:"70%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.props.loan.item}</span></td>
-                        </tr>
-                        { assetTag }
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Loaned to:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.requester}</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Justification:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.open_comment}</td>
-                        </tr>
-                        <tr>
-                        <th style={{width:"30%", verticalAlign: "middle"}}>Approval date:</th>
-                        <td style={{width:"70%", verticalAlign: "middle"}}>{new Date(this.props.loan.date_loaned).toLocaleString()}</td>
-
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Admin comments:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.closed_comment}</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Number Loaned:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.quantity_loaned} instance(s)</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Number Returned:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.quantity_returned} instance(s)</td>
-                        </tr>
-                      </tbody>
-                    </Table>
-                  </Col>
-                </Row>
-
+                <LoanInfoView loan={this.props.loan} request={this.props.request}/>
                 { adminForms }
-                { ownerForms }
-
               </Col>
             </Row>
-
           </Modal.Body>
         </Modal>
       )
