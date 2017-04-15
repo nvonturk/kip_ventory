@@ -1195,9 +1195,9 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
 def approveBackfillRequest(backfill_request):
     loan = backfill_request.loan
     quantity = loan.quantity_loaned - loan.quantity_returned # change this if want to implement partial backfills
-    convertLoanToBackfill(loan, backfill_request, quantity)
+    backfill = convertLoanToBackfill(loan, backfill_request, quantity)
     convertLoanToDisbursement(loan, quantity)
-    sendEmailForBackfillRequestApproved(backfill_request)
+    sendEmailForBackfillRequestApproved(backfill)
 
     #todo what happens if some of the loan was already returned before it was requested backfilled? - loan remains, but backfill requests still deleted
     if loan.quantity_loaned == 0:
@@ -1207,6 +1207,7 @@ def approveBackfillRequest(backfill_request):
 
 def convertLoanToBackfill(loan, backfill_request, quantity):
     backfill = models.Backfill.objects.create(request=loan.request, item=loan.item, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
+    return backfill
 
 def convertLoanToDisbursement(loan, quantity):
     # Standard loan - no asset to handle
@@ -1552,26 +1553,16 @@ class TransactionListCreate(generics.GenericAPIView):
 
 
     def post(self, request, format=None):
-        #todo django recommends doing this in middleware
         data = request.data.copy()
         data['administrator'] = request.user
 
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
-            quantity = serializer.validated_data.get('quantity', 0)
-            try:
-                item = models.Item.objects.get(name=serializer.validated_data.get('item'))
-                category = serializer.validated_data.get('category')
-                if category.lower() == "acquisition":
-                    item.quantity += quantity
-                elif category.lower() == "loss":
-                    item.quantity -= quantity
-                item.save()
-            except:
-                return Response({"name": ["Item with name '{}' does not exist.".format(serializer.validated_data.get('name', None))]})
-            transactionCreationLog(item, request.user.pk, request.data['category'], quantity)
+        if serializer.is_valid(): 
             serializer.save()
-
+            transaction = serializer.instance
+            item = transaction.item
+            quantity = getItemQuantity(item)
+            transactionCreationLog(item, request.user.pk, transaction.category, quantity)
             sendEmailForMinimumStockIfNeeded(item)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -1992,92 +1983,114 @@ def requestItemCreation(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
     log.save()
 
-DOMAIN = "https://colab-sbx-277.oit.duke.edu/"
-REQUESTS_URL = "{}{}".format(DOMAIN, "app/requests/")
-ITEMS_URL = "{}{}".format(DOMAIN, "app/items/")
-LOANS_URL = "{}{}".format(DOMAIN, "app/loans/")
-MANAGE_LOANS_URL = "{}{}".format(DOMAIN, "app/manage/loans/")
+#DOMAIN = "https://colab-sbx-277.oit.duke.edu/"
+DOMAIN = "localhost:8000"
+REQUESTS_URL = "{}{}".format(DOMAIN, "/app/requests/")
+ITEMS_URL = "{}{}".format(DOMAIN, "/app/inventory/")
+LOANS_URL = "{}{}".format(DOMAIN, "/app/loans/")
+MANAGE_LOANS_URL = "{}{}".format(DOMAIN, "/app/manage/loans/")
 
 def sendEmailForBackfillSatisfied(backfill):
     # notify user that backfill is satisfied
     user = backfill.request.requester
-    loan = backfill_request.loan
-    subject = "Backfill Request Approved"
-    loan_content = "Comment: {}\nItem: {}\nQuantity Loaned: {}\nQuantity Returned:{}\n".format(backfill_request.requester_comment, loan.item, loan.quantity_loaned, loan.quantity_returned)
-    text_content = "A manager has approved your backfill request. Go to {} to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, loan_content)
-    html_content = "This email is to confirm that you ({}) has requested a backfill for a loan. Go to <a href='{}'>{}</a> to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, LOANS_URL, loan_content)
+    item = backfill.item
+    receipt_url = "{}{}".format(DOMAIN, backfill.receipt.url)
+    subject = "Backfill Satisfied"
+    backfill_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, backfill.admin_comment)
+    backfill_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, receipt_url, backfill.admin_comment)
+    text_content = "A manager has marked your (username {}) backfill as Satisfied, meaning you have returned all backfilled items. Go to {} to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, backfill_content)
+    html_content = "A manager has marked your (username {}) backfill as Satisfied, meaning you have returned all backfilled items. Go to <a href='{}'>{}</a> to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_content_html)
     to_emails = [user.email]
-    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+    sendEmail(subject, text_content, html_content, to_emails)
 
-def sendEmailForBackfillRequestApproved(backfill_request):
+def sendEmailForBackfillRequestApproved(backfill):
     # notify user that backfill request approved
-    user = backfill_request.loan.request.requester
-    loan = backfill_request.loan
+    user = backfill.request.requester
+    item = backfill.item
+    receipt_url = "{}{}".format(DOMAIN, backfill.receipt.url)
+
     subject = "Backfill Request Approved"
-    loan_content = "Comment: {}\nItem: {}\nQuantity Loaned: {}\nQuantity Returned:{}\n".format(backfill_request.requester_comment, loan.item, loan.quantity_loaned, loan.quantity_returned)
-    text_content = "A manager has approved your backfill request. Go to {} to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, loan_content)
-    html_content = "This email is to confirm that you ({}) has requested a backfill for a loan. Go to <a href='{}'>{}</a> to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, LOANS_URL, loan_content)
+    backfill_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, backfill.admin_comment)
+    backfill_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, receipt_url, backfill.admin_comment)
+    text_content = "A manager has approved your (username {}) backfill request. Go to {} to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, backfill_content)
+    html_content = "A manager has approved your (username {}) backfill request. Go to <a href='{}'>{}</a> to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_content_html)
     to_emails = [user.email]
-    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+    sendEmail(subject, text_content, html_content, to_emails)
 
 def sendEmailForBackfillRequestDenied(backfill_request):
     # notify user that backfill request denied
     user = backfill_request.loan.request.requester
     loan = backfill_request.loan
+    item = loan.item
+    quantity = loan.quantity_loaned - loan.quantity_returned
+    receipt_url = "{}{}".format(DOMAIN, backfill_request.receipt.url)
+
+    backfill_request_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\nManager Comment: {}\n".format(item, quantity, backfill_request.requester_comment, receipt_url, backfill_request.admin_comment)
+    backfill_request_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\nManager Comment: {}\n".format(item, quantity, backfill_request.requester_comment, receipt_url, receipt_url, backfill_request.admin_comment)
+
     subject = "Backfill Request Denied"
-    loan_content = "Comment: {}\nItem: {}\nQuantity Loaned: {}\nQuantity Returned:{}\n".format(backfill_request.requester_comment, loan.item, loan.quantity_loaned, loan.quantity_returned)
-    text_content = "A manager has denied your backfill request. Go to {} to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, loan_content)
-    html_content = "This email is to confirm that you ({}) has requested a backfill for a loan. Go to <a href='{}'>{}</a> to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, LOANS_URL, loan_content)
+    text_content = "A manager has denied your (username {}) backfill request. Go to {} to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, backfill_request_content)
+    html_content = "A manager has denied your (username {}) backfill request. Go to <a href='{}'>{}</a> to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_request_content_html)
     to_emails = [user.email]
-    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+    sendEmail(subject, text_content, html_content, to_emails)
 
 def sendEmailForNewBackfillRequest(backfill_request):
     # notify user that backfill request created
     user = backfill_request.loan.request.requester
     loan = backfill_request.loan
+    item = loan.item
+    quantity = loan.quantity_loaned - loan.quantity_returned
+    receipt_url = "{}{}".format(DOMAIN, backfill_request.receipt.url)
+    backfill_request_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\n".format(item, quantity, backfill_request.requester_comment, receipt_url)
+    backfill_request_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\n".format(item, quantity, backfill_request.requester_comment, receipt_url, receipt_url)
+    
     subject = "New Backfill Request Confirmation"
-    #loan_url = "{}{}".format(LOANS_URL
-    #todo maybe include receipt
-    loan_content = "Comment: {}\nItem: {}\nQuantity Loaned: {}\nQuantity Returned:{}\n".format(backfill_request.requester_comment, loan.item, loan.quantity_loaned, loan.quantity_returned)
-    text_content = "This email is to confirm that you ({}) has requested a backfill for a loan. Go to {} to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, loan_content)
-    html_content = "This email is to confirm that you ({}) has requested a backfill for a loan. Go to <a href='{}'>{}</a> to view the backfill request. Here is information about the loan you requested for backfill:\n\n{}".format(user.username, LOANS_URL, LOANS_URL, loan_content)
+    #todo more specific loan url 
+    text_content = "This email is to confirm that you ({}) have requested a backfill for a loan. Go to {} to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, backfill_request_content)
+    html_content = "This email is to confirm that you ({}) have requested a backfill for a loan. Go to <a href='{}'>{}</a> to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_request_content_html)
     to_emails = [user.email]
-    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+    sendEmail(subject, text_content, html_content, to_emails)
 
 
     # notify subscribed managers that backfill request created???
+    subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
     subject = "New Backfill Request"
     #loan_url = "{}{}".format(LOANS_URL
-    text_content = "User {} has requested a backfill for a loan. Go to {} to respond to the backfill request. Here is information about the loan the user is requesting for backfill:\n\n{}".format(user.username, MANAGE_LOANS_URL, loan_content)
-    html_content = "User {} has requested a backfill for a loan. Go to <a href='{}'>{}</a> to respond to the backfill request. Here is information about the loan the user is requesting for backfill:\n\n{}".format(user.username, MANAGE_LOANS_URL, MANAGE_LOANS_URL, loan_content)
+    text_content = "User {} has requested a backfill for a loan. Go to {} to respond to the backfill request.\n\nBackfill Request\n{}".format(user.username, MANAGE_LOANS_URL, backfill_request_content)
+    html_content = "User {} has requested a backfill for a loan. Go to <a href='{}'>{}</a> to respond to the backfill request.\n\nBackfill Request\n{}".format(user.username, MANAGE_LOANS_URL, MANAGE_LOANS_URL, backfill_request_content_html)
     to_emails = []
     bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
     sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
 
 
-def sendEmailForMinimumStockIfNeeded(item):
-    # todo email: check logic
-    # are the only places possible for item PUTs and Transaction losses?
-    # what about assets? is it still item quantity or do you have to count the assets?
+def getItemQuantity(item):
+    # todo is this correct?
     if item.has_assets:
         assets_in_stock = item.assets.filter(status=models.IN_STOCK)
         quantity = len(assets_in_stock)
     else: 
         quantity = item.quantity
+    return quantity
+
+def sendEmailForMinimumStockIfNeeded(item):
+    # todo email: check logic
+    # are the only places possible for item PUTs and Transaction losses?
+    quantity = getItemQuantity(item)
 
     if quantity < item.minimum_stock:
-        sendEmailForMinimumStock(item)
+        sendEmailForMinimumStock(item, quantity)
 
-def sendEmailForMinimumStock(item):
+def sendEmailForMinimumStock(item, quantity):
     subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
 
     # Send email to all subscribed managers
     subject = "Minimum Stock Alert"
     item_url = "{}{}".format(ITEMS_URL, item.name)
-    text_content = "The quantity of item {} has fallen below the minimum stock. Go to {} to view item detail page".format(item.name, item_url)
-    html_content = "The quantity of item {} has fallen below the minimum stock. Go to <a href='{}'>{}</a> to view item detail page.".format(item.name, item_url, item_url)
+    text_content = "The quantity of item {} has fallen below the minimum stock of {}. There are {} currently in stock. Go to {} to view item detail page".format(item.name, item.minimum_stock, quantity, item_url)
+    html_content = "The quantity of item {} has fallen below the minimum stock of {}. There are {} currently in stock. Go to <a href='{}'>{}</a> to view item detail page.".format(item.name, item.minimum_stock, quantity, item_url, item_url)
     to_emails = []
     bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
+    print(bcc_emails)
     sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
 
 def sendEmailForLoanToDisbursementConversion(loan):
@@ -2495,8 +2508,7 @@ class BackfillRequestCreate(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            #todo how to get backfill_request
-            backfill_request = self.get_instance(serializer.data['id'])
+            backfill_request = serializer.instance
             sendEmailForNewBackfillRequest(backfill_request)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2542,18 +2554,18 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
         data = request.data.copy()
         #data.update({'user': request.user}) # add back in to deal with permissioning on a field-level basis in serializer
 
-        if not (instance.status == 'O'):
-            return Response({"status": ["Only outstanding backfill requests may be modified."]})
+        #if not (instance.status == 'O'):
+            #return Response({"status": ["Only outstanding backfill requests may be modified."]})
 
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
+        previous_status = instance.status
 
         if serializer.is_valid():
             serializer.save()
-            # todo get actual updated backfill request instance
             backfill_request = instance 
-            if instance.status!=models.APPROVED and serializer.data.get('status', None) == models.APPROVED:
+            if previous_status != models.APPROVED and backfill_request.status == models.APPROVED:
                 approveBackfillRequest(backfill_request)
-            else if instance.status != models.DENIED and serializer.data.get('status', None) == models.DENIED:
+            elif previous_status != models.DENIED and backfill_request.status == models.DENIED:
                 sendEmailForBackfillRequestDenied(backfill_request)
 
             return Response(serializer.data)
