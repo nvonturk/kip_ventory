@@ -1983,8 +1983,8 @@ def requestItemCreation(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
     log.save()
 
-#DOMAIN = "https://colab-sbx-277.oit.duke.edu/"
-DOMAIN = "localhost:8000"
+DOMAIN = "https://colab-sbx-277.oit.duke.edu"
+#DOMAIN = "localhost:8000"
 REQUESTS_URL = "{}{}".format(DOMAIN, "/app/requests/")
 ITEMS_URL = "{}{}".format(DOMAIN, "/app/inventory/")
 LOANS_URL = "{}{}".format(DOMAIN, "/app/loans/")
@@ -2492,11 +2492,6 @@ class BackfillRequestCreate(generics.GenericAPIView):
             return models.Loan.objects.get(pk=pk)
         except models.Loan.DoesNotExist:
             raise NotFound('Loan with ID {} not found.'.format(pk))
-    def get_instance(self, pk):
-        try:
-            return models.BackfillRequest.objects.get(pk=pk)
-        except models.BackfillRequest.DoesNotExist:
-            raise NotFound('BackfillRequest with ID {} not found.'.format(pk))
 
     def get_serializer_class(self):
         return serializers.BackfillRequestPOSTSerializer
@@ -2554,8 +2549,8 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
         data = request.data.copy()
         #data.update({'user': request.user}) # add back in to deal with permissioning on a field-level basis in serializer
 
-        #if not (instance.status == 'O'):
-            #return Response({"status": ["Only outstanding backfill requests may be modified."]})
+        if not (instance.status == 'O'):
+            return Response({"status": ["Only outstanding backfill requests may be modified."]})
 
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
         previous_status = instance.status
