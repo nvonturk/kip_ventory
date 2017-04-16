@@ -292,16 +292,27 @@ const ItemInfoPanel = React.createClass({
   render() {
     var popover = (
       <Popover id="popover">
-        <p style={{marginBottom: "0px", verticalAlign: "middle", textAlign: "center"}}>Only administrators may modify quantity on non-asset-tracked items.</p>
+        <p style={{marginBottom: "0px", verticalAlign: "middle", textAlign: "center"}}>
+          Only administrators may directly modify quantity.
+        </p>
       </Popover>
     )
+    if (this.props.user.is_superuser) {
+      popover = (
+        <Popover id="popover">
+          <p style={{marginBottom: "0px", verticalAlign: "middle", textAlign: "center"}}>
+            Administrators may only modify quantity on <strong>non-asset-tracked items</strong>.
+          </p>
+        </Popover>
+      )
+    } 
     var quantityForm = (!this.props.user.is_superuser || this.props.item.has_assets) ? (
       <OverlayTrigger trigger={['hover', 'focus']} placement="right" overlay={popover}>
-      <FormControl disabled={!this.props.user.is_superuser || this.props.item.has_assets}
-                   type="number"
-                   name="quantity"
-                   value={this.state.modifiedItem.quantity}
-                   onChange={this.handleItemFormChange}/>
+        <FormControl disabled={!this.props.user.is_superuser || this.props.item.has_assets}
+                     type="number"
+                     name="quantity"
+                     value={this.state.modifiedItem.quantity}
+                     onChange={this.handleItemFormChange}/>
       </OverlayTrigger>
     ) : (
       <FormControl disabled={!this.props.user.is_superuser || this.props.item.has_assets}
