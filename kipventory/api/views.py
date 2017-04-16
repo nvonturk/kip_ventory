@@ -1213,7 +1213,7 @@ def approveBackfillRequest(backfill_request):
     #     backfill_request.delete()
 
 def convertLoanToBackfill(loan, backfill_request, quantity):
-    backfill = models.Backfill.objects.create(request=loan.request, item=loan.item, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
+    backfill = models.Backfill.objects.create(request=backfill_request.request, item=backfill_request.item, asset=backfill_request.asset, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
     return backfill
 
 def convertLoanToDisbursement(loan, quantity):

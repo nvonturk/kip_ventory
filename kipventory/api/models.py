@@ -462,7 +462,7 @@ class BackfillRequest(models.Model):
 class Backfill(models.Model):
     request            = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='backfills', blank=True, null=True)
     item               = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="backfills")
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="backfills", null=True)
+    asset              = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="backfills", null=True)
     date_created       = models.DateTimeField(blank=True, auto_now_add=True)
     date_satisfied      = models.DateTimeField(blank=True, null=True)
     status = models.TextField(choices=BACKFILL_STATUS_CHOICES, default=AWAITING_ITEMS)
