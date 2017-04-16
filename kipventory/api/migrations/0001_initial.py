@@ -51,12 +51,8 @@ class Migration(migrations.Migration):
                 ('quantity', models.PositiveIntegerField(default=1)),
                 ('requester_comment', models.TextField()),
                 ('receipt', models.FileField(blank=True, null=True, upload_to='backfill/')),
-<<<<<<< HEAD
-                ('admin_comment', models.TextField(blank=True, default='', max_length=1024)),
-=======
                 ('admin_comment', models.TextField(blank=True, default='')),
                 ('asset', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='backfills', to='api.Asset')),
->>>>>>> 61830e0565e3d6e414386db5ca58376923e238e5
             ],
         ),
         migrations.CreateModel(
