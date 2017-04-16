@@ -819,13 +819,13 @@ const ManagerDetail = React.createClass({
               </Row>
 
               <Row>
-                <Col md={4} xs={12}>
+                <Col md={5} xs={12}>
                   <ItemInfoPanel user={this.props.route.user} item={this.state.item} customFields={this.state.custom_fields} />
                 </Col>
                 <Col md={3} xs={12}>
                   <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
                 </Col>
-                <Col md={5} xs={12}>
+                <Col md={4} xs={12}>
                   <ItemAssetPanel item={this.state.item} refresh={this.refresh} user={this.props.route.user}/>
                 </Col>
               </Row>
