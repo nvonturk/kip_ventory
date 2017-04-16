@@ -680,7 +680,7 @@ class LoanSerializer(serializers.ModelSerializer):
                 # we returned several untracked instances. delete this loan object, and instead
                 # create one new loan object for each instance we are returning.
                 else:
-                    for i in range(loan.quantity_returned):
+                    for i in range(new_quantity - old_quantity):
                         asset = models.Asset.objects.create(item=loan.item)
                         new_loan = models.Loan.objects.create(request=loan.request, item=loan.item, asset=asset, quantity_loaned=1, quantity_returned=1)
                         loan.quantity_returned -= 1

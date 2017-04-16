@@ -24,7 +24,7 @@ const LoanModal = React.createClass({
   componentWillReceiveProps(nextProps) {
     if (nextProps.loan != null) {
       this.setState({
-        returnQuantity: nextProps.loan.quantity_returned,
+        returnQuantity: 0,
         disburseQuantity: 0,
         requester_comment: "",
         receipt: null,
@@ -35,7 +35,7 @@ const LoanModal = React.createClass({
 
   handleReturnQuantityChange(e) {
     var q = Number(e.target.value)
-    if ((q >= this.props.loan.quantity_returned) && (q <= (this.props.loan.quantity_loaned))) {
+    if ((q >= 0) && (q <= (this.props.loan.quantity_loaned - this.props.loan.quantity_returned))) {
       this.setState({
         returnQuantity: q,
         errorNodes: {}
@@ -142,6 +142,10 @@ const LoanModal = React.createClass({
 
   isDisburseDisabled() {
     return (this.state.disburseQuantity == 0)
+  },
+
+  isReturnDisabled() {
+    return (this.state.returnQuantity == 0)
   },
 
   handleBackfillRequestFormChange(e) {
@@ -398,13 +402,13 @@ const LoanModal = React.createClass({
               <Form>
                 <FormGroup bsSize="small">
                   <ControlLabel>
-                    Quantity Returned
+                    Quantity to Return
                   </ControlLabel>
                   <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
-                               onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
+                               onChange={this.handleReturnQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned - this.props.quantity_returned} />
                 </FormGroup>
                 <FormGroup bsSize="small">
-                  <Button bsStyle="info" bsSize="small"
+                  <Button bsStyle="info" bsSize="small" disabled={this.isReturnDisabled()}
                           style={{fontSize: "12px", float: "right"}} onClick={this.handleReturn}>
                     Log Return
                   </Button>
@@ -421,7 +425,7 @@ const LoanModal = React.createClass({
                     Quantity to Disburse
                   </ControlLabel>
                   <FormControl type="number" name="disburseQuantity" value={this.state.disburseQuantity}
-                               onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
+                               onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned - this.props.quantity_returned}/>
                 </FormGroup>
                 <FormGroup bsSize="small">
                   <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()}
