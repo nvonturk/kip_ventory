@@ -316,6 +316,41 @@ const LoanModal = React.createClass({
     });
 	},
 
+  cancelBackfillRequest() {
+    var _this = this
+    var url = "/api/backfillrequests/" +this.props.loan.outstanding_backfill_request.id + "/"
+    ajax({
+      url: url,
+      contentType: "application/json",
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          requester_comment: "",
+          admin_comment: "",
+          receipt: null,
+          errorNodes: {}
+        }, () => {_this.props.refresh(); _this.props.onHide()})
+      },
+      error:function (xhr, textStatus, thrownError){
+        if (xhr.status == 400) {
+          var response = xhr.responseJSON
+          var errNodes = {}
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
+        }
+      }
+    });
+  },
 
   getBackfillRequestedPanel() {
     var approvalForm = (this.props.user.is_staff || this.props.user.is_superuser) ? (
@@ -351,6 +386,16 @@ const LoanModal = React.createClass({
         </Col>
       </Form>
     ) : null
+    
+    var isOwner = (this.props.user.username == this.props.request.requester)
+    var cancelForm = isOwner ? (
+      <Button bsStyle="danger" bsSize="small"
+                  style={{marginRight: "15px", fontSize: "12px"}}
+                  onClick={this.cancelBackfillRequest}>
+        Cancel Backfill Request
+      </Button>
+    ) : null; 
+
     return (this.props.loan.outstanding_backfill_request != null) ? (
       <Row>
         <Col xs={12}>
@@ -381,6 +426,7 @@ const LoanModal = React.createClass({
                 </tr>
               </tbody>
             </Table>
+            { cancelForm }
             { approvalForm }
           </Panel>
         </Col>

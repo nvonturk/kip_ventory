@@ -879,12 +879,24 @@ class BackfillRequestGETSerializer(serializers.ModelSerializer):
         model = models.BackfillRequest
         fields = ['id', 'request', 'item', 'asset', 'quantity', 'requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
 
+    def to_representation(self, backfill_request):
+        backfill_request_json = super().to_representation(backfill_request)
+        owner_username = backfill_request.request.requester.username
+        backfill_request_json.update({"owner_username":owner_username})
+        return backfill_request_json
+
 class BackfillRequestGETSerializerNoLoan(serializers.ModelSerializer):
     receipt = serializers.FileField()
 
     class Meta:
         model = models.BackfillRequest
         fields = ['id', 'quantity', 'requester_comment', 'receipt', 'status', 'admin_comment']
+
+    def to_representation(self, backfill_request):
+        backfill_request_json = super().to_representation(backfill_request)
+        owner_username = backfill_request.request.requester.username
+        backfill_request_json.update({"owner_username":owner_username})
+        return backfill_request_json
 
 class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()

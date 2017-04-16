@@ -2569,7 +2569,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # OWNER LOCKED
-    def delete(self, request, request_pk, format=None):
+    def delete(self, request, pk, format=None):
         instance = self.get_instance(pk)
         is_owner =  (instance.request.requester.pk == request.user.pk)
         if not (is_owner):

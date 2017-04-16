@@ -6,6 +6,8 @@ import { getCookie } from '../../../../csrf/DjangoCSRFToken'
 import Select from 'react-select'
 import LoanModal from '../../../loans/LoanModal'
 import BackfillRequestModal from '../../../backfills/BackfillRequestModal'
+import CreateBackfillRequestModal from '../../../backfills/CreateBackfillRequestModal'
+
 
 const TabContainer = React.createClass({
   getInitialState() {
@@ -38,6 +40,9 @@ const TabContainer = React.createClass({
 
       showBackfillRequestModal: false,
       backfillRequestToModify: null,
+
+      showCreateBackfillRequestModal: false, 
+      loanForNewBackfillRequest: null,
     }
   },
 
@@ -58,6 +63,13 @@ const TabContainer = React.createClass({
         })
       })
     }
+  },
+
+  createBackfillRequestSuccessHandler() {
+    // todo update loan of interest instead of refreshing all loans
+    // todo use promise
+    this.componentWillMount()
+    this.hideCreateBackfillRequestModal();
   },
 
   updateBackfillRequestToModify() {
@@ -88,6 +100,7 @@ const TabContainer = React.createClass({
     }
     var _this = this
     getJSON(url, params, function(data) {
+      console.log(data);
       _this.setState({
         loans: data.results,
         loanPageCount: data.num_pages
@@ -96,6 +109,7 @@ const TabContainer = React.createClass({
   },
 
   getDisbursements() {
+    console.log("disbursements");
     var url = "/api/requests/" + this.props.request.id + "/disbursements/"
     var params = {
       item: this.state.disbursementSearchText,
@@ -162,11 +176,25 @@ const TabContainer = React.createClass({
       loanToModify: null,
     })
   },
+  
+  showCreateBackfillRequestModal(loan) {
+    this.setState({
+      showCreateBackfillRequestModal: true,
+      loanForNewBackfillRequest: loan,
+    })
+  }, 
+
+  hideCreateBackfillRequestModal(e) {
+    this.setState({
+      showCreateBackfillRequestModal: false,
+    })
+  },
 
   showBackfillRequestModal(backfillRequest) {
     var _this = this
     var url = "/api/backfillrequests/" + backfillRequest.id + "/"
     getJSON(url, null, function(data) {
+      console.log(data)
       _this.setState({
         showBackfillRequestModal: true,
         backfillRequestToModify: data
@@ -677,7 +705,12 @@ const TabContainer = React.createClass({
                    onClick={this.showBackfillRequestModal.bind(this, loan.outstanding_backfill_request)}>
                    Click to view
                 </a>
-              ) : <span style={{fontSize: "12px"}}>None</span>
+              ) : (
+                <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                   onClick={this.showCreateBackfillRequestModal.bind(this, loan)}>
+                   Click to Request
+                </a>
+              )
               var asset = (loan.asset == null) ? ("N/A") : (loan.asset)
               return (
                 <tr key={loan.id}>
@@ -827,13 +860,20 @@ const TabContainer = React.createClass({
                    updateLoan={this.updateLoanToModify}
                    user={this.props.user}/>
 
-       <BackfillRequestModal backfillRequest={this.state.backfillRequestToModify}
+        <BackfillRequestModal backfillRequest={this.state.backfillRequestToModify}
                              request={this.props.request}
                              show={this.state.showBackfillRequestModal}
                              onHide={this.hideBackfillRequestModal}
                              refresh={this.componentWillMount.bind(this)}
                              updateBackfillRequest={this.updateBackfillRequestToModify}
                              user={this.props.user}/>
+        
+       <CreateBackfillRequestModal loan={this.state.loanForNewBackfillRequest}
+                              request={this.props.request}
+                              show={this.state.showCreateBackfillRequestModal}
+                              onHide={this.hideCreateBackfillRequestModal}
+                              createBackfillRequestSuccessHandler={this.createBackfillRequestSuccessHandler}
+                              user={this.props.user}/>
       </Panel>
 
     ) : null
