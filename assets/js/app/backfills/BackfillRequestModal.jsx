@@ -226,13 +226,6 @@ const BackfillRequestModal = React.createClass({
             </Row>
           </Modal.Body>
 
-          <AssetModal show={this.state.showAssetModal}
-                      onHide={this.closeAssetModal}
-                      asset={this.state.assetToShow}
-                      refresh={this.refreshAssets}
-                      assetRefresh={this.assetEditRefresh}
-                      user={this.props.user}/>
-
         </Modal>
       )
     }
