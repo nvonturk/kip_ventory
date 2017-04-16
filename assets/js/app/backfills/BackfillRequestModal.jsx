@@ -221,7 +221,9 @@ const BackfillRequestModal = React.createClass({
   
 
     var isOwner = (this.props.user.username == this.props.backfillRequest.owner_username)
-    var cancelForm = isOwner ? (
+    var isBackfillRequestOutstanding = this.props.backfillRequest.status == "O"
+    var isCancellable = (isOwner && isBackfillRequestOutstanding)
+    var cancelForm = (isCancellable) ? (
       <Button bsStyle="danger" bsSize="small"
                   style={{marginRight: "15px", fontSize: "12px"}}
                   onClick={this.cancelBackfillRequest}>
