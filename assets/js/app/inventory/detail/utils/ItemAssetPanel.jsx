@@ -150,36 +150,38 @@ const ItemAssetPanel = React.createClass({
         <div className="panel-body" style={{minHeight:"317px"}}>
           <Row>
             <Col xs={12}>
-              <Form horizontal>
-                  <Col xs={6}>
-                    <FormGroup bsSize="small">
-                      <InputGroup bsSize="small">
-                        <FormControl placeholder="Search by asset tag"
-                                     style={{fontSize:"12px"}}
-                                     type="text" name="assetTagSearch"
-                                     value={this.state.assetTagSearch}
-                                     onChange={this.handleTagSearch}/>
-                        <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.handleTagSearch}>
-                          <Glyphicon glyph="search"/>
-                        </InputGroup.Addon>
-                      </InputGroup>
-                    </FormGroup>
-                  </Col>
-                  <Col xs={5} xsOffset={1}>
-                    <FormGroup bsSize="small">
-                      <FormControl componentClass="select"
-                                   name="assetFilterStatus"
-                                   style={{fontSize:"12px"}}
-                                   placeholder="Filter by asset status"
-                                   value={this.state.assetFilterStatus}
-                                   onChange={this.handleAssetStatusSelection}>
-                        <option value=''>Show all assets</option>
-                        <option value="In Stock">In Stock</option>
-                        <option value="Loaned">Loaned</option>
-                        <option value="Disbursed">Disbursed</option>
-                      </FormControl>
-                    </FormGroup>
-                  </Col>
+              <Form>
+                <FormGroup bsSize="small">
+                  <ControlLabel>
+                    Search by asset tag
+                  </ControlLabel>
+                  <InputGroup bsSize="small">
+                    <FormControl placeholder="Search by asset tag"
+                                 style={{fontSize:"12px"}}
+                                 type="text" name="assetTagSearch"
+                                 value={this.state.assetTagSearch}
+                                 onChange={this.handleTagSearch}/>
+                    <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.handleTagSearch}>
+                      <Glyphicon glyph="search"/>
+                    </InputGroup.Addon>
+                  </InputGroup>
+                </FormGroup>
+                <FormGroup bsSize="small">
+                  <ControlLabel>
+                    Filter by asset status
+                  </ControlLabel>
+                  <FormControl componentClass="select"
+                               name="assetFilterStatus"
+                               style={{fontSize:"12px"}}
+                               placeholder="Filter by asset status"
+                               value={this.state.assetFilterStatus}
+                               onChange={this.handleAssetStatusSelection}>
+                    <option value=''>Show all assets</option>
+                    <option value="In Stock">In Stock</option>
+                    <option value="Loaned">Loaned</option>
+                    <option value="Disbursed">Disbursed</option>
+                  </FormControl>
+                </FormGroup>
               </Form>
             </Col>
           </Row>

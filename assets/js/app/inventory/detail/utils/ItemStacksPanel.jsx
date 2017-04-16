@@ -97,6 +97,15 @@ const ItemStacksPanel = React.createClass({
             </tr>
 
             <tr>
+              <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Awaiting Backfill</th>
+              <td style={{border: "1px solid #596a7b"}} className="text-center">{this.props.stacks.awaiting_backfill}</td>
+            </tr>
+
+            <tr>
+              <td colSpan={2}><hr /></td>
+            </tr>
+
+            <tr>
               <th style={{paddingRight:"15px", verticalAlign: "middle", border: "1px solid #596a7b"}}>Disbursed</th>
               <td style={{border: "1px solid #596a7b"}} className="text-center">{this.props.stacks.disbursed}</td>
             </tr>

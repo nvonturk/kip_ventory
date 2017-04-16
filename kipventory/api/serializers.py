@@ -142,9 +142,7 @@ class ItemSerializer(serializers.Serializer):
         return d
 
     def to_internal_value(self, data):
-        print(data)
         data = super(ItemSerializer, self).to_internal_value(data)
-        print(data)
 
         name = data.get('name', None)
         if name is not None:
@@ -619,9 +617,13 @@ class RequestLoanDisbursementSerializer(serializers.Serializer):
         request_json = RequestSerializer(context=self.context, instance=request).data
         loans = LoanSerializerNoRequest(instance=request.loans.all(), many=True).data
         disbursements = DisbursementSerializerNoRequest(instance=request.disbursements.all(), many=True).data
+        backfill_requests = BackfillRequestGETSerializer(instance=request.backfill_requests.all(), many=True).data
+        backfills = BackfillGETSerializer(instance=request.backfills.all(), many=True).data
         d = {
             "disbursements": disbursements,
             "loans": loans,
+            "backfills": backfills,
+            "backfill_requests": backfill_requests,
             "request": request_json
         }
         return d
@@ -643,7 +645,7 @@ class LoanSerializer(serializers.ModelSerializer):
         outstanding_backfill_request = None
         for backfill_request in loan.backfill_requests.all():
             if backfill_request.status == models.OUTSTANDING:
-                outstanding_backfill_request = BackfillRequestGETSerializer(instance=backfill_request).data
+                outstanding_backfill_request = BackfillRequestGETSerializerNoLoan(instance=backfill_request).data
         loan_json.update({"outstanding_backfill_request": outstanding_backfill_request})
         return loan_json
 
@@ -657,6 +659,11 @@ class LoanSerializer(serializers.ModelSerializer):
 
         # Loan was fully returned.
         if loan.quantity_returned == loan.quantity_loaned:
+            # delete any outstanding backfill requests
+            for bf in loan.backfill_requests.all():
+                if bf.status == models.OUTSTANDING:
+                    bf.delete()
+
             if (loan.asset):
                 loan.asset.status = models.IN_STOCK
                 loan.asset.save()
@@ -692,6 +699,19 @@ class LoanSerializer(serializers.ModelSerializer):
 
         return loan
 
+class LoanSerializerNoBackfillRequest(serializers.ModelSerializer):
+    item = serializers.SlugRelatedField(slug_field="name", read_only=True)
+
+    class Meta:
+        model = models.Loan
+        fields = ['id', 'item', 'quantity_loaned', 'quantity_returned', 'date_loaned', 'date_returned']
+        read_only_fields = ['id', 'item', 'quantity_loaned', 'date_loaned']
+
+    def to_representation(self, loan):
+        loan_json = super().to_representation(loan)
+        if loan.asset != None:
+            loan_json.update({"asset": loan.asset.tag})
+        return loan_json
 
 class LoanSerializerNoRequest(serializers.ModelSerializer):
     item    = serializers.SlugRelatedField(slug_field="name", read_only=True)
@@ -709,7 +729,7 @@ class LoanSerializerNoRequest(serializers.ModelSerializer):
         outstanding_backfill_request = None
         for backfill_request in loan.backfill_requests.all():
             if backfill_request.status == models.OUTSTANDING:
-                outstanding_backfill_request = BackfillRequestGETSerializer(instance=backfill_request).data
+                outstanding_backfill_request = BackfillRequestGETSerializerNoLoan(instance=backfill_request).data
         loan_json.update({"outstanding_backfill_request": outstanding_backfill_request})
         return loan_json
 
@@ -812,15 +832,19 @@ class BulkImportSerializer(serializers.ModelSerializer):
 
 class BackfillGETSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
-    #loan = # todo change loan serializer to something other than id?
+    item = serializers.SlugRelatedField(slug_field="name", read_only=True)
+    asset = serializers.SlugRelatedField(slug_field="tag", read_only=True)
+
     class Meta:
         model = models.Backfill
-        fields = ['id', 'request', 'date_created', 'date_satisfied', 'status', 'requester_comment', 'receipt', 'admin_comment']
+        fields = ['id', 'request', 'item', 'asset', 'quantity', 'date_created', 'date_satisfied', 'status', 'requester_comment', 'receipt', 'admin_comment']
 
 class BackfillPUTSerializer(serializers.ModelSerializer):
+    status = serializers.ChoiceField(choices=models.BACKFILL_STATUS_CHOICES)
+
     class Meta:
         model = models.Backfill
-        fields = ['status', 'date_satisfied']
+        fields = ['status']
 
     def to_internal_value(self, data):
         date_satisfied = timezone.now()
@@ -828,32 +852,69 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
         validated_data.update({"date_satisfied": date_satisfied})
         return validated_data
 
+    def update(self, backfill, data):
+        status = data.get('status')
+        if status == models.SATISFIED:
+            item = backfill.item
+            if item.has_assets:
+                for i in range(backfill.quantity):
+                    asset = models.Asset.objects.create(item=item)
+                item.quantity += backfill.quantity
+                item.save()
+            else:
+                item.quantity += backfill.quantity
+                item.save()
+        return backfill
+
+
+
 class BackfillRequestGETSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
-    #loan = # todo change loan serializer to something other than id?
+    loan = LoanSerializerNoBackfillRequest()
+    item = serializers.SlugRelatedField(slug_field="name", read_only=True)
+    asset = serializers.SlugRelatedField(slug_field="tag", read_only=True)
+
+
     class Meta:
         model = models.BackfillRequest
-        fields = ['id', 'requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
+        fields = ['id', 'request', 'item', 'asset', 'quantity', 'requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
+
+class BackfillRequestGETSerializerNoLoan(serializers.ModelSerializer):
+    receipt = serializers.FileField()
+
+    class Meta:
+        model = models.BackfillRequest
+        fields = ['id', 'quantity', 'requester_comment', 'receipt', 'status', 'admin_comment']
 
 class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()
     #loan = # todo change loan serializer to something other than id?
-
+    # quantity = serializers.IntegerField(min_value=1)
     class Meta:
         model = models.BackfillRequest
         fields = ['requester_comment', 'receipt']
 
     def to_internal_value(self, data):
         loan = data.get('loan', None)
+        request = loan.request
         data = super().to_internal_value(data)
         data.update({"loan": loan})
+        data.update({"request": request})
         return data
 
-    def validate_receipt(self, value):
-        print(value)
-        validate_file_extension(value)
-        return value
+    def validate(self, data):
+        receipt = data.get('receipt')
+        validate_file_extension(receipt)
+        return data
 
+    def create(self, validated_data):
+        loan = validated_data.get('loan')
+        q = loan.quantity_loaned - loan.quantity_returned
+        backfill_request = models.BackfillRequest.objects.create(request=loan.request, loan=loan, item=loan.item,
+                                                                 asset=loan.asset, quantity=q,
+                                                                 requester_comment=validated_data.get('requester_comment'),
+                                                                 receipt=validated_data.get('receipt'))
+        return backfill_request
 
 
 class BackfillRequestPUTSerializer(serializers.ModelSerializer):

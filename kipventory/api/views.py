@@ -92,7 +92,6 @@ class ItemListCreate(generics.GenericAPIView):
 
         # Low stock filter
         if low_stock:
-            print(low_stock)
             queryset = queryset.filter(quantity__lte=F('minimum_stock'))
 
 
@@ -215,17 +214,16 @@ class AssetList(generics.GenericAPIView):
 
         tag_name = request.query_params.get('search', False)
         if tag_name:
-            print(tag_name)
             queryset = queryset.filter(tag__icontains=tag_name)
 
-        status = request.query_params.get('status', False)
-        if status:
-            status = status.lower().strip().replace(" ", "")
-            if status == "instock":
+        asset_status = request.query_params.get('status', False)
+        if asset_status:
+            asset_status = asset_status.lower().strip().replace(" ", "")
+            if asset_status == "instock":
                 queryset = queryset.filter(status=models.IN_STOCK)
-            elif status == "loaned":
+            elif asset_status == "loaned":
                 queryset = queryset.filter(status=models.LOANED)
-            elif status == "disbursed":
+            elif asset_status == "disbursed":
                 queryset = queryset.filter(status=models.DISBURSED)
 
 
@@ -280,8 +278,6 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
         data = request.data.copy()
         asset = self.get_instance(asset_tag=asset_tag)
         #TODO: add log
-
-
 
         serializer = self.get_serializer(instance=asset, data=data, partial=True)
         if serializer.is_valid():
@@ -514,6 +510,13 @@ class GetItemStacks(generics.GenericAPIView):
         for d in disbursements.all():
             dq += d.quantity
 
+        backfills = models.Backfill.objects.filter(item__name=item_name, status=models.AWAITING_ITEMS)
+        if not (request.user.is_staff or request.user.is_superuser):
+            backfills = backfills.filter(request__requester=request.user.pk)
+        bq = 0
+        for b in backfills:
+            bq += b.quantity
+
         cart = models.CartItem.objects.filter(owner__pk=request.user.pk, item__name=item_name)
         cq = 0
         for c in cart.all():
@@ -524,6 +527,7 @@ class GetItemStacks(generics.GenericAPIView):
             "requested": rq,
             "loaned": lq,
             "disbursed": dq,
+            "awaiting_backfill": bq,
             "in_cart": cq,
         }
         return Response(data)
@@ -688,9 +692,9 @@ class RequestListAll(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         queryset = self.get_queryset()
-        status = request.GET.get('status')
-        if not (status is None or status=="All" or status==""):
-            queryset = models.Request.objects.filter(status=status)
+        request_status = request.GET.get('status')
+        if not (request_status is None or request_status=="All" or request_status==""):
+            queryset = models.Request.objects.filter(status=request_status)
 
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
@@ -721,9 +725,9 @@ class RequestListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
 
-        status = request.GET.get('status')
-        if not (status is None or status=="All" or status==""):
-            queryset = queryset.filter(status=status)
+        request_status = request.GET.get('status')
+        if not (request_status is None or request_status=="All" or request_status==""):
+            queryset = queryset.filter(status=request_status)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
@@ -905,16 +909,16 @@ class GetBackFillRequestsByRequest(generics.GenericAPIView):
             d = {"error": ["Manager or owner permissions required."]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
-        backfill_requests = self.get_queryset().filter(loan__request__pk=instance.pk).distinct()
+        backfill_requests = self.get_queryset().filter(request__pk=instance.pk).distinct()
 
         # filter by status
-        status = request.query_params.get('status', "")
-        if status != "":
-            if (status == models.OUTSTANDING):
+        bf_status = request.query_params.get('status', "").strip().lower()
+        if bf_status != "":
+            if (bf_status == "o" or bf_status == "outstanding"):
                 backfill_requests = backfill_requests.filter(status=models.OUTSTANDING).distinct()
-            elif (status == models.APPROVED):
+            elif (bf_status == "a" or bf_status == "approved"):
                 backfill_requests = backfill_requests.filter(status=models.APPROVED).distinct()
-            elif (status == models.DENIED):
+            elif (bf_status == "d" or bf_status == "denied"):
                 backfill_requests = backfill_requests.filter(status=models.DENIED).distinct()
 
         # Pagination
@@ -953,11 +957,11 @@ class GetLoansByRequest(generics.GenericAPIView):
 
         loans = self.get_queryset().filter(request__pk=instance.pk)
 
-        status = request.query_params.get('status', "").lower().strip()
-        if status != "":
-            if (status == "outstanding"):
+        loan_status = request.query_params.get('status', "").lower().strip()
+        if loan_status != "":
+            if (loan_status == "outstanding"):
                 loans = loans.filter(quantity_loaned__gt=F('quantity_returned')).distinct()
-            elif (status == "returned"):
+            elif (loan_status == "returned"):
                 loans = loans.filter(quantity_loaned=F('quantity_returned')).distinct()
 
         item = request.query_params.get('item', "")
@@ -1206,12 +1210,13 @@ def approveBackfillRequest(backfill_request):
     #todo what happens if some of the loan was already returned before it was requested backfilled? - loan remains, but backfill requests still deleted
     if loan.quantity_loaned == 0:
         loan.delete() # also deletes backfill_request
-    else:
-        backfill_request.delete()
+    print(backfill_request)
+    # else:
+    #     backfill_request.delete()
 
 def convertLoanToBackfill(loan, backfill_request, quantity):
     #TODO: log this
-    backfill = models.Backfill.objects.create(request=loan.request, item=loan.item, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
+    backfill = models.Backfill.objects.create(request=backfill_request.request, item=backfill_request.item, asset=backfill_request.asset, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
     return backfill
 
 def convertLoanToDisbursement(loan, quantity):
@@ -1343,10 +1348,8 @@ class EditUser(generics.GenericAPIView):
 
         serializer = self.get_serializer(instance=user, data=jsonData, partial=True)
         if serializer.is_valid():
-            print("saving user serializer")
             serializer.save()
             return Response(serializer.data)
-        print("error saving user {} ".format(serializer.errors))
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetNetIDTokenFilter(BaseFilterBackend):
@@ -1578,11 +1581,9 @@ class TokenPoint(generics.GenericAPIView):
     def get(self, request, format=None):
         if Token.objects.filter(user=request.user).count() > 0:
             #User has a token, return created token
-            print(Token.objects.get(user=request.user).key)
             return Response({"token": Token.objects.get(user=request.user).key})
         else:
             token = Token.objects.create(user=request.user)
-            print(token.key)
             return Response({"token": token.key})
 
 
@@ -1715,16 +1716,11 @@ class BulkImport(generics.GenericAPIView):
             # check type of has_assets
             has_assets_errors = []
             for i, has_assets in enumerate(have_assets):
-                print(has_assets)
                 if (has_assets != "") and (has_assets.lower() != "true") and (has_assets.lower() != "false"):
-                    print((has_assets.lower() != "true"))
-                    print("HERE1")
                     has_assets_errors.append("has_assets field must be empty or of type boolean (row {}).".format(i))
                 if has_assets.lower() == 'true':
-                    print("HERE2")
                     have_assets[i] = True
                 if has_assets.lower() == 'false' or has_assets.lower() == '':
-                    print("HERE3")
                     have_assets[i] = False
             minimum_stock_errors = []
             for i, minimum_stock in enumerate(minimum_stocks):
@@ -1856,8 +1852,6 @@ class DisburseCreate(generics.GenericAPIView):
         quantities = data['quantities']
         types = data['types']
 
-        print(data)
-
         try:
             requester = User.objects.get(username=requester)
         except User.DoesNotExist:
@@ -1886,7 +1880,6 @@ class DisburseCreate(generics.GenericAPIView):
         # if we made it here, we know we can go ahead and create the request, all the request items, and approve it
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
-            print("MADE IT")
             request_instance = serializer.save()
 
             data = {}
@@ -1909,7 +1902,6 @@ class DisburseCreate(generics.GenericAPIView):
                 item.save()
 
                 # Logging
-                print("Rq Instance", request_instance)
                 requestItemCreation(req_item, request.user.pk, request_instance)
                 requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
 
@@ -2532,7 +2524,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
         instance = self.get_instance(pk)
         # if manager, see any backfill request.
         # if user, only see your backfill requests
-        is_owner = (instance.loan.request.requester.pk == request.user.pk)
+        is_owner = (instance.request.requester.pk == request.user.pk)
         if not (request.user.is_staff or request.user.is_superuser or is_owner):
             d = {"error": ["Manager or owner permissions required."]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -2545,7 +2537,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
     #  - only owners may change the receipt on a BackfillRequests
     def put(self, request, pk, format=None):
         instance = self.get_instance(pk)
-        is_owner = (instance.loan.request.requester.pk == request.user.pk)
+        is_owner = (instance.request.requester.pk == request.user.pk)
         if not (request.user.is_staff or request.user.is_superuser or is_owner):
             d = {"error": ["Manager or owner permissions required."]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
@@ -2573,7 +2565,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
     # OWNER LOCKED
     def delete(self, request, request_pk, format=None):
         instance = self.get_instance(pk)
-        is_owner =  (instance.loan.request.requester.pk == request.user.pk)
+        is_owner =  (instance.request.requester.pk == request.user.pk)
         if not (is_owner):
             d = {"error": ["Owner permissions required"]}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
