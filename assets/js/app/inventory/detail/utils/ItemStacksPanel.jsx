@@ -56,7 +56,7 @@ const ItemStacksPanel = React.createClass({
             <Col xs={12}>
               <Form horizontal onSubmit={this.addToCart} style={{marginBottom: "0px"}}>
                 <FormGroup bsSize="small">
-                  <Col xs={3} style={{textAlign:"center"}} componentClass={ControlLabel}>
+                  <Col xs={2} style={{textAlign:"center"}} componentClass={ControlLabel}>
                     Qty:
                   </Col>
                   <Col xs={4}>
@@ -66,7 +66,7 @@ const ItemStacksPanel = React.createClass({
                                  value={this.state.addToCartQuantity}
                                  onChange={this.handleCartQuantityChange} />
                   </Col>
-                  <Col xs={5}>
+                  <Col xs={6}>
                     <Button disabled={this.state.addToCartQuantity == 0} bsStyle="info" bsSize="small" type="submit">Add to cart</Button>
                   </Col>
                 </FormGroup>

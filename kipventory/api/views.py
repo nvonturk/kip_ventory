@@ -1140,8 +1140,13 @@ class LoanDetailModify(generics.GenericAPIView):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         loan = self.get_instance(pk=pk)
+
         data = request.data.copy()
+        quantity_to_return = data.pop('quantity_returned', 0)
+        quantity_returned = loan.quantity_returned + quantity_to_return
         data.update({"loan": loan})
+        data.update({"quantity_returned": quantity_returned})
+
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -1192,6 +1197,9 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             sendEmailForLoanToDisbursementConversion(loan)
             requestItemLoantoDisburse(loan, request.user, quantity)
             if loan.quantity_loaned == 0:
+                for bf in loan.backfill_requests.all():
+                    if bf.status == models.OUTSTANDING:
+                        bf.delete()
                 loan.delete()
 
             return Response(serializer.data)

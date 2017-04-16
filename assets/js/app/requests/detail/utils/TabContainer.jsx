@@ -274,6 +274,7 @@ const TabContainer = React.createClass({
                            style={{color: "#5bc0de", fontSize: "12px"}}
                            onClick={this.showBackfillRequestModal.bind(this, backfill_request)}/>
               ) : null
+              var asset = (backfill_request.asset == null) ? ("N/A") : (backfill_request.asset)
               return (
                 <tr key={backfill_request.id}>
                   <td data-th="Item" className="text-left">
@@ -282,7 +283,7 @@ const TabContainer = React.createClass({
                     </a>
                   </td>
                   <td data-th="Asset Tag" className="text-center">
-                    {backfill_request.asset}
+                    {asset}
                   </td>
                   <td data-th="Requester Comment" className="text-left">
                     {backfill_request.requester_comment}
@@ -420,6 +421,7 @@ const TabContainer = React.createClass({
                    Click to view
                 </a>
               ) : null
+              var asset = (backfill.asset == null) ? ("N/A") : (backfill.asset)
               return (
                 <tr key={backfill.id}>
                   <td data-th="Item" className="text-left">
@@ -428,7 +430,7 @@ const TabContainer = React.createClass({
                     </a>
                   </td>
                   <td data-th="Asset Tag" className="text-center">
-                    {backfill.asset}
+                    {asset}
                   </td>
                   <td data-th="Date Approved" className="text-center">
                     { new Date(backfill.date_created).toLocaleString() }
@@ -518,13 +520,14 @@ const TabContainer = React.createClass({
           <thead>
             <tr>
               <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset</th>
+              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tag</th>
               <th style={{width:"25%", borderBottom: "1px solid $506a7b"}} className="text-center">Date Disbursed</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
             </tr>
           </thead>
           <tbody>
             { this.state.disbursements.map( (disbursement, i) => {
+              var asset = (disbursement.asset == null) ? ("N/A") : (disbursement.asset)
               return (
                 <tr key={disbursement.id}>
                   <td data-th="Item" className="text-left">
@@ -532,8 +535,8 @@ const TabContainer = React.createClass({
                       { disbursement.item }
                     </a>
                   </td>
-                  <td data-th="Asset" className="text-center">
-                    { disbursement.asset }
+                  <td data-th="Asset Tag" className="text-center">
+                    { asset }
                   </td>
                   <td data-th="Date Disbursed" className="text-center">
                     { new Date(disbursement.date).toLocaleString() }
@@ -675,6 +678,7 @@ const TabContainer = React.createClass({
                    Click to view
                 </a>
               ) : <span style={{fontSize: "12px"}}>None</span>
+              var asset = (loan.asset == null) ? ("N/A") : (loan.asset)
               return (
                 <tr key={loan.id}>
                   <td data-th="Item" className="text-left">
@@ -682,15 +686,9 @@ const TabContainer = React.createClass({
                       { loan.item }
                     </a>
                   </td>
-                  {(loan.asset == null) ? (
-                    <td data-th="Asset Tag" className="text-center">
-
-                    </td>
-                  ) : (
-                    <td data-th="Asset Tag" className="text-center">
-                      { loan.asset }
-                    </td>
-                  )}
+                  <td data-th="Asset Tag" className="text-center">
+                    { asset }
+                  </td>
                   <td data-th="Loaned" className="text-center">
                     { loan.quantity_loaned }
                   </td>
