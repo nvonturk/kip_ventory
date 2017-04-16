@@ -459,4 +459,3 @@ class Backfill(models.Model):
     requester_comment = models.TextField(max_length=1024)
     receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
     admin_comment = models.TextField(default='', max_length=1024, blank=True)
-

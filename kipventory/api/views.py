@@ -127,6 +127,8 @@ class ItemListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
+            #TODO asset logging
+            print(serializer.data)
             itemCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -274,6 +276,7 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
 
         data = request.data.copy()
         asset = self.get_instance(asset_tag=asset_tag)
+        #TODO: add log
 
         serializer = self.get_serializer(instance=asset, data=data, partial=True)
         if serializer.is_valid():
@@ -294,6 +297,7 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
             raise NotFound("Item '{}' not found.".format(item_name))
 
         asset = self.get_instance(asset_tag=asset_tag)
+        #TODO: add log
         asset.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1019,6 +1023,7 @@ def approveBackfillRequest(backfill_request):
         backfill_request.delete()
 
 def convertLoanToBackfill(loan, backfill_request, quantity):
+    #TODO: log this
     backfill = models.Backfill.objects.create(request=loan.request, item=loan.item, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
 
 def convertLoanToDisbursement(loan, quantity):
@@ -1031,16 +1036,20 @@ def convertLoanToDisbursement(loan, quantity):
         if disbursements.count() > 0:
             disbursement = disbursements.first()
             disbursement.quantity += quantity
+            #TODO: log change to disbursement
             disbursement.save()
         else:
             disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
             disbursement.save()
+            #TODO: log
         loan.save()
 
     # loan with asset, item has assets
     else:
         disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
+        #TODO: log disbursement of assets
         disbursement.save()
+        #TODO: log change to loan
         loan.quantity_loaned -= quantity
         loan.save()
 
@@ -1100,7 +1109,6 @@ class UserCreate(generics.GenericAPIView):
         if serializer.is_valid():
             # serializer.save()
             user = User.objects.create_user(**serializer.validated_data)
-            #todo do we log this for net id creations?
             userCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1259,10 +1267,6 @@ class TagDelete(generics.GenericAPIView):
 
         tag = self.get_instance(tag_name=tag_name)
         tag.delete()
-        # Insert Delete Log
-        # Need {serializer.data, initiating_user_pk, 'Item Changed'}
-        # itemDeletionLog(item_name, request.user.pk)
-        #TODO NEED TO LOG DELETION HERE
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class LogListFilter(BaseFilterBackend):
