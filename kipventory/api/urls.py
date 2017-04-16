@@ -36,7 +36,7 @@ urlpatterns = [
     url(r'^loans/all/?$',                    views.LoanListAll.as_view()),
     url(r'^loans/(?P<pk>[\d]+?)/?$',         views.LoanDetailModify.as_view()),
     url(r'^loans/(?P<pk>[\d]+?)/convert/?$', views.ConvertLoanToDisbursement.as_view()),
-    url(r'^loans/(?P<pk>[\d]+?)/requestforbackfill/?$', views.BackfillRequestCreate.as_view()),
+    url(r'^loans/(?P<loan_id>[\d]+?)/requestforbackfill/?$', views.BackfillRequestCreate.as_view()),
 
     #url(r'^backfillrequests/all/?$',                    views.BackfillRequestListAll.as_view()),
     url(r'^backfillrequests/(?P<pk>[\d]+?)/?$', views.BackfillRequestDetailModifyCancel.as_view()),
@@ -56,10 +56,13 @@ urlpatterns = [
 
     url(r'^disburse/?$', views.DisburseCreate.as_view()),
 
-    url(r'^requests/?$',                         views.RequestListCreate.as_view()),
-    url(r'^requests/all/?$',                     views.RequestListAll.as_view()),
-    url(r'^requests/(?P<request_pk>[0-9]+?)/?$', views.RequestDetailModifyDelete.as_view()),
-    # url(r'^requests/(?P<request_pk>[0-9]+?)/(?P<item_name>.+?)/?$', views.RequestedItemDetailModifyDelete.as_view()),
+    url(r'^requests/?$',                                            views.RequestListCreate.as_view()),
+    url(r'^requests/all/?$',                                        views.RequestListAll.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]+?)/?$',                    views.RequestDetailModifyDelete.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]+?)/backfills/?$',          views.GetBackfillsByRequest.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]+?)/backfills/requests/?$', views.GetBackFillRequestsByRequest.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]+?)/loans/?$',              views.GetLoansByRequest.as_view()),
+    url(r'^requests/(?P<request_pk>[0-9]+?)/disbursements/?$',      views.GetDisbursementsByRequest.as_view()),
 
     url(r'^login/?$',  views.post_user_login),
     url(r'^logout/?$', auth_views.logout),

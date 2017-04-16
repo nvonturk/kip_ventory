@@ -305,3 +305,140 @@ FATAL:  database "kipventory/" does not exist
 ERROR:  cannot drop the currently open database
 STATEMENT:  drop database kipventory
 	;
+LOG:  database system was shut down at 2017-04-13 01:24:44 EDT
+LOG:  MultiXact member wraparound protections are now enabled
+LOG:  database system is ready to accept connections
+LOG:  autovacuum launcher started
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" WHERE "api_asset"."id" = 1 LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 21
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  column api_asset.id does not exist at character 8
+STATEMENT:  SELECT "api_asset"."id", "api_asset"."tag", "api_asset"."item_id", "api_asset"."status" FROM "api_asset" INNER JOIN "api_item" ON ("api_asset"."item_id" = "api_item"."id") WHERE "api_item"."name" = 'test' ORDER BY "api_asset"."tag" ASC LIMIT 5
+ERROR:  duplicate key value violates unique constraint "api_asset_tag_key"
+DETAIL:  Key (tag)=(3) already exists.
+STATEMENT:  UPDATE "api_asset" SET "tag" = 3, "item_id" = 1, "status" = 'In Stock' WHERE "api_asset"."id" = 2

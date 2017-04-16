@@ -526,6 +526,11 @@ const ManagerDetail = React.createClass({
             <tr>
               <th style={{width:"5%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">User</th>
+              {(this.state.item.has_assets) ? (
+                <th style={{width:"5%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
+              ) : (
+                <th style={{width:"5%", borderBottom: "1px solid #596a7b"}} className="text-left"></th>
+              )}
               <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Loaned</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Request</th>
               <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-left">Admin Comment</th>
@@ -544,6 +549,14 @@ const ManagerDetail = React.createClass({
                   <td data-th="User" className="text-center" >
                     <span style={{fontSize: "11px", color: "#df691a"}}>{loan.request.requester}</span>
                   </td>
+                  {(this.state.item.has_assets) ? (
+                    <td data-th="Asset" className="text-center" >
+                      <span style={{fontSize: "12px"}}>{loan.asset}</span>
+                    </td>
+                  ) : (
+                    <td data-th="Asset" className="text-center" >
+                    </td>
+                  )}
                   <td data-th="Date Loaned" className="text-center" >
                     <span style={{fontSize: "11px"}}>{new Date(loan.date_loaned).toLocaleString()}</span>
                   </td>
@@ -813,7 +826,7 @@ const ManagerDetail = React.createClass({
                   <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
                 </Col>
                 <Col md={5} xs={12}>
-                  <ItemAssetPanel item={this.state.item} refresh={this.refresh}/>
+                  <ItemAssetPanel item={this.state.item} refresh={this.refresh} user={this.props.route.user}/>
                 </Col>
               </Row>
 
@@ -899,7 +912,8 @@ const ManagerDetail = React.createClass({
                      loan={this.state.loanToShow}
                      request={request}
                      onHide={e => {this.setState({showLoanModal: false, loanToShow: null})}}
-                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.refresh();}}/>
+                     refresh={e => {this.setState({showLoanModal: false, loanToShow: null}); this.refresh();}}
+                     user={this.props.route.user}/>
 
         </Grid>
       )

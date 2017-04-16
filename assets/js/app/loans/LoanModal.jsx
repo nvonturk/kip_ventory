@@ -5,6 +5,7 @@ import { Grid, Row, Col, Button, Modal, Table, Form, Glyphicon, Pagination,
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
+import LoanInfoView from './LoanInfoView'
 import Select from 'react-select'
 
 const LoanModal = React.createClass({
@@ -39,6 +40,12 @@ const LoanModal = React.createClass({
         disburseQuantity: q
       })
     }
+  },
+
+  handleChange(e) {
+    this.setState({
+      [e.target.name]: e.target.value
+    })
   },
 
   handleReturn(e) {
@@ -107,16 +114,60 @@ const LoanModal = React.createClass({
     if (this.props.loan == null) {
       return null
     } else {
-      var statusLabel = (this.props.loan.quantity_loaned == this.props.loan.quantity_returned) ? (
-        <Label bsSize="small" bsStyle="success">Returned</Label>
-      ) : (
-        <Label bsSize="small" bsStyle="warning">Outstanding</Label>
-      )
-      var assetTag = (this.props.loan.asset != null) ? (
-        <tr>
-          <th style={{width:"20%"}}>Asset Tag:</th>
-          <td style={{width:"80%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.props.loan.asset}</span></td>
-        </tr>
+      var adminForms = (this.props.user.is_staff || this.props.user.is_superuser) ? (
+        <Row>
+          <Col xs={12}>
+            <hr />
+            <h5>
+              Log a Return
+            </h5>
+
+            <Form horizontal>
+              <FormGroup bsSize="small">
+                <Col xs={4} componentClass={ControlLabel}>
+                  Quantity Returned:
+                </Col>
+                <Col xs={4}>
+                  <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
+                               onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
+                </Col>
+                <Col xs={4}>
+                  <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleReturn}>
+                    Log Return
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+          </Col>
+
+          <Col xs={12}>
+            <hr />
+          </Col>
+
+          <Col xs={12}>
+            <h5>
+              Convert to Disbursement
+            </h5>
+
+            <Form horizontal>
+              <FormGroup bsSize="small">
+                <Col xs={4} componentClass={ControlLabel}>
+                  Quantity to Disburse
+                </Col>
+                <Col xs={4}>
+                  <FormControl type="number" name="disburseQuantity" value={this.state.disburseQuantity}
+                               onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
+                </Col>
+                <Col xs={4}>
+                  <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()} style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
+                    Disburse Instances
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+            <hr />
+          </Col>
+        </Row>
       ) : null
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
@@ -124,110 +175,12 @@ const LoanModal = React.createClass({
             <Modal.Title>Viewing Loan #{this.props.loan.id}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-
             <Row>
               <Col xs={12}>
-                <Row>
-                  <Col xs={12}>
-                    <span style={{float:"right", fontSize:"12px"}}>Status: &nbsp; &nbsp; {statusLabel}</span>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={12} xs={12}>
-                    <Table condensed style={{fontSize:"14px"}}>
-                      <tbody>
-                        <tr>
-                          <th style={{width:"30%"}}>Item:</th>
-                          <td style={{width:"70%"}}><span style={{color: "rgb(223, 105, 26)"}}>{this.props.loan.item}</span></td>
-                        </tr>
-                        { assetTag }
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Loaned to:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.requester}</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Justification:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.open_comment}</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Approval date:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{new Date(this.props.loan.date_loaned).toLocaleString()}</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Admin comments:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.request.closed_comment}</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Number Loaned:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.quantity_loaned} instance(s)</td>
-                        </tr>
-                        <tr>
-                          <th style={{width:"30%", verticalAlign: "middle"}}>Number Returned:</th>
-                          <td style={{width:"70%", verticalAlign: "middle"}}>{this.props.loan.quantity_returned} instance(s)</td>
-                        </tr>
-                      </tbody>
-                    </Table>
-                  </Col>
-                </Row>
-
-
-                <Row>
-                  <Col xs={12}>
-                  <hr />
-                    <h5>
-                      Log a Return
-                    </h5>
-
-                    <Form horizontal>
-                      <FormGroup bsSize="small">
-                        <Col xs={4} componentClass={ControlLabel}>
-                          Quantity Returned:
-                        </Col>
-                        <Col xs={4}>
-                          <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
-                                       onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
-                        </Col>
-                        <Col xs={4}>
-                          <Button bsStyle="info" bsSize="small" style={{fontSize: "12px"}} onClick={this.handleReturn}>
-                            Log Return
-                          </Button>
-                        </Col>
-                      </FormGroup>
-                    </Form>
-                  </Col>
-
-                  <Col xs={12}>
-                    <hr />
-                  </Col>
-
-                  <Col xs={12}>
-                    <h5>
-                      Convert to Disbursement
-                    </h5>
-
-                    <Form horizontal>
-                      <FormGroup bsSize="small">
-                        <Col xs={4} componentClass={ControlLabel}>
-                          Quantity to Disburse
-                        </Col>
-                        <Col xs={4}>
-                          <FormControl type="number" name="disburseQuantity" value={this.state.disburseQuantity}
-                                       onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
-                        </Col>
-                        <Col xs={4}>
-                          <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()} style={{fontSize: "12px"}} onClick={this.handleDisbursement}>
-                            Disburse Instances
-                          </Button>
-                        </Col>
-                      </FormGroup>
-                    </Form>
-                    <hr />
-                  </Col>
-                </Row>
-
+                <LoanInfoView loan={this.props.loan} request={this.props.request}/>
+                { adminForms }
               </Col>
             </Row>
-
           </Modal.Body>
         </Modal>
       )

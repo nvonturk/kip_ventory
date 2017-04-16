@@ -75,7 +75,7 @@ const ItemAssetPanel = React.createClass({
   },
 
   updateCurrentAsset() {
-    var url = "/api/items/" + this.state.assetToShow.item + "/assets/" + this.state.assetToShow.tag + "/"
+    var url = "/api/items/" + this.state.item.name + "/assets/" + this.state.assetToShow.tag + "/"
     var _this = this
     getJSON(url, null, function(data) {
       _this.setState({
@@ -89,6 +89,13 @@ const ItemAssetPanel = React.createClass({
     this.updateCurrentAsset()
     this.props.refresh()
   },
+
+  assetEditRefresh(e){
+    this.getAssets()
+    this.props.refresh()
+    this.closeAssetModal()
+  },
+
 
   handleAssetStatusSelection(e) {
     this.setState({
@@ -199,7 +206,9 @@ const ItemAssetPanel = React.createClass({
         <AssetModal show={this.state.showAssetModal}
                     onHide={this.closeAssetModal}
                     asset={this.state.assetToShow}
-                    refresh={this.refreshAssets} />
+                    refresh={this.refreshAssets}
+                    assetRefresh={this.assetEditRefresh}
+                    user={this.props.user}/>
 
       </div>
     ) : (

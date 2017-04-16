@@ -166,6 +166,7 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
         serializer = self.get_serializer(instance=item, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            sendEmailForMinimumStockIfNeeded(item)
             itemModificationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -274,9 +275,13 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
         except:
             raise NotFound("Item '{}' not found.".format(item_name))
 
+
+
         data = request.data.copy()
         asset = self.get_instance(asset_tag=asset_tag)
         #TODO: add log
+
+    
 
         serializer = self.get_serializer(instance=asset, data=data, partial=True)
         if serializer.is_valid():
@@ -829,6 +834,188 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
         # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class GetBackfillsByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.Backfill.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.BackfillGETSerializer
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        backfills = self.get_queryset().filter(request__pk=instance.pk).distinct()
+
+        # filter by status
+        backfill_status = request.query_params.get('status', "")
+        if backfill_status != "":
+            if (backfill_status == models.AWAITING_ITEMS):
+                backfills = backfills.filter(status=models.AWAITING_ITEMS).distinct()
+            elif (backfill_status == models.SATISFIED):
+                backfills = backfills.filter(status=models.SATISFIED).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(backfills)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetBackFillRequestsByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.BackfillRequest.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.BackfillRequestGETSerializer
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        backfill_requests = self.get_queryset().filter(loan__request__pk=instance.pk).distinct()
+
+        # filter by status
+        status = request.query_params.get('status', "")
+        if status != "":
+            if (status == models.OUTSTANDING):
+                backfill_requests = backfill_requests.filter(status=models.OUTSTANDING).distinct()
+            elif (status == models.APPROVED):
+                backfill_requests = backfill_requests.filter(status=models.APPROVED).distinct()
+            elif (status == models.DENIED):
+                backfill_requests = backfill_requests.filter(status=models.DENIED).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(backfill_requests)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetLoansByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+    filter_backends = (GetLoansByItemFilter,)
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.Loan.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.LoanSerializerNoRequest
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        loans = self.get_queryset().filter(request__pk=instance.pk)
+
+        status = request.query_params.get('status', "").lower().strip()
+        if status != "":
+            if (status == "outstanding"):
+                loans = loans.filter(quantity_loaned__gt=F('quantity_returned')).distinct()
+            elif (status == "returned"):
+                loans = loans.filter(quantity_loaned=F('quantity_returned')).distinct()
+
+        item = request.query_params.get('item', "")
+        if item != "":
+            loans = loans.filter(item__name__icontains=item).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(loans)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+class GetDisbursementsByRequest(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+    pagination_class = CustomPagination
+    filter_backends = (GetLoansByItemFilter,)
+
+    def get_instance(self, request_pk):
+        try:
+            return models.Request.objects.get(pk=request_pk)
+        except models.Request.DoesNotExist:
+            raise NotFound('Request with ID {} not found.'.format(request_pk))
+
+    def get_queryset(self):
+        return models.Disbursement.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.DisbursementSerializerNoRequest
+
+    def get(self, request, request_pk, format=None):
+        instance = self.get_instance(request_pk)
+        if (instance.status != models.APPROVED):
+            d = {"error": ["Request with ID {} is not approved.".format(request_pk)]}
+            return Response(d, status=status.HTTP_204_NO_CONTENT)
+
+        is_owner = (instance.requester.pk == request.user.pk)
+        if not (request.user.is_staff or request.user.is_superuser or is_owner):
+            d = {"error": ["Manager or owner permissions required."]}
+            return Response(d, status=status.HTTP_403_FORBIDDEN)
+
+        disbursements = self.get_queryset().filter(request__pk=instance.pk)
+
+        item = request.query_params.get('item', "")
+        if item != "":
+            disbursements = disbursements.filter(item__name__icontains=item).distinct()
+
+        # Pagination
+        paginated_queryset = self.paginate_queryset(disbursements)
+        serializer = self.get_serializer(instance=paginated_queryset, many=True)
+        response = self.get_paginated_response(serializer.data)
+        return response
+
+
+
+
+
+
+
 class LoanListAllFilter(BaseFilterBackend):
   def get_schema_fields(self, view):
     fields = [
@@ -1012,9 +1199,9 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
 def approveBackfillRequest(backfill_request):
     loan = backfill_request.loan
     quantity = loan.quantity_loaned - loan.quantity_returned # change this if want to implement partial backfills
-    convertLoanToBackfill(loan, backfill_request, quantity)
+    backfill = convertLoanToBackfill(loan, backfill_request, quantity)
     convertLoanToDisbursement(loan, quantity)
-    #todo send email
+    sendEmailForBackfillRequestApproved(backfill)
 
     #todo what happens if some of the loan was already returned before it was requested backfilled? - loan remains, but backfill requests still deleted
     if loan.quantity_loaned == 0:
@@ -1025,6 +1212,7 @@ def approveBackfillRequest(backfill_request):
 def convertLoanToBackfill(loan, backfill_request, quantity):
     #TODO: log this
     backfill = models.Backfill.objects.create(request=loan.request, item=loan.item, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
+    return backfill
 
 def convertLoanToDisbursement(loan, quantity):
     # Standard loan - no asset to handle
@@ -1369,25 +1557,18 @@ class TransactionListCreate(generics.GenericAPIView):
 
 
     def post(self, request, format=None):
-        #todo django recommends doing this in middleware
         data = request.data.copy()
         data['administrator'] = request.user
 
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid(): #todo could move the validation this logic into serializer's validate method
-            quantity = serializer.validated_data.get('quantity', 0)
-            try:
-                item = models.Item.objects.get(name=serializer.validated_data.get('item'))
-                category = serializer.validated_data.get('category')
-                if category.lower() == "acquisition":
-                    item.quantity += quantity
-                elif category.lower() == "loss":
-                    item.quantity -= quantity
-                item.save()
-            except:
-                return Response({"name": ["Item with name '{}' does not exist.".format(serializer.validated_data.get('name', None))]})
-            transactionCreationLog(item, request.user.pk, request.data['category'], quantity)
+        if serializer.is_valid(): 
             serializer.save()
+            transaction = serializer.instance
+            item = transaction.item
+            quantity = getItemQuantity(item)
+            transactionCreationLog(item, request.user.pk, transaction.category, quantity)
+            sendEmailForMinimumStockIfNeeded(item)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1806,8 +1987,115 @@ def requestItemCreation(request_item, initiating_user_pk, requestObj):
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
     log.save()
 
-DOMAIN = "https://colab-sbx-277.oit.duke.edu/"
-REQUESTS_URL = "{}{}".format(DOMAIN, "app/requests/")
+DOMAIN = "https://colab-sbx-277.oit.duke.edu"
+#DOMAIN = "localhost:8000"
+REQUESTS_URL = "{}{}".format(DOMAIN, "/app/requests/")
+ITEMS_URL = "{}{}".format(DOMAIN, "/app/inventory/")
+LOANS_URL = "{}{}".format(DOMAIN, "/app/loans/")
+MANAGE_LOANS_URL = "{}{}".format(DOMAIN, "/app/manage/loans/")
+
+def sendEmailForBackfillSatisfied(backfill):
+    # notify user that backfill is satisfied
+    user = backfill.request.requester
+    item = backfill.item
+    receipt_url = "{}{}".format(DOMAIN, backfill.receipt.url)
+    subject = "Backfill Satisfied"
+    backfill_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, backfill.admin_comment)
+    backfill_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, receipt_url, backfill.admin_comment)
+    text_content = "A manager has marked your (username {}) backfill as Satisfied, meaning you have returned all backfilled items. Go to {} to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, backfill_content)
+    html_content = "A manager has marked your (username {}) backfill as Satisfied, meaning you have returned all backfilled items. Go to <a href='{}'>{}</a> to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_content_html)
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+def sendEmailForBackfillRequestApproved(backfill):
+    # notify user that backfill request approved
+    user = backfill.request.requester
+    item = backfill.item
+    receipt_url = "{}{}".format(DOMAIN, backfill.receipt.url)
+
+    subject = "Backfill Request Approved"
+    backfill_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, backfill.admin_comment)
+    backfill_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\nManager Comment: {}\n".format(item, backfill.quantity, backfill.requester_comment, receipt_url, receipt_url, backfill.admin_comment)
+    text_content = "A manager has approved your (username {}) backfill request. Go to {} to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, backfill_content)
+    html_content = "A manager has approved your (username {}) backfill request. Go to <a href='{}'>{}</a> to view the backfill.\n\nBackfill\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_content_html)
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+def sendEmailForBackfillRequestDenied(backfill_request):
+    # notify user that backfill request denied
+    user = backfill_request.loan.request.requester
+    loan = backfill_request.loan
+    item = loan.item
+    quantity = loan.quantity_loaned - loan.quantity_returned
+    receipt_url = "{}{}".format(DOMAIN, backfill_request.receipt.url)
+
+    backfill_request_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\nManager Comment: {}\n".format(item, quantity, backfill_request.requester_comment, receipt_url, backfill_request.admin_comment)
+    backfill_request_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\nManager Comment: {}\n".format(item, quantity, backfill_request.requester_comment, receipt_url, receipt_url, backfill_request.admin_comment)
+
+    subject = "Backfill Request Denied"
+    text_content = "A manager has denied your (username {}) backfill request. Go to {} to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, backfill_request_content)
+    html_content = "A manager has denied your (username {}) backfill request. Go to <a href='{}'>{}</a> to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_request_content_html)
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+def sendEmailForNewBackfillRequest(backfill_request):
+    # notify user that backfill request created
+    user = backfill_request.loan.request.requester
+    loan = backfill_request.loan
+    item = loan.item
+    quantity = loan.quantity_loaned - loan.quantity_returned
+    receipt_url = "{}{}".format(DOMAIN, backfill_request.receipt.url)
+    backfill_request_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\n".format(item, quantity, backfill_request.requester_comment, receipt_url)
+    backfill_request_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\n".format(item, quantity, backfill_request.requester_comment, receipt_url, receipt_url)
+    
+    subject = "New Backfill Request Confirmation"
+    #todo more specific loan url 
+    text_content = "This email is to confirm that you ({}) have requested a backfill for a loan. Go to {} to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, backfill_request_content)
+    html_content = "This email is to confirm that you ({}) have requested a backfill for a loan. Go to <a href='{}'>{}</a> to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_request_content_html)
+    to_emails = [user.email]
+    sendEmail(subject, text_content, html_content, to_emails)
+
+
+    # notify subscribed managers that backfill request created???
+    subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
+    subject = "New Backfill Request"
+    #loan_url = "{}{}".format(LOANS_URL
+    text_content = "User {} has requested a backfill for a loan. Go to {} to respond to the backfill request.\n\nBackfill Request\n{}".format(user.username, MANAGE_LOANS_URL, backfill_request_content)
+    html_content = "User {} has requested a backfill for a loan. Go to <a href='{}'>{}</a> to respond to the backfill request.\n\nBackfill Request\n{}".format(user.username, MANAGE_LOANS_URL, MANAGE_LOANS_URL, backfill_request_content_html)
+    to_emails = []
+    bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
+    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
+
+
+def getItemQuantity(item):
+    # todo is this correct?
+    if item.has_assets:
+        assets_in_stock = item.assets.filter(status=models.IN_STOCK)
+        quantity = len(assets_in_stock)
+    else: 
+        quantity = item.quantity
+    return quantity
+
+def sendEmailForMinimumStockIfNeeded(item):
+    # todo email: check logic
+    # are the only places possible for item PUTs and Transaction losses?
+    quantity = getItemQuantity(item)
+
+    if quantity < item.minimum_stock:
+        sendEmailForMinimumStock(item, quantity)
+
+def sendEmailForMinimumStock(item, quantity):
+    subscribed_managers = User.objects.filter(is_staff=True).filter(profile__subscribed=True)
+
+    # Send email to all subscribed managers
+    subject = "Minimum Stock Alert"
+    item_url = "{}{}".format(ITEMS_URL, item.name)
+    text_content = "The quantity of item {} has fallen below the minimum stock of {}. There are {} currently in stock. Go to {} to view item detail page".format(item.name, item.minimum_stock, quantity, item_url)
+    html_content = "The quantity of item {} has fallen below the minimum stock of {}. There are {} currently in stock. Go to <a href='{}'>{}</a> to view item detail page.".format(item.name, item.minimum_stock, quantity, item_url, item_url)
+    to_emails = []
+    bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
+    print(bcc_emails)
+    sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
 
 def sendEmailForLoanToDisbursementConversion(loan):
     user = User.objects.get(username=loan.request.requester)
@@ -2177,6 +2465,7 @@ class BackfillDetailModify(generics.GenericAPIView):
     #  - only managers may change the status of a Backfill
     def put(self, request, pk, format=None):
         instance = self.get_instance(pk)
+        previous_status = instance.status # for emails
         is_owner = (instance.request.requester.pk == request.user.pk)
         if not (request.user.is_staff or request.user.is_superuser or is_owner):
             d = {"error": ["Manager or owner permissions required."]}
@@ -2191,6 +2480,9 @@ class BackfillDetailModify(generics.GenericAPIView):
 
         if serializer.is_valid():
             serializer.save()
+            backfill = instance
+            if previous_status == models.AWAITING_ITEMS and backfill.status == models.SATISFIED:
+                sendEmailForBackfillSatisfied(backfill)
 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2199,17 +2491,26 @@ class BackfillRequestCreate(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
+    def get_loan(self, pk):
+        try:
+            return models.Loan.objects.get(pk=pk)
+        except models.Loan.DoesNotExist:
+            raise NotFound('Loan with ID {} not found.'.format(pk))
+
     def get_serializer_class(self):
         return serializers.BackfillRequestPOSTSerializer
 
-    def post(self, request, format=None):
+    def post(self, request, loan_id, format=None):
+        loan = self.get_loan(pk=loan_id)
         data = request.data.copy()
-
+        data.update({"loan" : loan})
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
-
-        return Response(serializer.data)
+            backfill_request = serializer.instance
+            sendEmailForNewBackfillRequest(backfill_request)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
@@ -2256,11 +2557,15 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
             return Response({"status": ["Only outstanding backfill requests may be modified."]})
 
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
+        previous_status = instance.status
 
         if serializer.is_valid():
             serializer.save()
-            if serializer.data.get('status', None) == "A":
-                approveBackfillRequest(instance)
+            backfill_request = instance 
+            if previous_status != models.APPROVED and backfill_request.status == models.APPROVED:
+                approveBackfillRequest(backfill_request)
+            elif previous_status != models.DENIED and backfill_request.status == models.DENIED:
+                sendEmailForBackfillRequestDenied(backfill_request)
 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

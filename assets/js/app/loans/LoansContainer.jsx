@@ -32,6 +32,7 @@ const LoansContainer = React.createClass({
   },
 
   getLoanGroups() {
+    console.log("get loan groups");
     var url = "/api/loans/"
     var params = {
       page: this.state.page,
@@ -42,6 +43,7 @@ const LoansContainer = React.createClass({
     }
     var _this = this;
     getJSON(url, params, function(data) {
+      console.log("get loan groups return");
       _this.setState({
         loanGroups: data.results,
         pageCount: Number(data.num_pages)
@@ -100,7 +102,7 @@ const LoansContainer = React.createClass({
             <LoanGroupPanel getLoanGroups={this.getLoanGroups}
                             toggleExpanded={this.handleLoanGroupExpand.bind(this, i)}
                             index={i} expanded={this.state.expandedLoanGroup}
-                            key={lg.request.id} loanGroup={lg} />
+                            key={lg.request.id} loanGroup={lg} user={this.props.route.user}/>
           )
         })}
       </ListGroup>
