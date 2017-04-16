@@ -281,7 +281,7 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
         asset = self.get_instance(asset_tag=asset_tag)
         #TODO: add log
 
-    
+
 
         serializer = self.get_serializer(instance=asset, data=data, partial=True)
         if serializer.is_valid():
@@ -1561,7 +1561,7 @@ class TransactionListCreate(generics.GenericAPIView):
         data['administrator'] = request.user
 
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid(): 
+        if serializer.is_valid():
             serializer.save()
             transaction = serializer.instance
             item = transaction.item
@@ -2047,9 +2047,9 @@ def sendEmailForNewBackfillRequest(backfill_request):
     receipt_url = "{}{}".format(DOMAIN, backfill_request.receipt.url)
     backfill_request_content = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: {}\n".format(item, quantity, backfill_request.requester_comment, receipt_url)
     backfill_request_content_html = "Item: {}\nQuantity: {}\nRequester Comment: {}\nReceipt: <a href='{}'>{}</a>\n".format(item, quantity, backfill_request.requester_comment, receipt_url, receipt_url)
-    
+
     subject = "New Backfill Request Confirmation"
-    #todo more specific loan url 
+    #todo more specific loan url
     text_content = "This email is to confirm that you ({}) have requested a backfill for a loan. Go to {} to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, backfill_request_content)
     html_content = "This email is to confirm that you ({}) have requested a backfill for a loan. Go to <a href='{}'>{}</a> to view the backfill request.\n\nBackfill Request\n{}".format(user.username, LOANS_URL, LOANS_URL, backfill_request_content_html)
     to_emails = [user.email]
@@ -2072,7 +2072,7 @@ def getItemQuantity(item):
     if item.has_assets:
         assets_in_stock = item.assets.filter(status=models.IN_STOCK)
         quantity = len(assets_in_stock)
-    else: 
+    else:
         quantity = item.quantity
     return quantity
 
@@ -2561,7 +2561,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
 
         if serializer.is_valid():
             serializer.save()
-            backfill_request = instance 
+            backfill_request = instance
             if previous_status != models.APPROVED and backfill_request.status == models.APPROVED:
                 approveBackfillRequest(backfill_request)
             elif previous_status != models.DENIED and backfill_request.status == models.DENIED:
