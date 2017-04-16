@@ -351,6 +351,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         transaction = super().create(validated_data)
+        item = transaction.item
 
         if transaction.item.has_assets:
             if transaction.category == models.LOSS:
@@ -361,7 +362,13 @@ class TransactionSerializer(serializers.ModelSerializer):
                 for i in range(transaction.quantity):
                     asset = models.Asset.objects.create(item=transaction.item)
                     transaction.assets.add(asset)
+        else:
+            if transaction.category == models.LOSS:
+                item.quantity -= validated_data["quantity"]
+            elif transaction.category == models.ACQUISITION:
+                item.quantity += validated_data["quantity"]
 
+        item.save()
         transaction.save()
         return transaction
 
