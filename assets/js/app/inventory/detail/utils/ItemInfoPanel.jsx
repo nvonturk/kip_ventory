@@ -1,5 +1,7 @@
 import React from 'react'
-import { Grid, Row, Col, Tabs, Tab, Nav, NavItem, Button, Modal, Table, Checkbox, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
+import { Grid, Row, Col, Tabs, Tab, Nav, NavItem, Button, Modal, Table,
+         Checkbox, Form, FormGroup, InputGroup, FormControl, Pagination,
+         ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well, OverlayTrigger, Popover }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../../csrf/DjangoCSRFToken'
 import {browserHistory} from 'react-router'
@@ -288,6 +290,26 @@ const ItemInfoPanel = React.createClass({
   },
 
   render() {
+    var popover = (
+      <Popover id="popover">
+        <p style={{marginBottom: "0px", verticalAlign: "middle", textAlign: "center"}}>Only administrators may modify quantity on non-asset-tracked items.</p>
+      </Popover>
+    )
+    var quantityForm = (!this.props.user.is_superuser || this.props.item.has_assets) ? (
+      <OverlayTrigger trigger={['hover', 'focus']} placement="right" overlay={popover}>
+      <FormControl disabled={!this.props.user.is_superuser || this.props.item.has_assets}
+                   type="number"
+                   name="quantity"
+                   value={this.state.modifiedItem.quantity}
+                   onChange={this.handleItemFormChange}/>
+      </OverlayTrigger>
+    ) : (
+      <FormControl disabled={!this.props.user.is_superuser || this.props.item.has_assets}
+                   type="number"
+                   name="quantity"
+                   value={this.state.modifiedItem.quantity}
+                   onChange={this.handleItemFormChange}/>
+    )
     return (
       <Row>
         <Col xs={12}>
@@ -336,11 +358,7 @@ const ItemInfoPanel = React.createClass({
                   <Col md={3} xs={12}>
                     <FormGroup bsSize="small" controlId="quantity" validationState={this.getValidationState('quantity')}>
                       <ControlLabel>Quantity<span style={{color:"red"}}>*</span></ControlLabel>
-                      <FormControl disabled={!this.props.user.is_superuser}
-                                   type="number"
-                                   name="quantity"
-                                   value={this.state.modifiedItem.quantity}
-                                   onChange={this.handleItemFormChange}/>
+                      { quantityForm }
                       { this.state.errorNodes['quantity'] }
                     </FormGroup>
                   </Col>

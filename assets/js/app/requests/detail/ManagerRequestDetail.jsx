@@ -7,7 +7,7 @@ import Select from 'react-select'
 import LoanModal from '../../loans/LoanModal'
 
 import RequestedItemsContainer from './utils/RequestedItemsContainer'
-
+import TabContainer from './utils/TabContainer'
 
 const ManagerRequestsDetail = React.createClass({
   getInitialState() {
@@ -25,48 +25,19 @@ const ManagerRequestsDetail = React.createClass({
         approved_items: [],
       },
 
-      loans: [],
-      loanSearchText: "",
-      loanStatus: "",
-      loanPage: 1,
-      loanPageCount: 1,
-
-      disbursements: [],
-      disbursementSearchText: "",
-      disbursementPage: 1,
-      disbursementPageCount: 1,
-
-      backfills: [],
-      backfillSearchText: "",
-      backfillStatus: "",
-      backfillPage: 1,
-      backfillPageCount: 1,
-
-      backfillRequests: [],
-      backfillRequestSearchText: "",
-      backfillRequestStatus: "",
-      backfillRequestPage: 1,
-      backfillRequestPageCount: 1,
-
       itemQuantities: {},
       itemAssets: {},
 
       requestExists: true,
       forbidden: false,
 
-      showLoanModal: false,
-      loanToModify: null,
-
-      errorNodes: {}
+      errorNodes: {},
+      refresh: false
     }
   },
 
   componentWillMount() {
     this.getRequest()
-    this.getLoans()
-    this.getDisbursements()
-    this.getBackfills()
-    this.getBackfillRequests()
   },
 
   getRequest() {
@@ -85,7 +56,8 @@ const ManagerRequestsDetail = React.createClass({
           response.approved_items = ris
         }
         _this.setState({
-          request: response
+          request: response,
+          refresh: false
         })
         for (var i=0; i<response.requested_items.length; i++) {
           var item = response.requested_items[i].item
@@ -115,77 +87,6 @@ const ManagerRequestsDetail = React.createClass({
         }
       }
     });
-  },
-
-  getLoans() {
-    var url = "/api/requests/" + this.state.request.id + "/loans/"
-    var params = {
-      item: this.state.loanSearchText,
-      status: this.state.loanStatus,
-      page: this.state.loanPage,
-      itemsPerPage: 5
-    }
-    var _this = this
-    getJSON(url, params, function(data) {
-      _this.setState({
-        loans: data.results,
-        loanPage: 1,
-        loanPageCount: data.num_pages
-      })
-    })
-  },
-
-  getDisbursements() {
-    var url = "/api/requests/" + this.state.request.id + "/disbursements/"
-    var params = {
-      item: this.state.disbursementSearchText,
-      page: this.state.disbursementPage,
-      itemsPerPage: 5
-    }
-    var _this = this
-    getJSON(url, params, function(data) {
-      _this.setState({
-        disbursements: data.results,
-        disbursementPage: 1,
-        disbursementPageCount: data.num_pages
-      })
-    })
-  },
-
-  getBackfills() {
-    var url = "/api/requests/" + this.state.request.id + "/backfills/"
-    var params = {
-      item: this.state.backfillSearchText,
-      status: this.state.backfillStatus,
-      page: this.state.backfillPage,
-      itemsPerPage: 5
-    }
-    var _this = this
-    getJSON(url, params, function(data) {
-      _this.setState({
-        backfills: data.results,
-        backfillPage: 1,
-        backfillPageCount: data.num_pages
-      })
-    })
-  },
-
-  getBackfillRequests() {
-    var url = "/api/requests/" + this.state.request.id + "/backfills/requests/"
-    var params = {
-      item: this.state.backfillRequestSearchText,
-      status: this.state.backfillRequestStatus,
-      page: this.state.backfillRequestPage,
-      itemsPerPage: 5
-    }
-    var _this = this
-    getJSON(url, params, function(data) {
-      _this.setState({
-        backfillRequests: data.results,
-        backfillRequestPage: 1,
-        backfillRequestPageCount: data.num_pages
-      })
-    })
   },
 
   denyRequest(e) {
@@ -236,7 +137,9 @@ const ManagerRequestsDetail = React.createClass({
         request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
       },
       success:function(response){
-        _this.componentWillMount()
+        _this.setState({
+          refresh: true
+        }, _this.componentWillMount())
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
@@ -304,20 +207,6 @@ const ManagerRequestsDetail = React.createClass({
     } else {
       return null
     }
-  },
-
-  showLoanModal(loan) {
-    this.setState({
-      showLoanModal: true,
-      loanToModify: loan,
-    })
-  },
-
-  hideModal(e) {
-    this.setState({
-      showLoanModal: false,
-      loanToModify: null,
-    })
   },
 
   getValidationState(key) {
@@ -567,538 +456,6 @@ const ManagerRequestsDetail = React.createClass({
     )
   },
 
-  handleBackfillRequestItemSearch(e) {
-    var _this = this
-    this.setState({
-      backfillRequestSearchText: e.target.value,
-      backfillRequestPage: 1
-    }, _this.getBackfillRequests)
-  },
-
-  handleBackfillRequestStatusSelection(status) {
-    var _this = this
-    if (status == null) {
-      this.setState({
-        backfillRequestStatus: "",
-      }, _this.getBackfillRequests)
-    } else {
-      this.setState({
-        backfillRequestStatus: status.value
-      }, _this.getBackfillRequests)
-    }
-  },
-
-  getBackfillRequestsFilterPanel() {
-    return (
-      <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
-        <h5>Refine Results</h5>
-        <hr />
-        <FormGroup>
-          <ControlLabel>Search by item name or model number</ControlLabel>
-          <InputGroup bsSize="small">
-            <FormControl placeholder="Item name or model number"
-                         style={{fontSize:"12px"}}
-                         type="text" name="backfillRequestSearchText"
-                         value={this.state.backfillRequestSearchText}
-                         onChange={this.handleBackfillRequestItemSearch}/>
-            <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.getBackfillRequests}>
-              <Glyphicon glyph="search"/>
-            </InputGroup.Addon>
-          </InputGroup>
-        </FormGroup>
-        <FormGroup>
-          <ControlLabel>Filter by status</ControlLabel>
-          <Select style={{fontSize:"12px"}} name="backfill-status-filter"
-                  multi={false}
-                  placeholder="Filter by status"
-                  value={this.state.backfillRequestStatus}
-                  options={[
-                    {label: "Outstanding", value: "outstanding"},
-                    {label: "Approved", value: "approved"},
-                    {label: "Denied", value: "denied"}
-                  ]}
-                  onChange={this.handleBackfillRequestStatusSelection} />
-        </FormGroup>
-      </Panel>
-    )
-  },
-
-  getBackfillRequestsPanel() {
-    var backfillRequestTable = null;
-    if (this.state.backfillRequests.length == 0) {
-      backfillRequestTable = (
-        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
-          No results.
-        </Well>
-      )
-    } else {
-      backfillRequestTable = (
-        <Table style={{marginBottom: "0px"}}>
-          <thead>
-            <tr>
-              <th style={{width:"45%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"45%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset Tag</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.state.backfillRequests.map( (backfill_request, i) => {
-              return (
-                <tr key={backfill_request.id}>
-                  <td data-th="Item">
-                    {backfill_request.id}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </Table>
-      )
-    }
-    return (
-      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
-
-        <div className="panel-body" style={{minHeight:"220px"}}>
-          { backfillRequestTable }
-        </div>
-
-        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
-          <Row>
-            <Col md={12}>
-              <Pagination next prev maxButtons={10} boundaryLinks
-                          ellipsis style={{float:"right", margin: "0px"}}
-                          bsSize="small" items={this.state.backfillRequestPageCount}
-                          activePage={this.state.backfillRequestPage}
-                          onSelect={activeKey => {this.setState({backfillRequestPage: activeKey}, this.getBackfillRequests)}}/>
-            </Col>
-          </Row>
-        </div>
-
-      </div>
-    )
-  },
-
-
-  handleBackfillItemSearch(e) {
-    var _this = this
-    this.setState({
-      backfillSearchText: e.target.value,
-      backfillPage: 1
-    }, _this.getBackfills)
-  },
-
-  handleBackfillStatusSelection(status) {
-    var _this = this
-    if (status == null) {
-      this.setState({
-        backfillStatus: "",
-      }, _this.getBackfills)
-    } else {
-      this.setState({
-        backfillStatus: status.value
-      }, _this.getBackfills)
-    }
-  },
-
-  getBackfillsFilterPanel() {
-    return (
-      <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
-        <h5>Refine Results</h5>
-        <hr />
-        <FormGroup>
-          <ControlLabel>Search by item name or model number</ControlLabel>
-          <InputGroup bsSize="small">
-            <FormControl placeholder="Item name or model number"
-                         style={{fontSize:"12px"}}
-                         type="text" name="disbursementSearchText"
-                         value={this.state.backfillSearchText}
-                         onChange={this.handleBackfillItemSearch}/>
-            <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.getBackfills}>
-              <Glyphicon glyph="search"/>
-            </InputGroup.Addon>
-          </InputGroup>
-        </FormGroup>
-        <FormGroup>
-          <ControlLabel>Filter by status</ControlLabel>
-          <Select style={{fontSize:"12px"}} name="backfill-status-filter"
-                  multi={false}
-                  placeholder="Filter by status"
-                  value={this.state.backfillStatus}
-                  options={[
-                    {label: "Awaiting Items", value: "awaiting_items"},
-                    {label: "Items Received", value: "satisfied"}
-                  ]}
-                  onChange={this.handleBackfillStatusSelection} />
-        </FormGroup>
-      </Panel>
-    )
-  },
-
-  getBackfillsPanel() {
-    var backfillTable = null;
-    if (this.state.backfills.length == 0) {
-      backfillTable = (
-        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
-          No results.
-        </Well>
-      )
-    } else {
-      backfillTable = (
-        <Table style={{marginBottom: "0px"}}>
-          <thead>
-            <tr>
-              <th style={{width:"45%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"45%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset Tag</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.state.backfills.map( (backfill, i) => {
-              return (
-                <tr key={backfill.id}>
-                  <td data-th="Item">
-                    {backfill.id}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </Table>
-      )
-    }
-    return (
-      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
-
-        <div className="panel-body" style={{minHeight:"220px"}}>
-          { backfillTable }
-        </div>
-
-        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
-          <Row>
-            <Col md={12}>
-              <Pagination next prev maxButtons={10} boundaryLinks
-                          ellipsis style={{float:"right", margin: "0px"}}
-                          bsSize="small" items={this.state.backfillPageCount}
-                          activePage={this.state.backfillPage}
-                          onSelect={activeKey => {this.setState({backfillPage: activeKey}, this.getBackfills)}}/>
-            </Col>
-          </Row>
-        </div>
-
-      </div>
-    )
-  },
-
-
-
-  handleDisbursementItemSearch(e) {
-    var _this = this
-    this.setState({
-      disbursementSearchText: e.target.value,
-      disbursmentPage: 1
-    }, _this.getDisbursements)
-  },
-
-  getDisbursementsFilterPanel() {
-    return (
-      <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
-        <h5>Refine Results</h5>
-        <hr />
-        <FormGroup>
-          <ControlLabel>Search by item name or model number</ControlLabel>
-          <InputGroup bsSize="small">
-            <FormControl placeholder="Item name or model number"
-                         style={{fontSize:"12px"}}
-                         type="text" name="disbursementSearchText"
-                         value={this.state.disbursementSearchText}
-                         onChange={this.handleDisbursementItemSearch}/>
-            <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.getDisbursements}>
-              <Glyphicon glyph="search"/>
-            </InputGroup.Addon>
-          </InputGroup>
-        </FormGroup>
-      </Panel>
-    )
-  },
-
-  getDisbursementsPanel() {
-    if (this.state.request.status == "A") {
-      return (this.state.disbursements.length > 0) ? (
-        <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
-          <Table style={{marginBottom: "0px"}}>
-            <thead>
-              <tr>
-                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-                <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-                <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
-                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              { this.state.disbursements.map( (disbursement, i) => {
-                return (
-                  <tr key={disbursement.id}>
-                    <td data-th="Status" className="text-center">
-                      <Glyphicon style={{color: "rgb(217, 83, 79)", fontSize: "15px"}} glyph="log-out" />
-                    </td>
-                    <td data-th="Item" className="text-left">
-                      <a href={"/app/inventory/" + disbursement.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                        { disbursement.item }
-                      </a>
-                    </td>
-                    {(disbursement.asset == null) ? (
-                      <td data-th="Asset" className="text-left">
-
-                      </td>
-                    ) : (
-                      <td data-th="Asset" className="text-left">
-                        { disbursement.asset }
-                      </td>
-                    )}
-                    <td data-th="Quantity" className="text-center">
-                      { disbursement.quantity }
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </Panel>
-      ) : (
-        <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
-          <Well bsSize="small" style={{fontSize: "12px"}} className="text-center">
-            This request has no associated disbursements.
-          </Well>
-        </Panel>
-      )
-    } else {
-      return null
-    }
-  },
-
-  getLoanStatusSymbol(loan, fs) {
-    return (loan.quantity_returned === loan.quantity_loaned) ? (
-      <Glyphicon style={{color: "#5cb85c", fontSize: fs}} glyph="ok-sign" />
-    ) : (
-      <Glyphicon style={{color: "#f0ad4e", fontSize: fs}} glyph="exclamation-sign" />
-    )
-  },
-
-  handleLoanStatusSelection(status) {
-    var _this = this
-    if (status == null) {
-      this.setState({
-        loanStatus: "",
-      }, _this.getLoans)
-    } else {
-      this.setState({
-        loanStatus: status.value
-      }, _this.getLoans)
-    }
-  },
-
-  handleLoanItemSearch(e) {
-    var _this = this
-    this.setState({
-      loanSearchText: e.target.value,
-      loanPage: 1
-    }, _this.getLoans)
-  },
-
-  getLoansFilterPanel() {
-    return (
-      <Panel style={{boxShadow: "0px 0px 5px 2px #485563"}}>
-        <h5>Refine Results</h5>
-        <hr />
-        <FormGroup>
-          <ControlLabel>Search by item name or model number</ControlLabel>
-          <InputGroup bsSize="small">
-            <FormControl placeholder="Item name or model number"
-                         style={{fontSize:"12px"}}
-                         type="text" name="loanSearchText"
-                         value={this.state.loanSearchText}
-                         onChange={this.handleLoanItemSearch}/>
-            <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.getLoans}>
-              <Glyphicon glyph="search"/>
-            </InputGroup.Addon>
-          </InputGroup>
-        </FormGroup>
-        <FormGroup>
-          <ControlLabel>Status</ControlLabel>
-          <Select style={{fontSize:"12px"}} name="loans-status-filter"
-                  multi={false}
-                  placeholder="Filter by status"
-                  value={this.state.loanStatus}
-                  options={[
-                    {label: "Outstanding", value: "outstanding"},
-                    {label: "Returned", value: "returned"}
-                  ]}
-                  onChange={this.handleLoanStatusSelection} />
-        </FormGroup>
-      </Panel>
-    )
-  },
-
-  getLoansPanel() {
-    var loanTable = null;
-    if (this.state.loans.length == 0) {
-      loanTable = (
-        <Well bsSize="small" style={{marginBottom:"0px", fontSize: "12px"}} className="text-center">
-          No results.
-        </Well>
-      )
-    } else {
-      loanTable = (
-        <Table style={{marginBottom: "0px"}}>
-          <thead>
-            <tr>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.state.loans.map( (loan, i) => {
-              var editGlyph = (loan.quantity_loaned > loan.quantity_returned) ? (
-                <Glyphicon glyph="edit" className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
-                        onClick={this.showLoanModal.bind(this, loan)} />
-              ) : null
-              return (
-                <tr key={loan.id}>
-                  <td data-th="" className="text-center">
-                    { this.getLoanStatusSymbol(loan, "15px") }
-                  </td>
-                  <td data-th="Item" className="text-left">
-                    <a href={"/app/inventory/" + loan.item + "/"} style={{fontSize: "12px", color: "rgb(223, 105, 26)"}}>
-                      { loan.item }
-                    </a>
-                  </td>
-                  {(loan.asset == null) ? (
-                    <td data-th="Asset" className="text-left">
-
-                    </td>
-                  ) : (
-                    <td data-th="Asset" className="text-left">
-                      { loan.asset }
-                    </td>
-                  )}
-                  <td data-th="Loaned" className="text-center">
-                    { loan.quantity_loaned }
-                  </td>
-                  <td data-th="Returned" className="text-center">
-                    { loan.quantity_returned }
-                  </td>
-                  <td data-th="" className="text-center">
-                    { editGlyph }
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </Table>
-      )
-    }
-    return (
-      <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
-
-        <div className="panel-body" style={{minHeight:"220px"}}>
-          { loanTable }
-        </div>
-
-        <div className="panel-footer" style={{backgroundColor: "transparent"}}>
-          <Row>
-            <Col md={12}>
-              <Pagination next prev maxButtons={10} boundaryLinks
-                          ellipsis style={{float:"right", margin: "0px"}}
-                          bsSize="small" items={this.state.loanPageCount}
-                          activePage={this.state.loanPage}
-                          onSelect={activeKey => {this.setState({loanPage: activeKey}, this.getLoans)}}/>
-            </Col>
-          </Row>
-        </div>
-
-      </div>
-    )
-  },
-
-  getTabContainer() {
-    return (this.state.request.status == "A") ? (
-      <Panel header={"View loans, disbursements, and backfills associated with this request."}>
-        <Tab.Container id="tabs-with-dropdown" defaultActiveKey={1} >
-          <Row className="clearfix">
-            <Col sm={12}>
-              <Nav bsStyle="tabs" style={{borderBottom: "1px solid #596a7b"}}>
-                <NavItem eventKey={1} style={{borderBottom: "1px solid #596a7b"}}>
-                  Loans
-                </NavItem>
-                <NavItem eventKey={2} style={{borderBottom: "1px solid #596a7b"}}>
-                  Disbursements
-                </NavItem>
-                <NavItem eventKey={3} style={{borderBottom: "1px solid #596a7b"}}>
-                  Backfill Requests
-                </NavItem>
-                <NavItem eventKey={4} style={{borderBottom: "1px solid #596a7b"}}>
-                  Backfills
-                </NavItem>
-              </Nav>
-            </Col>
-            <Col sm={12}>
-              <Tab.Content animation>
-
-                <Tab.Pane eventKey={1} style={{padding: "15px"}}>
-                  <Row>
-                    <Col xs={3} style={{paddingLeft: "0px"}}>
-                      { this.getLoansFilterPanel() }
-                    </Col>
-                    <Col xs={9} style={{paddingRight: "0px"}}>
-                      { this.getLoansPanel() }
-                    </Col>
-                  </Row>
-                </Tab.Pane>
-
-                <Tab.Pane eventKey={2} style={{padding: "15px"}}>
-                  <Row>
-                    <Col xs={3} style={{paddingLeft: "0px"}}>
-                      { this.getDisbursementsFilterPanel() }
-                    </Col>
-                    <Col xs={9} style={{paddingRight: "0px"}}>
-                      { this.getDisbursementsPanel() }
-                    </Col>
-                  </Row>
-                </Tab.Pane>
-
-                <Tab.Pane eventKey={3} style={{padding: "15px"}}>
-                  <Row>
-                    <Col xs={3} style={{paddingLeft: "0px"}}>
-                      { this.getBackfillRequestsFilterPanel() }
-                    </Col>
-                    <Col xs={9} style={{paddingRight: "0px"}}>
-                      { this.getBackfillRequestsPanel() }
-                    </Col>
-                  </Row>
-                </Tab.Pane>
-
-                <Tab.Pane eventKey={4} style={{padding: "15px"}}>
-                  <Row>
-                    <Col xs={3} style={{paddingLeft: "0px"}}>
-                      { this.getBackfillsFilterPanel() }
-                    </Col>
-                    <Col xs={9} style={{paddingRight: "0px"}}>
-                      { this.getBackfillsPanel() }
-                    </Col>
-                  </Row>
-                </Tab.Pane>
-
-              </Tab.Content>
-            </Col>
-          </Row>
-        </Tab.Container>
-      </Panel>
-    ) : null
-  },
-
   render() {
     if (this.state.forbidden) {
       return this.get403Forbidden()
@@ -1127,6 +484,9 @@ const ManagerRequestsDetail = React.createClass({
           </Col>
         </Row>
       )
+      var tabcontainer = (this.state.request.status == "A") ? (
+        <TabContainer user={this.props.route.user} request={this.state.request}/>
+      ) : null
       return (
         <Grid>
           <Row>
@@ -1143,21 +503,9 @@ const ManagerRequestsDetail = React.createClass({
               <hr />
             </Col>
           </Row>
-
           { toprow }
-
           <hr />
-
-          { this.getTabContainer() }
-
-          <LoanModal loan={this.state.loanToModify}
-                     request={this.state.request}
-                     show={this.state.showLoanModal}
-                     onHide={this.hideModal}
-                     refresh={this.componentWillMount.bind(this)}
-                     user={this.props.route.user}/>
-
-
+          {tabcontainer}
         </Grid>
       )
     }
