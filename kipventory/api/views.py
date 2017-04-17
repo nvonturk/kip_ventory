@@ -1171,8 +1171,13 @@ class LoanDetailModify(generics.GenericAPIView):
             d = {"error": "Manager permissions required."}
             return Response(d, status=status.HTTP_403_FORBIDDEN)
         loan = self.get_instance(pk=pk)
+
         data = request.data.copy()
+        quantity_to_return = data.pop('quantity_returned', 0)
+        quantity_returned = loan.quantity_returned + quantity_to_return
         data.update({"loan": loan})
+        data.update({"quantity_returned": quantity_returned})
+
         serializer = self.get_serializer(instance=loan, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -1222,6 +1227,9 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
             convertLoanToDisbursement(loan, request.user.pk, quantity)
             sendEmailForLoanToDisbursementConversion(loan)
             if loan.quantity_loaned == 0:
+                for bf in loan.backfill_requests.all():
+                    if bf.status == models.OUTSTANDING:
+                        bf.delete()
                 loan.delete()
 
             return Response(serializer.data)
@@ -2606,6 +2614,7 @@ class BackfillDetailModify(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
+        print("test")
 
         if not (instance.status == models.AWAITING_ITEMS):
             return Response({"status": ["Only backfills with status 'Awaiting Items' can be modified."]})
@@ -2710,7 +2719,7 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # OWNER LOCKED
-    def delete(self, request, request_pk, format=None):
+    def delete(self, request, pk, format=None):
         instance = self.get_instance(pk)
         is_owner =  (instance.request.requester.pk == request.user.pk)
         if not (is_owner):

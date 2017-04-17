@@ -680,7 +680,7 @@ class LoanSerializer(serializers.ModelSerializer):
                 # we returned several untracked instances. delete this loan object, and instead
                 # create one new loan object for each instance we are returning.
                 else:
-                    for i in range(loan.quantity_returned):
+                    for i in range(new_quantity - old_quantity):
                         asset = models.Asset.objects.create(item=loan.item)
                         new_loan = models.Loan.objects.create(request=loan.request, item=loan.item, asset=asset, quantity_loaned=1, quantity_returned=1)
                         loan.quantity_returned -= 1
@@ -853,6 +853,8 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
         return validated_data
 
     def update(self, backfill, data):
+        #todo are this supposed to update the inventory like this??
+        
         status = data.get('status')
         if status == models.SATISFIED:
             item = backfill.item
@@ -864,6 +866,8 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
             else:
                 item.quantity += backfill.quantity
                 item.save()
+        
+        super().update(backfill, data)     
         return backfill
 
 
@@ -879,12 +883,24 @@ class BackfillRequestGETSerializer(serializers.ModelSerializer):
         model = models.BackfillRequest
         fields = ['id', 'request', 'item', 'asset', 'quantity', 'requester_comment', 'loan', 'receipt', 'status', 'admin_comment']
 
+    def to_representation(self, backfill_request):
+        backfill_request_json = super().to_representation(backfill_request)
+        owner_username = backfill_request.request.requester.username
+        backfill_request_json.update({"owner_username":owner_username})
+        return backfill_request_json
+
 class BackfillRequestGETSerializerNoLoan(serializers.ModelSerializer):
     receipt = serializers.FileField()
 
     class Meta:
         model = models.BackfillRequest
         fields = ['id', 'quantity', 'requester_comment', 'receipt', 'status', 'admin_comment']
+
+    def to_representation(self, backfill_request):
+        backfill_request_json = super().to_representation(backfill_request)
+        owner_username = backfill_request.request.requester.username
+        backfill_request_json.update({"owner_username":owner_username})
+        return backfill_request_json
 
 class BackfillRequestPOSTSerializer(serializers.ModelSerializer):
     receipt = serializers.FileField()

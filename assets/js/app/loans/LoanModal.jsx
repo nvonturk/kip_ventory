@@ -24,7 +24,7 @@ const LoanModal = React.createClass({
   componentWillReceiveProps(nextProps) {
     if (nextProps.loan != null) {
       this.setState({
-        returnQuantity: nextProps.loan.quantity_returned,
+        returnQuantity: 0,
         disburseQuantity: 0,
         requester_comment: "",
         receipt: null,
@@ -35,7 +35,7 @@ const LoanModal = React.createClass({
 
   handleReturnQuantityChange(e) {
     var q = Number(e.target.value)
-    if ((q >= this.props.loan.quantity_returned) && (q <= (this.props.loan.quantity_loaned))) {
+    if ((q >= 0) && (q <= (this.props.loan.quantity_loaned - this.props.loan.quantity_returned))) {
       this.setState({
         returnQuantity: q,
         errorNodes: {}
@@ -144,6 +144,10 @@ const LoanModal = React.createClass({
     return (this.state.disburseQuantity == 0)
   },
 
+  isReturnDisabled() {
+    return (this.state.returnQuantity == 0)
+  },
+
   handleBackfillRequestFormChange(e) {
     this.setState({
       [e.target.name] : e.target.value
@@ -217,6 +221,7 @@ const LoanModal = React.createClass({
       <Row>
         <Col xs={12}>
           <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}} header={<h4>Request for backfill</h4>}>
+            <p>This will request the remaining {this.props.loan.quantity_loaned - this.props.loan.quantity_returned} item(s) on loan for backfill.</p>
             <Form horizontal>
               <Row>
                 <Col xs={12}>
@@ -312,6 +317,41 @@ const LoanModal = React.createClass({
     });
 	},
 
+  cancelBackfillRequest() {
+    var _this = this
+    var url = "/api/backfillrequests/" +this.props.loan.outstanding_backfill_request.id + "/"
+    ajax({
+      url: url,
+      contentType: "application/json",
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          requester_comment: "",
+          admin_comment: "",
+          receipt: null,
+          errorNodes: {}
+        }, () => {_this.props.refresh(); _this.props.onHide()})
+      },
+      error:function (xhr, textStatus, thrownError){
+        if (xhr.status == 400) {
+          var response = xhr.responseJSON
+          var errNodes = {}
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
+        }
+      }
+    });
+  },
 
   getBackfillRequestedPanel() {
     var approvalForm = (this.props.user.is_staff || this.props.user.is_superuser) ? (
@@ -347,6 +387,16 @@ const LoanModal = React.createClass({
         </Col>
       </Form>
     ) : null
+    
+    var isOwner = (this.props.user.username == this.props.request.requester)
+    var cancelForm = isOwner ? (
+      <Button bsStyle="danger" bsSize="small"
+                  style={{marginRight: "15px", fontSize: "12px"}}
+                  onClick={this.cancelBackfillRequest}>
+        Cancel Backfill Request
+      </Button>
+    ) : null; 
+
     return (this.props.loan.outstanding_backfill_request != null) ? (
       <Row>
         <Col xs={12}>
@@ -377,6 +427,7 @@ const LoanModal = React.createClass({
                 </tr>
               </tbody>
             </Table>
+            { cancelForm }
             { approvalForm }
           </Panel>
         </Col>
@@ -398,13 +449,13 @@ const LoanModal = React.createClass({
               <Form>
                 <FormGroup bsSize="small">
                   <ControlLabel>
-                    Quantity Returned
+                    Quantity to Return
                   </ControlLabel>
                   <FormControl type="number" name="returnQuantity" value={this.state.returnQuantity}
-                               onChange={this.handleReturnQuantityChange} min={this.props.loan.quantity_returned} step={1} max={this.props.loan.quantity_loaned} />
+                               onChange={this.handleReturnQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned - this.props.quantity_returned} />
                 </FormGroup>
                 <FormGroup bsSize="small">
-                  <Button bsStyle="info" bsSize="small"
+                  <Button bsStyle="info" bsSize="small" disabled={this.isReturnDisabled()}
                           style={{fontSize: "12px", float: "right"}} onClick={this.handleReturn}>
                     Log Return
                   </Button>
@@ -421,7 +472,7 @@ const LoanModal = React.createClass({
                     Quantity to Disburse
                   </ControlLabel>
                   <FormControl type="number" name="disburseQuantity" value={this.state.disburseQuantity}
-                               onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned}/>
+                               onChange={this.handleDisburseQuantityChange} min={0} step={1} max={this.props.loan.quantity_loaned - this.props.quantity_returned}/>
                 </FormGroup>
                 <FormGroup bsSize="small">
                   <Button bsStyle="info" bsSize="small" disabled={this.isDisburseDisabled()}
