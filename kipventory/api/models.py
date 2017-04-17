@@ -362,6 +362,7 @@ class BulkImport(models.Model):
 class Log(models.Model):
     item                    = models.ForeignKey(Item, on_delete=models.SET_NULL, blank=True, null=True)
     quantity                = models.PositiveIntegerField(blank=True, null=True)
+    asset                   = models.ForeignKey(Asset, on_delete=models.SET_NULL, blank=True, null=True)
     initiating_user         = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='initiating_user', null=True)
     affected_user           = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='affected_user', blank=True, null=True)
     date_created            = models.DateTimeField(blank=True, auto_now_add=True)
@@ -371,6 +372,7 @@ class Log(models.Model):
     default_item            = models.TextField(blank=True, null=True)
     default_initiating_user = models.TextField(blank=True, null=True)
     default_affected_user   = models.TextField(blank=True, null=True)
+    default_asset           = models.TextField(blank=True, null=True)
 
     # The following categories detail what type of inventory change occurred
     ITEM_CREATION                   = "Item Creation"
@@ -384,6 +386,13 @@ class Log(models.Model):
     REQUEST_ITEM_DENIAL             = "Request Item Denial"
     USER_CREATION                   = "User Creation"
     TRANSACTION_CREATION            = "Transaction Creation"
+    ASSET_CREATION                  = "Asset Creation"
+    ASSET_DELETION                  = "Asset Deletion"
+    ASSET_MODIFICATION              = 'Asset Modification'
+    LOAN_TO_BACKFILL_REQUEST        = 'Loan Changed to Backfill Request'
+    BACKFILL_REQUEST_APPROVAL       = 'Backfill Request Approval'
+    BACKFILL_REQUEST_DENIAL         = 'Backfill Request Denial'
+    BACKFILL_SATISFIED              = 'Backfill Satisfied'
     category_choices2    = (
         (ITEM_MODIFICATION, ITEM_MODIFICATION),
         (ITEM_CREATION, ITEM_CREATION),
@@ -396,6 +405,13 @@ class Log(models.Model):
         (REQUEST_ITEM_DENIAL, REQUEST_ITEM_DENIAL),
         (USER_CREATION, USER_CREATION),
         (TRANSACTION_CREATION, TRANSACTION_CREATION),
+        (ASSET_CREATION, ASSET_CREATION),
+        (ASSET_DELETION, ASSET_DELETION),
+        (ASSET_MODIFICATION, ASSET_MODIFICATION),
+        (LOAN_TO_BACKFILL_REQUEST, LOAN_TO_BACKFILL_REQUEST),
+        (BACKFILL_REQUEST_APPROVAL, BACKFILL_REQUEST_APPROVAL),
+        (BACKFILL_REQUEST_DENIAL, BACKFILL_REQUEST_DENIAL),
+        (BACKFILL_SATISFIED, BACKFILL_SATISFIED),
     )
     category            = models.TextField(choices=category_choices2)
 
@@ -412,6 +428,8 @@ class Log(models.Model):
             self.default_affected_user   = copy.deepcopy(self.affected_user.username)
         if self.initiating_user is not None:
             self.default_initiating_user = copy.deepcopy(self.initiating_user.username)
+        if self.asset is not None and self.asset is not "":
+            self.default_asset = copy.deepcopy(self.asset.tag)
 
     def save(self, *args, **kwargs):
         if self.pk is None:
