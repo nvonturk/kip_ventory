@@ -54,6 +54,8 @@ const InventoryContainer = React.createClass({
       showMinQuantsModal: false,
       newMinimumQuantity: 0,
       showMinQuantsErrorModal: false,
+
+      minModArray: [],
     }
   },
 
@@ -61,6 +63,7 @@ const InventoryContainer = React.createClass({
     this.getCustomFields();
     this.getItems(); //maybe move to componentDidMount()
     this.getAllTags();
+
   },
 
   getCustomFields() {
@@ -90,9 +93,14 @@ const InventoryContainer = React.createClass({
     }
     getJSON(url, params, function(data) {
       var item = _this.state.item
+      var newMinModArray = new Array(data.results.length)
+      for(var i = 0 ; i < newMinModArray.length ; i++){
+        newMinModArray[i] = false
+      }
       _this.setState({
         item: item,
         items: data.results,
+        minModArray: newMinModArray,
         pageCount: Math.ceil(data.num_pages),
       });
     });
@@ -783,7 +791,7 @@ const InventoryContainer = React.createClass({
                       </thead>
                       <tbody>
                         {this.state.items.map( (item, i) => {
-                          return (<InventoryItem key={item.name} item={item} minModSelect={true} minQuants={this.state.showMinQuants} boxChange={this.handleMinQuantsSelection} />)
+                          return (<InventoryItem key={item.name} item={item} minModSelect={this.state.minModArray[i]} minQuants={this.state.showMinQuants} boxChange={this.handleMinQuantsSelection} />)
                         })}
                       </tbody>
                     </Table>

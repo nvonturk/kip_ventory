@@ -151,7 +151,7 @@ const InventoryItem = React.createClass({
 
     var minQuantsCheckbox  = (this.props.minQuants) ? (
       <td data-th="Modify Minimum Stock" style={{fontSize:"10px", zIndex:"9999"}}  onClick={e => e.stopPropagation()}>
-        <Checkbox style={{paddingTop: "6px", textAlign: "center"}} checked={this.state.minModSelect} onChange={e => this.props.boxChange(e, this.props.item)} />
+       <Checkbox style={{paddingTop: "6px", textAlign: "center"}} onChange={e => this.props.boxChange(e, this.props.item)} />
       </td>
     ) : (
       null
