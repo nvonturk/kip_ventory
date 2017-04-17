@@ -9,8 +9,7 @@ const InventoryItem = React.createClass({
     return {
       quantity: 0,
       in_cart: this.props.item.in_cart,
-      showTags: false,
-      minModSelect: this.props.minModSelect,
+      showTags: false
     }
   },
 
@@ -175,7 +174,6 @@ const InventoryItem = React.createClass({
         </td>
         <td data-th="Model No." style={{fontSize:"10px"}} className="text-center">{this.props.item.model_no}</td>
         <td data-th="In Stock" style={{fontSize:"10px"}} className="text-center">{this.props.item.quantity}</td>
-        {minStockEntry}
         <td data-th="Tags" className="text-center" style={{fontSize:"10px", zIndex:"9999"}}>
           <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getPopover()}>
             <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>

@@ -178,43 +178,6 @@ const LoansContainer = React.createClass({
                   </div>
 
                 </div>
-                <div className="panel panel-default">
-
-                  <div className="panel-heading">
-                    <span style={{fontSize:"15px"}}>Legend</span>
-                  </div>
-
-                  <div className="panel-body">
-                    <Row style={{display: "flex"}}>
-                      <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#5cb85c", fontSize:"18px"}} glyph="ok-sign" />
-                      </Col>
-                      <Col md={9}>
-                        <p style={{marginBottom:"0px", fontSize: "12px"}}>This item has been returned from loan.</p>
-                      </Col>
-                    </Row>
-                    <hr />
-                    <Row style={{display: "flex"}}>
-                      <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#f0ad4e", fontSize:"18px"}} glyph="exclamation-sign" />
-                      </Col>
-                      <Col md={9}>
-                        <p style={{marginBottom: "0px", fontSize: "12px"}}>This item is still on loan.</p>
-                      </Col>
-                    </Row>
-                    <hr />
-                    <Row style={{display: "flex"}}>
-                      <Col md={3} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
-                        <Glyphicon style={{color: "#d9534f", fontSize:"18px"}} glyph="log-out" />
-                      </Col>
-                      <Col md={9}>
-                        <p style={{marginBottom: "0px", fontSize: "12px"}}>This item has been disbursed.</p>
-                      </Col>
-                    </Row>
-
-                  </div>
-
-                </div>
               </Col>
 
               <Col md={9} xs={12}>

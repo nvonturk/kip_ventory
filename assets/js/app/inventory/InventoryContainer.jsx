@@ -54,8 +54,6 @@ const InventoryContainer = React.createClass({
       showMinQuantsModal: false,
       newMinimumQuantity: 0,
       showMinQuantsErrorModal: false,
-
-      minModArray: [],
     }
   },
 
@@ -63,7 +61,6 @@ const InventoryContainer = React.createClass({
     this.getCustomFields();
     this.getItems(); //maybe move to componentDidMount()
     this.getAllTags();
-
   },
 
   getCustomFields() {
@@ -93,14 +90,9 @@ const InventoryContainer = React.createClass({
     }
     getJSON(url, params, function(data) {
       var item = _this.state.item
-      var newMinModArray = new Array(data.results.length)
-      for(var i = 0 ; i < newMinModArray.length ; i++){
-        newMinModArray[i] = false
-      }
       _this.setState({
         item: item,
         items: data.results,
-        minModArray: newMinModArray,
         pageCount: Math.ceil(data.num_pages),
       });
     });
@@ -689,8 +681,8 @@ const InventoryContainer = React.createClass({
         <th style={{width:"20%"}} className="text-left">Item</th>
         <th style={{width:"10%"}} className="text-center">Model No.</th>
         <th style={{width:"10%"}} className="text-center">In Stock</th>
-        <th style={{width:"10%"}} className="text-center">Minimum Stock</th>
         <th style={{width:"10%"}} className="text-center">Tags</th>
+        <th style={{width:"10%"}} className="text-center"/>
         <th style={{width:"10%"}} className="text-center">Status</th>
         <th style={{width:"10%"}} className="text-center">Min Stock</th>
         <th style={{width:"5%"}}  className="spacer" />
@@ -792,7 +784,7 @@ const InventoryContainer = React.createClass({
                       </thead>
                       <tbody>
                         {this.state.items.map( (item, i) => {
-                          return (<InventoryItem key={item.name} item={item} minModSelect={this.state.minModArray[i]} minQuants={this.state.showMinQuants} boxChange={this.handleMinQuantsSelection} />)
+                          return (<InventoryItem key={item.name} item={item} minQuants={this.state.showMinQuants} boxChange={this.handleMinQuantsSelection} />)
                         })}
                       </tbody>
                     </Table>

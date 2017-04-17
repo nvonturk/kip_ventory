@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
-import { Grid, Row, Col, Tabs, Tab, Nav, NavItem, Button, Modal, Table, Form, FormGroup, InputGroup, FormControl, Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
+import { Grid, Row, Col, Tabs, Tab, OverlayTrigger, Popover, Nav, NavItem,
+         Button, Modal, Table, Form, FormGroup, InputGroup, FormControl,
+         Pagination, ControlLabel, Glyphicon, HelpBlock, Panel, Label, Well }  from 'react-bootstrap'
 import { getJSON, ajax } from "jquery"
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import {browserHistory} from 'react-router'
@@ -144,16 +146,16 @@ const ManagerDetail = React.createClass({
     var params = {
       page: this.state.assetPage,
       itemsPerPage: ITEMS_PER_PAGE,
+      status: "In Stock"
     }
     var _this = this;
-      getJSON(url, params, function(data) {
-
-        _this.setState({
-          assets: data.results,
-          assetPageCount: Number(data.num_pages),
-        })
+    getJSON(url, params, function(data) {
+      console.log(data)
+      _this.setState({
+        assets: data.results,
+        assetPageCount: Number(data.num_pages),
       })
-
+    })
   },
 
   getItem() {
@@ -186,8 +188,6 @@ const ManagerDetail = React.createClass({
       }
     });
   },
-
-
 
   getOutstandingRequests() {
     var url = "/api/items/" + this.props.params.item_name + "/requests/";
@@ -242,12 +242,21 @@ const ManagerDetail = React.createClass({
   handleTransactionQuantityChange(e) {
     var q = Number(e.target.value)
     if (q < 0) {
-      event.stopPropagation()
+      e.stopPropagation()
     } else {
       this.setState({
         transactionQuantity: q
       })
     }
+  },
+
+  handleTransactionCategoryChange(e) {
+    var cat = e.target.value
+    var tq = this.state.transactionQuantity
+    this.setState({
+      transactionQuantity: tq,
+      transactionCategory: cat
+    })
   },
 
   getStatusSymbol(loan, fs) {
@@ -269,20 +278,14 @@ const ManagerDetail = React.createClass({
       comment: this.state.transactionComment
     }
     if(this.state.item.has_assets && this.state.transactionCategory == "Loss"){
-      var tagArray=[]
-      for(var i = 0  ; i < this.state.selectedAssets.length ; i++){
-        tagArray.push(this.state.selectedAssets[i].tag)
-      }
-      var data = {
+      data = {
         item: this.state.item.name,
         quantity: this.state.transactionQuantity,
         category: this.state.transactionCategory,
         comment: this.state.transactionComment,
-        assets: tagArray,
+        assets: this.state.selectedAssets.map((asset, i) => {return asset.tag}),
       }
     }
-
-
     ajax({
       url: "/api/transactions/",
       contentType: "application/json",
@@ -476,7 +479,6 @@ const ManagerDetail = React.createClass({
 
       <div className="panel panel-default" style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
 
-
         <div className="panel-body" style={{minHeight:"220px"}}>
           { requestsTable }
         </div>
@@ -657,13 +659,11 @@ const ManagerDetail = React.createClass({
     )
   },
 
-
   handlePageSelect(page){
     var _this = this
     this.setState({
-      assetPage: 2,
+      assetPage: page,
     }, _this.getAssets)
-
   },
 
   isAssetSelected(tag){
@@ -699,7 +699,6 @@ const ManagerDetail = React.createClass({
 
 
   getCreateTransactionForm() {
-
     return (
       <div>
       <Form style={{marginBottom: "0px"}} horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation();}}>
@@ -723,13 +722,13 @@ const ManagerDetail = React.createClass({
                          componentClass="select"
                          name="transactionCategory"
                          value={this.state.transactionCategory}
-                         onChange={e => this.setState({transactionCategory: e.target.value})}>
+                         onChange={this.handleTransactionCategoryChange}>
               <option value="Acquisition">Acquisition</option>
               <option value="Loss">Loss</option>
             </FormControl>
           </Col>
           <Col xs={12} className="text-center">
-            { this.state.errorNodes['quantity'] }
+            { this.state.errorNodes['transactionQuantity'] }
           </Col>
         </FormGroup>
         <FormGroup bsSize="small">
@@ -754,7 +753,7 @@ const ManagerDetail = React.createClass({
                        handleAssetRemoval={this.handleAssetRemoval}
                        handleAssetSelection={this.handleAssetSelection}
                        isAssetSelected={this.isAssetSelected}
-                       pageCount={this.state.assetpageCount}
+                       pageCount={this.state.assetPageCount}
                        page={this.state.assetPage}
                        handlePageSelect={this.handlePageSelect}/>
       ) : (
@@ -784,7 +783,7 @@ const ManagerDetail = React.createClass({
       }, this.getTransactions)
     } else {
       this.setState({
-        transactionsFilterCategory: selectedCategory.value
+        transactionsFilterCategory: selectedCategory.value,
       }, this.getTransactions)
     }
   },
@@ -825,6 +824,18 @@ const ManagerDetail = React.createClass({
     )
   },
 
+  getTransactionAssetsPopover(tx) {
+    return (
+      <Popover style={{maxWidth:"200px"}} id="tag-popover" >
+        <Col sm={12}>
+          <div style={{fontSize:"10px"}}>
+            <p style={{marginBottom: "2px"}}>{tx.assets.join(", ")}</p>
+          </div>
+        </Col>
+      </Popover>
+    )
+  },
+
   getTransactionPanel() {
     var transactionsTable = null
     if (this.state.transactions.length > 0) {
@@ -832,12 +843,13 @@ const ManagerDetail = React.createClass({
         <Table style={{marginBottom:"0px"}}>
           <thead>
             <tr>
-              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
               <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Administrator</th>
               <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
               <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Category</th>
-              <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "40%", borderBottom: "1px solid #596a7b"}} className="text-center">Comment</th>
+              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tags</th>
+              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
             </tr>
           </thead>
           <tbody>
@@ -863,6 +875,11 @@ const ManagerDetail = React.createClass({
                   </td>
                   <td data-th="Quantity" className="text-center" >
                     <span style={{fontSize:"11px"}}>{transaction.quantity}</span>
+                  </td>
+                  <td data-th="Asset Tags" className="text-center" >
+                    <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getTransactionAssetsPopover(transaction)}>
+                      <Glyphicon glyph="tags" className="clickable"/>
+                    </OverlayTrigger>
                   </td>
                   <td data-th="Comment" className="text-left" >
                     <span style={{fontSize:"11px"}}>{transaction.comment}</span>
@@ -892,7 +909,7 @@ const ManagerDetail = React.createClass({
             <Col md={12}>
             <Button bsSize="small" bsStyle="primary"
                     style={{float: "left", verticalAlign:"middle"}}
-                    onClick={e => {this.setState({showCreateTransactionModal: true})}}>
+                    onClick={this.showTransactionModal}>
               Log an Acquisition or Loss
             </Button>
               <Pagination next prev maxButtons={10} boundaryLinks
@@ -908,6 +925,27 @@ const ManagerDetail = React.createClass({
     )
   },
 
+  showTransactionModal(e) {
+    this.setState({
+      assetPage: 1,
+      selectedAssets: [],
+      showCreateTransactionModal: true,
+      transactionComment: "",
+      transactionQuantity: 0,
+      transactionCategory: "Acquisition",
+    })
+  },
+
+  hideTransactionModal(e) {
+    this.setState({
+      assetPage: 1,
+      selectedAssets: [],
+      showCreateTransactionModal: false,
+      transactionComment: "",
+      transactionQuantity: 0,
+      transactionCategory: "Acquisition",
+    })
+  },
 
 
   allowLossTransaction(){
@@ -1011,7 +1049,7 @@ const ManagerDetail = React.createClass({
             </Col>
           </Row>
 
-          <Modal show={this.state.showCreateTransactionModal} onHide={e => this.setState({showCreateTransactionModal: false})}>
+          <Modal show={this.state.showCreateTransactionModal} onHide={this.hideTransactionModal}>
             <Modal.Header closeButton>
               <Modal.Title>Log an Acquisition or Loss of Instances</Modal.Title>
             </Modal.Header>
@@ -1019,7 +1057,7 @@ const ManagerDetail = React.createClass({
               { this.getCreateTransactionForm() }
             </Modal.Body>
             <Modal.Footer>
-              <Button bsStyle="default" bsSize="small" onClick={e => this.setState({showCreateTransactionModal: false})}>Cancel</Button>
+              <Button bsStyle="default" bsSize="small" onClick={this.hideTransactionModal}>Cancel</Button>
               <Button bsStyle="info"    bsSize="small" onClick={this.createTransaction} disabled={!this.allowLossTransaction()}>Create</Button>
             </Modal.Footer>
           </Modal>
