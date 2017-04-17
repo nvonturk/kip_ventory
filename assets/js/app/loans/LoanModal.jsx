@@ -221,6 +221,7 @@ const LoanModal = React.createClass({
       <Row>
         <Col xs={12}>
           <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}} header={<h4>Request for backfill</h4>}>
+            <p>This will request the remaining {this.props.loan.quantity_loaned - this.props.loan.quantity_returned} item(s) on loan for backfill.</p>
             <Form horizontal>
               <Row>
                 <Col xs={12}>

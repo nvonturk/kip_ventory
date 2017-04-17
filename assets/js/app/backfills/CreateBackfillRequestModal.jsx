@@ -96,6 +96,7 @@ const CreateBackfillRequestModal = React.createClass({
           <Modal.Body>
             <LoanInfoView loan={this.props.loan} request={this.props.request}/>
             <CreateBackfillRequestForm comment={this.state.requester_comment} receipt={this.state.receipt} errorNodes={this.state.errorNodes} handleFormChange={this.handleBackfillRequestFormChange} handleFileChange={this.handleBackfillRequestFileChange} getValidationState={this.getBackfillRequestValidationState} />
+            <p>Submit this form to request the remaining {this.props.loan.quantity_loaned - this.props.loan.quantity_returned} item(s) on loan for backfill.</p>
           </Modal.Body>
           <Modal.Footer>
             <Button bsSize="small" onClick={this.props.onHide}>Cancel</Button>

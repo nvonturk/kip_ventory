@@ -853,6 +853,8 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
         return validated_data
 
     def update(self, backfill, data):
+        #todo are this supposed to update the inventory like this??
+        
         status = data.get('status')
         if status == models.SATISFIED:
             item = backfill.item
@@ -864,6 +866,8 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
             else:
                 item.quantity += backfill.quantity
                 item.save()
+        
+        super().update(backfill, data)     
         return backfill
 
 

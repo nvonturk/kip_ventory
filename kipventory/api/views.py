@@ -2470,6 +2470,7 @@ class BackfillDetailModify(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
+        print("test")
 
         if not (instance.status == models.AWAITING_ITEMS):
             return Response({"status": ["Only backfills with status 'Awaiting Items' can be modified."]})
