@@ -444,7 +444,7 @@ const TabContainer = React.createClass({
                   value={this.state.backfillStatus}
                   options={[
                     {label: "Awaiting Items", value: "awaiting_items"},
-                    {label: "Fulfilled", value: "satisfied"}
+                    {label: "Satisfied", value: "satisfied"}
                   ]}
                   onChange={this.handleBackfillStatusSelection} />
         </FormGroup>
