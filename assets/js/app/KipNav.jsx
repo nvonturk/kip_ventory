@@ -55,7 +55,6 @@ const KipNav = React.createClass({
         <LinkContainer to="/app/manage/tags">
           <MenuItem href="/app/manage/tags" eventKey={1.2}>Manage Tags</MenuItem>
         </LinkContainer>
-        { this.getCustomFieldsLink(this.props.route.user.is_superuser) }
         <LinkContainer to="/app/manage/disburse">
           <MenuItem eventKey={1.4}>Create New Loan or Disbursement</MenuItem>
         </LinkContainer>
@@ -81,6 +80,7 @@ const KipNav = React.createClass({
     INDEX = INDEX + 1
     return (
       <NavDropdown eventKey={i} title={name} id="admin-nav-dropdown">
+      { this.getCustomFieldsLink(this.props.route.user.is_superuser) }
         <LinkContainer to="/app/admin/users/create/">
           <MenuItem eventKey={2.1}>Create Users</MenuItem>
         </LinkContainer>

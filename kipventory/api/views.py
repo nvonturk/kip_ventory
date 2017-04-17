@@ -1763,8 +1763,8 @@ class BulkImport(generics.GenericAPIView):
                     have_assets[i] = False
             minimum_stock_errors = []
             for i, minimum_stock in enumerate(minimum_stocks):
-                if minimum_stock == "" or minimum_stock == None:
-                    minimum_stock_errors.append("Minimum stock must not be blank (row {}).".format(i))
+                if minimum_stock == "":
+                    minimum_stock = 0
                 try:
                     minimum_stock = int(minimum_stock)
                     minimum_stocks[i] = minimum_stock
@@ -2094,7 +2094,7 @@ def backfillRequestDenyLog(backfill_request, initiating_user_pk):
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category=category, message=message, affected_user=affected_user, asset=asset)
     log.save()
 
-def backfillSatisfiedLog(backfill, request_user_pk):
+def backfillSatisfiedLog(backfill, initiating_user_pk):
     item = backfill.item
     initiating_user = None
     try:
@@ -2345,7 +2345,10 @@ def requestItemLoanModify(loan, initiating_user_pk):
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
-    message = 'Loan for item {} modified. The number of items returned by {} is now {}. The total number loaned is {}'.format(item.name, initiating_user.username, quantity, loan.quantity_loaned)
+    if loan.asset == None:
+        message = 'Loan for item {} modified. The number of items returned by {} is now {}. The total number loaned is {}'.format(item.name, initiating_user.username, loan.quantity_returned, loan.quantity_loaned - loan.quantity_returned)
+    else:
+        message = 'Loan for asset {} has been marked as returned by {}'.format(loan.asset, initiating_user.username)
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
@@ -2376,7 +2379,7 @@ def requestItemLoantoDisburse(loan, user, num_disbursed):
     request = loan.request
     affected_user = request.requester
     category = 'Request Item Loan Changed to Disburse'
-    message = 'Loan for item {} modified. {} items have been disbursed from a loan by {}. The number still loaned is {}.'.format(item.name, quantity, initiating_user.username, loaned_quantity)
+    message = 'Loan for item {} modified. {} items have been disbursed from a loan by {}. The number still loaned is {}.'.format(item.name, quantity, initiating_user.username, loaned_quantity - loan.quantity_returned)
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
