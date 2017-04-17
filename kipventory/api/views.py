@@ -225,7 +225,6 @@ class AssetList(generics.GenericAPIView):
             elif asset_status == "lost":
                 queryset = queryset.filter(status=models.LOST)
 
-
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)

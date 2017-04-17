@@ -25,7 +25,9 @@ const AssetModal = React.createClass({
     if (nprops.asset != null) {
       this.updateAsset(nprops.asset)
       this.setState({
-        newTagName: nprops.asset.tag
+        newTagName: nprops.asset.tag,
+        modifyFields: {},
+        errorNodes: {},
       })
     }
   },
@@ -71,8 +73,6 @@ const AssetModal = React.createClass({
       newTagName: e.target.value,
     })
   },
-
-
 
   getShortTextField(field_name, i) {
     return (
