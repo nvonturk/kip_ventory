@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 import copy
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
+from .validators import validate_file_extension
 import uuid
 
 LOAN = 'loan'
@@ -125,10 +126,10 @@ def uuid_to_str():
     return str(uuid.uuid4())
 
 def auto_incr_asset():
-    asset = Asset.objects.all().order_by('-pk').first()
+    asset = Asset.objects.all().order_by('-tag').first()
     if (asset is None):
         return 1
-    return asset.pk + 1
+    return asset.tag + 1
 
 
 class Asset(models.Model):
@@ -450,18 +451,22 @@ class SubjectTag(models.Model):
 class BackfillRequest(models.Model):
     request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="backfill_requests")
     loan = models.ForeignKey('Loan', on_delete=models.SET_NULL, related_name="backfill_requests", null=True)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="backfill_requests")
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="backfill_requests", null=True)
+    quantity = models.PositiveIntegerField(default=1)
     requester_comment = models.TextField()
-    receipt = models.FileField(upload_to="backfill/", blank=True, null=True)
+    receipt = models.FileField(upload_to="backfill/", validators=[validate_file_extension])
     status = models.TextField(choices=BACKFILL_REQUEST_STATUS_CHOICES, default=OUTSTANDING)
     admin_comment = models.TextField(default='', blank=True)
 
 class Backfill(models.Model):
     request            = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='backfills', blank=True, null=True)
-    item               = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item               = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="backfills")
+    asset              = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="backfills", null=True)
     date_created       = models.DateTimeField(blank=True, auto_now_add=True)
     date_satisfied      = models.DateTimeField(blank=True, null=True)
     status = models.TextField(choices=BACKFILL_STATUS_CHOICES, default=AWAITING_ITEMS)
-    quantity = models.PositiveIntegerField(default=0)
+    quantity = models.PositiveIntegerField(default=1)
     # to add partial per-item backfill, replace status with quantity_backfilled and quantity_returned
     # backfillrequest fields
     requester_comment = models.TextField()
