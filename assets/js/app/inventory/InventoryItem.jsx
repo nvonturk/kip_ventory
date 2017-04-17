@@ -149,7 +149,7 @@ const InventoryItem = React.createClass({
     )
 
     var minQuantsCheckbox  = (this.props.minQuants) ? (
-      <td data-th="Modify Minimum Quantity" style={{fontSize:"10px", zIndex:"9999"}}  onClick={e => e.stopPropagation()}>
+      <td data-th="Modify Minimum Stock" style={{fontSize:"10px", zIndex:"9999"}}  onClick={e => e.stopPropagation()}>
         <Checkbox style={{paddingTop: "6px", textAlign: "center"}} onChange={e => this.props.boxChange(e, this.props.item)} />
       </td>
     ) : (
@@ -162,6 +162,13 @@ const InventoryItem = React.createClass({
       null
     )
 
+    var minStockEntry = (this.props.minQuants) ? (
+      <td data-th="Minimum Stock" style={{fontSize:"10px"}} className="text-center">{this.props.item.minimum_stock}</td>
+      // null
+    ) : (
+      null
+    )
+
     return (
       <tr style={{height: "40px"}} className="clickable" onClick={this.viewItemDetail}>
         <td data-th="Item">
@@ -169,6 +176,7 @@ const InventoryItem = React.createClass({
         </td>
         <td data-th="Model No." style={{fontSize:"10px"}} className="text-center">{this.props.item.model_no}</td>
         <td data-th="In Stock" style={{fontSize:"10px"}} className="text-center">{this.props.item.quantity}</td>
+        {minStockEntry}
         <td data-th="Tags" className="text-center" style={{fontSize:"10px", zIndex:"9999"}}>
           <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getPopover()}>
             <Glyphicon glyph="tags" className="clickable" onClick={(e) => this.setState({showTags: true})}/>
@@ -180,7 +188,6 @@ const InventoryItem = React.createClass({
         <td data-th="Status" className="text-center" style={{zIndex: "9999"}}>
           { this.getItemStatus(this.props.item) }
         </td>
-        <td className="spacer" />
         {quantityInput}
         {addToCartButton}
         {minQuantsCheckbox}
