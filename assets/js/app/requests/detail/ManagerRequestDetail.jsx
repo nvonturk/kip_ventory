@@ -355,11 +355,10 @@ const ManagerRequestsDetail = React.createClass({
           <tbody>
             { this.state.request.requested_items.map( (ri, i) => {
               return (
-                <tr key={ri.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ri.item + "/")}}>
+                <tr key={ri.item}>
                   <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
-                    <span style={{color: "#df691a", fontSize:"12px"}}>{ri.item}</span>
+                    <a className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ri.item + "/")}} style={{color: "#df691a", fontSize:"12px"}}>{ri.item}</a>
                   </td>
-
                   <td style={{verticalAlign:"middle"}} className="text-center">{ri.request_type}</td>
                   <td style={{verticalAlign:"middle"}} className="text-center">{ri.quantity}</td>
                 </tr>
@@ -408,9 +407,9 @@ const ManagerRequestsDetail = React.createClass({
             <tbody>
               { this.state.request.approved_items.map( (ai, i) => {
                 return (
-                  <tr key={ai.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ai.item + "/")}}>
+                  <tr key={ai.item}>
                     <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
-                      <span style={{color: "#df691a", fontSize:"12px"}}>{ai.item}</span>
+                      <a className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ai.item + "/")}} style={{color: "#df691a", fontSize:"12px"}}>{ai.item}</a>
                     </td>
                     <td style={{verticalAlign:"middle"}} className="text-center">{ai.request_type}</td>
                     <td style={{verticalAlign:"middle"}} className="text-center">{ai.quantity}</td>
@@ -485,7 +484,7 @@ const ManagerRequestsDetail = React.createClass({
         </Row>
       )
       var tabcontainer = (this.state.request.status == "A") ? (
-        <TabContainer user={this.props.route.user} request={this.state.request}/>
+        <TabContainer user={this.props.route.user} request={this.state.request} showHeader={true} refreshRequests={this.getRequest}/>
       ) : null
       return (
         <Grid>

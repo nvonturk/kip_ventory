@@ -218,7 +218,7 @@ const BackfillRequestModal = React.createClass({
         </Col>
       </Form>
     ) : null
-  
+
 
     var isOwner = (this.props.user.username == this.props.backfillRequest.owner_username)
     var isBackfillRequestOutstanding = this.props.backfillRequest.status == "O"
@@ -229,7 +229,7 @@ const BackfillRequestModal = React.createClass({
                   onClick={this.cancelBackfillRequest}>
         Cancel Backfill Request
       </Button>
-    ) : null; 
+    ) : null;
 
     return (this.props.backfillRequest != null) ? (
       <Row>

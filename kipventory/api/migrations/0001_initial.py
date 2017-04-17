@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('tag', models.IntegerField(default=api.models.auto_incr_asset, unique=True)),
-                ('status', models.TextField(choices=[('In Stock', 'In Stock'), ('Loaned', 'Loaned'), ('Disbursed', 'Disbursed')], default='In Stock')),
+                ('status', models.TextField(choices=[('In Stock', 'In Stock'), ('Loaned', 'Loaned'), ('Disbursed', 'Disbursed'), ('Lost', 'Lost')], default='In Stock')),
             ],
             options={
                 'ordering': ('tag',),

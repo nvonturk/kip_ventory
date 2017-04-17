@@ -95,7 +95,6 @@ class ItemListCreate(generics.GenericAPIView):
         if low_stock:
             queryset = queryset.filter(quantity__lte=F('minimum_stock'))
 
-
         return queryset
 
     def get(self, request, format=None):
@@ -236,7 +235,8 @@ class AssetList(generics.GenericAPIView):
                 queryset = queryset.filter(status=models.LOANED)
             elif asset_status == "disbursed":
                 queryset = queryset.filter(status=models.DISBURSED)
-
+            elif asset_status == "lost":
+                queryset = queryset.filter(status=models.LOST)
 
         # Pagination
         paginated_queryset = self.paginate_queryset(queryset)
@@ -244,7 +244,7 @@ class AssetList(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
-class AssetDetailModifyDelete(generics.GenericAPIView):
+class AssetDetailModify(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
     def get_instance(self, asset_tag):
@@ -297,29 +297,6 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
             assetModificationLog(asset, previous_tag, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, item_name, asset_tag, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            d = {"error": "Manager permissions required."}
-            return Response(d, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            item = models.Item.objects.get(name=item_name)
-            if not item.has_assets:
-                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
-        except:
-            raise NotFound("Item '{}' not found.".format(item_name))
-
-        asset = self.get_instance(asset_tag=asset_tag)
-        #TODO: add log
-        tag = copy.deepcopy(asset.tag)
-        stat = copy.deepcopy(asset.status)
-        asset.delete()
-        assetDeletionLog(tag, stat, item_name, request.user.pk)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 
 class AddItemToCart(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
@@ -1601,7 +1578,7 @@ class TransactionListCreate(generics.GenericAPIView):
     def post(self, request, format=None):
         data = request.data.copy()
         data['administrator'] = request.user
-
+        print("TRANSACTION POST: ", data)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -2617,7 +2594,6 @@ class BackfillDetailModify(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
-        print("test")
 
         if not (instance.status == models.AWAITING_ITEMS):
             return Response({"status": ["Only backfills with status 'Awaiting Items' can be modified."]})
@@ -2649,6 +2625,10 @@ class BackfillRequestCreate(generics.GenericAPIView):
 
     def post(self, request, loan_id, format=None):
         loan = self.get_loan(pk=loan_id)
+
+        if (self.request.user.pk != loan.request.requester.pk):
+            return Response({"error": ["You may not request a backfill on a loan you do not own."]}, status=status.HTTP_403_FORBIDDEN)
+
         data = request.data.copy()
         data.update({"loan" : loan})
         serializer = self.get_serializer(data=data)

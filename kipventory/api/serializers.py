@@ -52,6 +52,15 @@ class AssetSerializer(serializers.Serializer):
             elif ft == "Float":
                 self.fields[custom_field.name] = serializers.FloatField(required=False, default=0.0)
 
+    def validate(self, data):
+        tag = data.get("tag",None)
+
+        if tag is not None:
+            if models.Asset.objects.filter(tag=tag).count() > 0 :
+                raise ValidationError({"tag" : ["An Asset with the tag {} already exists".format(tag)]})
+        return data
+
+
     def to_representation(self, asset):
         d = {
             "item": asset.item.name,
@@ -118,7 +127,8 @@ class ItemSerializer(serializers.Serializer):
     def to_representation(self, item):
         in_cart = 0
         try:
-            ci = models.CartItem.objects.get(item__pk=item.pk)
+            user = self.context['request'].user
+            ci = models.CartItem.objects.filter(owner__pk=user.pk).get(item__pk=item.pk)
             in_cart = ci.quantity
         except:
             pass
@@ -356,17 +366,18 @@ class TransactionSerializer(serializers.ModelSerializer):
         if transaction.item.has_assets:
             if transaction.category == models.LOSS:
                 for asset in transaction.assets.all():
-                    asset.delete()
+                    asset.status = models.LOST
+                    asset.save()
 
             elif transaction.category == models.ACQUISITION:
                 for i in range(transaction.quantity):
                     asset = models.Asset.objects.create(item=transaction.item)
                     transaction.assets.add(asset)
-        else:
-            if transaction.category == models.LOSS:
-                item.quantity -= validated_data["quantity"]
-            elif transaction.category == models.ACQUISITION:
-                item.quantity += validated_data["quantity"]
+
+        if transaction.category == models.LOSS:
+            item.quantity -= transaction.quantity
+        elif transaction.category == models.ACQUISITION:
+            item.quantity += transaction.quantity
 
         item.save()
         transaction.save()
@@ -854,7 +865,7 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
 
     def update(self, backfill, data):
         #todo are this supposed to update the inventory like this??
-        
+
         status = data.get('status')
         if status == models.SATISFIED:
             item = backfill.item
@@ -866,8 +877,8 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
             else:
                 item.quantity += backfill.quantity
                 item.save()
-        
-        super().update(backfill, data)     
+
+        super().update(backfill, data)
         return backfill
 
 

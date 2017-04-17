@@ -43,7 +43,7 @@ const TabContainer = React.createClass({
       showBackfillRequestModal: false,
       backfillRequestToModify: null,
 
-      showCreateBackfillRequestModal: false, 
+      showCreateBackfillRequestModal: false,
       loanForNewBackfillRequest: null,
 
       showBackfillModal: false,
@@ -52,6 +52,7 @@ const TabContainer = React.createClass({
   },
 
   componentWillMount() {
+    this.props.refreshRequests()
     this.getLoans()
     this.getDisbursements()
     this.getBackfills()
@@ -181,13 +182,13 @@ const TabContainer = React.createClass({
       loanToModify: null,
     })
   },
-  
+
   showCreateBackfillRequestModal(loan) {
     this.setState({
       showCreateBackfillRequestModal: true,
       loanForNewBackfillRequest: loan,
     })
-  }, 
+  },
 
   hideCreateBackfillRequestModal(e) {
     this.setState({
@@ -465,11 +466,11 @@ const TabContainer = React.createClass({
           <thead>
             <tr>
               <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tag</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tag</th>
               <th style={{width:"25%", borderBottom: "1px solid #596a7b"}} className="text-center">Date Approved</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">View Backfill</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">View Backfill</th>
             </tr>
           </thead>
           <tbody>
@@ -584,8 +585,8 @@ const TabContainer = React.createClass({
           <thead>
             <tr>
               <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"30%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tag</th>
-              <th style={{width:"25%", borderBottom: "1px solid $506a7b"}} className="text-center">Date Disbursed</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tag</th>
+              <th style={{width:"35%", borderBottom: "1px solid $506a7b"}} className="text-center">Date Disbursed</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
             </tr>
           </thead>
@@ -716,13 +717,13 @@ const TabContainer = React.createClass({
         <Table style={{marginBottom: "0px"}}>
           <thead>
             <tr>
-              <th style={{width:"25%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tag</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
               <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
               <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Backfill Request</th>
-              <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Modify Loan</th>
+              <th style={{width:"20%", borderBottom: "1px solid #596a7b"}} className="text-center">Backfill Request</th>
+              <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Modify Loan</th>
             </tr>
           </thead>
           <tbody>
@@ -746,9 +747,9 @@ const TabContainer = React.createClass({
                      Click to view
                   </a>
                 );
-              } else if (loan.quantity_loaned > loan.quantity_returned) {
+              } else if (loan.quantity_loaned > loan.quantity_returned && this.props.request.requester == this.props.user.username) {
                 backfillRequestLink = (
-                  <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                  <a className="clickable" style={{color: "rgb(223, 105, 26)", fontSize: "12px"}}
                      onClick={this.showCreateBackfillRequestModal.bind(this, loan)}>
                      Click to Request
                   </a>
@@ -763,7 +764,7 @@ const TabContainer = React.createClass({
                       { loan.item }
                     </a>
                   </td>
-                  <td data-th="Asset Tag" className="text-center">
+                  <td data-th="Asset" className="text-center">
                     { asset }
                   </td>
                   <td data-th="Loaned" className="text-center">
@@ -911,7 +912,7 @@ const TabContainer = React.createClass({
                              refresh={this.componentWillMount.bind(this)}
                              updateBackfillRequest={this.updateBackfillRequestToModify}
                              user={this.props.user}/>
-        
+
        <CreateBackfillRequestModal loan={this.state.loanForNewBackfillRequest}
                               request={this.props.request}
                               show={this.state.showCreateBackfillRequestModal}

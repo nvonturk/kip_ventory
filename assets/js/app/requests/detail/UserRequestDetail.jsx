@@ -176,9 +176,9 @@ const UserRequestsDetail = React.createClass({
           <tbody>
             { this.state.request.requested_items.map( (ri, i) => {
               return (
-                <tr key={ri.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ri.item + "/")}}>
+                <tr key={ri.item}>
                   <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
-                    <span style={{color: "#df691a", fontSize:"12px"}}>{ri.item}</span>
+                    <a className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ri.item + "/")}} style={{color: "#df691a", fontSize:"12px"}}>{ri.item}</a>
                   </td>
                   <td style={{verticalAlign:"middle"}} className="text-center">{ri.request_type}</td>
                   <td style={{verticalAlign:"middle"}} className="text-center">{ri.quantity}</td>
@@ -210,19 +210,17 @@ const UserRequestsDetail = React.createClass({
           <Table hover style={{marginBottom:"0px"}}>
             <thead>
               <tr>
-                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-center">Status</th>
-                <th style={{width:"10%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
-                <th style={{width:"50%", borderBottom: "1px solid #596a7b"}} className="text-left">Asset</th>
-                <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Loaned</th>
-                <th style={{width:"15%", borderBottom: "1px solid #596a7b"}} className="text-center">Returned</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-left">Item</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Type</th>
+                <th style={{width:"20%", borderBottom: "1px solid #596a7b", verticalAlign:"middle"}} className="text-center">Quantity</th>
               </tr>
             </thead>
             <tbody>
               { this.state.request.approved_items.map( (ai, i) => {
                 return (
-                  <tr key={ai.item} className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ai.item + "/")}}>
+                  <tr key={ai.item}>
                     <td style={{verticalAlign:"middle"}} data-th="Item" className="text-left">
-                      <span style={{color: "#df691a", fontSize:"12px"}}>{ai.item}</span>
+                      <a className="clickable" onClick={e => {browserHistory.push("/app/inventory/" + ai.item + "/")}} style={{color: "#df691a", fontSize:"12px"}}>{ai.item}</a>
                     </td>
                     <td style={{verticalAlign:"middle"}} className="text-center">{ai.request_type}</td>
                     <td style={{verticalAlign:"middle"}} className="text-center">{ai.quantity}</td>
@@ -318,7 +316,7 @@ const UserRequestsDetail = React.createClass({
 
           <hr />
 
-          <TabContainer user={this.props.route.user} request={this.state.request}/>
+          <TabContainer user={this.props.route.user} request={this.state.request} showHeader={true} refreshRequests={this.getRequest}/>
 
 
         </Grid>
