@@ -882,6 +882,11 @@ class GetBackfillsByRequest(generics.GenericAPIView):
             elif (backfill_status == models.SATISFIED):
                 backfills = backfills.filter(status=models.SATISFIED).distinct()
 
+          # filter by search text
+        item = request.query_params.get('item', "")
+        if item != "":
+            backfills = backfills.filter(item__name__icontains=item).distinct()
+
         # Pagination
         paginated_queryset = self.paginate_queryset(backfills)
         serializer = self.get_serializer(instance=paginated_queryset, many=True)
@@ -926,6 +931,11 @@ class GetBackFillRequestsByRequest(generics.GenericAPIView):
                 backfill_requests = backfill_requests.filter(status=models.APPROVED).distinct()
             elif (bf_status == "d" or bf_status == "denied"):
                 backfill_requests = backfill_requests.filter(status=models.DENIED).distinct()
+
+        # filter by search text
+        item = request.query_params.get('item', "")
+        if item != "":
+            backfill_requests = backfill_requests.filter(item__name__icontains=item).distinct()
 
         # Pagination
         paginated_queryset = self.paginate_queryset(backfill_requests)
