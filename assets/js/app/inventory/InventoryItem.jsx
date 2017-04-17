@@ -149,21 +149,25 @@ const InventoryItem = React.createClass({
     )
 
     var minQuantsCheckbox  = (this.props.minQuants) ? (
-      <td data-th="Modify Minimum Quantity" style={{fontSize:"10px", zIndex:"9999"}}  onClick={e => e.stopPropagation()}>
-        <Checkbox style={{paddingTop: "6px", textAlign: "center"}} onChange={e => this.props.boxChange(e, this.props.item)} />
+      <td data-th="Select" style={{fontSize:"10px", zIndex:"9999"}}  onClick={e => e.stopPropagation()}>
+        <Checkbox style={{textAlign: "center", margin: "0px"}} onChange={e => this.props.boxChange(e, this.props.item)} />
       </td>
     ) : (
       null
     )
     var nullPlaceHolder  = (this.props.minQuants) ? (
-      <td  style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
+      <td style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
       </td>
     ) : (
       null
     )
 
+    var minStock = (this.props.minQuants) ? (
+      <td data-th="Min Stock" style={{fontSize:"10px"}} className="text-center">{this.props.item.minimum_stock}</td>
+    ) : null
+
     return (
-      <tr style={{height: "40px"}} className="clickable" onClick={this.viewItemDetail}>
+      <tr className="clickable" onClick={this.viewItemDetail}>
         <td data-th="Item">
           <h6 style={{color: "#df691a"}}>{this.props.item.name}</h6>
         </td>
@@ -180,6 +184,7 @@ const InventoryItem = React.createClass({
         <td data-th="Status" className="text-center" style={{zIndex: "9999"}}>
           { this.getItemStatus(this.props.item) }
         </td>
+        { minStock }
         <td className="spacer" />
         {quantityInput}
         {addToCartButton}
