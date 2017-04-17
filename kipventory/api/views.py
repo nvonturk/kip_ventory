@@ -222,6 +222,8 @@ class AssetList(generics.GenericAPIView):
                 queryset = queryset.filter(status=models.LOANED)
             elif asset_status == "disbursed":
                 queryset = queryset.filter(status=models.DISBURSED)
+            elif asset_status == "lost":
+                queryset = queryset.filter(status=models.LOST)
 
 
         # Pagination
@@ -230,7 +232,7 @@ class AssetList(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
-class AssetDetailModifyDelete(generics.GenericAPIView):
+class AssetDetailModify(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
     def get_instance(self, asset_tag):
@@ -282,24 +284,6 @@ class AssetDetailModifyDelete(generics.GenericAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, item_name, asset_tag, format=None):
-        if not (request.user.is_staff or request.user.is_superuser):
-            d = {"error": "Manager permissions required."}
-            return Response(d, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            item = models.Item.objects.get(name=item_name)
-            if not item.has_assets:
-                return Response({"item": ["Item '{}' has no tracked instances.".format(item_name)]}, status=status.HTTP_404_NOT_FOUND)
-        except:
-            raise NotFound("Item '{}' not found.".format(item_name))
-
-        asset = self.get_instance(asset_tag=asset_tag)
-        asset.delete()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 
 class AddItemToCart(generics.GenericAPIView):
@@ -1567,7 +1551,7 @@ class TransactionListCreate(generics.GenericAPIView):
     def post(self, request, format=None):
         data = request.data.copy()
         data['administrator'] = request.user
-
+        print("TRANSACTION POST: ", data)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()

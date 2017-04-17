@@ -52,6 +52,15 @@ class AssetSerializer(serializers.Serializer):
             elif ft == "Float":
                 self.fields[custom_field.name] = serializers.FloatField(required=False, default=0.0)
 
+    def validate(self, data):
+        tag = data.get("tag",None)
+
+        if tag is not None:
+            if models.Asset.objects.filter(tag=tag).count() > 0 :
+                raise ValidationError({"tag" : ["An Asset with the tag {} already exists".format(tag)]})
+        return data
+
+
     def to_representation(self, asset):
         d = {
             "item": asset.item.name,
@@ -357,17 +366,18 @@ class TransactionSerializer(serializers.ModelSerializer):
         if transaction.item.has_assets:
             if transaction.category == models.LOSS:
                 for asset in transaction.assets.all():
-                    asset.delete()
+                    asset.status = models.LOST
+                    asset.save()
 
             elif transaction.category == models.ACQUISITION:
                 for i in range(transaction.quantity):
                     asset = models.Asset.objects.create(item=transaction.item)
                     transaction.assets.add(asset)
-        else:
-            if transaction.category == models.LOSS:
-                item.quantity -= validated_data["quantity"]
-            elif transaction.category == models.ACQUISITION:
-                item.quantity += validated_data["quantity"]
+
+        if transaction.category == models.LOSS:
+            item.quantity -= transaction.quantity
+        elif transaction.category == models.ACQUISITION:
+            item.quantity += transaction.quantity
 
         item.save()
         transaction.save()

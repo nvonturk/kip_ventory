@@ -11,6 +11,8 @@ import ItemInfoPanel from './utils/ItemInfoPanel'
 import ItemStacksPanel from './utils/ItemStacksPanel'
 import ItemAssetPanel from './utils/ItemAssetPanel'
 
+import AssetSelector from './AssetSelector'
+
 const ITEMS_PER_PAGE = 5;
 
 const ManagerDetail = React.createClass({
@@ -60,6 +62,12 @@ const ManagerDetail = React.createClass({
 
       showLoanModal: false,
       loanToShow: null,
+
+      assetPage: 1,
+      assetPageCount: 1,
+      assets: [],
+      selectedAssets: [],
+
 
       errorNodes: {}
     }
@@ -131,6 +139,23 @@ const ManagerDetail = React.createClass({
     })
   },
 
+  getAssets() {
+    var url = "/api/items/" + this.props.params.item_name + "/assets/"
+    var params = {
+      page: this.state.assetPage,
+      itemsPerPage: ITEMS_PER_PAGE,
+    }
+    var _this = this;
+      getJSON(url, params, function(data) {
+
+        _this.setState({
+          assets: data.results,
+          assetPageCount: Number(data.num_pages),
+        })
+      })
+
+  },
+
   getItem() {
     var url = "/api/items/" + this.props.params.item_name + "/";
     var _this = this;
@@ -147,6 +172,9 @@ const ManagerDetail = React.createClass({
           item: response,
           modifiedItem: responseCopy
         })
+        if(response.has_assets){
+          _this.getAssets();
+        }
       },
       complete:function(){},
       error:function (xhr, textStatus, thrownError){
@@ -158,6 +186,8 @@ const ManagerDetail = React.createClass({
       }
     });
   },
+
+
 
   getOutstandingRequests() {
     var url = "/api/items/" + this.props.params.item_name + "/requests/";
@@ -238,6 +268,17 @@ const ManagerDetail = React.createClass({
       category: this.state.transactionCategory,
       comment: this.state.transactionComment
     }
+    if(this.state.item.has_assets && this.state.transactionCategory == "Loss"){
+      data = {
+        item: this.state.item.name,
+        quantity: this.state.transactionQuantity,
+        category: this.state.transactionCategory,
+        comment: this.state.transactionComment,
+        assets: this.state.selectedAssets.map((asset, i) => {return asset.tag}),
+      }
+    }
+
+
     ajax({
       url: "/api/transactions/",
       contentType: "application/json",
@@ -251,7 +292,8 @@ const ManagerDetail = React.createClass({
           transactionComment: "",
           transactionQuantity: 0,
           transactionCategory: "Acquisition",
-          showCreateTransactionModal: false
+          showCreateTransactionModal: false,
+          selectedAssets: [],
         }, function() {
           _this.getItem();
           _this.getTransactions();
@@ -611,8 +653,51 @@ const ManagerDetail = React.createClass({
     )
   },
 
+
+  handlePageSelect(page){
+    var _this = this
+    this.setState({
+      assetPage: 2,
+    }, _this.getAssets)
+
+  },
+
+  isAssetSelected(tag){
+    for(var i = 0 ; i < this.state.selectedAssets.length ; i++){
+      if(this.state.selectedAssets[i].tag == tag){
+        return true
+      }
+    }
+    return false
+  },
+
+  handleAssetSelection(e, index){
+    var newArray = this.state.selectedAssets
+    newArray.push(this.state.assets[index])
+    this.setState({
+      "selectedAssets" : newArray,
+    })
+
+  },
+
+  handleAssetRemoval(e, index){
+    var asset = this.state.assets[index]
+    for(var i = 0 ; i < this.state.selectedAssets.length ; i++){
+      if(this.state.selectedAssets[i].tag == asset.tag){
+        var newArray = this.state.selectedAssets
+        newArray.splice(i, 1)
+        this.setState({
+          "selectedAssets": newArray,
+        })
+      }
+    }
+  },
+
+
   getCreateTransactionForm() {
+
     return (
+      <div>
       <Form style={{marginBottom: "0px"}} horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation();}}>
         <FormGroup bsSize="small" validationState={this.getValidationState("quantity")}>
           <Col xs={2} componentClass={ControlLabel}>
@@ -658,6 +743,21 @@ const ManagerDetail = React.createClass({
           </Col>
         </FormGroup>
       </Form>
+      {(this.state.transactionCategory == "Loss") ? (
+        <AssetSelector assets={this.state.assets}
+                       selectedAssets={this.state.selectedAssets}
+                       lossQuantity={this.state.transactionQuantity}
+                       handleAssetRemoval={this.handleAssetRemoval}
+                       handleAssetSelection={this.handleAssetSelection}
+                       isAssetSelected={this.isAssetSelected}
+                       pageCount={this.state.assetpageCount}
+                       page={this.state.assetPage}
+                       handlePageSelect={this.handlePageSelect}/>
+      ) : (
+        <div>
+        </div>
+      )}
+      </div>
     )
   },
 
@@ -804,6 +904,18 @@ const ManagerDetail = React.createClass({
     )
   },
 
+
+
+  allowLossTransaction(){
+    if(this.state.selectedAssets.length < this.state.transactionQuantity && this.state.item.has_assets && this.state.transactionCategory == "Loss"){
+      return false;
+    }
+    if(this.state.transactionQuantity == 0){
+      return false;
+    }
+    return true;
+  },
+
   render() {
     if (this.state.itemExists) {
       var request = (this.state.loanToShow == null) ? null : this.state.loanToShow.request
@@ -904,9 +1016,11 @@ const ManagerDetail = React.createClass({
             </Modal.Body>
             <Modal.Footer>
               <Button bsStyle="default" bsSize="small" onClick={e => this.setState({showCreateTransactionModal: false})}>Cancel</Button>
-              <Button bsStyle="info"    bsSize="small" onClick={this.createTransaction}>Create</Button>
+              <Button bsStyle="info"    bsSize="small" onClick={this.createTransaction} disabled={!this.allowLossTransaction()}>Create</Button>
             </Modal.Footer>
           </Modal>
+
+
 
           <LoanModal show={this.state.showLoanModal}
                      loan={this.state.loanToShow}
