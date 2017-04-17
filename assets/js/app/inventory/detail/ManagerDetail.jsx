@@ -825,11 +825,16 @@ const ManagerDetail = React.createClass({
   },
 
   getTransactionAssetsPopover(tx) {
+    var content = (tx.assets.length > 0) ? (
+      tx.assets.join(", ")
+    ) : (
+      "N/A"
+    )
     return (
       <Popover style={{maxWidth:"200px"}} id="tag-popover" >
         <Col sm={12}>
           <div style={{fontSize:"10px"}}>
-            <p style={{marginBottom: "2px"}}>{tx.assets.join(", ")}</p>
+            <p style={{marginBottom: "2px"}}>{content}</p>
           </div>
         </Col>
       </Popover>
@@ -838,19 +843,31 @@ const ManagerDetail = React.createClass({
 
   getTransactionPanel() {
     var transactionsTable = null
+    var tableHeader = (this.state.item.has_assets) ? (
+      <tr>
+        <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+        <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Administrator</th>
+        <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
+        <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Category</th>
+        <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+        <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tags</th>
+        <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
+      </tr>
+    ) : (
+      <tr>
+        <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
+        <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Administrator</th>
+        <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
+        <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Category</th>
+        <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
+        <th style={{width: "40%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
+      </tr>
+    )
     if (this.state.transactions.length > 0) {
       transactionsTable = (
         <Table style={{marginBottom:"0px"}}>
           <thead>
-            <tr>
-              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Administrator</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Category</th>
-              <th style={{width: " 5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "15%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tags</th>
-              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
-            </tr>
+            { tableHeader }
           </thead>
           <tbody>
             { this.state.transactions.map( (transaction, i) => {
@@ -859,6 +876,13 @@ const ManagerDetail = React.createClass({
               ) : (
                 <Label bsSize="small" bsStyle="danger">Loss</Label>
               )
+              var assetCol = (this.state.item.has_assets) ? (
+                <td data-th="Asset Tags" className="text-center" >
+                  <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getTransactionAssetsPopover(transaction)}>
+                    <Glyphicon glyph="tags" className="clickable"/>
+                  </OverlayTrigger>
+                </td>
+              ) : null
               return (
                 <tr key={transaction.id}>
                   <td data-th="ID" className="text-center" >
@@ -876,11 +900,7 @@ const ManagerDetail = React.createClass({
                   <td data-th="Quantity" className="text-center" >
                     <span style={{fontSize:"11px"}}>{transaction.quantity}</span>
                   </td>
-                  <td data-th="Asset Tags" className="text-center" >
-                    <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getTransactionAssetsPopover(transaction)}>
-                      <Glyphicon glyph="tags" className="clickable"/>
-                    </OverlayTrigger>
-                  </td>
+                  { assetCol }
                   <td data-th="Comment" className="text-left" >
                     <span style={{fontSize:"11px"}}>{transaction.comment}</span>
                   </td>

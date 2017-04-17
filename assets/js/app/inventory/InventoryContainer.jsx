@@ -683,7 +683,7 @@ const InventoryContainer = React.createClass({
         <th style={{width:"10%"}} className="text-center">In Stock</th>
         <th style={{width:"10%"}} className="text-center">Tags</th>
         <th style={{width:"10%"}} className="text-center"/>
-        <th style={{width:"10%"}} className="text-center">Status</th>
+        <th style={{width:"10%"}} className="text-center">In Cart?</th>
         <th style={{width:"10%"}} className="text-center">Min Stock</th>
         <th style={{width:"5%"}}  className="spacer" />
         <th style={{width:"20%" }} className="text-center">Select</th>
@@ -695,7 +695,7 @@ const InventoryContainer = React.createClass({
         <th style={{width:"10%"}} className="text-center">In Stock</th>
         <th style={{width:"10%"}} className="text-center">Tags</th>
         <th style={{width:"10%"}} className="text-center"/>
-        <th style={{width:"10%"}} className="text-center">Status</th>
+        <th style={{width:"10%"}} className="text-center">In Cart?</th>
         <th style={{width:"5%"}}  className="spacer" />
         <th style={{width:"8%" }} className="text-center">Quantity</th>
         <th style={{width:"12%"}} className="text-center"></th>
