@@ -657,7 +657,7 @@ const InventoryContainer = React.createClass({
           Bulk Import &nbsp; <Glyphicon glyph="plus" /> <Glyphicon glyph="plus" />
         </Button>
         <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.openMinQuants}>
-        Set Minimum Stocks
+        Set Minimum Stock
         </Button>
       </div>
     )
@@ -686,14 +686,15 @@ const InventoryContainer = React.createClass({
 
     var tableHeaders = (this.state.showMinQuants) ? (
       <tr>
-        <th style={{width:"25%"}} className="text-left">Item</th>
+        <th style={{width:"20%"}} className="text-left">Item</th>
         <th style={{width:"10%"}} className="text-center">Model No.</th>
         <th style={{width:"10%"}} className="text-center">In Stock</th>
         <th style={{width:"10%"}} className="text-center">Minimum Stock</th>
         <th style={{width:"10%"}} className="text-center">Tags</th>
         <th style={{width:"10%"}} className="text-center">Status</th>
+        <th style={{width:"10%"}} className="text-center">Min Stock</th>
         <th style={{width:"5%"}}  className="spacer" />
-        <th style={{width:"20%" }} className="text-center">Modify Minimum Stock</th>
+        <th style={{width:"20%" }} className="text-center">Select</th>
       </tr>
     ) : (
       <tr>
@@ -838,12 +839,12 @@ const InventoryContainer = React.createClass({
 
         <Modal show={this.state.showMinQuantsModal} onHide={e => {this.setState({showMinQuantsModal: false})}}>
           <Modal.Header closeButton>
-            <Modal.Title>Set The Minimum Stock of Selected Items</Modal.Title>
+            <Modal.Title>Set Minimum Stock of Selected Items</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <FormGroup bsSize="small" controlId="minimumquantity" validationState={this.getValidationState("minimum_stock")}>
               <Col xs={2} componentClass={ControlLabel}>
-                Minimum Stock <span style={{color: "red"}}>*</span>
+                Minimum Stock<span style={{color: "red"}}>*</span>
               </Col>
               <Col xs={8}>
                 <FormControl type="number" min={0} step={1}
@@ -855,13 +856,13 @@ const InventoryContainer = React.createClass({
             </FormGroup>
           </Modal.Body>
           <Modal.Footer>
-            <Button bsSize="small" onClick={e => {this.implementMinQuantsMod(e);}}>Modify Minimum Stocks</Button>
+            <Button bsSize="small" onClick={e => {this.implementMinQuantsMod(e);}}>Modify Minimum Stock</Button>
           </Modal.Footer>
         </Modal>
 
         <Modal show={this.state.showMinQuantsErrorModal} onHide={e => {this.setState({showMinQuantsErrorModal: false})}}>
           <Modal.Header closeButton>
-            <Modal.Title>Set The Minimum Stock of Selected Items</Modal.Title>
+            <Modal.Title>Set Minimum Stock of Selected Items</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             Please select items to modify their minimum stock quantity.

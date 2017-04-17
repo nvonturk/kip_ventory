@@ -38,8 +38,6 @@ const CreateBackfillRequestModal = React.createClass({
   },
 
   createBackfillRequest() {
-    console.log(this.state);
-
     var url = '/api/loans/' + this.props.loan.id + '/requestforbackfill/';
     var data = {
       requester_comment: this.state.requester_comment,
@@ -62,7 +60,10 @@ const CreateBackfillRequestModal = React.createClass({
       success: function(response) {
         console.log('success');
         _this.props.createBackfillRequestSuccessHandler()
-      
+        _this.setState({
+          requester_comment: "",
+          receipt: null
+        })
       },
       // TODO : BETTER ERROR HANDLING. PARSE THE RESULT, AND ASSOCIATE WITH THE CORRECT FORM FIELD
       // USE THE <HelpBlock /> component to add subtext to the forms that failed the test.
@@ -95,7 +96,12 @@ const CreateBackfillRequestModal = React.createClass({
           </Modal.Header>
           <Modal.Body>
             <LoanInfoView loan={this.props.loan} request={this.props.request}/>
-            <CreateBackfillRequestForm comment={this.state.requester_comment} receipt={this.state.receipt} errorNodes={this.state.errorNodes} handleFormChange={this.handleBackfillRequestFormChange} handleFileChange={this.handleBackfillRequestFileChange} getValidationState={this.getBackfillRequestValidationState} />
+            <CreateBackfillRequestForm comment={this.state.requester_comment}
+                                       receipt={this.state.receipt}
+                                       errorNodes={this.state.errorNodes}
+                                       handleFormChange={this.handleBackfillRequestFormChange}
+                                       handleFileChange={this.handleBackfillRequestFileChange}
+                                       getValidationState={this.getBackfillRequestValidationState} />
             <p>Submit this form to request the remaining {this.props.loan.quantity_loaned - this.props.loan.quantity_returned} item(s) on loan for backfill.</p>
           </Modal.Body>
           <Modal.Footer>
