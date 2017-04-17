@@ -46,31 +46,37 @@ const AssetSelector = React.createClass({
                 isSelected = <Label bsSize="small" bsStyle="success" style={{fontSize:"10px"}}>Yes</Label>
                 selectOrDeselect = "Deselect"
               }
-              return (
-                <tr key={asset.tag} >
-                  <td data-th="Asset Tag" className="text-left">
-                    <h6 style={{color: "#df691a"}}>{asset.tag}</h6>
-                  </td>
-                  <td data-th="Selected?" className="text-center">
-                    {isSelected}
-                  </td>
-                  <td data-th="" className="spacer" />
-                  <td data-th="" className="text-center">
-                    <Button bsSize="small" bsStyle="info"
-                            onClick={(e) => {this.props.handleAssetSelection(e, i)} }
-                            disabled={((this.props.lossQuantity == this.props.selectedAssets.length) || this.props.isAssetSelected(asset.tag))}>
-                      Select
-                    </Button>
-                  </td>
-                  <td data-th="" className="text-center">
-                    <Button bsSize="small" bsStyle="danger"
-                            onClick={ (e) => {this.props.handleAssetRemoval(e, i)} }
-                            disabled={!this.props.isAssetSelected(asset.tag)}>
-                      Deselect
-                    </Button>
-                  </td>
-                </tr>
-              )
+
+              if(asset.status == "In Stock"){
+                return (
+                  <tr key={asset.tag} >
+                    <td data-th="Asset Tag" className="text-left">
+                      <h6 style={{color: "#df691a"}}>{asset.tag}</h6>
+                    </td>
+                    <td data-th="Selected?" className="text-center">
+                      {isSelected}
+                    </td>
+                    <td data-th="" className="spacer" />
+                    <td data-th="" className="text-center">
+                      <Button bsSize="small" bsStyle="info"
+                              onClick={(e) => {this.props.handleAssetSelection(e, i)} }
+                              disabled={((this.props.lossQuantity == this.props.selectedAssets.length) || this.props.isAssetSelected(asset.tag))}>
+                        Select
+                      </Button>
+                    </td>
+                    <td data-th="" className="text-center">
+                      <Button bsSize="small" bsStyle="danger"
+                              onClick={ (e) => {this.props.handleAssetRemoval(e, i)} }
+                              disabled={!this.props.isAssetSelected(asset.tag)}>
+                        Deselect
+                      </Button>
+                    </td>
+                  </tr>
+                )
+              } else{
+                return null
+              }
+
             })}
           </tbody>
         </Table>

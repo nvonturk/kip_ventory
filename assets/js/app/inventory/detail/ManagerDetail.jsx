@@ -147,6 +147,7 @@ const ManagerDetail = React.createClass({
     }
     var _this = this;
       getJSON(url, params, function(data) {
+
         _this.setState({
           assets: data.results,
           assetPageCount: Number(data.num_pages),
@@ -281,7 +282,6 @@ const ManagerDetail = React.createClass({
       }
     }
 
-    console.log(data.assets)
 
     ajax({
       url: "/api/transactions/",
@@ -296,7 +296,8 @@ const ManagerDetail = React.createClass({
           transactionComment: "",
           transactionQuantity: 0,
           transactionCategory: "Acquisition",
-          showCreateTransactionModal: false
+          showCreateTransactionModal: false,
+          selectedAssets: [],
         }, function() {
           _this.getItem();
           _this.getTransactions();
@@ -695,10 +696,6 @@ const ManagerDetail = React.createClass({
       }
     }
   },
-
-
-
-
 
 
   getCreateTransactionForm() {
