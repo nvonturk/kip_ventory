@@ -9,7 +9,8 @@ const InventoryItem = React.createClass({
     return {
       quantity: 0,
       in_cart: this.props.item.in_cart,
-      showTags: false
+      showTags: false,
+      minModSelect: this.props.minModSelect,
     }
   },
 
@@ -150,7 +151,7 @@ const InventoryItem = React.createClass({
 
     var minQuantsCheckbox  = (this.props.minQuants) ? (
       <td data-th="Modify Minimum Stock" style={{fontSize:"10px", zIndex:"9999"}}  onClick={e => e.stopPropagation()}>
-        <Checkbox style={{paddingTop: "6px", textAlign: "center"}} onChange={e => this.props.boxChange(e, this.props.item)} />
+        <Checkbox style={{paddingTop: "6px", textAlign: "center"}} checked={this.state.minModSelect} onChange={e => this.props.boxChange(e, this.props.item)} />
       </td>
     ) : (
       null
@@ -164,7 +165,6 @@ const InventoryItem = React.createClass({
 
     var minStockEntry = (this.props.minQuants) ? (
       <td data-th="Minimum Stock" style={{fontSize:"10px"}} className="text-center">{this.props.item.minimum_stock}</td>
-      // null
     ) : (
       null
     )
@@ -188,6 +188,11 @@ const InventoryItem = React.createClass({
         <td data-th="Status" className="text-center" style={{zIndex: "9999"}}>
           { this.getItemStatus(this.props.item) }
         </td>
+        {(this.props.minQuants) ? (
+          null
+        ) : (
+          <td className="spacer" />
+        ) }
         {quantityInput}
         {addToCartButton}
         {minQuantsCheckbox}

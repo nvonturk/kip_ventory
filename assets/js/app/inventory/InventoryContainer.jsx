@@ -783,7 +783,7 @@ const InventoryContainer = React.createClass({
                       </thead>
                       <tbody>
                         {this.state.items.map( (item, i) => {
-                          return (<InventoryItem key={item.name} item={item} minQuants={this.state.showMinQuants} boxChange={this.handleMinQuantsSelection} />)
+                          return (<InventoryItem key={item.name} item={item} minModSelect={true} minQuants={this.state.showMinQuants} boxChange={this.handleMinQuantsSelection} />)
                         })}
                       </tbody>
                     </Table>
