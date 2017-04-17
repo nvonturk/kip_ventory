@@ -13,6 +13,7 @@ DISBURSEMENT = 'disbursement'
 LOANED = "Loaned"
 DISBURSED = "Disbursed"
 IN_STOCK = 'In Stock'
+LOST = "Lost"
 
 # Types of item requests
 ITEM_REQUEST_TYPES = (
@@ -24,6 +25,7 @@ ASSET_STATUS_TYPES = (
     (IN_STOCK, 'In Stock'),
     (LOANED, "Loaned"),
     (DISBURSED, "Disbursed"),
+    (LOST, "Lost")
 )
 
 FIELD_TYPES = (

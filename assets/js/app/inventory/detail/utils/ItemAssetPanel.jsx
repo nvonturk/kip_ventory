@@ -56,7 +56,9 @@ const ItemAssetPanel = React.createClass({
     } else if (asset.status == "Loaned") {
       return (<Label bsSize="small" bsStyle="warning" style={{fontSize: "10px"}}>Loaned</Label>)
     } else if (asset.status == "Disbursed") {
-      return (<Label bsSize="small" bsStyle="danger" style={{fontSize: "10px"}}>Disbursed</Label>)
+      return (<Label bsSize="small" bsStyle="primary" style={{fontSize: "10px"}}>Disbursed</Label>)
+    } else if (asset.status == "Lost") {
+      return (<Label bsSize="small" bsStyle="danger" style={{fontSize: "10px"}}>Lost</Label>)
     }
   },
 
@@ -180,6 +182,7 @@ const ItemAssetPanel = React.createClass({
                     <option value="In Stock">In Stock</option>
                     <option value="Loaned">Loaned</option>
                     <option value="Disbursed">Disbursed</option>
+                    <option value="Lost">Lost</option>
                   </FormControl>
                 </FormGroup>
               </Form>
