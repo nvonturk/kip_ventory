@@ -23,7 +23,7 @@ const LoanGroupPanel = React.createClass({
     }
     for (var i=0; i<this.props.loanGroup.backfills.length; i++) {
       var backfill = this.props.loanGroup.backfills[i]
-      if (backfill.status != "Satisfied") {
+      if (backfill.status != "satisfied") {
         return false
       }
     }
@@ -87,7 +87,8 @@ const LoanGroupPanel = React.createClass({
                           request={request}
                           showHeader={false}
                           index={this.props.index}
-                          expanded={this.props.expanded}/>
+                          expanded={this.props.expanded}
+                          refreshRequests={this.props.getLoanGroups}/>
           </Col>
         </Row>
 

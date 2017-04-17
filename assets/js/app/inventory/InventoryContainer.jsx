@@ -678,24 +678,24 @@ const InventoryContainer = React.createClass({
 
     var tableHeaders = (this.state.showMinQuants) ? (
       <tr>
-        <th style={{width:"25%"}} className="text-left">Item</th>
+        <th style={{width:"20%"}} className="text-left">Item</th>
         <th style={{width:"10%"}} className="text-center">Model No.</th>
         <th style={{width:"10%"}} className="text-center">In Stock</th>
+        <th style={{width:"10%"}} className="text-center">Minimum Stock</th>
         <th style={{width:"10%"}} className="text-center">Tags</th>
         <th style={{width:"10%"}} className="text-center"/>
         <th style={{width:"10%"}} className="text-center">Status</th>
-        <th style={{width:"5%"}}  className="spacer" />
         <th style={{width:"20%" }} className="text-center">Modify Minimum Quantity</th>
       </tr>
     ) : (
       <tr>
-        <th style={{width:"25%"}} className="text-left">Item</th>
+        <th style={{width:"20%"}} className="text-left">Item</th>
         <th style={{width:"10%"}} className="text-center">Model No.</th>
         <th style={{width:"10%"}} className="text-center">In Stock</th>
+        <th style={{width:"10%"}} className="text-center">Minimum Stock</th>
         <th style={{width:"10%"}} className="text-center">Tags</th>
         <th style={{width:"10%"}} className="text-center"/>
         <th style={{width:"10%"}} className="text-center">Status</th>
-        <th style={{width:"5%"}}  className="spacer" />
         <th style={{width:"8%" }} className="text-center">Quantity</th>
         <th style={{width:"12%"}} className="text-center"></th>
       </tr>

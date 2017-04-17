@@ -94,7 +94,6 @@ class ItemListCreate(generics.GenericAPIView):
         if low_stock:
             queryset = queryset.filter(quantity__lte=F('minimum_stock'))
 
-
         return queryset
 
     def get(self, request, format=None):
@@ -2470,7 +2469,6 @@ class BackfillDetailModify(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
-        print("test")
 
         if not (instance.status == models.AWAITING_ITEMS):
             return Response({"status": ["Only backfills with status 'Awaiting Items' can be modified."]})
@@ -2501,6 +2499,10 @@ class BackfillRequestCreate(generics.GenericAPIView):
 
     def post(self, request, loan_id, format=None):
         loan = self.get_loan(pk=loan_id)
+
+        if (self.request.user.pk != loan.request.requester.pk):
+            return Response({"error": ["You may not request a backfill on a loan you do not own."]}, status=status.HTTP_403_FORBIDDEN)
+
         data = request.data.copy()
         data.update({"loan" : loan})
         serializer = self.get_serializer(data=data)

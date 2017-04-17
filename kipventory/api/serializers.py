@@ -118,7 +118,8 @@ class ItemSerializer(serializers.Serializer):
     def to_representation(self, item):
         in_cart = 0
         try:
-            ci = models.CartItem.objects.get(item__pk=item.pk)
+            user = self.context['request'].user
+            ci = models.CartItem.objects.filter(owner__pk=user.pk).get(item__pk=item.pk)
             in_cart = ci.quantity
         except:
             pass
@@ -854,7 +855,7 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
 
     def update(self, backfill, data):
         #todo are this supposed to update the inventory like this??
-        
+
         status = data.get('status')
         if status == models.SATISFIED:
             item = backfill.item
@@ -866,8 +867,8 @@ class BackfillPUTSerializer(serializers.ModelSerializer):
             else:
                 item.quantity += backfill.quantity
                 item.save()
-        
-        super().update(backfill, data)     
+
+        super().update(backfill, data)
         return backfill
 
 
