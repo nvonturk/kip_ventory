@@ -167,9 +167,9 @@ const InventoryItem = React.createClass({
     ) : null
 
     return (
-      <tr className="clickable" onClick={this.viewItemDetail}>
+      <tr>
         <td data-th="Item">
-          <h6 style={{color: "#df691a"}}>{this.props.item.name}</h6>
+          <a style={{color: "#df691a", fontSize:"14px"}} className="clickable" onClick={this.viewItemDetail}>{this.props.item.name}</a>
         </td>
         <td data-th="Model No." style={{fontSize:"10px"}} className="text-center">{this.props.item.model_no}</td>
         <td data-th="In Stock" style={{fontSize:"10px"}} className="text-center">{this.props.item.quantity}</td>
@@ -181,7 +181,7 @@ const InventoryItem = React.createClass({
         <td className="text-center" style={{zIndex: "9999"}}>
           { this.getRemoveFromCartLink() }
         </td>
-        <td data-th="Status" className="text-center" style={{zIndex: "9999"}}>
+        <td data-th="In Cart?" className="text-center" style={{zIndex: "9999"}}>
           { this.getItemStatus(this.props.item) }
         </td>
         { minStock }
