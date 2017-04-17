@@ -6,6 +6,10 @@ import { getCookie } from '../../../../csrf/DjangoCSRFToken'
 import Select from 'react-select'
 import LoanModal from '../../../loans/LoanModal'
 import BackfillRequestModal from '../../../backfills/BackfillRequestModal'
+import CreateBackfillRequestModal from '../../../backfills/CreateBackfillRequestModal'
+import BackfillModal from '../../../backfills/BackfillModal'
+
+
 
 const TabContainer = React.createClass({
   getInitialState() {
@@ -38,6 +42,12 @@ const TabContainer = React.createClass({
 
       showBackfillRequestModal: false,
       backfillRequestToModify: null,
+
+      showCreateBackfillRequestModal: false, 
+      loanForNewBackfillRequest: null,
+
+      showBackfillModal: false,
+      backfillToView: null,
     }
   },
 
@@ -58,6 +68,13 @@ const TabContainer = React.createClass({
         })
       })
     }
+  },
+
+  createBackfillRequestSuccessHandler() {
+    // todo update loan of interest instead of refreshing all loans
+    // todo use promise
+    this.componentWillMount()
+    this.hideCreateBackfillRequestModal();
   },
 
   updateBackfillRequestToModify() {
@@ -88,6 +105,7 @@ const TabContainer = React.createClass({
     }
     var _this = this
     getJSON(url, params, function(data) {
+      console.log(data);
       _this.setState({
         loans: data.results,
         loanPageCount: data.num_pages
@@ -96,6 +114,7 @@ const TabContainer = React.createClass({
   },
 
   getDisbursements() {
+    console.log("disbursements");
     var url = "/api/requests/" + this.props.request.id + "/disbursements/"
     var params = {
       item: this.state.disbursementSearchText,
@@ -162,11 +181,25 @@ const TabContainer = React.createClass({
       loanToModify: null,
     })
   },
+  
+  showCreateBackfillRequestModal(loan) {
+    this.setState({
+      showCreateBackfillRequestModal: true,
+      loanForNewBackfillRequest: loan,
+    })
+  }, 
+
+  hideCreateBackfillRequestModal(e) {
+    this.setState({
+      showCreateBackfillRequestModal: false,
+    })
+  },
 
   showBackfillRequestModal(backfillRequest) {
     var _this = this
     var url = "/api/backfillrequests/" + backfillRequest.id + "/"
     getJSON(url, null, function(data) {
+      console.log(data)
       _this.setState({
         showBackfillRequestModal: true,
         backfillRequestToModify: data
@@ -330,6 +363,36 @@ const TabContainer = React.createClass({
     )
   },
 
+  updateBackfillToView() {
+    if (this.state.backfillToView != null) {
+      var _this = this;
+      var url = "/api/backfills/" + this.state.backfillToView.id + "/"
+      getJSON(url, null, function(data) {
+        _this.setState({
+          backfillToView: data
+        })
+      })
+    }
+  },
+
+  showBackfillModal(backfill) {
+    var _this = this
+    var url = "/api/backfills/" + backfill.id + "/"
+    getJSON(url, null, function(data) {
+      console.log(data)
+      _this.setState({
+        showBackfillModal: true,
+        backfillToView: data
+      })
+    })
+  },
+
+  hideBackfillModal(e) {
+    this.setState({
+      showBackfillModal: false,
+      backfillToView: null,
+    })
+  },
 
   handleBackfillItemSearch(e) {
     var _this = this
@@ -412,15 +475,16 @@ const TabContainer = React.createClass({
           <tbody>
             { this.state.backfills.map( (backfill, i) => {
               var brStatus = (backfill.status == "satisfied") ? (
-                <Label bsSize="small" bsStyle="success">Fulfilled</Label>
+                <Label bsSize="small" bsStyle="success">Satisfied</Label>
               ) : (
                 <Label bsSize="small" bsStyle="warning">Awaiting Items</Label>
               )
-              var viewBackfill = (backfill.status == "awaiting_items") ? (
-                <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}} onClick={e => {console.log(backfill)}}>
+              var viewBackfill = (
+                <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}} onClick={this.showBackfillModal.bind(this, backfill)}>
                    Click to view
                 </a>
-              ) : null
+              );
+
               var asset = (backfill.asset == null) ? ("N/A") : (backfill.asset)
               return (
                 <tr key={backfill.id}>
@@ -672,12 +736,25 @@ const TabContainer = React.createClass({
               ) : (
                 <Label bsSize="small" bsStyle="success">Returned</Label>
               )
-              var backfillRequestLink = (loan.outstanding_backfill_request != null) ? (
-                <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
-                   onClick={this.showBackfillRequestModal.bind(this, loan.outstanding_backfill_request)}>
-                   Click to view
-                </a>
-              ) : <span style={{fontSize: "12px"}}>None</span>
+
+
+              var backfillRequestLink = "N/A";
+              if(loan.outstanding_backfill_request != null) {
+                backfillRequestLink = (
+                  <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                     onClick={this.showBackfillRequestModal.bind(this, loan.outstanding_backfill_request)}>
+                     Click to view
+                  </a>
+                );
+              } else if (loan.quantity_loaned > loan.quantity_returned) {
+                backfillRequestLink = (
+                  <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                     onClick={this.showCreateBackfillRequestModal.bind(this, loan)}>
+                     Click to Request
+                  </a>
+                );
+              }
+
               var asset = (loan.asset == null) ? ("N/A") : (loan.asset)
               return (
                 <tr key={loan.id}>
@@ -827,12 +904,28 @@ const TabContainer = React.createClass({
                    updateLoan={this.updateLoanToModify}
                    user={this.props.user}/>
 
-       <BackfillRequestModal backfillRequest={this.state.backfillRequestToModify}
+        <BackfillRequestModal backfillRequest={this.state.backfillRequestToModify}
                              request={this.props.request}
                              show={this.state.showBackfillRequestModal}
                              onHide={this.hideBackfillRequestModal}
                              refresh={this.componentWillMount.bind(this)}
                              updateBackfillRequest={this.updateBackfillRequestToModify}
+                             user={this.props.user}/>
+        
+       <CreateBackfillRequestModal loan={this.state.loanForNewBackfillRequest}
+                              request={this.props.request}
+                              show={this.state.showCreateBackfillRequestModal}
+                              onHide={this.hideCreateBackfillRequestModal}
+                              createBackfillRequestSuccessHandler={this.createBackfillRequestSuccessHandler}
+                              user={this.props.user}/>
+
+
+       <BackfillModal backfill={this.state.backfillToView}
+                             request={this.props.request}
+                             show={this.state.showBackfillModal}
+                             onHide={this.hideBackfillModal}
+                             refresh={this.componentWillMount.bind(this)}
+                             updateBackfill={this.updateBackfillToView}
                              user={this.props.user}/>
       </Panel>
 

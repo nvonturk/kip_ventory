@@ -29,6 +29,40 @@ const BackfillRequestModal = React.createClass({
     }
   },
 
+  cancelBackfillRequest() {
+    var _this = this
+    var url = "/api/backfillrequests/" + this.props.backfillRequest.id + "/"
+    ajax({
+      url: url,
+      contentType: "application/json",
+      type: "DELETE",
+      beforeSend: function(request) {
+        request.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+      },
+      success:function(response){
+        _this.setState({
+          admin_comment: "",
+          errorNodes: {}
+        }, () => {_this.props.refresh(); _this.props.onHide()})
+      },
+      error:function (xhr, textStatus, thrownError){
+        if (xhr.status == 400) {
+          var response = xhr.responseJSON
+          var errNodes = {}
+          for (var key in response) {
+            if (response.hasOwnProperty(key)) {
+              var node = <span key={key} className="help-block">{response[key][0]}</span>
+              errNodes[key] = node
+            }
+          }
+          _this.setState({
+            errorNodes: errNodes
+          })
+        }
+      }
+    });
+  },
+
   approveBackfillRequest() {
 		var _this = this
 		this.setState({
@@ -184,11 +218,25 @@ const BackfillRequestModal = React.createClass({
         </Col>
       </Form>
     ) : null
+  
+
+    var isOwner = (this.props.user.username == this.props.backfillRequest.owner_username)
+    var isBackfillRequestOutstanding = this.props.backfillRequest.status == "O"
+    var isCancellable = (isOwner && isBackfillRequestOutstanding)
+    var cancelForm = (isCancellable) ? (
+      <Button bsStyle="danger" bsSize="small"
+                  style={{marginRight: "15px", fontSize: "12px"}}
+                  onClick={this.cancelBackfillRequest}>
+        Cancel Backfill Request
+      </Button>
+    ) : null; 
+
     return (this.props.backfillRequest != null) ? (
       <Row>
         <Col xs={12}>
           <Panel style={{marginBottom: "0px", boxShadow: "0px 0px 5px 2px #485563"}}>
             { this.getBackfillInfoTable() }
+            { cancelForm }
             { approvalForm }
           </Panel>
         </Col>
