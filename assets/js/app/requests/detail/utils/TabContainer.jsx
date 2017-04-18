@@ -8,8 +8,7 @@ import LoanModal from '../../../loans/LoanModal'
 import BackfillRequestModal from '../../../backfills/BackfillRequestModal'
 import CreateBackfillRequestModal from '../../../backfills/CreateBackfillRequestModal'
 import BackfillModal from '../../../backfills/BackfillModal'
-
-
+import AssetInfoModal from '../../../inventory/detail/utils/AssetInfoModal'
 
 const TabContainer = React.createClass({
   getInitialState() {
@@ -48,6 +47,9 @@ const TabContainer = React.createClass({
 
       showBackfillModal: false,
       backfillToView: null,
+
+      showAssetInfoModal: false,
+      assetTagToView: null,
     }
   },
 
@@ -196,6 +198,19 @@ const TabContainer = React.createClass({
     })
   },
 
+  showAssetInfoModal(asset) {
+    this.setState({
+      assetTagToView: asset,
+      showAssetInfoModal: true,
+    });
+  },
+
+  hideAssetInfoModal() {
+    this.setState({
+      showAssetInfoModal: false,
+    });
+  },
+
   showBackfillRequestModal(backfillRequest) {
     var _this = this
     var url = "/api/backfillrequests/" + backfillRequest.id + "/"
@@ -308,7 +323,12 @@ const TabContainer = React.createClass({
                            style={{color: "#5bc0de", fontSize: "12px"}}
                            onClick={this.showBackfillRequestModal.bind(this, backfill_request)}/>
               ) : null
-              var asset = (backfill_request.asset == null) ? ("N/A") : (backfill_request.asset)
+              var asset = (backfill_request.asset == null) ? ("N/A") : (
+                  <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                         onClick={this.showAssetInfoModal.bind(this, backfill_request.asset)}>
+                         {backfill_request.asset}
+                  </a>
+              )
               return (
                 <tr key={backfill_request.id}>
                   <td data-th="Item" className="text-left">
@@ -486,7 +506,12 @@ const TabContainer = React.createClass({
                 </a>
               );
 
-              var asset = (backfill.asset == null) ? ("N/A") : (backfill.asset)
+              var asset = (backfill.asset == null) ? ("N/A") : (
+                  <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                         onClick={this.showAssetInfoModal.bind(this, backfill.asset)}>
+                         {backfill.asset}
+                  </a>
+              )
               return (
                 <tr key={backfill.id}>
                   <td data-th="Item" className="text-left">
@@ -592,7 +617,12 @@ const TabContainer = React.createClass({
           </thead>
           <tbody>
             { this.state.disbursements.map( (disbursement, i) => {
-              var asset = (disbursement.asset == null) ? ("N/A") : (disbursement.asset)
+              var asset = (disbursement.asset == null) ? ("N/A") : (
+                  <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                         onClick={this.showAssetInfoModal.bind(this, disbursement.asset)}>
+                         {disbursement.asset}
+                  </a>
+              )
               return (
                 <tr key={disbursement.id}>
                   <td data-th="Item" className="text-left">
@@ -756,7 +786,13 @@ const TabContainer = React.createClass({
                 );
               }
 
-              var asset = (loan.asset == null) ? ("N/A") : (loan.asset)
+
+              var asset = (loan.asset == null) ? ("N/A") : (
+                  <a className="clickable" style={{color: "#5bc0de", fontSize: "12px"}}
+                         onClick={this.showAssetInfoModal.bind(this, loan.asset)}>
+                         {loan.asset}
+                  </a>
+              )
               return (
                 <tr key={loan.id}>
                   <td data-th="Item" className="text-left">
@@ -928,6 +964,8 @@ const TabContainer = React.createClass({
                              refresh={this.componentWillMount.bind(this)}
                              updateBackfill={this.updateBackfillToView}
                              user={this.props.user}/>
+
+        <AssetInfoModal assetTag={this.state.assetTagToView} show={this.state.showAssetInfoModal} onHide={this.hideAssetInfoModal}/>
       </Panel>
 
     ) : null

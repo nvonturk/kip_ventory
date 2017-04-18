@@ -244,6 +244,7 @@ class AssetList(generics.GenericAPIView):
         response = self.get_paginated_response(serializer.data)
         return response
 
+
 class AssetDetailModify(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
 
@@ -297,6 +298,27 @@ class AssetDetailModify(generics.GenericAPIView):
             assetModificationLog(asset, previous_tag, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AssetDetail(generics.GenericAPIView):
+    permissions = (permissions.IsAuthenticated,)
+
+    def get_instance(self, asset_tag):
+        try:
+            return models.Asset.objects.get(tag=asset_tag)
+        except models.Asset.DoesNotExist:
+            raise NotFound('Asset {} not found.'.format(asset_tag))
+
+    def get_serializer_class(self):
+        return serializers.AssetSerializer
+
+    def get_queryset(self):
+        return models.Asset.objects.all()
+
+    def get(self, request, asset_tag, format=None):
+        asset = self.get_instance(asset_tag=asset_tag)
+        serializer = self.get_serializer(instance=asset)
+        return Response(serializer.data)
+
 
 class AddItemToCart(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
