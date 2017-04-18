@@ -1616,8 +1616,7 @@ class TransactionListCreate(generics.GenericAPIView):
             serializer.save()
             transaction = serializer.instance
             item = transaction.item
-            quantity = getItemQuantity(item)
-            transactionCreationLog(item, request.user.pk, transaction.category, quantity)
+            transactionCreationLog(item, request.user.pk, transaction)
             sendEmailForMinimumStockIfNeeded(item)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -2432,17 +2431,17 @@ def userCreationLog(data, initiating_user_pk):
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='User Creation', message=message, affected_user=affected_user)
     log.save()
 
-def transactionCreationLog(item, initiating_user_pk, category, amount):
+def transactionCreationLog(item, initiating_user_pk, transaction):
     item = item
     initiating_user = None
-    quantity = amount
     affected_user = None
+    category = transaction.category
     try:
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
-    message = "User {} created a {} transaction on item {} of quantity {} and it now has a quantity of {}".format(initiating_user, category, item, quantity, item.quantity)
-    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Transaction Creation', message=message, affected_user=affected_user)
+    message = "User {} created a {} transaction on item {} of quantity {} and it now has a quantity of {}".format(initiating_user, category, item, transaction.quantity, getItemQuantity(item))
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=transaction.quantity, category='Transaction Creation', message=message, affected_user=affected_user)
     log.save()
 
 

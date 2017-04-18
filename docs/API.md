@@ -23,6 +23,21 @@ Note: many of the GET requests return paginated results. You can specify a `page
 * `/apitoken/`
   * GET: get an API token (must be logged in via application interface)
 
+#### Assets
+* `/assets/{asset_tag}`
+  * GET: get an asset object with the asset tag `asset_tag`
+
+#### Backfill requests
+* `/backfillrequests/{id}`
+  * GET:
+  * DELETE:
+  * PUT:
+
+#### Backfills
+* `/backfills/{id}`
+  * GET:
+  * PUT:
+
 #### Backup Email
 * `/backupemail/`
   * GET: initiate the sending of emails to administrative users notifying of backup results
@@ -121,6 +136,23 @@ Note: many of the GET requests return paginated results. You can specify a `page
   |--------------|------------------|-------------------------------------------------------------|-----------|
   | quantity     | positive integer | number of items requested                                   | yes       |
   | request type | string           | delineates whether item is request for loan or disbursement | yes       |
+
+* `/items/{item_name}/assets/`
+  * GET: get all assets associated with object with name `{item_name}`
+
+  | Parameter    | Type             | Purpose                                                     | Required? |
+  |--------------|------------------|-------------------------------------------------------------|-----------|
+  | page         | string           | page number for paginated assets                            | no        |
+  | itemsPerPage | string           | number of items in each paginated query of assets           | no        |
+
+* `/items/{item_name}/assets/{asset_tag}`
+  * GET: get all asset with tag `asset_tag` associated with object with name `{item_name}`
+  * PUT: change the value of asset fields with current tag `{asset_tag}` associated with object with and  `{item_name}`  
+  | Parameter | Type    | Purpose                    | Required? |
+  |-----------|---------|----------------------------|-----------|
+  | location  | string  | physical location of asset | no        |
+  | tag       | integer | new integer tag of asset   | yes       |
+
 
 * `/items/{item_name}/fields`
   * GET: get the values of all custom fields for an item
