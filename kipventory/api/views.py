@@ -1616,18 +1616,24 @@ class TransactionListCreate(generics.GenericAPIView):
     def post(self, request, format=None):
         data = request.data.copy()
         data['administrator'] = request.user
-        print("TRANSACTION POST: ", data)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
             transaction = serializer.instance
             item = transaction.item
-            quantity = getItemQuantity(item)
+            quantity = getTransactionQuantity(transaction)
             transactionCreationLog(item, request.user.pk, transaction.category, quantity)
             sendEmailForMinimumStockIfNeeded(item)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def getTransactionQuantity(item):
+    if transaction.assets is not None:
+        quantity = len(transaction.assets)
+    else:
+        quantity = transaction.quantity
+    return quantity
 
 class TokenPoint(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
