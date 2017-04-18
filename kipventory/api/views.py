@@ -841,8 +841,11 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
                 for ri in requested_items:
                     if ri.request_type == 'loan':
                         requestItemApprovalLoan(ri, request.user.pk, request_obj)
+                        sendEmailForMinimumStockIfNeeded(ri.item)
                     else:
                         requestItemApprovalDisburse(ri, request.user.pk, request_obj)
+                        sendEmailForMinimumStockIfNeeded(ri.item)
+
             if request_obj.status == 'D':
                 for ri in requested_items:
                     requestItemDenial(ri, request.user.pk, request_obj)
@@ -1957,8 +1960,10 @@ class DisburseCreate(generics.GenericAPIView):
                 requestItemCreation(req_item, request.user.pk, request_instance)
                 if req_item.request_type == 'loan':
                     requestItemApprovalLoan(req_item, request.user.pk, request_instance)
+                    sendEmailForMinimumStockIfNeeded(req_item.item)
                 else:
                     requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
+                    sendEmailForMinimumStockIfNeeded(req_item.item)
 
             sendEmailForNewDisbursement(requester, request_instance)
             return Response(serializer.data)
