@@ -132,6 +132,24 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | quantity     | positive integer | number of items requested                                   | yes       |
   | request type | string           | delineates whether item is request for loan or disbursement | yes       |
 
+* `/items/{item_name}/assets/`
+  * GET: get all assets associated with object with name `{item_name}`
+
+  | Parameter    | Type             | Purpose                                                     | Required? |
+  |--------------|------------------|-------------------------------------------------------------|-----------|
+  | page         | string           | page number for paginated assets                            | no        |
+  | itemsPerPage | string           | number of items in each paginated query of assets           | no        |
+
+* `/items/{item_name}/assets/{asset_tag}`
+  * GET: get all asset with tag `asset_tag` associated with object with name `{item_name}`
+
+
+
+
+
+
+
+
 * `/items/{item_name}/fields`
   * GET: get the values of all custom fields for an item
 * `/items/{item_name}/fields/{field_name}`
