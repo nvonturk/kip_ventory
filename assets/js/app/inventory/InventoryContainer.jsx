@@ -14,8 +14,6 @@ import FileInput from 'react-file-input'
 import Select from 'react-select';
 import 'react-select/dist/react-select.css';
 
-const ITEMS_PER_PAGE = 10;
-
 const InventoryContainer = React.createClass({
   getInitialState() {
     return {
@@ -28,6 +26,7 @@ const InventoryContainer = React.createClass({
       searchText: "",
       lowStock: false,
 
+      itemsPerPage: 10,
       page: 1,
       pageCount: 1,
 
@@ -86,7 +85,7 @@ const InventoryContainer = React.createClass({
       exclude_tags: this.state.excludeTagsSelected,
       low_stock: this.state.lowStock,
       page: this.state.page,
-      itemsPerPage: ITEMS_PER_PAGE
+      itemsPerPage: this.state.itemsPerPage
     }
     getJSON(url, params, function(data) {
       var item = _this.state.item
@@ -152,6 +151,14 @@ const InventoryContainer = React.createClass({
         }
       }
     })
+  },
+
+  updateItemsPerPage(e) {
+    this.setState({
+      page: 1,
+      pageCount: 1,
+      itemsPerPage: Number(e.target.value)
+    }, this.getItems)
   },
 
   handleIncludeTagSelection(tagsSelected) {
@@ -806,7 +813,29 @@ const InventoryContainer = React.createClass({
 
                   <div className="panel-footer">
                     <Row>
-                      <Col md={12}>
+                      <Col xs={3}>
+                        <Form horizontal>
+                          <FormGroup bsSize="small">
+                            <Col xs={7} componentClass={ControlLabel}>
+                              Items per page:
+                            </Col>
+                            <Col xs={5}>
+                              <FormControl componentClass="select"
+                                           name="itemsPerPage"
+                                           style={{fontSize:"12px"}}
+                                           value={this.state.itemsPerPage}
+                                           onChange={this.updateItemsPerPage}>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="250">250</option>
+                              </FormControl>
+                            </Col>
+                          </FormGroup>
+                        </Form>
+                      </Col>
+                      <Col xs={9}>
                         <Pagination next prev maxButtons={10} boundaryLinks ellipsis style={{float:"right", margin: "0px"}} bsSize="small" items={this.state.pageCount} activePage={this.state.page} onSelect={this.handlePageSelect} />
                       </Col>
                     </Row>
