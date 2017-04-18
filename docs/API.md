@@ -7,26 +7,41 @@ This document details how to interact with the REST API via HTTP methods.
 REST Endpoints
 ------------
 
-The following is a list of all REST endpoints in the web app. All endpoints are relative to `https://colab-sbx-277.oit.duke.edu/api/`. Under each endpoint, the available actions are listed. If an action is not listed, it is not supported by the API. If permissions are not listed, any user can access that endpoint. If parameters are not listed, no data needs to be included with the HTTP request. 
+The following is a list of all REST endpoints in the web app. All endpoints are relative to `https://colab-sbx-277.oit.duke.edu/api/`. Under each endpoint, the available actions are listed. If an action is not listed, it is not supported by the API. If permissions are not listed, any user can access that endpoint. If parameters are not listed, no data needs to be included with the HTTP request.
 
 #### Pagination
 Note: many of the GET requests return paginated results. You can specify a `page` parameter to specify which page to retrieve and an `itemsPerPage` parameter to specify how many items per page for pagination. See Swagger to see which endpoints are paginated (they should show both `page` and `itemsPerPage` parameters). The paginated results return the following format:
-``` 
+```
 {
   "count": totalNumberOfItems,
   "num_pages": totalNumberOfPages,
   "results": data, // an array of all items
-} 
+}
 ```
 
 #### API Token
 * `/apitoken/`
   * GET: get an API token (must be logged in via application interface)
 
+#### Assets
+* `/assets/{asset_tag}`
+  * GET: get an asset object with the asset tag `asset_tag`
+
+#### Backfill requests
+* `/backfillrequests/{id}`
+  * GET:
+  * DELETE:
+  * PUT:
+
+#### Backfills
+* `/backfills/{id}`
+  * GET:
+  * PUT:
+
 #### Backup Email
 * `/backupemail/`
   * GET: initiate the sending of emails to administrative users notifying of backup results
-  
+
   | Parameter | Type   | Purpose                                | Required? |
   |-----------|--------|----------------------------------------|-----------|
   | status    | string | backup result status (success/failure) | yes       |
@@ -38,7 +53,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   * GET: get the number of a specified item in the user's cart
   * DELETE: delete a specified item from the user's cart
   * PUT: modify quantity of item in user's cart or whether item is requested for loan/disbursement
-  
+
   | Parameter    | Type   | Purpose                                              | Required? |
   |--------------|--------|------------------------------------------------------|-----------|
   | quantity     | string | number of item to be requested                       | yes       |
@@ -47,7 +62,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
 #### Disburse
 * `/disburse/`
   * POST: create approved disbursals from an admin user to a regular user, logged in user defaults to admin user
-  
+
   | Parameter      | Type          | Purpose                                                                      | Required? |
   |----------------|---------------|------------------------------------------------------------------------------|-----------|
   | requester      | string        | filter logs by user associated with entries                                  | yes       |
@@ -61,7 +76,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
 * `/fields/`
   * GET: get all custom fields in system
   * POST: create a new custom field
-  
+
   | Parameter  | Type    | Purpose                                                   | Required? |
   |------------|---------|-----------------------------------------------------------|-----------|
   | private    | boolean | whether or not field is hidden to non-admin/manager users | yes       |
@@ -75,7 +90,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
 #### Import
 * `/import/`
   * POST: initiate a bulk import, a files is included with this request
-  
+
   | Parameter     | Type   | Purpose                         | Required? |
   |---------------|--------|---------------------------------|-----------|
   | administrator | string | administrator initiating import | yes       |
@@ -87,7 +102,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
 * `/items/`
   * GET: get all items
   * POST: create a new item
-  
+
   | Parameter   | Type             | Purpose                          | Required? |
   |-------------|------------------|----------------------------------|-----------|
   | model_no    | string           | the id of the item               | yes       |
@@ -100,7 +115,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   * GET: get the item with the specified item name
   * DELETE: delete the item with the specified item name
   * PUT: modify the values of a currently existing item
-  
+
   | Parameter   | Type             | Purpose                          | Required? |
   |-------------|------------------|----------------------------------|-----------|
   | model_no    | string           | the id of the item               | yes       |
@@ -111,7 +126,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
 
 * `/items/{item_name}/addtocart`
   * POST: add an item to the logged in user's cart.
-  
+
   | Parameter    | Type             | Purpose                                                     | Required? |
   |--------------|------------------|-------------------------------------------------------------|-----------|
   | quantity     | positive integer | number of items requested                                   | yes       |
@@ -122,21 +137,21 @@ Note: many of the GET requests return paginated results. You can specify a `page
 * `/items/{item_name}/fields/{field_name}`
   * GET: get the value of a specified custom field for an item
   * PUT: modify the value of a specified custom field for an item
-  
+
   | Parameter | Type   | Purpose                                                        | Required? |
   |-----------|--------|----------------------------------------------------------------|-----------|
   | value     | string | custom field value, parsed into required field type on backend | yes       |
 
 * `/items/{item_name}/loans`
   * GET: get all loans associated with an item.
-  
+
   | Parameter | Type   | Purpose                 | Required? |
   |-----------|--------|-------------------------|-----------|
   | user      | string | filter loans by user    | no        |
 
 * `/items/{item_name}/requests`
   * GET: get all requests associated with an item
-  
+
   | Parameter | Type   | Purpose                         | Required? |
   |-----------|--------|---------------------------------|-----------|
   | type      | string | fitler requests by request type | no        |
@@ -146,7 +161,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   * GET: get item stack values for a specified item
 * `/items/{item_name}/transactions`
   * GET: get all transactions associated with a specified item
-  
+
   | Parameter     | Type   | Purpose                                       | Required? |
   |---------------|--------|-----------------------------------------------|-----------|
   | category      | string | filter transactions by transaction category   | no        |
@@ -199,7 +214,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
     | item   | string | Filter by item name   | no       |
 
 * `/loans/all/`
-  * GET: get all loans 
+  * GET: get all loans
     * Permissions: must be a manager
     * Query params:
 
@@ -267,13 +282,13 @@ Note: many of the GET requests return paginated results. You can specify a `page
 * `/requests/`
   * GET: get all requests made by the current user
     * Query params:
-     
+
       | Parameter   | Type             | Purpose                          | Required? |
       |-------------|------------------|----------------------------------|-----------|
       | status      | string           | Filter by status (Outstanding, Approved, or Denied) | no       |
 
   * POST: create a request for the current user for the items currently in his/her cart
-      
+
       | Parameter   | Type             | Purpose                          | Required? |
       |-------------|------------------|----------------------------------|-----------|
       | open_comment | string           | reason for request               | yes      |
@@ -286,7 +301,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
       | Parameter   | Type             | Purpose                          | Required? |
       |-------------|------------------|----------------------------------|-----------|
       | status      | string           | Filter by status (Outstanding, Approved, or Denied) | no       |
-     
+
 * `/requests/[request_pk]/`
   * GET: get the request with the specified id (request_pk)
     * Permissions:  
@@ -295,7 +310,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
 
   * PUT: approve or deny the request with the specified id (request_pk)
     * Permissions: must be an admin
-    * Parameters: 
+    * Parameters:
 
       | Parameter     | Type             | Purpose                                    | Required? |
       |-------------  |------------------|----------------------------------          |-----------|
@@ -343,7 +358,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
 * `/tags/`
   * GET: get all tags in the database
   * POST: add a tag
-    * Sample data: 
+    * Sample data:
       ```
       {
         "name": "string"
@@ -391,7 +406,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   * GET: get the current user
 *`/api/users/edit/{username}/`
   * PUT: edit the user with username `username`
-    * Permissions: 
+    * Permissions:
       * must be an admin to change privilege (is_superuser, is_staff)
       * must be a manager to change profile.subscribed
     * Cannot change username to a netid (or else that netid could not log in for the first time)
