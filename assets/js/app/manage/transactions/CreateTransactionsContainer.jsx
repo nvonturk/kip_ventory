@@ -95,7 +95,7 @@ const CreateTransactionsContainer = React.createClass({
     var cat = e.target.value
     var q = this.state.quantity
     if (cat === "Loss" && q > this.state.items[this.state.index].quantity) {
-      q = 0
+      q = 1
     }
     this.setState({
       quantity: q,
@@ -206,7 +206,7 @@ const CreateTransactionsContainer = React.createClass({
       success:function(response){
         _this.setState({
           comment: "",
-          quantity: 0,
+          quantity: 1,
           category: "Acquisition",
           showModal: false,
           selectedAssets: [],
