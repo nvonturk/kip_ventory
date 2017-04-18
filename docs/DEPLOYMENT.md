@@ -38,8 +38,23 @@ pip install psycopg2 gunicorn
 
 ##### Update settings.py
 ```
-TODO: allowed hosts ifconfig
+sudo vi kipventory/settings.py 
+
+# Change the - lines to the + lines for production
+
+-DEBUG = True
++DEBUG = False
+
+-ALLOWED_HOSTS = [] 
++ALLOWED_HOSTS = ['colab-sbx-277.oit.duke.edu', '152.3.52.30']
+
+-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
++#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ 
+-# EMAIL_BACKEND =   'djcelery_email.backends.CeleryEmailBackend'
++EMAIL_BACKEND =   'djcelery_email.backends.CeleryEmailBackend'
 ```
+
 
 ###### Install node.js dependencies
 ```
