@@ -142,12 +142,11 @@ Note: many of the GET requests return paginated results. You can specify a `page
 
 * `/items/{item_name}/assets/{asset_tag}`
   * GET: get all asset with tag `asset_tag` associated with object with name `{item_name}`
-
-
-
-
-
-
+  * PUT: change the value of asset fields with current tag `{asset_tag}` associated with object with and  `{item_name}`  
+  | Parameter | Type    | Purpose                    | Required? |
+  |-----------|---------|----------------------------|-----------|
+  | location  | string  | physical location of asset | no        |
+  | tag       | integer | new integer tag of asset   | yes       |
 
 
 * `/items/{item_name}/fields`
