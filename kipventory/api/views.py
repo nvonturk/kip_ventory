@@ -840,10 +840,8 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             if request_obj.status == 'A':
                 for ri in requested_items:
                     if ri.request_type == 'loan':
-                        print('loan', ri)
                         requestItemApprovalLoan(ri, request.user.pk, request_obj)
                     else:
-                        print('disburse', ri)
                         requestItemApprovalDisburse(ri, request.user.pk, request_obj)
             if request_obj.status == 'D':
                 for ri in requested_items:
@@ -1098,8 +1096,6 @@ class LoanListAll(generics.GenericAPIView):
                 requests = requests.exclude(loans__quantity_loaned__lte=F('loans__quantity_returned')).distinct()
 
         user = request.query_params.get('user', "")
-        print("PARAMS", request.query_params)
-        print("USER", user)
         if user != "":
             requests = requests.filter(requester__username__icontains=user).distinct()
 
@@ -1258,7 +1254,6 @@ def approveBackfillRequest(backfill_request, request_user_pk):
     #todo what happens if some of the loan was already returned before it was requested backfilled? - loan remains, but backfill requests still deleted
     if loan.quantity_loaned == 0:
         loan.delete() # also deletes backfill_request
-    print(backfill_request)
     # else:
     #     backfill_request.delete()
 
@@ -2242,7 +2237,7 @@ def sendEmailForMinimumStock(item, quantity):
     html_content = "The quantity of item {} has fallen below the minimum stock of {}. There are {} currently in stock. Go to <a href='{}'>{}</a> to view item detail page.".format(item.name, item.minimum_stock, quantity, item_url, item_url)
     to_emails = []
     bcc_emails = [subscribed_manager.email for subscribed_manager in subscribed_managers]
-    print(bcc_emails)
+    # print(bcc_emails)
     sendEmail(subject, text_content, html_content, to_emails, bcc_emails)
 
 def sendEmailForLoanToDisbursementConversion(loan):

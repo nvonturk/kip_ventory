@@ -42,12 +42,16 @@ import UserRequestDetail from './requests/detail/UserRequestDetail'
 // import RequestDetail from './requests/RequestDetail'
 
 function getManagerPanel(userData) {
+  var cf = (userData.is_superuser) ? (
+    <Route path="custom-fields" component={CustomFieldContainer} admin={userData} />
+  ) : null
   return userData.is_staff ? (
     <Route path="manage" component={ManagerContainer} admin={userData}>
       <IndexRoute component={ManagerWelcome} admin={userData} />
       <Route path="disburse" component={DisbursementContainer} admin={userData} />
       <Route path="requests" component={ManagerRequestsContainer} admin={userData} />
       <Route path="loans" component={ManagerLoansContainer} admin={userData} />
+      { cf }
       <Route path="transactions" component={TransactionsContainer} admin={userData} />
       <Route path="logs" component={LogsContainer} admin={userData} />
       <Route path="tags" component={TagsContainer} admin={userData} />
@@ -62,7 +66,6 @@ function getAdminPanel(userData) {
       <Route path="users/create/" component={LocalUserCreationForm} admin={userData} />
       <Route path="users/manage/" component={UserPrivilegesContainer} admin={userData} />
       <Route path="adminpanel/" component={DjangoAdminPanelLink} admin={userData} />
-      <Route path="custom-fields" component={CustomFieldContainer} admin={userData} />
     </Route>) : null
 }
 
