@@ -54,8 +54,13 @@ class AssetSerializer(serializers.Serializer):
 
     def validate(self, data):
         tag = data.get("tag",None)
-
-        if tag is not None:
+        try:
+            tag = int(tag)
+        except:
+            raise ValidationError({"tag" : ["Asset Tag must be an integer"]})
+        
+        # can't update asset tag to be the same as an already existing asset tag
+        if (tag is not None) and (tag != self.instance.tag):
             if models.Asset.objects.filter(tag=tag).count() > 0 :
                 raise ValidationError({"tag" : ["An Asset with the tag {} already exists".format(tag)]})
         return data

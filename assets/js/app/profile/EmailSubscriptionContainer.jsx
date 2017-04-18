@@ -34,7 +34,7 @@ class EmailSubscriptionContainer extends Component {
       },
       error:function (xhr, textStatus, thrownError){
         //todo show error message
-        console.log("error");
+        console.log("error saving subscription preferences");
       }
     });
   }
@@ -63,7 +63,7 @@ class EmailSubscriptionContainer extends Component {
       <div>
         <h3>Email Subscription</h3>
         <hr></hr>
-        <p>Check the box if you want to receive emails for every user request</p>
+        <p>Check the box if you want to receive emails for every user request and for when an item’s available pool goes below the configured threshold</p>
         <Checkbox startChecked={this.state.user.profile.subscribed} label={this.getSubscribedLabel()} handleCheckboxChange={this.handleSubcriptionChange}/>
       </div>
     )

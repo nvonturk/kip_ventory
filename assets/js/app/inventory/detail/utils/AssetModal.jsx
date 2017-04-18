@@ -7,6 +7,7 @@ import { getCookie } from '../../../../csrf/DjangoCSRFToken'
 import { browserHistory } from 'react-router'
 import Select from 'react-select'
 import LoanModal from '../../../loans/LoanModal'
+import $ from 'jquery'
 
 const AssetModal = React.createClass({
   getInitialState() {
@@ -133,8 +134,9 @@ const AssetModal = React.createClass({
     e.stopPropagation()
     e.preventDefault()
     var url = "/api/items/" + this.state.asset.item + "/assets/" + this.state.asset.tag + "/"
-    var data = this.state.asset
+    var data = $.extend(true, {}, this.state.asset) //makes copy of state.asset so that asset.tag does not change unless PUT request succeeds
     data.tag = this.state.newTagName
+
     var _this = this
     ajax({
       url: url,
@@ -269,7 +271,7 @@ const AssetModal = React.createClass({
       return (
         <Modal show={this.props.show} onHide={this.props.onHide}>
           <Modal.Header closeButton>
-            <Modal.Title>{this.state.asset.item}, &nbsp; &nbsp; Asset tag: {this.state.newTagName}</Modal.Title>
+            <Modal.Title>{this.state.asset.item}, &nbsp; &nbsp; Asset tag: {this.state.asset.tag}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Row>

@@ -10,6 +10,7 @@ urlpatterns = [
     # ITEM ENDPOINTS
     url(r'^items/?$',                                               views.ItemListCreate.as_view()),
     url(r'^items/(?P<item_name>.+?)/assets/(?P<asset_tag>.+?)/?$',  views.AssetDetailModify.as_view()),
+    url(r'^assets/(?P<asset_tag>.+?)/?$',  views.AssetDetail.as_view()),
     url(r'^items/(?P<item_name>.+?)/assets/?$',                     views.AssetList.as_view()),
     url(r'^items/(?P<item_name>.+?)/requests/?$',                   views.GetOutstandingRequestsByItem.as_view()),
     url(r'^items/(?P<item_name>.+?)/stacks/?$',                     views.GetItemStacks.as_view()),
