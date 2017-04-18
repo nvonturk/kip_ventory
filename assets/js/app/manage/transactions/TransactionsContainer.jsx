@@ -3,17 +3,20 @@ import $ from "jquery"
 import TransactionList from './TransactionList'
 import Select from 'react-select'
 import Paginator from '../../Paginator'
-import { Grid, Row, Col, Button, Glyphicon, Panel, Form, FormGroup, ControlLabel, FormControl, Well, Pagination, Table, Label } from 'react-bootstrap'
+import { Grid, Row, Col, Button, Glyphicon, Panel, Form, FormGroup,
+         ControlLabel, FormControl, Well, Pagination, Table, Label,
+         OverlayTrigger, Popover, InputGroup } from 'react-bootstrap'
 import CreateTransactionsContainer from './CreateTransactionsContainer'
-
-const TRANSACTIONS_PER_PAGE = 10;
 
 
 const TransactionsContainer = React.createClass({
   getInitialState() {
     return {
       transactions:[],
+
       category: 'All',
+      itemSearch: "",
+
       page: 1,
       pageCount: 0,
 
@@ -21,7 +24,9 @@ const TransactionsContainer = React.createClass({
                 { value: 'Acquisition', label: 'Acquisition' },
                 { value: 'Loss', label: 'Loss' },
                 { value: 'All', label: 'All' }
-               ]
+              ],
+
+      itemsPerPage: 10
     }
   },
 
@@ -32,8 +37,9 @@ const TransactionsContainer = React.createClass({
   getTransactions(){
     var params = {
       category: this.state.category,
+      item: this.state.itemSearch,
       page: this.state.page,
-      itemsPerPage: TRANSACTIONS_PER_PAGE
+      itemsPerPage: this.state.itemsPerPage
     };
     var _this = this;
     $.getJSON("/api/transactions/", params, function(data){
@@ -44,27 +50,42 @@ const TransactionsContainer = React.createClass({
     });
   },
 
+  updateItemsPerPage(e) {
+    var q = Number(e.target.value)
+    this.setState({
+      itemsPerPage: q
+    }, this.getTransactions)
+  },
+
   handlePageSelect(activePage) {
     this.setState({
       page: activePage,
-    })
+    }, this.getTransactions)
   },
 
   handleCategoryChange(category) {
     if (category == null) {
       this.setState({
         category: "",
+        page: 1
       }, this.getTransactions)
     } else {
       this.setState({
-        category: category.value
+        category: category.value,
+        page: 1
       }, this.getTransactions)
     }
   },
 
+  handleItemSearch(e) {
+    this.setState({
+      itemSearch: e.target.value,
+      page: 1
+    }, this.getTransactions)
+  },
+
   getTransactionFilterPanel() {
     return (
-
       <div className="panel panel-default">
 
         <div className="panel-heading">
@@ -72,6 +93,19 @@ const TransactionsContainer = React.createClass({
         </div>
 
         <div className="panel-body">
+          <FormGroup>
+            <ControlLabel>Search by item name</ControlLabel>
+            <InputGroup bsSize="small">
+              <FormControl placeholder="Item name"
+                           style={{fontSize:"12px"}}
+                           type="text" name="itemSearch"
+                           value={this.state.itemSearch}
+                           onChange={this.handleItemSearch}/>
+              <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.handleSearch}>
+                <Glyphicon glyph="search"/>
+              </InputGroup.Addon>
+            </InputGroup>
+          </FormGroup>
           <FormGroup>
             <ControlLabel>Type of Request</ControlLabel>
             <Select style={{fontSize:"12px"}} name="transactions-category-filter"
@@ -96,6 +130,23 @@ const TransactionsContainer = React.createClass({
     )
   },
 
+  getTransactionAssetsPopover(tx) {
+    var content = (tx.assets.length > 0) ? (
+      tx.assets.join(", ")
+    ) : (
+      "N/A"
+    )
+    return (
+      <Popover style={{maxWidth:"200px"}} id="tag-popover" >
+        <Col sm={12}>
+          <div style={{fontSize:"10px"}}>
+            <p style={{marginBottom: "2px"}}>{content}</p>
+          </div>
+        </Col>
+      </Popover>
+    )
+  },
+
   getTransactionPanel() {
     var transactionsTable = null
     if (this.state.transactions.length > 0) {
@@ -104,12 +155,13 @@ const TransactionsContainer = React.createClass({
           <thead>
             <tr>
               <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">ID</th>
-              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-left">Item</th>
               <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">Category</th>
               <th style={{width: "5%", borderBottom: "1px solid #596a7b"}} className="text-center">Quantity</th>
-              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
+              <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">Asset Tags</th>
               <th style={{width: "10%", borderBottom: "1px solid #596a7b"}} className="text-center">Administrator</th>
-              <th style={{width: "25%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-center">Date</th>
+              <th style={{width: "20%", borderBottom: "1px solid #596a7b"}} className="text-left">Comment</th>
             </tr>
           </thead>
           <tbody>
@@ -135,11 +187,16 @@ const TransactionsContainer = React.createClass({
                   <td data-th="Quantity" className="text-center" >
                     <span style={{fontSize:"11px"}}>{transaction.quantity}</span>
                   </td>
-                  <td data-th="Date" className="text-center" >
-                    <span style={{fontSize:"11px"}}>{new Date(transaction.date).toLocaleString()}</span>
+                  <td data-th="Asset Tags" className="text-center" >
+                    <OverlayTrigger rootClose trigger={["hover", "focus"]} placement="right" overlay={this.getTransactionAssetsPopover(transaction)}>
+                      <Glyphicon glyph="tags" className="clickable"/>
+                    </OverlayTrigger>
                   </td>
                   <td data-th="Administrator" className="text-center" >
                     <span style={{color: "#df691a"}}>{transaction.administrator}</span>
+                  </td>
+                  <td data-th="Date" className="text-center" >
+                    <span style={{fontSize:"11px"}}>{new Date(transaction.date).toLocaleString()}</span>
                   </td>
                   <td data-th="Comment" className="text-left" >
                     <span style={{fontSize:"11px"}}>{transaction.comment}</span>
@@ -177,7 +234,29 @@ const TransactionsContainer = React.createClass({
 
         <div className="panel-footer" >
           <Row>
-            <Col md={12}>
+            <Col xs={3}>
+              <Form horizontal>
+                <FormGroup bsSize="small">
+                  <Col xs={7} componentClass={ControlLabel}>
+                    Items per page:
+                  </Col>
+                  <Col xs={5}>
+                    <FormControl componentClass="select"
+                                 name="itemsPerPage"
+                                 style={{fontSize:"12px"}}
+                                 value={this.state.itemsPerPage}
+                                 onChange={this.updateItemsPerPage}>
+                      <option value="10">10</option>
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                      <option value="250">250</option>
+                    </FormControl>
+                  </Col>
+                </FormGroup>
+              </Form>
+            </Col>
+            <Col xs={9}>
               <Pagination next prev maxButtons={10} boundaryLinks
                           ellipsis style={{float:"right", margin: "0px"}}
                           bsSize="small" items={this.state.pageCount}
@@ -217,91 +296,6 @@ const TransactionsContainer = React.createClass({
   }
 
 })
-
-// class TransactionsContainer extends Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       transactions:[],
-//       category: 'All',
-//       page: 1,
-//       pageCount: 0,
-//     };
-//
-//     this.options = [
-//                 { value: 'Acquisition', label: 'Acquisition' },
-//                 { value: 'Loss', label: 'Loss' },
-//                 { value: 'All', label: 'All' }
-//             ];
-//     this.placeholder = "Filter";
-//     this.handleFilterChange = this.handleFilterChange.bind(this);
-//     this.handlePageClick = this.handlePageClick.bind(this);
-//     this.showCreateTransactionForm = this.showCreateTransactionForm.bind(this);
-//     this.getTransactions = this.getTransactions.bind(this);
-//
-//     this.getTransactions();
-//   }
-//
-//
-//   // Only used for initial get
-  // getTransactions(){
-  //   var params = {
-  //     category: this.state.filter_option,
-  //     page: this.state.page,
-  //     itemsPerPage: TRANSACTIONS_PER_PAGE
-  //   };
-  //
-  //   var thisObj = this;
-  //   $.getJSON("/api/transactions/", params, function(data){
-  //     thisObj.setState({
-  //       transactions: data.results,
-  //       pageCount: Math.ceil(data.num_pages),
-  //     });
-  //   });
-  // }
-//
-//   handlePageClick(data) {
-//     let selected = data.selected;
-//     let offset = Math.ceil(selected * TRANSACTIONS_PER_PAGE);
-//     let page = data.selected + 1;
-//
-//     this.setState({page: page}, () => {
-//       this.getTransactions();
-//     });
-//   }
-//
-//
-//   handleFilterChange(type) {
-//     this.setState({
-//       filter_option : type.value,
-//       page: 1
-//     }, this.getTransactions);
-//   }
-//
-//   showCreateTransactionForm() {
-//     this.setState({
-//       showCreateTransactionForm: true
-//     })
-//   }
-//
-//   render() {
-//     return (
-//       <Grid fluid>
-//         <Row>
-//           <Col sm={12}>
-//             <h3 style={{display:"inline-block"}}>Acquisitions and Losses</h3>
-//             <hr />
-//           </Col>
-//         </Row>
-//         <p>View Acquisitions and Losses or Log a new one.</p>
-//         <CreateTransactionsContainer handleTransactionCreated={this.getTransactions} />
-//         <Select value={this.state.filter_option} placeholder={this.placeholder} options={this.options} onChange={this.handleFilterChange} clearable={false}/>
-//         <TransactionList transactions={this.state.transactions} />
-//         <Paginator pageCount={this.state.pageCount} onPageChange={this.handlePageClick} forcePage={this.state.page - 1}/>
-//       </Grid>
-//     );
-//   }
-// }
 
 
 export default TransactionsContainer

@@ -1535,9 +1535,13 @@ class TransactionListCreate(generics.GenericAPIView):
     def get(self, request, format=None):
         queryset = self.get_queryset()
 
-        category = request.query_params.get('category', None)
-        if category != None and category != "":
-            if category in set(['Acquisition', 'Loss']):
+        item = request.query_params.get('item', "")
+        if item != "":
+            queryset = queryset.filter(item__name__icontains=item)
+
+        category = request.query_params.get('category', "")
+        if category != "":
+            if category.lower().strip() in set(['acquisition', 'loss']):
                 queryset = queryset.filter(category=category)
 
         # Pagination

@@ -253,6 +253,9 @@ const ManagerDetail = React.createClass({
   handleTransactionCategoryChange(e) {
     var cat = e.target.value
     var tq = this.state.transactionQuantity
+    if (cat === "Loss" && tq > this.state.item.quantity) {
+      tq = 0
+    }
     this.setState({
       transactionQuantity: tq,
       transactionCategory: cat
@@ -746,7 +749,7 @@ const ManagerDetail = React.createClass({
           </Col>
         </FormGroup>
       </Form>
-      {(this.state.transactionCategory == "Loss") ? (
+      {(this.state.transactionCategory == "Loss" && this.state.item.has_assets) ? (
         <AssetSelector assets={this.state.assets}
                        selectedAssets={this.state.selectedAssets}
                        lossQuantity={this.state.transactionQuantity}
@@ -756,10 +759,7 @@ const ManagerDetail = React.createClass({
                        pageCount={this.state.assetPageCount}
                        page={this.state.assetPage}
                        handlePageSelect={this.handlePageSelect}/>
-      ) : (
-        <div>
-        </div>
-      )}
+      ) : null }
       </div>
     )
   },
@@ -1078,11 +1078,9 @@ const ManagerDetail = React.createClass({
             </Modal.Body>
             <Modal.Footer>
               <Button bsStyle="default" bsSize="small" onClick={this.hideTransactionModal}>Cancel</Button>
-              <Button bsStyle="info"    bsSize="small" onClick={this.createTransaction} disabled={!this.allowLossTransaction()}>Create</Button>
+              <Button bsStyle="info" bsSize="small" onClick={this.createTransaction} disabled={!this.allowLossTransaction()}>Create</Button>
             </Modal.Footer>
           </Modal>
-
-
 
           <LoanModal show={this.state.showLoanModal}
                      loan={this.state.loanToShow}
