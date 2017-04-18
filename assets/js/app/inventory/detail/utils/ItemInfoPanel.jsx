@@ -275,7 +275,7 @@ const ItemInfoPanel = React.createClass({
             </tr>
 
             {this.props.customFields.map( (cf, i) => {
-              return (this.props.item.has_assets && cf.asset_tracked) ? null : (
+              return (
                 <tr key={i}>
                   <th style={{paddingRight:"10px", border: "1px solid #596a7b"}}>{cf.name}</th>
                   <td style={{border: "1px solid #596a7b"}}>{this.props.item[cf.name]}</td>

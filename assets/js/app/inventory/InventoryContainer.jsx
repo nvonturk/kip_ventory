@@ -241,16 +241,12 @@ const InventoryContainer = React.createClass({
   getShortTextField(field_name, presentation_name, i) {
     return (
       <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
+          <ControlLabel>{presentation_name} </ControlLabel>
           <FormControl type="text"
                        value={this.state.item[field_name]}
                        name={field_name}
                        onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
-        </Col>
       </FormGroup>
     )
   },
@@ -258,10 +254,7 @@ const InventoryContainer = React.createClass({
   getLongTextField(field_name, presentation_name, i) {
     return (
       <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
+          <ControlLabel>{presentation_name} </ControlLabel>
           <FormControl type="text"
                        style={{resize: "vertical", height:"100px"}}
                        componentClass={"textarea"}
@@ -269,7 +262,6 @@ const InventoryContainer = React.createClass({
                        name={field_name}
                        onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
-        </Col>
       </FormGroup>
     )
   },
@@ -277,10 +269,7 @@ const InventoryContainer = React.createClass({
   getIntegerField(field_name, presentation_name, min, step, i) {
     return (
       <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
+        <ControlLabel>{presentation_name} </ControlLabel>
           <FormControl type="number"
                        min={min}
                        step={step}
@@ -288,7 +277,6 @@ const InventoryContainer = React.createClass({
                        name={field_name}
                        onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
-        </Col>
       </FormGroup>
     )
   },
@@ -296,16 +284,12 @@ const InventoryContainer = React.createClass({
   getFloatField(field_name, presentation_name, i){
     return (
       <FormGroup key={field_name} bsSize="small" validationState={this.getValidationState(field_name)}>
-        <Col xs={2} componentClass={ControlLabel}>
-          {presentation_name}
-        </Col>
-        <Col xs={8}>
+        <ControlLabel>{presentation_name} </ControlLabel>
           <FormControl type="number"
                        value={Number(this.state.item[field_name])}
                        name={field_name}
                        onChange={this.handleItemFormChange} />
           { this.state.errorNodes[field_name] }
-        </Col>
       </FormGroup>
     )
   },
