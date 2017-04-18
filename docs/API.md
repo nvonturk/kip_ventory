@@ -71,6 +71,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | quantities     | integer array | index related to items field, requested quantity of each item                | yes       |
   | closed_comment | string        | administrator comment explaining action                                      | yes       |
   | open_comment   | string        | comment on opening of requests                                               | yes       |
+  | assets         | string array  | specify which assets to loan/disburse                                        | if [items] is asset-tracked |
 
 #### Fields
 * `/fields/`
@@ -82,6 +83,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | private    | boolean | whether or not field is hidden to non-admin/manager users | yes       |
   | name       | string  | the name of the custom field                              | yes       |
   | field_type | string  | one of four custom field types (Single/Multi/Float/Int)   | yes       |
+  | asset_tracked | string  | whether this custom field is also applied to individual assets   | yes       |
 
 * `/fields/{field_name}`
   * DELETE: delete a specified custom field
@@ -110,6 +112,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | quantity    | positive integer | amount of item in inventory      | yes       |
   | name        | string           | colloquial name of item          | yes       |
   | tags        | string array     | tags associated with item        | yes       |
+  | has_assets  | boolean          | whether this item is asset-tracked|yes       |
 
 * `/items/{item_name}/`
   * GET: get the item with the specified item name
@@ -123,6 +126,8 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | quantity    | positive integer | amount of item in inventory      | yes       |
   | name        | string           | colloquial name of item          | yes       |
   | tags        | string array     | tags associated with item        | yes       |
+  | has_assets  | boolean          | whether this item is asset-tracked|yes       |
+
 
 * `/items/{item_name}/addtocart`
   * POST: add an item to the logged in user's cart.
@@ -165,13 +170,14 @@ Note: many of the GET requests return paginated results. You can specify a `page
   | Parameter | Type   | Purpose                 | Required? |
   |-----------|--------|-------------------------|-----------|
   | user      | string | filter loans by user    | no        |
+  | status    | string | filter by loan status (outstanding, returned)    | no        |
 
 * `/items/{item_name}/requests`
   * GET: get all requests associated with an item
 
   | Parameter | Type   | Purpose                         | Required? |
   |-----------|--------|---------------------------------|-----------|
-  | type      | string | fitler requests by request type | no        |
+  | type      | string | filter requests by request type | no        |
   | user      | string | filter requests by user         | no        |
 
 * `/items/{item_name}/stacks`
@@ -268,7 +274,6 @@ Note: many of the GET requests return paginated results. You can specify a `page
   * POST: authenticate and login a user
   * Parameters:
 
-
   | Parameter  | Type   | Purpose                   | Required? |
   |------------|--------|---------------------------|-----------|
   | username   | string | the new user's username   | yes       |
@@ -331,11 +336,11 @@ Note: many of the GET requests return paginated results. You can specify a `page
 
       | Parameter     | Type             | Purpose                                    | Required? |
       |-------------  |------------------|----------------------------------          |-----------|
-      | requested_items      | list of dictionaries | the items in the cart - can modify quantity and request_type         | no        |
+      | approved_items      | list of dictionaries | the items in the cart - can modify item, quantity, request_type, and assets         | yes        |
       | status        | string           | request status: 'Approved', or 'Denied'    | yes       |
       | closed_comment| string           | reason for approving or denying            | no        |
 
-    * Requested items sample data:
+    * Approved items sample data:
     ```
     [
       {
@@ -346,7 +351,8 @@ Note: many of the GET requests return paginated results. You can specify a `page
       {
           "item": "item2",
           "quantity": 3,
-          "request_type": "disbursement" // or "loan"
+          "request_type": "disbursement" // or "loan",
+          "assets": ["1", "2", "3"] // list of asset tags - length must equal quantity
       }
     ]
     ```
@@ -398,6 +404,7 @@ Note: many of the GET requests return paginated results. You can specify a `page
       | item          | string            | the id of the item acquired/lost              | yes       |
       | category      | string            | the transaction category: 'Acquired' or 'Lost'| yes       |
       | comment       | string            | a comment to explain the transaction          | no        |
+      | assets        | string array      | List of asset tags to mark as lost          | if category is "loss" and specified item has assets        |
 
 #### Users
 * `/users/`
