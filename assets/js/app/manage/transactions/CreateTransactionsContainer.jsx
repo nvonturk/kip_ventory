@@ -171,7 +171,7 @@ const CreateTransactionsContainer = React.createClass({
   handlePageSelect(activePage) {
     this.setState({
       assetPage: activePage
-    })
+    }, this.getAssets)
   },
 
   createTransaction(e) {
