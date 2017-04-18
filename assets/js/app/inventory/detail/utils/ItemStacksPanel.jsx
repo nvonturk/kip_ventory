@@ -59,14 +59,14 @@ const ItemStacksPanel = React.createClass({
                   <Col xs={2} style={{textAlign:"center"}} componentClass={ControlLabel}>
                     Qty:
                   </Col>
-                  <Col xs={4}>
+                  <Col xs={5}>
                     <FormControl type="number"
                                  min={0} max={this.props.item.quantity} step={1}
                                  name="addToCartQuantity"
                                  value={this.state.addToCartQuantity}
                                  onChange={this.handleCartQuantityChange} />
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={5}>
                     <Button disabled={this.state.addToCartQuantity == 0} bsStyle="info" bsSize="small" type="submit">Add to cart</Button>
                   </Col>
                 </FormGroup>

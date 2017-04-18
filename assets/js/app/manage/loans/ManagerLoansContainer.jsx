@@ -156,6 +156,20 @@ const ManagerLoansContainer = React.createClass({
                         </FormGroup>
 
                         <FormGroup>
+                          <ControlLabel>Search by User</ControlLabel>
+                          <InputGroup bsSize="small">
+                            <FormControl placeholder="User name"
+                                         style={{fontSize:"12px"}}
+                                         type="text" name="userSearch"
+                                         value={this.state.userSearch}
+                                         onChange={this.handleUserSearch}/>
+                            <InputGroup.Addon style={{backgroundColor: "#df691a"}} className="clickable" onClick={this.handleUserSearch}>
+                              <Glyphicon glyph="search"/>
+                            </InputGroup.Addon>
+                          </InputGroup>
+                        </FormGroup>
+
+                        <FormGroup>
                           <ControlLabel>Loan Status</ControlLabel>
                           <Select style={{fontSize:"12px"}} name="loan-status-filter"
                                   multi={false}
