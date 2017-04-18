@@ -30,14 +30,6 @@ const KipNav = React.createClass({
     )
   },
 
-  getCustomFieldsLink(is_superuser) {
-    return is_superuser ? (
-      <LinkContainer to="/app/manage/custom-fields">
-        <MenuItem eventKey={1.8}>Add/Remove Custom Fields</MenuItem>
-      </LinkContainer>
-    ) : null
-  },
-
   getManagerLink(url, name) {
     var i = INDEX
     INDEX = INDEX + 1
@@ -80,15 +72,17 @@ const KipNav = React.createClass({
     INDEX = INDEX + 1
     return (
       <NavDropdown eventKey={i} title={name} id="admin-nav-dropdown">
-      { this.getCustomFieldsLink(this.props.route.user.is_superuser) }
+        <LinkContainer to="/app/manage/custom-fields">
+          <MenuItem eventKey={2.1}>Add/Remove Custom Fields</MenuItem>
+        </LinkContainer>
         <LinkContainer to="/app/admin/users/create/">
-          <MenuItem eventKey={2.1}>Create Users</MenuItem>
+          <MenuItem eventKey={2.2}>Create Users</MenuItem>
         </LinkContainer>
         <LinkContainer to="/app/admin/users/manage/">
-          <MenuItem eventKey={2.2}>Manage Users</MenuItem>
+          <MenuItem eventKey={2.3}>Manage Users</MenuItem>
         </LinkContainer>
         <LinkContainer to="/app/admin/adminpanel/">
-          <MenuItem eventKey={2.3}>Django Admin Panel</MenuItem>
+          <MenuItem eventKey={2.4}>Django Admin Panel</MenuItem>
         </LinkContainer>
       </NavDropdown>
     )

@@ -293,12 +293,12 @@ const RequestedItemPanel = React.createClass({
     } else {
       assetPanel = (
         <Row style={{display:"flex", zIndex: 1}}>
-          <Col xs={3} style={{paddingLeft: "0px", display: "flex", flexDirection:"column", justifyContent: "center"}}>
+          <Col xs={2} style={{paddingLeft: "0px", display: "flex", flexDirection:"column", justifyContent: "center"}}>
             <a style={{fontSize:"14px", color: "#df691a"}} href={"/app/inventory/" + this.props.requestedItem.item + "/"}>
               { this.props.requestedItem.item }
             </a>
           </Col>
-          <Col xs={6} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
+          <Col xs={7} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             <Form horizontal>
               <Col xs={3} componentClass={ControlLabel}>
                 Qty:

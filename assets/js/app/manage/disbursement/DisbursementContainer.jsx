@@ -356,6 +356,9 @@ const DisbursementContainer = React.createClass({
             <p>
               A request will be automatically generated, logged, and approved for disbursement on behalf of the specified user.
             </p>
+            <p>
+              If an asset-tracked item is loaned or disbursed, the system will auto-select the first available assets to satisfy the desired quantity.
+            </p>
             <br />
           </Col>
         </Row>

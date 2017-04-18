@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import { Form, Row, Col, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Button, Glyphicon} from 'react-bootstrap'
+import { Form, Row, Col, FormGroup, ControlLabel, FormControl, HelpBlock, Modal,
+         Button, Glyphicon, Well } from 'react-bootstrap'
 import { getCookie } from '../../../csrf/DjangoCSRFToken'
 import { ajax, getJSON } from 'jquery'
 import AssetSelector from '../../inventory/detail/AssetSelector'
@@ -251,6 +252,59 @@ const CreateTransactionsContainer = React.createClass({
         )
       }
     }
+    var body = (this.state.items.length > 0) ? (
+      <div>
+        <Form horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation();}}>
+          <FormGroup bsSize="small" controlId="formControlsSelect">
+            <Col xs={2} componentClass={ControlLabel}>
+              Item
+            </Col>
+            <Col xs={10}>
+              <FormControl componentClass="select" value={this.state.index} onChange={this.handleItemChange}>
+                {this.getItemOptions()}
+              </FormControl>
+            </Col>
+          </FormGroup>
+
+          <FormGroup bsSize="small" controlId="formControlsText">
+            <Col xs={2} componentClass={ControlLabel}>
+              Quantity
+            </Col>
+            <Col xs={2}>
+              <FormControl type="number" min={1} step={1} value={this.state.quantity} onChange={this.handleQuantityChange} />
+            </Col>
+            <Col xs={2} componentClass={ControlLabel}>
+              Category
+            </Col>
+            <Col xs={4}>
+              <FormControl componentClass="select" placeholder="select" value={this.state.category} onChange={this.handleCategoryChange}>
+                <option value="Acquisition">Acquisition</option>
+                <option value="Loss">Loss</option>
+              </FormControl>
+            </Col>
+          </FormGroup>
+
+          <FormGroup bsSize="small" controlId="formControlsText">
+            <Col xs={2} componentClass={ControlLabel}>
+              Comment
+            </Col>
+            <Col xs={10}>
+            <FormControl type="text"
+                         style={{resize: "vertical", height:"100px"}}
+                         componentClass={"textarea"}
+                         name="comment"
+                         value={this.state.comment}
+                         onChange={this.handleCommentChange}/>
+            </Col>
+          </FormGroup>
+        </Form>
+        { assetSelect }
+      </div>
+    ) : (
+      <Well bsSize="small" className="text-center" style={{fontSize: "12px"}}>
+        There are no items in the inventory. Please add an item to log an acquisition or loss.
+      </Well>
+    )
     return (
       <div>
         <Button bsSize="small" bsStyle="primary" style={{verticalAlign:"middle", fontSize:"10px"}} onClick={this.showModal}>
@@ -260,52 +314,8 @@ const CreateTransactionsContainer = React.createClass({
           <Modal.Header closeButton>
             <Modal.Title>Log an Acquisition or Loss of Instances</Modal.Title>
           </Modal.Header>
-            <Modal.Body>
-            <Form horizontal onSubmit={e => {e.preventDefault(); e.stopPropagation();}}>
-              <FormGroup bsSize="small" controlId="formControlsSelect">
-                <Col xs={2} componentClass={ControlLabel}>
-                  Item
-                </Col>
-                <Col xs={10}>
-                  <FormControl componentClass="select" value={this.state.index} onChange={this.handleItemChange}>
-                    {this.getItemOptions()}
-                  </FormControl>
-                </Col>
-              </FormGroup>
-
-              <FormGroup bsSize="small" controlId="formControlsText">
-                <Col xs={2} componentClass={ControlLabel}>
-                  Quantity
-                </Col>
-                <Col xs={2}>
-                  <FormControl type="number" min={1} step={1} value={this.state.quantity} onChange={this.handleQuantityChange} />
-                </Col>
-                <Col xs={2} componentClass={ControlLabel}>
-                  Category
-                </Col>
-                <Col xs={4}>
-                  <FormControl componentClass="select" placeholder="select" value={this.state.category} onChange={this.handleCategoryChange}>
-                    <option value="Acquisition">Acquisition</option>
-                    <option value="Loss">Loss</option>
-                  </FormControl>
-                </Col>
-              </FormGroup>
-
-               <FormGroup bsSize="small" controlId="formControlsText">
-                 <Col xs={2} componentClass={ControlLabel}>
-                   Comment
-                 </Col>
-                 <Col xs={10}>
-                 <FormControl type="text"
-                              style={{resize: "vertical", height:"100px"}}
-                              componentClass={"textarea"}
-                              name="comment"
-                              value={this.state.comment}
-                              onChange={this.handleCommentChange}/>
-                 </Col>
-              </FormGroup>
-            </Form>
-            { assetSelect }
+          <Modal.Body>
+            { body }
           </Modal.Body>
           <Modal.Footer>
             <Button bsSize="small" bsStyle="default" onClick={this.hideModal}>Close</Button>

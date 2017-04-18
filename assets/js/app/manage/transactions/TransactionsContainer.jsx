@@ -210,7 +210,7 @@ const TransactionsContainer = React.createClass({
     } else {
       transactionsTable = (
         <Well bsSize="small" style={{marginBottom: "0px", fontSize: "12px"}} className="text-center">
-          There have not been any acquisitions or losses of this item.
+          There have not been any acquisitions or losses.
         </Well>
       )
     }

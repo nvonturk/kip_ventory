@@ -1849,21 +1849,21 @@ class BulkImport(generics.GenericAPIView):
     def get_queryset(self):
         return models.BulkImport.Objects.all()
 
-# class DisburseFilter(BaseFilterBackend):
-#   def get_schema_fields(self, view):
-#     fields = [
-#       coreapi.Field(name="requester", description="Request username", required=True, location='body'),
-#       coreapi.Field(name="closed_comment", description="Admin comment", required=True, location='body'),
-#       coreapi.Field(name="items", description="list of disbursed items", required=True, location='body'),
-#       coreapi.Field(name="types", description="index correlated request type", required=True, location='body'),
-#       coreapi.Field(name="quantities", description="index correlated item quantity", required=True, location='body'),
-#     ]
-#
-#     return fields
+class DisburseFilter(BaseFilterBackend):
+  def get_schema_fields(self, view):
+    fields = [
+      coreapi.Field(name="requester", description="Request username", required=True, location='body'),
+      coreapi.Field(name="closed_comment", description="Admin comment", required=True, location='body'),
+      coreapi.Field(name="items", description="list of disbursed items", required=True, location='body'),
+      coreapi.Field(name="types", description="index correlated request type", required=True, location='body'),
+      coreapi.Field(name="quantities", description="index correlated item quantity", required=True, location='body'),
+    ]
+
+    return fields
 
 class DisburseCreate(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    # filter_backends = (DisburseFilter,)
+    filter_backends = (DisburseFilter,)
     queryset = models.Request.objects.all()
 
     def get_serializer_class(self):
@@ -1881,6 +1881,7 @@ class DisburseCreate(generics.GenericAPIView):
         items = data['items']
         quantities = data['quantities']
         types = data['types']
+        selectedAssets = []
 
         try:
             requester = User.objects.get(username=requester)
@@ -1903,7 +1904,11 @@ class DisburseCreate(generics.GenericAPIView):
             quantities[i] = quantity
             if quantity > item.quantity:
                 errors.update({'error': "Request for {} instances of '{}' exceeds current stock of {}.".format(quantity, item.name, item.quantity)})
-
+            if item.has_assets:
+                assets = item.assets.all().filter(status=models.IN_STOCK)[:quantity]
+                selectedAssets.append(assets)
+            else:
+                selectedAssets.append([])
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1922,11 +1927,10 @@ class DisburseCreate(generics.GenericAPIView):
             request_instance.status = 'A'
             request_instance.save()
 
-            for item, quantity, request_type in zip(items, quantities, types):
+            for item, quantity, request_type, assets in zip(items, quantities, types, selectedAssets):
                 # Create request item
-                req_item = models.ApprovedItem.objects.create(item=item, quantity=quantity, request_type=request_type, request=request_instance)
-                req_item.save()
-
+                req_item = models.ApprovedItem(item=item, quantity=quantity, request_type=request_type, request=request_instance)
+                req_item.save(assets=assets)
 
                 # Decrement the quantity remaining on the Item
                 item.quantity -= quantity
@@ -2354,7 +2358,10 @@ def backfillRequestCreateLog(backfill_request, initiating_user_pk):
     affected_user = request.requester
     asset = backfill_request.asset
     category = 'Loan Changed to Backfill Request'
-    message = 'Loan for asset number: {} of item: {} requested for backfill by {}. Awaiting approval from {}. Current status is {}'.format(asset.tag, asset.item, affected_user, initiating_user.username, backfill_request.status)
+    message = 'Loan of item: {} requested for backfill by {}. Awaiting approval from {}. Current status is {}'.format(backfill_request.item, affected_user, initiating_user.username, backfill_request.status)
+    status = "Outstanding"
+    if (asset != None):
+        message = 'Loan for asset with tag: {} of item: {} requested for backfill by {}. Awaiting approval from {}. Current status is {}'.format(asset.tag, backfill_request.item, affected_user, initiating_user.username, status)
     log = models.Log(item=item, request=request, initiating_user=initiating_user, asset=asset, quantity=backfilled_quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
@@ -2650,7 +2657,6 @@ class BackfillRequestCreate(generics.GenericAPIView):
             serializer.save()
             backfill_request = serializer.instance
             sendEmailForNewBackfillRequest(backfill_request)
-            print(backfill_request)
             backfillRequestCreateLog(backfill_request, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
