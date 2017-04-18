@@ -993,10 +993,10 @@ const ManagerDetail = React.createClass({
               </Row>
 
               <Row>
-                <Col md={5} sm={6} xs={12}>
+                <Col md={4} sm={5} xs={11}>
                   <ItemInfoPanel user={this.props.route.user} item={this.state.item} customFields={this.state.custom_fields} />
                 </Col>
-                <Col md={3} sm={6} xs={12}>
+                <Col md={4} sm={7} xs={13}>
                   <ItemStacksPanel item={this.state.item} stacks={this.state.stacks} />
                 </Col>
                 <Col md={4} sm={12} xs={12}>
