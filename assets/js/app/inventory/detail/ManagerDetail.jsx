@@ -98,7 +98,7 @@ const ManagerDetail = React.createClass({
     var params = {"all": true}
     getJSON(url, params, function(data) {
       var custom_fields = data.results.map( (field, i) => {
-        return ({"name": field.name, "value": "", "field_type": field.field_type})
+        return ({"name": field.name, "value": "", "field_type": field.field_type, "asset_tracked":field.asset_tracked})
       });
       _this.setState({
         custom_fields: custom_fields
