@@ -616,6 +616,20 @@ const InventoryContainer = React.createClass({
               Click <a href="/api/import/template/">here</a> to download a .csv file template.
             </p>
           </Col>
+          </Row>
+          <Row>
+            <Col md = {12} xs = {6}>
+              <p style={{fontSize:"12px"}}>
+                Format for Columns:<br/>
+                name -> required, unique<br/>
+                quantity -> required, integer<br/>
+                tags -> separated by commas<br/>
+                has_assets -> true, false <br/>
+                minimum_stock -> integer (defaults to 0) <br/>
+              </p>
+            </Col>
+          </Row>
+          <Row>
           <Col md={12} xs={6}>
             <Form onSubmit={this.handleImportSubmit}>
               <FormGroup bsSize="small">

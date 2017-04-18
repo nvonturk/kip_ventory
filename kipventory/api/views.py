@@ -16,6 +16,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q, F
+import copy
 
 from . import models, serializers
 from rest_framework import pagination
@@ -125,7 +126,12 @@ class ItemListCreate(generics.GenericAPIView):
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
+            #TODO asset logging
+            item_name = serializer.data['name']
             itemCreationLog(serializer.data, request.user.pk)
+            item = models.Item.objects.get(name=item_name)
+            assets = models.Asset.objects.filter(item=item)
+            assetCreationLog(assets, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -174,6 +180,13 @@ class ItemDetailModifyDelete(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         item = self.get_instance(item_name=item_name)
+        assets = models.Asset.objects.filter(item=item)
+        for asset in assets:
+            tag = copy.deepcopy(asset.tag)
+            stat = copy.deepcopy(asset.status)
+            asset.delete()
+            assetDeletionLog(tag, stat, item_name, request.user.pk)
+
         item.delete()
         for r in models.Request.objects.all():
             if (r.requested_items.count() == 0):
@@ -275,15 +288,15 @@ class AssetDetailModify(generics.GenericAPIView):
 
         data = request.data.copy()
         asset = self.get_instance(asset_tag=asset_tag)
-
+        previous_tag = copy.deepcopy(asset.tag)
 
 
         serializer = self.get_serializer(instance=asset, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            assetModificationLog(asset, previous_tag, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class AddItemToCart(generics.GenericAPIView):
     permissions = (permissions.IsAuthenticated,)
@@ -798,6 +811,21 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
 
         if serializer.is_valid():
             serializer.save()
+            request_obj = models.Request.objects.get(pk=request_pk)
+            # Check what was done to the request
+            # Could be approved or denied
+            requested_items = models.RequestedItem.objects.filter(request=request_obj)
+            if request_obj.status == 'A':
+                for ri in requested_items:
+                    if ri.request_type == 'loan':
+                        print('loan', ri)
+                        requestItemApprovalLoan(ri, request.user.pk, request_obj)
+                    else:
+                        print('disburse', ri)
+                        requestItemApprovalDisburse(ri, request.user.pk, request_obj)
+            if request_obj.status == 'D':
+                for ri in requested_items:
+                    requestItemDenial(ri, request.user.pk, request_obj)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -814,8 +842,6 @@ class RequestDetailModifyDelete(generics.GenericAPIView):
             return Response(d, status=status.HTTP_403_FORBIDDEN)
 
         instance.delete()
-        #sendEmailForDeletedOutstandingRequest? Probably not
-        # Don't post log here since its as if it never happened
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -855,6 +881,11 @@ class GetBackfillsByRequest(generics.GenericAPIView):
                 backfills = backfills.filter(status=models.AWAITING_ITEMS).distinct()
             elif (backfill_status == models.SATISFIED):
                 backfills = backfills.filter(status=models.SATISFIED).distinct()
+
+          # filter by search text
+        item = request.query_params.get('item', "")
+        if item != "":
+            backfills = backfills.filter(item__name__icontains=item).distinct()
 
         # Pagination
         paginated_queryset = self.paginate_queryset(backfills)
@@ -900,6 +931,11 @@ class GetBackFillRequestsByRequest(generics.GenericAPIView):
                 backfill_requests = backfill_requests.filter(status=models.APPROVED).distinct()
             elif (bf_status == "d" or bf_status == "denied"):
                 backfill_requests = backfill_requests.filter(status=models.DENIED).distinct()
+
+        # filter by search text
+        item = request.query_params.get('item', "")
+        if item != "":
+            backfill_requests = backfill_requests.filter(item__name__icontains=item).distinct()
 
         # Pagination
         paginated_queryset = self.paginate_queryset(backfill_requests)
@@ -1175,9 +1211,8 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
         if serializer.is_valid():
             data = serializer.data
             quantity = data.get('quantity')
-            convertLoanToDisbursement(loan, quantity)
+            convertLoanToDisbursement(loan, request.user.pk, quantity)
             sendEmailForLoanToDisbursementConversion(loan)
-            requestItemLoantoDisburse(loan, request.user, quantity)
             if loan.quantity_loaned == 0:
                 for bf in loan.backfill_requests.all():
                     if bf.status == models.OUTSTANDING:
@@ -1188,11 +1223,12 @@ class ConvertLoanToDisbursement(generics.GenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-def approveBackfillRequest(backfill_request):
+def approveBackfillRequest(backfill_request, request_user_pk):
     loan = backfill_request.loan
     quantity = loan.quantity_loaned - loan.quantity_returned # change this if want to implement partial backfills
     backfill = convertLoanToBackfill(loan, backfill_request, quantity)
-    convertLoanToDisbursement(loan, quantity)
+    backfillRequestApproveLog(backfill_request, backfill, request_user_pk)
+    convertLoanToDisbursement(loan, request_user_pk, quantity)
     sendEmailForBackfillRequestApproved(backfill)
 
     #todo what happens if some of the loan was already returned before it was requested backfilled? - loan remains, but backfill requests still deleted
@@ -1206,7 +1242,7 @@ def convertLoanToBackfill(loan, backfill_request, quantity):
     backfill = models.Backfill.objects.create(request=backfill_request.request, item=backfill_request.item, asset=backfill_request.asset, quantity=quantity, requester_comment=backfill_request.requester_comment, receipt=backfill_request.receipt, admin_comment=backfill_request.admin_comment)
     return backfill
 
-def convertLoanToDisbursement(loan, quantity):
+def convertLoanToDisbursement(loan, user_pk, quantity):
     # Standard loan - no asset to handle
     if (loan.asset == None and loan.item.has_assets == False):
         loan.quantity_loaned -= quantity
@@ -1216,18 +1252,25 @@ def convertLoanToDisbursement(loan, quantity):
         if disbursements.count() > 0:
             disbursement = disbursements.first()
             disbursement.quantity += quantity
+            #TODO: log change to disbursement
             disbursement.save()
         else:
             disbursement = models.Disbursement.objects.create(item=loan.item, request=loan.request, quantity=quantity)
             disbursement.save()
+            #TODO: log
         loan.save()
+        requestItemLoantoDisburse(loan, user_pk, quantity)
 
     # loan with asset, item has assets
     else:
         disbursement = models.Disbursement.objects.create(item=loan.item, asset=loan.asset, request=loan.request, quantity=quantity)
+        #TODO: log disbursement of assets
         disbursement.save()
+        #TODO: log change to loan
         loan.quantity_loaned -= quantity
         loan.save()
+        requestItemLoantoDisburse(loan, user_pk, quantity)
+
 
 
 @api_view(['POST'])
@@ -1285,7 +1328,6 @@ class UserCreate(generics.GenericAPIView):
         if serializer.is_valid():
             # serializer.save()
             user = User.objects.create_user(**serializer.validated_data)
-            #todo do we log this for net id creations?
             userCreationLog(serializer.data, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1442,10 +1484,6 @@ class TagDelete(generics.GenericAPIView):
 
         tag = self.get_instance(tag_name=tag_name)
         tag.delete()
-        # Insert Delete Log
-        # Need {serializer.data, initiating_user_pk, 'Item Changed'}
-        # itemDeletionLog(item_name, request.user.pk)
-        #TODO NEED TO LOG DELETION HERE
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class LogListFilter(BaseFilterBackend):
@@ -1716,8 +1754,8 @@ class BulkImport(generics.GenericAPIView):
                     have_assets[i] = False
             minimum_stock_errors = []
             for i, minimum_stock in enumerate(minimum_stocks):
-                if minimum_stock == "" or minimum_stock == None:
-                    minimum_stock_errors.append("Minimum stock must not be blank (row {}).".format(i))
+                if minimum_stock == "":
+                    minimum_stock = 0
                 try:
                     minimum_stock = int(minimum_stock)
                     minimum_stocks[i] = minimum_stock
@@ -1889,13 +1927,17 @@ class DisburseCreate(generics.GenericAPIView):
                 req_item = models.ApprovedItem.objects.create(item=item, quantity=quantity, request_type=request_type, request=request_instance)
                 req_item.save()
 
+
                 # Decrement the quantity remaining on the Item
                 item.quantity -= quantity
                 item.save()
 
                 # Logging
                 requestItemCreation(req_item, request.user.pk, request_instance)
-                requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
+                if req_item.request_type == 'loan':
+                    requestItemApprovalLoan(req_item, request.user.pk, request_instance)
+                else:
+                    requestItemApprovalDisburse(req_item, request.user.pk, request_instance)
 
             sendEmailForNewDisbursement(requester, request_instance)
             return Response(serializer.data)
@@ -1919,6 +1961,46 @@ def itemCreationLog(data, initiating_user_pk):
     quantity = data['quantity']
     message = 'Item {} created by {}'.format(data['name'], initiating_user)
     log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Item Creation', message=message, affected_user=affected_user)
+    log.save()
+
+def assetCreationLog(assets, initiating_user_pk):
+    for asset in assets:
+        item = asset.item
+        quantity = 1
+        asset = asset
+        try:
+            initiating_user = User.objects.get(pk=initiating_user_pk)
+        except User.DoesNotExist:
+            raise NotFound('User not found.')
+        affected_user = None
+        message = 'Asset {} created by {}'.format(asset, initiating_user)
+        log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Asset Creation', message=message, affected_user=affected_user)
+        log.save()
+
+def assetDeletionLog(tag, status, item_name, initiating_user_pk):
+    item = None
+    initiating_user = None
+    quantity = None
+    affected_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Asset {} for item {} deleted by {}'.format(tag, item_name, initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Asset Deletion', message=message, affected_user=affected_user)
+    log.save()
+
+def assetModificationLog(asset, previous_tag, initiating_user_pk):
+    item = asset.item
+    initiating_user = None
+    quantity = 1
+    affected_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    message = 'Asset {} for item {} modified by {}. Previously was asset {}'.format(asset.tag, item, initiating_user, previous_tag)
+    log = models.Log(item=item, initiating_user=initiating_user, quantity=quantity, category='Asset Modification', message=message, affected_user=affected_user)
     log.save()
 
 def itemCreationBILog(item, initiating_user):
@@ -1969,6 +2051,54 @@ def requestItemCreation(request_item, initiating_user_pk, requestObj):
         raise NotFound('User not found.')
     message = 'Request Item for item {} created by {}'.format(request_item.item.name, initiating_user)
     log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category='Request Item Creation', message=message, affected_user=affected_user)
+    log.save()
+
+def backfillRequestApproveLog(backfill_request, backfill, initiating_user_pk):
+    item = backfill.item
+    initiating_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    quantity = backfill.quantity
+    affected_user = backfill.request.requester
+    request = backfill.request
+    asset = backfill.asset
+    message = 'Backfill Request for asset {} approved by {} for user {}'.format(asset, initiating_user, affected_user)
+    category = 'Backfill Request Approval'
+    log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category=category, message=message, affected_user=affected_user, asset=asset)
+    log.save()
+
+def backfillRequestDenyLog(backfill_request, initiating_user_pk):
+    item = backfill_request.item
+    initiating_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    quantity = backfill_request.quantity
+    affected_user = backfill_request.request.requester
+    request = backfill_request.request
+    asset = backfill_request.asset
+    message = 'Backfill Request for asset {} denied by {} for user {}'.format(asset, initiating_user, affected_user)
+    category = 'Backfill Request Denial'
+    log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category=category, message=message, affected_user=affected_user, asset=asset)
+    log.save()
+
+def backfillSatisfiedLog(backfill, initiating_user_pk):
+    item = backfill.item
+    initiating_user = None
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    quantity = backfill.quantity
+    affected_user = backfill.request.requester
+    request = backfill.request
+    asset = backfill.asset
+    category = 'Backfill Satisfied'
+    message = 'Backfill for asset {} satisfied by {}'.format(asset, initiating_user)
+    log = models.Log(item=item, initiating_user=initiating_user, request=request, quantity=quantity, category=category, message=message, affected_user=affected_user, asset=asset)
     log.save()
 
 DOMAIN = "https://colab-sbx-277.oit.duke.edu"
@@ -2206,19 +2336,41 @@ def requestItemLoanModify(loan, initiating_user_pk):
         initiating_user = User.objects.get(pk=initiating_user_pk)
     except User.DoesNotExist:
         raise NotFound('User not found.')
-    message = 'Loan for item {} modified. The number of items returned by {} is now {}. The total number loaned is {}'.format(item.name, initiating_user.username, quantity, loan.quantity_loaned)
+    if loan.asset == None:
+        message = 'Loan for item {} modified. The number of items returned by {} is now {}. The total number loaned is {}'.format(item.name, initiating_user.username, loan.quantity_returned, loan.quantity_loaned - loan.quantity_returned)
+    else:
+        message = 'Loan for asset {} has been marked as returned by {}'.format(loan.asset, initiating_user.username)
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
+    log.save()
+
+def backfillRequestCreateLog(backfill_request, initiating_user_pk):
+    item = backfill_request.item
+    try:
+        initiating_user = User.objects.get(pk=initiating_user_pk)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
+    backfilled_quantity = backfill_request.quantity
+    request = backfill_request.request
+    affected_user = request.requester
+    asset = backfill_request.asset
+    category = 'Loan Changed to Backfill Request'
+    message = 'Loan for asset number: {} of item: {} requested for backfill by {}. Awaiting approval from {}. Current status is {}'.format(asset.tag, asset.item, affected_user, initiating_user.username, backfill_request.status)
+    log = models.Log(item=item, request=request, initiating_user=initiating_user, asset=asset, quantity=backfilled_quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
 def requestItemLoantoDisburse(loan, user, num_disbursed):
     item = loan.item
-    initiating_user = user
+    initiating_user = None
+    try:
+        initiating_user = User.objects.get(pk=user)
+    except User.DoesNotExist:
+        raise NotFound('User not found.')
     quantity = num_disbursed
     loaned_quantity = loan.quantity_loaned
     request = loan.request
     affected_user = request.requester
     category = 'Request Item Loan Changed to Disburse'
-    message = 'Loan for item {} modified. {} items have been disbursed from a loan by {}. The number still loaned is {}.'.format(item.name, quantity, initiating_user.username, loaned_quantity)
+    message = 'Loan for item {} modified. {} items have been disbursed from a loan by {}. The number still loaned is {}.'.format(item.name, quantity, initiating_user.username, loaned_quantity - loan.quantity_returned)
     log = models.Log(item=item, request=request, initiating_user=initiating_user, quantity=quantity, category=category, message=message, affected_user=affected_user)
     log.save()
 
@@ -2466,6 +2618,7 @@ class BackfillDetailModify(generics.GenericAPIView):
             serializer.save()
             backfill = instance
             if previous_status == models.AWAITING_ITEMS and backfill.status == models.SATISFIED:
+                backfillSatisfiedLog(backfill, request.user.pk)
                 sendEmailForBackfillSatisfied(backfill)
 
             return Response(serializer.data)
@@ -2497,6 +2650,8 @@ class BackfillRequestCreate(generics.GenericAPIView):
             serializer.save()
             backfill_request = serializer.instance
             sendEmailForNewBackfillRequest(backfill_request)
+            print(backfill_request)
+            backfillRequestCreateLog(backfill_request, request.user.pk)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2550,9 +2705,11 @@ class BackfillRequestDetailModifyCancel(generics.GenericAPIView):
         if serializer.is_valid():
             serializer.save()
             backfill_request = instance
+
             if previous_status != models.APPROVED and backfill_request.status == models.APPROVED:
-                approveBackfillRequest(backfill_request)
+                approveBackfillRequest(backfill_request, request.user.pk)
             elif previous_status != models.DENIED and backfill_request.status == models.DENIED:
+                backfillRequestDenyLog(backfill_request, request.user.pk)
                 sendEmailForBackfillRequestDenied(backfill_request)
 
             return Response(serializer.data)

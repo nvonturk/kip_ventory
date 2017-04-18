@@ -120,7 +120,7 @@ const CartItemTableRow = React.createClass({
         </td>
         <td />
         <td data-th="Quantity">
-          <FormGroup bsSize="small" style={{margin:"auto"}}>
+          <FormGroup bsSize="small" style={{margin:"auto", width:"70px"}}>
             <FormControl type="number"
                          className="text-center"
                          name="quantity"

@@ -134,7 +134,7 @@ const InventoryItem = React.createClass({
       null
     ) : (
       <td data-th="Quantity" style={{fontSize:"10px", zIndex:"9999"}} onClick={e => e.stopPropagation()}>
-        <FormGroup bsSize="small" style={{margin:"auto"}}>
+        <FormGroup bsSize="small" style={{margin:"auto", width:"70px"}}>
           <FormControl style={{fontSize: "10px"}} type="number" min={0} step={1} max={this.props.item.quantity} value={this.state.quantity} className="form-control text-center" onChange={this.onQuantityChange} />
         </FormGroup>
       </td>
