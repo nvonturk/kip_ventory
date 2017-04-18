@@ -1076,8 +1076,10 @@ class LoanListAll(generics.GenericAPIView):
                 requests = requests.exclude(loans__quantity_loaned__lte=F('loans__quantity_returned')).distinct()
 
         user = request.query_params.get('user', "")
+        print("PARAMS", request.query_params)
+        print("USER", user)
         if user != "":
-            requests = requests.filter(requester__username=user).distinct()
+            requests = requests.filter(requester__username__icontains=user).distinct()
 
         requests = self.paginate_queryset(requests)
         serializer = self.get_serializer(instance=requests, many=True)
