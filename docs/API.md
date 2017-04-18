@@ -29,14 +29,31 @@ Note: many of the GET requests return paginated results. You can specify a `page
 
 #### Backfill requests
 * `/backfillrequests/{id}`
-  * GET:
-  * DELETE:
-  * PUT:
+  * GET: get the backfill requests with the specified id
+    * Permissions: managers see all backfill requests, users only see their own backfill requests
+  * DELETE: delete the backfill request with the specified id
+    * Permissions: all users can only delete (cancel) their own, outstanding, backfill requests
+  * PUT: approve or deny a request
+    * Permissions: managers only, and can only change outstanding backfill requests
+    * on approval, a backfill is created and the loan is converted to a disbursement
+
+    | Parameter | Type   | Purpose                                | Required? |
+    |-----------|--------|----------------------------------------|-----------|
+    | status    | string | approve ("A") or deny ("D")            | yes       |
+    | admin_comment   | string | optional comment          | no     |
+
 
 #### Backfills
 * `/backfills/{id}`
-  * GET:
-  * PUT:
+  * GET: get the backfill with the specified id
+    * Permissions: managers see all backfills, users only see their own backfills
+  * PUT: change status of backfill to satisfied
+    * Permissions: managers only, and can only change backfills with status "awaiting items"
+
+    | Parameter | Type   | Purpose                                | Required? |
+    |-----------|--------|----------------------------------------|-----------|
+    | status    | string | mark backfill as "satisfied"            | yes       |
+
 
 #### Backup Email
 * `/backupemail/`
@@ -263,6 +280,17 @@ Note: many of the GET requests return paginated results. You can specify a `page
     }
     ```
 
+* `/loans/{id}/requestforbackfill/`
+  * POST: request a loan for backfill
+    * Permissions: user must own the loan
+    * Sample data
+    ```
+    {
+      "requester_comment": string, 
+      "receipt" : file
+    }
+    ```
+
 #### Login
 * `/login/`
   * POST: authenticate and login a user
@@ -358,6 +386,18 @@ Note: many of the GET requests return paginated results. You can specify a `page
 * `/requests/all/`
   * GET: get all requests
     * Permissions: must be an admin
+
+* `/requests/[request_pk]/backfills/`
+  * GET: get all backfills, grouped by request
+
+* `/requests/[request_pk]/backfills/requests/`
+  * GET: get all backfill requests, grouped by request
+
+* `/requests/[request_pk]/loans/`
+  * GET: get all loans, grouped by request
+
+* `/requests/[request_pk]/disbursements/`
+  * GET: get all disbursements, grouped by request
 
 #### Subject Tag
 * `/subjecttag/`
