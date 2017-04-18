@@ -653,10 +653,10 @@ const InventoryContainer = React.createClass({
     var inventoryPanelHeaderButtons = (this.state.showMinQuants)   ? (
       <div>
         <span className="panel-title" style={{fontSize:"15px"}}>Current Inventory</span>
-        <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.modifyMinQuants}>
+        <Button bsSize="small" bsStyle="info" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.modifyMinQuants}>
         Modify Minimum Stock
         </Button>
-        <Button bsSize="small" bsStyle="primary" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.hideMinQuants}>
+        <Button bsSize="small" bsStyle="success" style={{fontSize:"10px", marginRight:"12px", float:"right", verticalAlign:"middle"}} onClick={this.hideMinQuants}>
         Done
         </Button>
       </div>

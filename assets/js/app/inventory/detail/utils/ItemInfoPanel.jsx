@@ -275,7 +275,7 @@ const ItemInfoPanel = React.createClass({
             </tr>
 
             {this.props.customFields.map( (cf, i) => {
-              return (
+              return (this.props.item.has_assets && cf.asset_tracked) ? null : (
                 <tr key={i}>
                   <th style={{paddingRight:"10px", border: "1px solid #596a7b"}}>{cf.name}</th>
                   <td style={{border: "1px solid #596a7b"}}>{this.props.item[cf.name]}</td>
@@ -305,7 +305,7 @@ const ItemInfoPanel = React.createClass({
           </p>
         </Popover>
       )
-    } 
+    }
     var quantityForm = (!this.props.user.is_superuser || this.props.item.has_assets) ? (
       <OverlayTrigger trigger={['hover', 'focus']} placement="right" overlay={popover}>
         <FormControl disabled={!this.props.user.is_superuser || this.props.item.has_assets}

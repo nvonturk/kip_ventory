@@ -300,10 +300,10 @@ const RequestedItemPanel = React.createClass({
           </Col>
           <Col xs={7} style={{display: "flex", flexDirection:"column", justifyContent: "center", textAlign: "center"}}>
             <Form horizontal>
-              <Col xs={3} componentClass={ControlLabel}>
+              <Col xs={2} componentClass={ControlLabel}>
                 Qty:
               </Col>
-              <Col xs={2}>
+              <Col xs={3}>
                 <FormGroup bsSize="small" style={{marginBottom: "0px", zIndex: 9999}}>
                   <FormControl type="number" min={1} className="text-center"
                                style={{fontSize:"10px", height:"30px", lineHeight:"30px"}}
