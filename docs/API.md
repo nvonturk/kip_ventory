@@ -1,7 +1,7 @@
 API Documentation
 =================
 
-This document details how to interact with the REST API via HTTP methods.
+This document details how to interact with the REST API via HTTP methods.  All API endpoints must had the header `Authorization: Token XXXXXXXXXXXXXXXXXX`
 
 
 REST Endpoints
