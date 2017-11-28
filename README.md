@@ -35,6 +35,12 @@ npm run build
 python kipventory/manage.py createsuperuser
 ```
 
+Start Postgres Server (locally).
+```
+pg_ctl -D /usr/local/var/postgres -l logfile start
+psql postgres
+```
+
 Start Django server.
 ```
 python kipventory/manage.py runserver
